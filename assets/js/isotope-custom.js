@@ -14,7 +14,6 @@ imagesLoaded(isotopeContainer, function () {
 	  // options
 	  itemSelector: '.isotope-item',
 	  layoutMode: 'fitRows'
-	  
 	});
 	
 	// filter items on click
