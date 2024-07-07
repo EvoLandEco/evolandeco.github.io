@@ -94,8 +94,8 @@
     <article class="blog-post px-3 py-5 p-md-5">
         <div class="container single-col-max-width">
             <header class="blog-post-header">
-                <h2 class="title mb-2">Why Every Developer Should Have A Blog</h2>
-                <div class="meta mb-3"><span class="date">Published 2 days ago</span><span class="time">10 min read</span><span class="comment"><a href="blog-Seamlessly-Integrate-Linux-and-macOS-on-Windows.html#disqus_thread">Link</a></span></div>
+                <h2 class="title mb-2">Seamlessly Integrate Linux and macOS on Windows</h2>
+                <div class="meta mb-3"><span class="date"><i class="fa-solid fa-calendar-days me-2"></i>Published on 15 Feb 2024</span><span class="time"><i class="fa-solid fa-clock me-2"></i>30 min read</span><span class="comment"><i class="fa-solid fa-comment me-2"></i><a href="https://qtj.me/blog-Seamlessly-Integrate-Linux-and-macOS-on-Windows.html#disqus_thread" data-disqus-identifier="BLOG_POST_SEAMLESS">Link</a></span></div>
             </header>
 
             <div class="blog-post-body">
@@ -103,10 +103,32 @@
                     <a><img class="img-fluid" src="assets/images/blog/blog-post-banner-seamlessly-integrating.png" alt="image"></a>
                     <figcaption class="mt-2 text-center image-caption">Image Credit: <a class="theme-link" href="https://fontawesome.com/" target="_blank">fontawesome.com</a></figcaption>
                 </figure>
-                <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. </p>
+                <p>In today's diverse computing environment, the ability to run multiple operating systems on a single machine can significantly enhance productivity and flexibility. This blog post provides a detailed guide on configuring the Windows Subsystem for Linux (WSL) and Docker-based macOS on a Windows platform. While automated tests across different environments (e.g., GitHub Actions) are common, you may still find it beneficial to manually test your applications through a GUI. Additionally, tech enthusiasts may be excited to explore new systems without the need to purchase or borrow additional hardware. Regardless of your motivation, this tutorial will help you seamlessly integrate Linux and macOS into your Windows workflow—assuming, of course, that you have a powerful enough computer.</p>
 
-                <h3 class="mt-5 mb-3">Code Block Example</h3>
-                <p>You can get more info at <a class="text-link" href="https://highlightjs.org/" target="_blank">https://highlightjs.org/</a>. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. </p>
+                <h3 class="mt-5 mb-3">WSL and Docker</h3>
+                <p>The Windows Subsystem for Linux (WSL) is a compatibility layer developed by Microsoft that allows users to run a genuine Linux distribution directly within Windows. WSL now supports running Linux GUI applications (X11 and Wayland) for a fully integrated desktop experience.</p>
+
+                <p>Docker is a platform that enables developers to create, deploy, and manage containerized applications. By using Docker with WSL2, we can run Docker-based macOS from WSL2. This allows us to seamlessly integrate Linux and macOS systems within a Windows environment.</p>
+
+                <p>In this guide, we will cover the following steps:</p>
+                <ul>
+                    <li>Basic requirements for Windows version and hardware</li>
+                    <li>How to install WSL2 on Windows</li>
+                    <li>How to configure GUI for WSL2</li>
+                    <li>How to install Docker</li>
+                    <li>How to pull a Docker image of macOS and install it</li>
+                </ul>
+
+                <h3 class="mt-5 mb-3">Basic requirements for Windows version and hardware</h3>
+
+                <ul>
+                    <li>Basic requirements for Windows version and hardware</li>
+                    <li>How to install WSL2 on Windows</li>
+                    <li>How to configure GUI for WSL2</li>
+                    <li>How to install Docker</li>
+                    <li>How to pull a Docker image of macOS and install it</li>
+                </ul>
+
                 <pre>
 					    <code>
 function $initHighlight(block, cls) {
@@ -212,7 +234,7 @@ export  $initHighlight;
 
                     var disqus_config = function () {
                         // Replace PAGE_URL with your page's canonical URL variable
-                        this.page.url = "https://qtj.me/blog-Seamlessly-Integrate-Linux-and-macOS-on-Windows.htm";
+                        this.page.url = "https://qtj.me/blog-Seamlessly-Integrate-Linux-and-macOS-on-Windows.html";
 
                         // Replace PAGE_IDENTIFIER with your page's unique identifier variable
                         this.page.identifier = "BLOG_POST_SEAMLESS";
@@ -239,16 +261,6 @@ export  $initHighlight;
 
         </div><!--//container-->
     </article>
-
-    <section class="promo-section theme-bg-light py-5 text-center">
-        <div class="container single-col-max-width">
-            <h2 class="title">Promo Section Heading</h2>
-            <p>You can use this section to promote your side projects etc. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. </p>
-            <figure class="promo-figure">
-                <a href="https://made4dev.com" target="_blank"><img class="img-fluid" src="assets/images/promo-banner.jpg" alt="image"></a>
-            </figure>
-        </div><!--//container-->
-    </section><!--//promo-section-->
 
     <footer class="footer text-center py-4">
         <small class="copyright">Copyright &copy; Tianjian Qin</small>
