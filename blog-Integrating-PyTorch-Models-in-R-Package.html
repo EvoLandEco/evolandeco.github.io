@@ -136,9 +136,10 @@
                 <h3 class="mt-5 mb-3">Storing Pretrained Models and Python Scripts</h3>
                 <p>The <code>/inst</code> directory also stores pre-trained neural network models (<code>weights.pt</code>) and Python scripts (<code>import.py</code> and <code>function.py</code>) that contain the necessary libraries, functions defining the neural network architecture, and data loading mechanisms.</p>
 
-                <p>For an intuitive impression of how the <code>EvoNN</code> package is structured, you can play around with the interactive tree viewer below to see the core files and their relative locations. Just click on the folder icon, there will be no harm.</p>
+                <p>For an intuitive impression of how the <code>EvoNN</code> package is structured, you can play around with the interactive tree viewer below to see the core files and their relative locations.</p>
                 <!-- Placeholder for file structure within /inst -->
                 <div class="row">
+                    <button id="toggleAll" class="btn btn-primary col-5">Expand All</button>
                     <div class="col-12" id="treeView">
                     </div>
                 </div>
@@ -426,6 +427,31 @@ nn_estimate <- function(phylo_tree) {
 
     const app = document.querySelector("#treeView");
     app.appendChild(createElement(TreeView));
+
+    document.getElementById("toggleAll").addEventListener("click", (event) => {
+        const expandAll = event.target.textContent === "Expand All";
+        event.target.textContent = expandAll ? "Collapse All" : "Expand All";
+
+        document.querySelectorAll(".folder-header").forEach(header => {
+            header.setAttribute("opened", expandAll);
+            const icons = header.querySelectorAll(".material-icons");
+            icons.forEach(icon => {
+                if (/arrow/i.test(icon.textContent)) {
+                    icon.textContent = expandAll ? openedArrowIcon : closedArrowIcon;
+                } else {
+                    icon.textContent = expandAll ? openedFolderIcon : closedFolderIcon;
+                }
+            });
+            const sibling = header.nextElementSibling;
+            if (sibling) {
+                if (expandAll) {
+                    sibling.classList.remove("hide");
+                } else {
+                    sibling.classList.add("hide");
+                }
+            }
+        });
+    });
 </script>
 
 <!-- Page Specific JS -->
