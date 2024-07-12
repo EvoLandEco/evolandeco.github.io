@@ -229,7 +229,8 @@ py_function_to_r <- NULL # Global variable to store imported Python function
   }
 
   # Use the EvoNN virtual environment
-  reticulate::use_virtualenv("EvoNN")
+  # Note that here we must explicitly set required = TRUE
+  reticulate::use_virtualenv("EvoNN", required = TRUE)
   # Import Python dependencies
   reticulate::source_python(system.file(paste0("model/", "import.py"), package = "EvoNN"))
   # Import Python functions
@@ -237,7 +238,12 @@ py_function_to_r <- NULL # Global variable to store imported Python function
   # Assign the function needed (assume it is defined as py_function) to the global environment
   py_function_to_r <<- reticulate::py$py_function
 }</code></pre>
-
+                <br>
+                <p>In the above code block this line is very important:</p>
+                <pre><code class="r">reticulate::use_virtualenv("EvoNN", required = TRUE)</code></pre>
+                <br>
+                <p>Here we explicitly set <code>required = TRUE</code>, because its default value in <code>use_virtualenv()</code>, <code>use_python()</code>, and <code>use_conda()</code> is different within <code>.onLoad()</code>. It is <code>required = TRUE</code> in most contexts, except in <code>.onLoad(</code>).</p>
+                <p>If we do not set <code>required = TRUE</code>, our on-load script may fail if users have already initialized their own Python environment in which the dependencies are missing.</p>
                 <h3 class="mt-5 mb-3">Embedding Imported Python Function into R Function</h3>
                 <p>Till now, we have successfully imported the Python function into R. The next step is to embed the imported Python function into an R function. This R function will be the interface for users to call the Python function.</p>
                 <p>In <code>EvoNN</code>, we defined an <code>nn_estimate()</code> function to load a phylogenetic tree into R, convert it to the desired data formats, and then use <code>reticulate::r_to_py()</code> to convert the R objects to Python objects. These objects are passed to the imported Python function, which return neural network estimates back to R.</p>
@@ -257,8 +263,26 @@ nn_estimate <- function(phylo_tree) {
 }</code></pre>
                 <h3 class="mt-5 mb-3">Passing the R CMD Check</h3>
                 <p>After completing the above steps, run <code>R CMD check</code> to ensure your package is free of errors and warnings. By following this guide, Python integration won't be an obstacle. However, if you encounter any problems during the <code>R CMD check</code>, refer to <a href="https://rstudio.github.io/reticulate/articles/package.html">Using reticulate in an R Package</a> for possible solutions, especially if you plan to upload your package to CRAN.</p>
+
                 <h3 class="mt-5 mb-3">In the End</h3>
-                <p>This article used simplified <code>EvoNN</code> code to illustrate how you can conveniently integrate pre-trained PyTorch models into your R projects. If you have any difficulty understanding or porting the examples, please visit <code>EvoNN</code>'s GitHub repository below for a complete codebase. Click on the image below to open:</p>
+                <p>The implementation of Python integration into an R package using reticulate is highly flexible. Here, we introduced a manual example, but you can also let the reticulate package automatically configure the Python environment for you by adding some lines to your R package's <code>DESCRIPTION</code> file. Below is an example:</p>
+                <pre><code class="r">Package: rscipy
+Title: An R Interface to scipy
+Version: 1.0.0
+Description: Provides an R interface to the Python package scipy.
+Config/reticulate:
+  list(
+    packages = list(
+      list(package = "scipy")
+    )
+  )
+< ... other fields ... >
+Installation</code></pre>
+                <br>
+                <p>However, the autoconfiguration will always install <code>miniconda</code> to manage Python dependencies, which might not be the best practice for small projects or if we intend to run the code on a cluster computer. We may want to use Python's virtual environment instead.</p>
+                <p>The reticulate developers prefer not to configure the Python environment automatically for users. Instead, they suggest providing an installation function that allows users the freedom to choose where to set up the required virtual environment. They also suggest avoiding the use of <code>reticulate::source_python()</code> within <code>.onLoad()</code> as it modifies the user's global environment and forces reticulate to initialize Python, possibly before the user has selected the desired Python version. They recommend using the <code>reticulate::import()</code> function family to load dependencies. Click <a href="https://rstudio.github.io/reticulate/articles/python_dependencies.html">here</a> to read more about the good practices of managing an R package’s Python dependencies.</p>
+                <p>These suggestions, while being safe and robust, may pose challenges for both R package developers and their users. For developers, <code>reticulate::import()</code> doesn't always work, such as some submodules required by the <code>EvoNN</code> package. For users, additional knowledge may be required to get everything set up correctly, especially for those who primarily use R and lack Python experience. Therefore, this article provided a manual workaround trying to relieve some pain. Unexpected issues may still occur on the user-side, given the complex nature of Python versions, packages and environment management.</p>
+                <p>This article used simplified <code>EvoNN</code> code to demonstrate how to conveniently integrate pre-trained PyTorch models into your R projects. If you have any difficulty understanding or porting the examples, please visit the <code>EvoNN</code> GitHub repository below for the complete codebase. Click on the image below to open:</p>
                 <div class="center-repo">
                     <a href="https://github.com/EvoLandEco/EvoNN">
                         <img alt="" src="https://github-readme-stats.vercel.app/api/pin/?username=EvoLandEco&repo=EvoNN&theme=transparent" />
