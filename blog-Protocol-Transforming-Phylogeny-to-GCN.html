@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>A Protocol to Bridge Phylogeny and GCN - Blog - Tianjian Qin</title>
+
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Blog Post">
+    <meta name="author" content="Tianjian Qin">
+    <link rel="shortcut icon" href="favicon.ico">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
+
+    <!-- FontAwesome JS -->
+    <script defer src="assets/fontawesome/js/all.js"></script>
+
+    <!-- Plugin CSS -->
+    <link rel="stylesheet" href="assets/plugins/highlight/styles/monokai-sublime.min.css">
+
+    <!-- Theme CSS -->
+    <link id="theme-style" rel="stylesheet" href="assets/css/theme-1.css">
+
+    <style>
+        pre {
+            margin: 0 auto 0 0; /* Left align the block */
+            overflow-x: auto; /* Enable horizontal scrolling if the content overflows */
+            word-wrap: break-word; /* Break long words */
+        }
+        code {
+            margin: 0px !Important;
+            width: 100%;
+            border-radius: 10px;
+        }
+        .center-repo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<header class="header text-center">
+    <div class="force-overflow">
+        <h1 class="blog-name pt-lg-4 mb-0"><a class="no-text-decoration" href="index.html">Tianjian Qin</a></h1>
+
+        <nav class="navbar navbar-expand-lg navbar-dark" >
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navigation" aria-controls="navigation" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div id="navigation" class="collapse navbar-collapse flex-column" >
+                <div class="profile-section pt-3 pt-lg-0">
+                    <img class="profile-image mb-3 rounded-circle mx-auto" src="assets/images/profile.png" alt="image" >
+
+                    <div class="bio mb-3">Hi, my name is Tianjian. I'm a theoretical biologist.</div><!--//bio-->
+                    <ul class="social-list list-inline py-2 mx-auto">
+                        <li class="list-inline-item"><a href="#"><i class="fab fa-twitter fa-fw"></i></a></li>
+                        <li class="list-inline-item"><a href="#"><i class="fab fa-linkedin-in fa-fw"></i></a></li>
+                        <li class="list-inline-item"><a href="#"><i class="fab fa-github-alt fa-fw"></i></a></li>
+                        <li class="list-inline-item"><a href="#"><i class="fab fa-stack-overflow fa-fw"></i></a></li>
+                        <li class="list-inline-item"><a href="#"><i class="fab fa-codepen fa-fw"></i></a></li>
+                    </ul><!--//social-list-->
+                    <hr>
+                </div><!--//profile-section-->
+
+                <ul class="navbar-nav flex-column text-start">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html"><i class="fas fa-user fa-fw me-2"></i>About Me</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="portfolio.html"><i class="fas fa-laptop-code fa-fw me-2"></i>Portfolio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="resume.html"><i class="fas fa-file-alt fa-fw me-2"></i>Resume</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="blog-home.html"><i class="fas fa-blog fa-fw me-2"></i>Blog</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="contact.html"><i class="fas fa-envelope-open-text fa-fw me-2"></i>Contact</a>
+                    </li>
+                </ul>
+
+                <div class="my-2">
+                    <a class="btn btn-primary" href="contact.html" target="_blank"><i class="fas fa-paper-plane me-2"></i>Contact Me</a>
+                </div>
+
+
+                <div class="dark-mode-toggle text-center w-100">
+                    <hr class="mb-4">
+                    <h4 class="toggle-name mb-3 "><i class="fas fa-adjust me-1"></i>Dark Mode</h4>
+
+                    <input class="toggle" id="darkmode" type="checkbox">
+                    <label class="toggle-btn mx-auto mb-0" for="darkmode"></label>
+
+                </div><!--//dark-mode-toggle-->
+            </div>
+        </nav>
+    </div><!--//force-overflow-->
+</header>
+
+<div class="main-wrapper">
+
+    <article class="blog-post px-3 py-5 p-md-5">
+        <div class="container single-col-max-width">
+            <header class="blog-post-header">
+                <h2 class="title mb-2">A Protocol to Bridge Phylogeny and GCN</h2>
+                <div class="meta mb-3"><span class="date"><i class="fa-solid fa-calendar-days me-2"></i>Published on 8 Nov 2023</span><span class="time"><i class="fa-solid fa-clock me-2"></i>10 min read</span><span class="comment"><i class="fa-solid fa-comment me-2"></i><a href="https://qtj.me/blog-Protocol-Transforming-Phylogeny-to-GCN.html#disqus_thread" data-disqus-identifier="BLOG_POST_PROTOCOL">Link</a></span></div>
+            </header>
+
+            <div class="blog-post-body">
+                <figure class="blog-banner">
+                    <a href="#"><img class="img-fluid" src="assets/images/blog/blog-post-banner-pdfgen.jpg" alt="image"></a>
+                    <figcaption class="mt-2 text-center image-caption">Image Credit: <a class="theme-link" href="https://leonardo.ai" target="_blank">leonardo.ai</a></figcaption>
+                </figure>
+                <p></p>
+
+                <iframe width='100%' height='300' class="col-12", src='https://rdrr.io/snippets/embed/?code=library(ape)%0Alibrary(DDD)%0A%0Aphy%20%3C-%20dd_sim(c(0.5%2C%200.1%2C%20100)%2C%2010)%0Aplot(phy%24tes)'></iframe>
+
+                <h3 class="mt-5 mb-3">Introducing Graph Convolutional Networks (GCNs)</h3>
+                <figure class="teaser">
+                    <div id="layerwise-trace"> <div class="lines-holder-div" style="z-index: 0;"><svg id="layer_3"></svg></div><text x="-130" y="50" style="font-size: 16px; font-weight: 600;">Layer 3</text><div class="graph-div" style="left: 600px; z-index: 1;"><svg class="holderAll"><g class="holder"><line x1="250" x2="250" y1="150" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="250" x2="180.90169943749473" y1="150" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="250" y1="54.894348370484636" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="180.90169943749476" y1="245.10565162951536" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="69.09830056250527" y1="245.10565162951536" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="180.90169943749476" y1="208.77852522924735" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="69.09830056250527" y1="208.77852522924735" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="180.90169943749473" y1="208.77852522924735" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="69.09830056250527" y1="54.894348370484636" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="69.09830056250524" y1="91.22147477075269" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="250" y1="91.22147477075269" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="250" x2="69.09830056250524" y1="150" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="180.90169943749473" y1="54.894348370484636" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="180.90169943749476" y1="54.894348370484636" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="180.90169943749473" y1="245.10565162951536" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="69.09830056250524" y1="54.894348370484636" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="180.90169943749473" y1="91.22147477075269" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><circle r="15" id="layer3_id_0" cx="250" cy="150" style="fill: rgb(142, 104, 0); stroke: rgb(99, 73, 0);" class=""></circle><circle r="15" id="layer3_id_1" cx="180.90169943749476" cy="245.10565162951536" style="fill: rgb(116, 88, 0); stroke: rgb(81, 62, 0);"></circle><circle r="15" id="layer3_id_2" cx="69.09830056250527" cy="208.77852522924735" style="fill: rgb(149, 137, 99); stroke: rgb(105, 96, 69);"></circle><circle r="15" id="layer3_id_3" cx="69.09830056250524" cy="91.22147477075269" style="fill: rgb(149, 123, 50); stroke: rgb(105, 86, 35);"></circle><circle r="15" id="layer3_id_4" cx="180.90169943749473" cy="54.894348370484636" style="fill: rgb(122, 93, 0); stroke: rgb(86, 65, 0);"></circle></g></svg></div><div class="lines-holder-div" style="z-index: 2;"><svg id="layer_2"><line stroke-dasharray="2, 2" class="layer2_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="500.43115234375" x2="500.43115234375" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer2_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="500.43115234375" x2="500.43115234375" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer2_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="487.36297607421875" x2="700.43115234375" y1="136.42703247070312" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer2_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="449.3282470703125" x2="449.3282470703125" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer2_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="449.3282470703125" x2="449.3282470703125" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer2_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="411.61285400390625" x2="411.61285400390625" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer2_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="411.61285400390625" x2="411.61285400390625" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer2_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="411.61285400390625" x2="411.61285400390625" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer2_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="487.36297607421875" x2="611.61279296875" y1="136.42703247070312" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer2_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="431.629150390625" x2="431.629150390625" y1="134.18695068359375" y2="134.18695068359375"></line><line stroke-dasharray="2, 2" class="layer2_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="431.629150390625" x2="431.629150390625" y1="134.18695068359375" y2="134.18695068359375"></line><line stroke-dasharray="2, 2" class="layer2_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="500.43115234375" x2="500.43115234375" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer2_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="487.36297607421875" x2="687.3629760742188" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer2_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="487.36297607421875" x2="649.3283081054688" y1="136.42703247070312" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer2_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="449.3282470703125" x2="449.3282470703125" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer2_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="487.36297607421875" x2="631.629150390625" y1="136.42703247070312" y2="134.18695068359375"></line><line stroke-dasharray="2, 2" class="layer2_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="431.629150390625" x2="431.629150390625" y1="134.18695068359375" y2="134.18695068359375"></line></svg></div><text x="-130" y="50" style="font-size: 16px; font-weight: 600;">Layer 2</text><div class="graph-div" style="left: 400px; z-index: 3;"><svg class="holderAll"><g class="holder"><line x1="250" x2="250" y1="150" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="250" x2="180.90169943749473" y1="150" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="250" y1="54.894348370484636" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="180.90169943749476" y1="245.10565162951536" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="69.09830056250527" y1="245.10565162951536" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="180.90169943749476" y1="208.77852522924735" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="69.09830056250527" y1="208.77852522924735" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="180.90169943749473" y1="208.77852522924735" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="69.09830056250527" y1="54.894348370484636" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="69.09830056250524" y1="91.22147477075269" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="250" y1="91.22147477075269" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="250" x2="69.09830056250524" y1="150" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="180.90169943749473" y1="54.894348370484636" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="180.90169943749476" y1="54.894348370484636" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="180.90169943749473" y1="245.10565162951536" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="69.09830056250524" y1="54.894348370484636" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="180.90169943749473" y1="91.22147477075269" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><circle r="15" id="layer2_id_0" cx="250" cy="150" style="fill: rgb(169, 125, 0); stroke: rgb(119, 87, 0);"></circle><circle r="15" id="layer2_id_1" cx="180.90169943749476" cy="245.10565162951536" style="fill: rgb(139, 106, 0); stroke: rgb(97, 74, 0);"></circle><circle r="15" id="layer2_id_2" cx="69.09830056250527" cy="208.77852522924735" style="fill: rgb(179, 164, 118); stroke: rgb(125, 115, 83);"></circle><circle r="15" id="layer2_id_3" cx="69.09830056250524" cy="91.22147477075269" style="fill: rgb(179, 147, 59); stroke: rgb(125, 103, 42);" class=""></circle><circle r="15" id="layer2_id_4" cx="180.90169943749473" cy="54.894348370484636" style="fill: rgb(146, 111, 0); stroke: rgb(102, 78, 0);" class=""></circle></g></svg></div><div class="lines-holder-div" style="z-index: 4;"><svg id="layer_1"><line stroke-dasharray="2, 2" class="layer1_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="300.43115234375" x2="300.43115234375" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer1_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="300.43115234375" x2="300.43115234375" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer1_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="287.363037109375" x2="287.363037109375" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer1_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="249.32827758789062" x2="249.32827758789062" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer1_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="249.32827758789062" x2="249.32827758789062" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer1_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="211.61282348632812" x2="211.61282348632812" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer1_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="211.61282348632812" x2="211.61282348632812" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer1_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="211.61282348632812" x2="211.61282348632812" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer1_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="287.363037109375" x2="287.363037109375" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer1_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="231.629150390625" x2="231.629150390625" y1="134.18695068359375" y2="134.18695068359375"></line><line stroke-dasharray="2, 2" class="layer1_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="231.629150390625" x2="231.629150390625" y1="134.18695068359375" y2="134.18695068359375"></line><line stroke-dasharray="2, 2" class="layer1_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="300.43115234375" x2="300.43115234375" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer1_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="287.363037109375" x2="287.363037109375" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer1_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="287.363037109375" x2="287.363037109375" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer1_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="249.32827758789062" x2="249.32827758789062" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer1_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="287.363037109375" x2="287.363037109375" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer1_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="231.629150390625" x2="231.629150390625" y1="134.18695068359375" y2="134.18695068359375"></line></svg></div><text x="-130" y="50" style="font-size: 16px; font-weight: 600;">Layer 1</text><div class="graph-div" style="left: 200px; z-index: 5;"><svg class="holderAll"><g class="holder"><line x1="250" x2="250" y1="150" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="250" x2="180.90169943749473" y1="150" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="250" y1="54.894348370484636" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="180.90169943749476" y1="245.10565162951536" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="69.09830056250527" y1="245.10565162951536" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="180.90169943749476" y1="208.77852522924735" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="69.09830056250527" y1="208.77852522924735" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="180.90169943749473" y1="208.77852522924735" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="69.09830056250527" y1="54.894348370484636" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="69.09830056250524" y1="91.22147477075269" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="250" y1="91.22147477075269" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="250" x2="69.09830056250524" y1="150" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="180.90169943749473" y1="54.894348370484636" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="180.90169943749476" y1="54.894348370484636" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="180.90169943749473" y1="245.10565162951536" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="69.09830056250524" y1="54.894348370484636" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="180.90169943749473" y1="91.22147477075269" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><circle r="15" id="layer1_id_0" cx="250" cy="150" style="fill: rgb(202, 149, 0); stroke: rgb(142, 104, 0);"></circle><circle r="15" id="layer1_id_1" cx="180.90169943749476" cy="245.10565162951536" style="fill: rgb(166, 126, 0); stroke: rgb(116, 88, 0);"></circle><circle r="15" id="layer1_id_2" cx="69.09830056250527" cy="208.77852522924735" style="fill: rgb(213, 196, 141); stroke: rgb(149, 137, 99);"></circle><circle r="15" id="layer1_id_3" cx="69.09830056250524" cy="91.22147477075269" style="fill: rgb(213, 176, 71); stroke: rgb(149, 123, 50);"></circle><circle r="15" id="layer1_id_4" cx="180.90169943749473" cy="54.894348370484636" style="fill: rgb(175, 133, 0); stroke: rgb(122, 93, 0);"></circle></g></svg></div><div class="lines-holder-div" style="z-index: 6;"><svg id="layer_0"><line stroke-dasharray="2, 2" class="layer0_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="100.44268798828125" x2="100.44268798828125" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer0_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="100.44268798828125" x2="100.44268798828125" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer0_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="87.37457275390625" x2="87.37457275390625" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer0_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="49.339813232421875" x2="49.339813232421875" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer0_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="49.339813232421875" x2="49.339813232421875" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer0_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="11.6243896484375" x2="11.6243896484375" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer0_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="11.6243896484375" x2="11.6243896484375" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer0_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="11.6243896484375" x2="11.6243896484375" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer0_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="87.37457275390625" x2="87.37457275390625" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer0_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="31.64068603515625" x2="31.64068603515625" y1="134.18695068359375" y2="134.18695068359375"></line><line stroke-dasharray="2, 2" class="layer0_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="31.64068603515625" x2="31.64068603515625" y1="134.18695068359375" y2="134.18695068359375"></line><line stroke-dasharray="2, 2" class="layer0_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="100.44268798828125" x2="100.44268798828125" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer0_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="87.37457275390625" x2="87.37457275390625" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer0_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="87.37457275390625" x2="87.37457275390625" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer0_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="49.339813232421875" x2="49.339813232421875" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer0_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="87.37457275390625" x2="87.37457275390625" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer0_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="31.64068603515625" x2="31.64068603515625" y1="134.18695068359375" y2="134.18695068359375"></line></svg></div><text x="-130" y="50" style="font-size: 16px; font-weight: 600;">Layer 0</text><div class="graph-div" style="left: 0px; z-index: 7;"><svg class="holderAll"><g class="holder"><line x1="250" x2="250" y1="150" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="250" x2="180.90169943749473" y1="150" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="250" y1="54.894348370484636" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="180.90169943749476" y1="245.10565162951536" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="69.09830056250527" y1="245.10565162951536" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="180.90169943749476" y1="208.77852522924735" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="69.09830056250527" y1="208.77852522924735" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="180.90169943749473" y1="208.77852522924735" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="69.09830056250527" y1="54.894348370484636" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="69.09830056250524" y1="91.22147477075269" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="250" y1="91.22147477075269" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="250" x2="69.09830056250524" y1="150" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="180.90169943749473" y1="54.894348370484636" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="180.90169943749476" y1="54.894348370484636" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="180.90169943749473" y1="245.10565162951536" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="69.09830056250524" y1="54.894348370484636" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="180.90169943749473" y1="91.22147477075269" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><circle r="15" id="layer0_id_0" cx="250" cy="150" style="fill: rgb(242, 178, 0); stroke: rgb(169, 125, 0);"></circle><circle r="15" id="layer0_id_1" cx="180.90169943749476" cy="245.10565162951536" style="fill: rgb(198, 151, 0); stroke: rgb(139, 106, 0);"></circle><circle r="15" id="layer0_id_2" cx="69.09830056250527" cy="208.77852522924735" style="fill: rgb(255, 234, 169); stroke: rgb(179, 164, 118);"></circle><circle r="15" id="layer0_id_3" cx="69.09830056250524" cy="91.22147477075269" style="fill: rgb(255, 210, 85); stroke: rgb(179, 147, 59);"></circle><circle r="15" id="layer0_id_4" cx="180.90169943749473" cy="54.894348370484636" style="fill: rgb(209, 159, 0); stroke: rgb(146, 111, 0);"></circle></g></svg></div></div>
+                    <figcaption>
+                        Hover over a node in the diagram below to see how it accumulates information from nodes around it through the layers of the network.
+                    </figcaption>
+                </figure>
+                <p>
+                    Graph Convolutional Networks (GCNs) are a type of neural network specifically designed to operate on graph-structured data.
+                    Unlike traditional convolutional networks that work on regular grid data like images, GCNs can process data represented as nodes and edges,
+                    such as social networks, molecule structures, and knowledge graphs. The core idea of GCNs is to aggregate features from a node's neighbors
+                    to capture both local graph topology and feature information. This is achieved through convolutional operations that combine and transform
+                    node features based on their connections. Visit Thomas Kipf's <a href="https://tkipf.github.io/graph-convolutional-networks/">original blog</a> for more information.
+                </p>
+
+                <h3 class="mt-5 mb-3">Phylogenetic Trees</h3>
+                <p>
+                    A phylogenetic tree is a diagram that represents the evolutionary relationships among various biological species or entities based on their
+                    physical or genetic characteristics. These trees illustrate how species or groups have evolved from common ancestors over time. In a phylogenetic
+                    tree, each node represents a species or a common ancestor, and each edge represents the evolutionary connection between them. Moreover, in a
+                    time-calibrated phylogenetic tree, the edges have lengths, which can be interpreted as the time taken to evolve from the ancestors to the descendants.
+                </p>
+
+                <h3 class="mt-5 mb-3">Viewing Phylogeny as a Graph</h3>
+                <p>
+                    Phylogenetic trees can be viewed as graphs, where the nodes represent species or ancestors, and the edges represent evolutionary relationships.
+                    By interpreting a phylogenetic tree as a graph, we can apply Graph Convolutional Networks (GCNs) to analyze and learn from the phylogeny.
+                    GCNs can leverage the graph structure of phylogenetic trees to extract meaningful patterns and insights that might not be apparent through
+                    traditional analysis methods.
+                </p>
+
+                <h3 class="mt-5 mb-3">Utilizing GCNs to Learn from Phylogeny</h3>
+                <p>
+                    To efficiently use GCNs for learning from phylogenetic trees, I propose a protocol to directly embed the evolutionary relationships (lengths
+                    of adjacent edges) into the node features. This method can simplify the process of applying GCNs to phylogenetic trees to capture the
+                    evolutionary patterns present in the data.
+                </p>
+
+                <p>We use <code>yargs</code> to configure the command line arguments for our script. These arguments allow the user to specify various parameters such as the URL, output file path, DPI, page size, and margins.</p>
+                <pre><code class="javascript">const argv = yargs(hideBin(process.argv))
+    .usage('Usage: $0 --url &lt;string&gt; --output &lt;string&gt; [--dpi &lt;number&gt;] [--scale &lt;number&gt;] [--pageSize &lt;string&gt; | --width &lt;number&gt; --height &lt;number&gt;] [--top &lt;number&gt;] [--right &lt;number&gt;] [--bottom &lt;number&gt;] [--left &lt;number&gt;] [--no-background] [--no-margin]')
+    .demandOption(['url', 'output'])
+    .describe('dpi', 'The DPI (dots per inch) for the PDF')
+    .describe('scale', 'The scale factor for the PDF')
+    .describe('url', 'The URL of the HTML file to convert to PDF')
+    .describe('output', 'The file path to write the generated PDF')
+    .describe('pageSize', 'The standard page size (A4, Letter, Legal, Tabloid, Executive, A5, A3)')
+    .describe('width', 'The custom width for the PDF (in inches)')
+    .describe('height', 'The custom height for the PDF (in inches)')
+    .describe('top', 'Top margin in mm')
+    .describe('right', 'Right margin in mm')
+    .describe('bottom', 'Bottom margin in mm')
+    .describe('left', 'Left margin in mm')
+    .describe('no-background', 'Disable printing background (default: false)')
+    .describe('no-margin', 'Set all margins to 0 (conflicts with individual margin settings)')
+    .default('dpi', 300)
+    .default('scale', 1.0)
+    .default('pageSize', 'A4')
+    .default('top', 10)
+    .default('right', 10)
+    .default('bottom', 10)
+    .default('left', 10)
+    .boolean('no-background')
+    .boolean('no-margin')
+    .conflicts('no-margin', ['top', 'right', 'bottom', 'left'])
+    .help('h')
+    .alias('h', 'help')
+    .argv;
+
+const dpi = parseInt(argv.dpi, 10);
+const scale = parseFloat(argv.scale);
+const url = argv.url;
+const outputPath = argv.output;
+const noBackground = argv['no-background'];
+const noMargin = argv['no-margin'];
+
+let width, height;
+
+if (argv.pageSize) {
+    const pageSize = pageSizes[argv.pageSize];
+    if (pageSize) {
+        width = pageSize.width;
+        height = pageSize.height;
+    } else {
+        console.error('Invalid page size. Valid options are: A4, Letter, Legal, Tabloid, Executive, A5, A3.');
+        process.exit(1);
+    }
+} else if (argv.width && argv.height) {
+    width = parseFloat(argv.width);
+    height = parseFloat(argv.height);
+} else {
+    console.error('Please provide either a standard page size or custom width and height.');
+    process.exit(1);
+}
+
+const widthPx = Math.round(width * dpi);
+const heightPx = Math.round(height * dpi);
+
+let top, right, bottom, left;
+if (noMargin) {
+    top = right = bottom = left = 0;
+} else {
+    top = parseFloat(argv.top);
+    right = parseFloat(argv.right);
+    bottom = parseFloat(argv.bottom);
+    left = parseFloat(argv.left);
+}
+
+const topInches = top / 25.4;
+const rightInches = right / 25.4;
+const bottomInches = bottom / 25.4;
+const leftInches = left / 25.4;</code></pre>
+
+                <h3 class="mt-5 mb-3">Generating the PDF</h3>
+                <p>Now, we create an async function to generate the PDF using Puppeteer. This function launches a headless browser, navigates to the specified URL, sets the viewport, and generates the PDF with the specified settings.</p>
+                <pre><code class="javascript">async function generatePDF(url, outputPath) {
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
+
+    await page.setViewport({
+        width: widthPx,
+        height: heightPx,
+        deviceScaleFactor: 1,
+    });
+
+    await page.pdf({
+        path: outputPath,
+        width: `${widthPx}px`,
+        height: `${heightPx}px`,
+        printBackground: !noBackground,
+        margin: {
+            top: topInches,
+            right: rightInches,
+            bottom: bottomInches,
+            left: leftInches
+        },
+        scale: scale
+    });
+
+    await browser.close();
+}
+
+generatePDF(url, outputPath)
+    .then(() => console.log('PDF generated successfully'))
+    .catch(err => console.error('Error generating PDF:', err));</code></pre>
+
+                <h3 class="mt-5 mb-3">Flexibility</h3>
+                <p>
+                    This script allows you to customize various parameters such as:
+                </p>
+                <ul>
+                    <li><strong>DPI:</strong> The dots per inch for the PDF, with a default value of 300 DPI.</li>
+                    <li><strong>Scale:</strong> The scale factor for the PDF, defaulting to 1.0.</li>
+                    <li><strong>Page Size:</strong> Standard page sizes like A4, Letter, Legal, etc.</li>
+                    <li><strong>Custom Dimensions:</strong> Specify custom width and height in inches if needed.</li>
+                    <li><strong>Margins:</strong> Customize top, right, bottom, and left margins in millimeters, or set all margins to zero.</li>
+                    <li><strong>Background:</strong> Option to disable printing the background.</li>
+                </ul>
+
+                <h3 class="mt-5 mb-3">Getting Started</h3>
+                <p>
+                    To use this script, you need to have Node.js and Puppeteer installed. You can find the script and detailed instructions in my GitHub repository, click the image below to open it:</a>.
+                </p>
+                <div class="center-repo">
+                    <a href="https://github.com/EvoLandEco/WebToolBox">
+                        <img alt="" src="https://github-readme-stats.vercel.app/api/pin/?username=EvoLandEco&repo=WebToolBox&theme=transparent" />
+                    </a>
+                </div>
+                <h3 class="mt-5 mb-3">Example Usage</h3>
+                <p>
+                    Here is an example command to generate a PDF:
+                </p>
+                <pre><code class="bash">node pdfgen.js --url https://example.com --output example.pdf --dpi 300 --scale 1.0 --pageSize A4 --top 10 --right 10 --bottom 10 --left 10</code></pre>
+                <p>
+                    This command converts the HTML page at <code>https://example.com</code> to a PDF named <code>example.pdf</code> with 300 DPI, a scale factor of 1.0, A4 page size, and 10mm margins on all sides.
+                </p>
+
+            </div>
+
+            <nav class="blog-nav nav nav-justified my-5">
+                <a class="nav-link-prev nav-item nav-link rounded-left" href="#">Previous<i class="arrow-prev fas fa-long-arrow-alt-left"></i></a>
+                <a class="nav-link-next nav-item nav-link rounded-right" href="#">Next<i class="arrow-next fas fa-long-arrow-alt-right"></i></a>
+            </nav>
+
+            <div class="blog-comments-section">
+                <div id="disqus_thread"></div>
+                <script>
+                    /**
+                     *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT
+                     *  THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR
+                     *  PLATFORM OR CMS.
+                     *
+                     *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT:
+                     *  https://disqus.com/admin/universalcode/#configuration-variables
+                     */
+
+                    var disqus_config = function () {
+                        // Replace PAGE_URL with your page's canonical URL variable
+                        this.page.url = "https://qtj.me/blog-Protocol-Transforming-Phylogeny-to-GCN.html";
+
+                        // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+                        this.page.identifier = "BLOG_POST_PROTOCOL";
+                    };
+
+
+                    (function() {  // REQUIRED CONFIGURATION VARIABLE: EDIT THE SHORTNAME BELOW
+                        var d = document, s = d.createElement('script');
+
+                        // IMPORTANT: use website shortname
+                        s.src = 'https://qtj-me.disqus.com/embed.js';
+
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s);
+                    })();
+                </script>
+                <noscript>
+                    Please enable JavaScript to view the
+                    <a href="https://disqus.com/?ref_noscript" rel="nofollow">
+                        comments powered by Disqus.
+                    </a>
+                </noscript>
+            </div><!--//blog-comments-section-->
+
+        </div><!--//container-->
+    </article>
+
+    <footer class="footer text-center py-4">
+        <small class="copyright">Copyright &copy; Tianjian Qin</small>
+    </footer>
+
+</div><!--//main-wrapper-->
+
+
+<!-- *****CONFIGURE STYLE (REMOVE ON YOUR PRODUCTION SITE)****** -->
+<div id="config-panel" class="config-panel config-panel-hide d-none d-lg-block">
+    <div class="panel-inner">
+        <a id="config-trigger" class="config-trigger text-center" href="#"><i class="fas fa-cog mx-auto" data-fa-transform="down-6" ></i></a>
+        <h5 class="panel-title">Choose Colour</h5>
+        <ul id="color-options" class="list-inline mb-0">
+            <li class="theme-1 active list-inline-item"><a data-style="assets/css/theme-1.css" href="#"></a></li>
+            <li class="theme-2  list-inline-item"><a data-style="assets/css/theme-2.css" href="#"></a></li>
+            <li class="theme-3  list-inline-item"><a data-style="assets/css/theme-3.css" href="#"></a></li>
+            <li class="theme-4  list-inline-item"><a data-style="assets/css/theme-4.css" href="#"></a></li>
+            <li class="theme-5  list-inline-item"><a data-style="assets/css/theme-5.css" href="#"></a></li>
+            <li class="theme-6  list-inline-item"><a data-style="assets/css/theme-6.css" href="#"></a></li>
+            <li class="theme-7  list-inline-item"><a data-style="assets/css/theme-7.css" href="#"></a></li>
+            <li class="theme-8  list-inline-item"><a data-style="assets/css/theme-8.css" href="#"></a></li>
+            <li class="theme-9  list-inline-item"><a data-style="assets/css/theme-9.css" href="#"></a></li>
+            <li class="theme-10  list-inline-item"><a data-style="assets/css/theme-10.css" href="#"></a></li>
+        </ul>
+        <a id="config-close" class="close" href="#"><i class="fa fa-times-circle"></i></a>
+    </div><!--//panel-inner-->
+</div><!--//configure-panel-->
+
+
+<!-- Javascript -->
+<script src="assets/plugins/popper.min.js"></script>
+<script src="assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+
+<!-- Page Specific JS -->
+<link
+        rel="stylesheet"
+        href="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.css"
+/>
+<script src="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+<script>hljs.addPlugin(new CopyButtonPlugin());</script>
+
+<!-- Custom JS -->
+<script src="assets/js/blog.js"></script>
+
+<!-- Dark Mode -->
+<script src="assets/plugins/js-cookie.min.js"></script>
+<script src="assets/js/dark-mode.js"></script>
+
+<!-- Style Switcher (REMOVE ON YOUR PRODUCTION SITE) -->
+<script src="assets/js/demo/style-switcher.js"></script>
+
+<!-- Disqus Counter -->
+<script id="dsq-count-scr" src="//qtj-me.disqus.com/count.js" async></script>
+
+</body>
+</html>
