@@ -23,22 +23,164 @@
     <!-- Theme CSS -->
     <link id="theme-style" rel="stylesheet" href="assets/css/theme-1.css">
 
-    <style>
-        pre {
-            margin: 0 auto 0 0; /* Left align the block */
-            overflow-x: auto; /* Enable horizontal scrolling if the content overflows */
-            word-wrap: break-word; /* Break long words */
-        }
-        code {
-            margin: 0px !Important;
-            width: 100%;
-            border-radius: 10px;
-        }
-        .center-repo {
+    <script
+            type="text/javascript"
+            src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
+    ></script>
+
+    <style type="text/css">
+        #container {
             display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .row-boarder {
+            display: flex;
+            width: 100%;
+            margin-bottom: 0px;
+            border: 2px dashed #ccc; /* Dashed border with light gray color */
+            border-radius: 10px; /* Rounded corners */
+            min-height: 100px;
+        }
+        .row-button {
+            display: flex;
+            width: 100%;
+            justify-content: left;
+        }
+        #mynetwork-legend {
+            flex: 1; /* 1/11 of the total width */
+            height: 400px;
+            margin-right: 0px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 10px;
+
+        }.legend-item {
+             display: flex;
+             align-items: center;
+             margin-bottom: 10px;
+         }
+        .legend-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid; /* Add a border with a slightly darker color */
+        }
+        .root-circle {
+            background-color: #8080ff; /* Light Blue */
+            border-color: #7070da; /* Slightly darker blue */
+        }
+        .internal-circle {
+            background-color: #ffbf80; /* Light Orange */
+            border-color: #daa46e; /* Slightly darker orange */
+        }
+        .tip-circle {
+            background-color: #dfff80; /* Light Lime Green */
+            border-color: #bfdc6f; /* Slightly darker lime green */
+        }
+        #mynetwork {
+            flex: 10; /* 10/11 of the total width */
+            height: 400px;
+        }
+        #adjacency-list {
+            flex: 1; /* Equal width for adjacency-list and node-features */
+            font-family: monospace;
+            font-size: 18px;
+            white-space: nowrap;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        #node-features {
+            flex: 1; /* Equal width for adjacency-list and node-features */
+            font-family: monospace;
+            font-size: 17px;
+            white-space: nowrap;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        #adjacency-list-title {
+            color: #767776;
+            flex: 1;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+            font-family: "Arial Math", Arial, sans-serif; /* Change the font to Arial Math */
+            background-color: #fbf5f7;
             padding: 10px;
+            margin-left: 10px;
+            margin-right: 10px;
+            border-radius: 10px; /* Rounded corners */
+        }
+        #node-features-title {
+            color: #767776;
+            flex: 1;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+            font-family: "Arial Math", Arial, sans-serif; /* Change the font to Arial Math */
+            background-color: #fbf5f7;
+            padding: 10px;
+            margin-left: 10px;
+            margin-right: 10px;
+            border-radius: 10px; /* Rounded corners */
+        }
+        .highlight {
+            background-color: yellow;
+            /*border: 1px dashed #e35142; !* Dashed border with light red color *!*/
+            border-radius: 5px; /* Rounded corners */
+        }
+        .highlight-node-feature {
+            background-color: lightblue;
+            /*border: 1px dashed #ccc; !* Dashed border with light gray color *!*/
+            border-radius: 5px; /* Rounded corners */
+        }
+        #node-features .highlight-node-feature {
+            background-color: lightblue;
+            /*border: 1px dashed #ccc; !* Dashed border with light gray color *!*/
+            border-radius: 5px; /* Rounded corners */
+        }
+        .label-highlight {
+            background-color: lightblue;
+            /*border: 1px dashed #ccc; !* Dashed border with light gray color *!*/
+            border-radius: 5px; /* Rounded corners */
+        }
+        .row-container {
+            display: flex;
+            align-items: center;
+            padding: 1px 0;
+        }
+        .row-container:hover {
+            background-color: yellow;
+        }
+        .edge-label, .node-label {
+            min-width: 50px;
+            text-align: right;
+            padding-right: 10px;
+        }
+        .colon {
+            padding-right: 10px;
+        }
+        .node-container {
+            display: inline-block;
+            text-align: center;
+            margin-right: 5px;
+        }
+        .brackets {
+            margin: 0 5px;
         }
     </style>
 
@@ -113,198 +255,613 @@
         <div class="container single-col-max-width">
             <header class="blog-post-header">
                 <h2 class="title mb-2">A Protocol to Bridge Phylogeny and GCN</h2>
-                <div class="meta mb-3"><span class="date"><i class="fa-solid fa-calendar-days me-2"></i>Published on 8 Nov 2023</span><span class="time"><i class="fa-solid fa-clock me-2"></i>10 min read</span><span class="comment"><i class="fa-solid fa-comment me-2"></i><a href="https://qtj.me/blog-Protocol-Transforming-Phylogeny-to-GCN.html#disqus_thread" data-disqus-identifier="BLOG_POST_PROTOCOL">Link</a></span></div>
+                <div class="meta mb-3"><span class="date"><i class="fa-solid fa-calendar-days me-2"></i>Published on 8 Nov 2023</span><span class="time"><i class="fa-solid fa-clock me-2"></i>15 min read</span><span class="comment"><i class="fa-solid fa-comment me-2"></i><a href="https://qtj.me/blog-Protocol-Transforming-Phylogeny-to-GCN.html#disqus_thread" data-disqus-identifier="BLOG_POST_PROTOCOL">Link</a></span></div>
             </header>
 
             <div class="blog-post-body">
                 <figure class="blog-banner">
-                    <a href="#"><img class="img-fluid" src="assets/images/blog/blog-post-banner-pdfgen.jpg" alt="image"></a>
+                    <a href="#"><img class="img-fluid" src="assets/images/blog/blog-post-banner-protocol.jpg" alt="image"></a>
                     <figcaption class="mt-2 text-center image-caption">Image Credit: <a class="theme-link" href="https://leonardo.ai" target="_blank">leonardo.ai</a></figcaption>
                 </figure>
-                <p></p>
 
-                <iframe width='100%' height='300' class="col-12", src='https://rdrr.io/snippets/embed/?code=library(ape)%0Alibrary(DDD)%0A%0Aphy%20%3C-%20dd_sim(c(0.5%2C%200.1%2C%20100)%2C%2010)%0Aplot(phy%24tes)'></iframe>
+                <h3 class="mt-5 mb-3">Phylogenies and Visualization</h3>
+                <p>
+                    A phylogenetic tree is a diagram that illustrates how species or groups have evolved from common ancestors over time. In a
+                    time-calibrated phylogenetic tree, the edges have lengths, which can be interpreted as the time taken to evolve from the ancestors to the descendants.
+                </p>
 
-                <h3 class="mt-5 mb-3">Introducing Graph Convolutional Networks (GCNs)</h3>
-                <figure class="teaser">
-                    <div id="layerwise-trace"> <div class="lines-holder-div" style="z-index: 0;"><svg id="layer_3"></svg></div><text x="-130" y="50" style="font-size: 16px; font-weight: 600;">Layer 3</text><div class="graph-div" style="left: 600px; z-index: 1;"><svg class="holderAll"><g class="holder"><line x1="250" x2="250" y1="150" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="250" x2="180.90169943749473" y1="150" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="250" y1="54.894348370484636" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="180.90169943749476" y1="245.10565162951536" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="69.09830056250527" y1="245.10565162951536" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="180.90169943749476" y1="208.77852522924735" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="69.09830056250527" y1="208.77852522924735" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="180.90169943749473" y1="208.77852522924735" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="69.09830056250527" y1="54.894348370484636" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="69.09830056250524" y1="91.22147477075269" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="250" y1="91.22147477075269" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="250" x2="69.09830056250524" y1="150" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="180.90169943749473" y1="54.894348370484636" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="180.90169943749476" y1="54.894348370484636" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="180.90169943749473" y1="245.10565162951536" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="69.09830056250524" y1="54.894348370484636" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="180.90169943749473" y1="91.22147477075269" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><circle r="15" id="layer3_id_0" cx="250" cy="150" style="fill: rgb(142, 104, 0); stroke: rgb(99, 73, 0);" class=""></circle><circle r="15" id="layer3_id_1" cx="180.90169943749476" cy="245.10565162951536" style="fill: rgb(116, 88, 0); stroke: rgb(81, 62, 0);"></circle><circle r="15" id="layer3_id_2" cx="69.09830056250527" cy="208.77852522924735" style="fill: rgb(149, 137, 99); stroke: rgb(105, 96, 69);"></circle><circle r="15" id="layer3_id_3" cx="69.09830056250524" cy="91.22147477075269" style="fill: rgb(149, 123, 50); stroke: rgb(105, 86, 35);"></circle><circle r="15" id="layer3_id_4" cx="180.90169943749473" cy="54.894348370484636" style="fill: rgb(122, 93, 0); stroke: rgb(86, 65, 0);"></circle></g></svg></div><div class="lines-holder-div" style="z-index: 2;"><svg id="layer_2"><line stroke-dasharray="2, 2" class="layer2_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="500.43115234375" x2="500.43115234375" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer2_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="500.43115234375" x2="500.43115234375" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer2_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="487.36297607421875" x2="700.43115234375" y1="136.42703247070312" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer2_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="449.3282470703125" x2="449.3282470703125" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer2_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="449.3282470703125" x2="449.3282470703125" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer2_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="411.61285400390625" x2="411.61285400390625" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer2_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="411.61285400390625" x2="411.61285400390625" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer2_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="411.61285400390625" x2="411.61285400390625" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer2_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="487.36297607421875" x2="611.61279296875" y1="136.42703247070312" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer2_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="431.629150390625" x2="431.629150390625" y1="134.18695068359375" y2="134.18695068359375"></line><line stroke-dasharray="2, 2" class="layer2_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="431.629150390625" x2="431.629150390625" y1="134.18695068359375" y2="134.18695068359375"></line><line stroke-dasharray="2, 2" class="layer2_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="500.43115234375" x2="500.43115234375" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer2_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="487.36297607421875" x2="687.3629760742188" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer2_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="487.36297607421875" x2="649.3283081054688" y1="136.42703247070312" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer2_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="449.3282470703125" x2="449.3282470703125" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer2_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="487.36297607421875" x2="631.629150390625" y1="136.42703247070312" y2="134.18695068359375"></line><line stroke-dasharray="2, 2" class="layer2_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="431.629150390625" x2="431.629150390625" y1="134.18695068359375" y2="134.18695068359375"></line></svg></div><text x="-130" y="50" style="font-size: 16px; font-weight: 600;">Layer 2</text><div class="graph-div" style="left: 400px; z-index: 3;"><svg class="holderAll"><g class="holder"><line x1="250" x2="250" y1="150" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="250" x2="180.90169943749473" y1="150" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="250" y1="54.894348370484636" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="180.90169943749476" y1="245.10565162951536" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="69.09830056250527" y1="245.10565162951536" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="180.90169943749476" y1="208.77852522924735" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="69.09830056250527" y1="208.77852522924735" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="180.90169943749473" y1="208.77852522924735" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="69.09830056250527" y1="54.894348370484636" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="69.09830056250524" y1="91.22147477075269" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="250" y1="91.22147477075269" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="250" x2="69.09830056250524" y1="150" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="180.90169943749473" y1="54.894348370484636" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="180.90169943749476" y1="54.894348370484636" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="180.90169943749473" y1="245.10565162951536" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="69.09830056250524" y1="54.894348370484636" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="180.90169943749473" y1="91.22147477075269" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><circle r="15" id="layer2_id_0" cx="250" cy="150" style="fill: rgb(169, 125, 0); stroke: rgb(119, 87, 0);"></circle><circle r="15" id="layer2_id_1" cx="180.90169943749476" cy="245.10565162951536" style="fill: rgb(139, 106, 0); stroke: rgb(97, 74, 0);"></circle><circle r="15" id="layer2_id_2" cx="69.09830056250527" cy="208.77852522924735" style="fill: rgb(179, 164, 118); stroke: rgb(125, 115, 83);"></circle><circle r="15" id="layer2_id_3" cx="69.09830056250524" cy="91.22147477075269" style="fill: rgb(179, 147, 59); stroke: rgb(125, 103, 42);" class=""></circle><circle r="15" id="layer2_id_4" cx="180.90169943749473" cy="54.894348370484636" style="fill: rgb(146, 111, 0); stroke: rgb(102, 78, 0);" class=""></circle></g></svg></div><div class="lines-holder-div" style="z-index: 4;"><svg id="layer_1"><line stroke-dasharray="2, 2" class="layer1_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="300.43115234375" x2="300.43115234375" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer1_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="300.43115234375" x2="300.43115234375" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer1_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="287.363037109375" x2="287.363037109375" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer1_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="249.32827758789062" x2="249.32827758789062" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer1_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="249.32827758789062" x2="249.32827758789062" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer1_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="211.61282348632812" x2="211.61282348632812" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer1_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="211.61282348632812" x2="211.61282348632812" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer1_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="211.61282348632812" x2="211.61282348632812" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer1_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="287.363037109375" x2="287.363037109375" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer1_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="231.629150390625" x2="231.629150390625" y1="134.18695068359375" y2="134.18695068359375"></line><line stroke-dasharray="2, 2" class="layer1_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="231.629150390625" x2="231.629150390625" y1="134.18695068359375" y2="134.18695068359375"></line><line stroke-dasharray="2, 2" class="layer1_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="300.43115234375" x2="300.43115234375" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer1_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="287.363037109375" x2="287.363037109375" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer1_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="287.363037109375" x2="287.363037109375" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer1_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="249.32827758789062" x2="249.32827758789062" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer1_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="287.363037109375" x2="287.363037109375" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer1_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="231.629150390625" x2="231.629150390625" y1="134.18695068359375" y2="134.18695068359375"></line></svg></div><text x="-130" y="50" style="font-size: 16px; font-weight: 600;">Layer 1</text><div class="graph-div" style="left: 200px; z-index: 5;"><svg class="holderAll"><g class="holder"><line x1="250" x2="250" y1="150" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="250" x2="180.90169943749473" y1="150" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="250" y1="54.894348370484636" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="180.90169943749476" y1="245.10565162951536" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="69.09830056250527" y1="245.10565162951536" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="180.90169943749476" y1="208.77852522924735" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="69.09830056250527" y1="208.77852522924735" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="180.90169943749473" y1="208.77852522924735" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="69.09830056250527" y1="54.894348370484636" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="69.09830056250524" y1="91.22147477075269" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="250" y1="91.22147477075269" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="250" x2="69.09830056250524" y1="150" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="180.90169943749473" y1="54.894348370484636" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="180.90169943749476" y1="54.894348370484636" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="180.90169943749473" y1="245.10565162951536" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="69.09830056250524" y1="54.894348370484636" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="180.90169943749473" y1="91.22147477075269" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><circle r="15" id="layer1_id_0" cx="250" cy="150" style="fill: rgb(202, 149, 0); stroke: rgb(142, 104, 0);"></circle><circle r="15" id="layer1_id_1" cx="180.90169943749476" cy="245.10565162951536" style="fill: rgb(166, 126, 0); stroke: rgb(116, 88, 0);"></circle><circle r="15" id="layer1_id_2" cx="69.09830056250527" cy="208.77852522924735" style="fill: rgb(213, 196, 141); stroke: rgb(149, 137, 99);"></circle><circle r="15" id="layer1_id_3" cx="69.09830056250524" cy="91.22147477075269" style="fill: rgb(213, 176, 71); stroke: rgb(149, 123, 50);"></circle><circle r="15" id="layer1_id_4" cx="180.90169943749473" cy="54.894348370484636" style="fill: rgb(175, 133, 0); stroke: rgb(122, 93, 0);"></circle></g></svg></div><div class="lines-holder-div" style="z-index: 6;"><svg id="layer_0"><line stroke-dasharray="2, 2" class="layer0_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="100.44268798828125" x2="100.44268798828125" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer0_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="100.44268798828125" x2="100.44268798828125" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer0_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="87.37457275390625" x2="87.37457275390625" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer0_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="49.339813232421875" x2="49.339813232421875" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer0_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="49.339813232421875" x2="49.339813232421875" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer0_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="11.6243896484375" x2="11.6243896484375" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer0_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="11.6243896484375" x2="11.6243896484375" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer0_id_2 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="11.6243896484375" x2="11.6243896484375" y1="216.45834350585938" y2="216.45834350585938"></line><line stroke-dasharray="2, 2" class="layer0_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="87.37457275390625" x2="87.37457275390625" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer0_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="31.64068603515625" x2="31.64068603515625" y1="134.18695068359375" y2="134.18695068359375"></line><line stroke-dasharray="2, 2" class="layer0_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="31.64068603515625" x2="31.64068603515625" y1="134.18695068359375" y2="134.18695068359375"></line><line stroke-dasharray="2, 2" class="layer0_id_0 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="100.44268798828125" x2="100.44268798828125" y1="233.68768310546875" y2="233.68768310546875"></line><line stroke-dasharray="2, 2" class="layer0_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="87.37457275390625" x2="87.37457275390625" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer0_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="87.37457275390625" x2="87.37457275390625" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer0_id_1 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="49.339813232421875" x2="49.339813232421875" y1="278.6932373046875" y2="278.6932373046875"></line><line stroke-dasharray="2, 2" class="layer0_id_4 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="87.37457275390625" x2="87.37457275390625" y1="136.42703247070312" y2="136.42703247070312"></line><line stroke-dasharray="2, 2" class="layer0_id_3 link" style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1;" x1="31.64068603515625" x2="31.64068603515625" y1="134.18695068359375" y2="134.18695068359375"></line></svg></div><text x="-130" y="50" style="font-size: 16px; font-weight: 600;">Layer 0</text><div class="graph-div" style="left: 0px; z-index: 7;"><svg class="holderAll"><g class="holder"><line x1="250" x2="250" y1="150" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="250" x2="180.90169943749473" y1="150" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="250" y1="54.894348370484636" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="180.90169943749476" y1="245.10565162951536" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="69.09830056250527" y1="245.10565162951536" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="180.90169943749476" y1="208.77852522924735" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="69.09830056250527" y1="208.77852522924735" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250527" x2="180.90169943749473" y1="208.77852522924735" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="69.09830056250527" y1="54.894348370484636" y2="208.77852522924735" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="69.09830056250524" y1="91.22147477075269" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="250" y1="91.22147477075269" y2="150" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="250" x2="69.09830056250524" y1="150" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="180.90169943749473" y1="54.894348370484636" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="180.90169943749476" y1="54.894348370484636" y2="245.10565162951536" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749476" x2="180.90169943749473" y1="245.10565162951536" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="180.90169943749473" x2="69.09830056250524" y1="54.894348370484636" y2="91.22147477075269" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><line x1="69.09830056250524" x2="180.90169943749473" y1="91.22147477075269" y2="54.894348370484636" style="stroke: rgb(204, 204, 204); stroke-width: 1;"></line><circle r="15" id="layer0_id_0" cx="250" cy="150" style="fill: rgb(242, 178, 0); stroke: rgb(169, 125, 0);"></circle><circle r="15" id="layer0_id_1" cx="180.90169943749476" cy="245.10565162951536" style="fill: rgb(198, 151, 0); stroke: rgb(139, 106, 0);"></circle><circle r="15" id="layer0_id_2" cx="69.09830056250527" cy="208.77852522924735" style="fill: rgb(255, 234, 169); stroke: rgb(179, 164, 118);"></circle><circle r="15" id="layer0_id_3" cx="69.09830056250524" cy="91.22147477075269" style="fill: rgb(255, 210, 85); stroke: rgb(179, 147, 59);"></circle><circle r="15" id="layer0_id_4" cx="180.90169943749473" cy="54.894348370484636" style="fill: rgb(209, 159, 0); stroke: rgb(146, 111, 0);"></circle></g></svg></div></div>
-                    <figcaption>
-                        Hover over a node in the diagram below to see how it accumulates information from nodes around it through the layers of the network.
-                    </figcaption>
+                <p>Phylogenies can be visualized in many distinct layouts. While these layouts have difference appearances, they all maintain identical topological relationship between nodes and edges.</p>
+
+                <figure class="figure-container" style="text-align: center;">
+                    <img width="70%" src="assets/images/blog/protocol-phylo-ape.svg" alt="ape-phylogeny-forms">
+                    <figcaption class="mt-2 text-center image-caption">A simple phylogeny in three distinct layouts</a></figcaption>
                 </figure>
+
+                <h3 class="mt-5 mb-3">Phylogenies Are Graphs</h3>
+                <p>
+                    Phylogenetic trees are essentially graphs. In a phylogeny, each node represents a species or a common ancestor, and each edge represents the evolutionary connection between them.
+                </p>
+
+                <p>Below I provide you an interactive playground, in which you can explore the forms of a phylogeny/graph.</p>
+                <p>You can specify a tip number and click on the "Generate Tree" button below to simulate a phylogenetic tree under the Yule model.</p>
+                <p>Click on "Phlogeny Form" and "Graph Form" to switch between common layouts of phylogeny and graph. Click on the rotation buttons to display the tree in a different pose. If you like, you can also drag the nodes around.</p>
+                <p>Enter number of tips:<p>
+                <form id="treeForm">
+                    <div class="row my-3">
+                        <div class="col-md-6">
+                            <input type="number" class="form-control" id="tipCount" name="tipCount" min="2" max="10" value="5" required>
+                        </div>
+                        <div class="col-md-6">
+                            <button class="btn btn-block btn-primary py-2" type="submit">Generate Tree</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="row col-12">
+                    <div class="col-md-auto">
+                        <!--add button to change layout to phylogenetic tree style-->
+                        <button class="btn btn-block btn-outline-warning py-2" onclick="network.setOptions({layout: {hierarchical: {sortMethod: 'directed'}}})">Phylogeny Form</button>
+                    </div>
+
+                    <div class="col-md-auto">
+                        <!--add button to change layout to phylogenetic tree style and disable physics-->
+                        <button class="btn btn-block btn-outline-warning py-2" onclick="network.setOptions({layout: {hierarchical: false}, physics: true})">Graph Form</button>
+                    </div>
+
+                    <div class="col-md-auto">
+                        <!--Two buttons for rotation using the rotateLayout() function-->
+                        <button class="btn btn-block btn-outline-secondary py-2" onclick="rotateLayoutClockwise()">Rotate 90&deg</button>
+                    </div>
+
+                    <div class="col-md-auto">
+                        <button class="btn btn-block btn-outline-secondary py-2" onclick="rotateLayoutCounterClockwise()">Rotate -90&deg</button>
+                    </div>
+                </div>
+
+                <!-- Two rows layout -->
+                <div id="container">
+                    <!-- First row: legend and network -->
+                    <div class="row-boarder my-3">
+                        <div id="mynetwork-legend">
+                            <div id="legend-content">
+                                <div class="legend-item">
+                                    <div class="legend-circle root-circle"></div>
+                                    <span>Root</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-circle internal-circle"></div>
+                                    <span>Internal</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-circle tip-circle"></div>
+                                    <span>Tip</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="mynetwork"></div>
+                    </div>
+                    <!-- Column titles for the second row -->
+                    <div class="row my-2">
+                        <div class="col-6" id="adjacency-list-title">Adjacency List</div>
+                        <div class="col-6" id="node-features-title">Node Features</div>
+                    </div>
+                    <!-- Second row: adjacency list and node features -->
+                    <div class="row-boarder my-2">
+                        <div id="adjacency-list">
+                            <div class="content">
+                                <!-- Adjacency list content goes here -->
+                            </div>
+                        </div>
+                        <div id="node-features">
+                            <div class="content">
+                                <!-- Node features content goes here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p id="selection"></p>
+
+                <script type="text/javascript">
+                    // Define colors for nodes, edges, and labels corresponding to LaTeX tikz colors
+                    const rootNodeColor = "#8080ff"; // Blue!50 -> Light Blue
+                    const internalNodeColor = "#ffbf80"; // Orange!50 -> Light Orange
+                    const tipNodeColor = "#dfff80"; // Lime!50 -> Light Lime Green
+                    const edgeColor = "black";
+                    const nodeLabelColor = "black";
+                    const edgeLabelColor = "gray";
+
+                    const nodeSize = 30; // Increase node size
+
+                    var network, nodesDataSet, edgesDataSet;
+
+                    document.getElementById('treeForm').addEventListener('submit', function(event) {
+                        event.preventDefault();
+                        var T = parseInt(document.getElementById('tipCount').value);
+                        generateYuleTree(T);
+                    });
+
+                    // Execute generateYuleTree with the default value when the page is loaded
+                    document.addEventListener('DOMContentLoaded', function() {
+                        var defaultT = parseInt(document.getElementById('tipCount').value);
+                        generateYuleTree(defaultT);
+                    });
+
+                    function generateYuleTree(T) {
+                        var nodes = [];
+                        var edges = [];
+                        var nextNodeId = 1;
+                        var nextEdgeId = 1;
+
+                        // Initialize tree with the root node
+                        nodes.push({ id: nextNodeId,
+                            label: `n${nextNodeId}`,
+                            shape: "circle",
+                            color: rootNodeColor,
+                            font: { color: nodeLabelColor },
+                            size: nodeSize,
+                        });
+
+                        var activeLineages = [nextNodeId];
+                        nextNodeId++;
+                        var currentTipCount = 1;
+
+                        while (currentTipCount < T) {
+                            // Randomly select a lineage to split
+                            var lineageIndex = Math.floor(Math.random() * activeLineages.length);
+                            var parent = activeLineages[lineageIndex];
+
+                            // Remove the selected lineage from active lineages
+                            activeLineages.splice(lineageIndex, 1);
+
+                            // Add two new nodes as children of the selected lineage
+                            var child1 = nextNodeId++;
+                            var child2 = nextNodeId++;
+
+                            nodes.push({ id: child1, label: `n${child1}`, shape: "circle", color: internalNodeColor, font: { color: nodeLabelColor }, size: nodeSize });
+                            nodes.push({ id: child2, label: `n${child2}`, shape: "circle", color: internalNodeColor, font: { color: nodeLabelColor }, size: nodeSize });
+
+                            edges.push({ from: parent, to: child1, label: `e${nextEdgeId++}`, font: { align: 'top', color: edgeLabelColor }, color: edgeColor });
+                            edges.push({ from: parent, to: child2, label: `e${nextEdgeId++}`, font: { align: 'top', color: edgeLabelColor }, color: edgeColor });
+
+                            // Add the new nodes to the active lineages
+                            activeLineages.push(child1, child2);
+
+                            // Increment the tip count
+                            currentTipCount += 1;
+                        }
+
+                        // Update tip nodes (those that are still in activeLineages)
+                        activeLineages.forEach(nodeId => {
+                            nodes = nodes.map(node =>
+                                node.id === nodeId
+                                    ? { ...node, shape: "circle", color: tipNodeColor }
+                                    : node
+                            );
+                        });
+
+                        // Set all edge colors to black
+                        edges.forEach((edge) => {
+                            edge.color = edgeColor;
+                        });
+
+                        // Relabel nodes starting with tip nodes, then root, then internal nodes
+                        var tipNodes = nodes.filter(node => node.color === tipNodeColor);
+                        var rootNode = nodes.find(node => node.color === rootNodeColor);
+                        var internalNodes = nodes.filter(node => node.color === internalNodeColor);
+
+                        var newLabelIndex = 1;
+
+                        tipNodes.forEach(node => {
+                            node.label = `n${newLabelIndex++}`;
+                        });
+
+                        if (rootNode) {
+                            rootNode.label = `n${newLabelIndex++}`;
+                        }
+
+                        internalNodes.forEach(node => {
+                            node.label = `n${newLabelIndex++}`;
+                        });
+
+                        // Update network data with sorted tip nodes
+                        nodesDataSet = new vis.DataSet([...tipNodes, rootNode, ...internalNodes]);
+                        edgesDataSet = new vis.DataSet(edges);
+
+                        var container = document.getElementById("mynetwork");
+                        var data = {
+                            nodes: nodesDataSet,
+                            edges: edgesDataSet,
+                        };
+                        var options = {
+                            layout: {
+                                hierarchical: {
+                                    direction: "UD",
+                                    sortMethod: "directed",
+                                    levelSeparation: 80,
+                                },
+                            },
+                            edges: {
+                                arrows: {
+                                    to: { enabled: true, scaleFactor: 1, type: "vee" },
+                                },
+                                chosen: {
+                                    edge: changeChosenEdge,
+                                },
+                            },
+                            nodes: {
+                                font: {
+                                    align: 'center',
+                                },
+                                chosen: {
+                                    node: changeChosenNode,
+                                },
+                            },
+                            interaction: {
+                                hover: true,
+                                zoomView: false,
+                            },
+                        };
+                        network = new vis.Network(container, data, options);
+
+                        // Update adjacency list
+                        updateAdjacencyList(edges, nodesDataSet);
+                        // Update node features list
+                        updateNodeFeaturesList(edges, nodesDataSet);
+
+                        // Set up hover event listeners for the network
+                        network.on('hoverEdge', function(params) {
+                            highlightEdgeInLists(params.edge, true);
+                            // Set the edge to a new group
+                            edgesDataSet.update({ id: params.edge, group: 'highlight-edges' });
+                            // Set the edge to a new color
+                            edgesDataSet.update({ id: params.edge, color: 'yellow' });
+                        });
+
+                        network.on('blurEdge', function(params) {
+                            highlightEdgeInLists(params.edge, false);
+                            // Reset the edge group
+                            edgesDataSet.update({ id: params.edge, group: undefined });
+                            // Reset the edge color
+                            edgesDataSet.update({ id: params.edge, color: edgeColor });
+                        });
+
+                        network.on('hoverNode', function(params) {
+                            highlightNodeInLists(params.node, true);
+                            highlightNodeInNetwork(params.node, true);
+                        });
+
+                        network.on('blurNode', function(params) {
+                            highlightNodeInLists(params.node, false);
+                            highlightNodeInNetwork(params.node, false);
+                        });
+                    }
+
+                    // Function to update the adjacency list
+                    function updateAdjacencyList(edges, nodesDataSet) {
+                        const adjacencyList = {};
+                        let maxWidth = 0;
+
+                        // Calculate the max width for node labels
+                        nodesDataSet.forEach(node => {
+                            const nodeWidth = getTextWidth(node.label, '18px monospace');
+                            if (nodeWidth > maxWidth) {
+                                maxWidth = nodeWidth;
+                            }
+                        });
+
+                        edges.forEach(edge => {
+                            const fromNode = nodesDataSet.get(edge.from);
+                            const toNode = nodesDataSet.get(edge.to);
+                            const edgeLabel = `<span class="edge-label">${edge.label}</span>`;
+                            const colon = `<span class="colon">:</span>`;
+                            const fromLabel = `<span id="node-${fromNode.id}" class="node-container node-label-${fromNode.id}" style="color:${fromNode.color}; width:${maxWidth}px">${fromNode.label}</span>`;
+                            const comma = `<span class="brackets">,</span>`;
+                            const toLabel = `<span id="node-${toNode.id}" class="node-container node-label-${toNode.id}" style="color:${toNode.color}; width:${maxWidth}px">${toNode.label}</span>`;
+                            const brackets = `<span class="brackets">[</span>${fromLabel}${comma}${toLabel}<span class="brackets">]</span>`;
+
+                            adjacencyList[edge.id] = `<div id="row-${edge.id}" class="row-container">${edgeLabel}${colon}${brackets}</div>`;
+                        });
+
+                        let listString = '';
+                        Object.keys(adjacencyList).forEach(key => {
+                            listString += adjacencyList[key];
+                        });
+
+                        document.getElementById('adjacency-list').innerHTML = listString;
+
+                        // Add hover listeners to the adjacency list containers
+                        addHoverListenersToAdjacencyList();
+                    }
+
+                    // Function to update the node features list
+                    function updateNodeFeaturesList(edges, nodesDataSet) {
+                        const nodeFeaturesList = {};
+                        let maxWidth = 0;
+
+                        // Calculate the max width for edge labels
+                        edges.forEach(edge => {
+                            const edgeWidth = getTextWidth(edge.label, '18px monospace');
+                            if (edgeWidth > maxWidth) {
+                                maxWidth = edgeWidth;
+                            }
+                        });
+
+                        nodesDataSet.forEach(node => {
+                            const incomingEdge = edges.find(edge => edge.to === node.id);
+                            const outgoingEdges = edges.filter(edge => edge.from === node.id);
+
+                            const ancestorEdge = incomingEdge ? incomingEdge.label : '0';
+                            const daughterEdge1 = outgoingEdges[0] ? outgoingEdges[0].label : '0';
+                            const daughterEdge2 = outgoingEdges[1] ? outgoingEdges[1].label : '0';
+
+                            // Get node and edge colors
+                            const nodeColor = node.color || node.color.background;
+                            const edgeColor1 = incomingEdge ? edgeColor : 'gray'; // default to gray if no edge
+                            const edgeColor2 = outgoingEdges[0] ? edgeColor : 'gray';
+                            const edgeColor3 = outgoingEdges[1] ? edgeColor : 'gray';
+
+                            // Generate HTML with appropriate colors
+                            const edgeLabel1 = `<span id="edge-${incomingEdge ? incomingEdge.id : '0'}" class="edge-container" style="width:${maxWidth}px; color:${edgeColor1}">${ancestorEdge}</span>`;
+                            const edgeLabel2 = `<span id="edge-${outgoingEdges[0] ? outgoingEdges[0].id : '0'}" class="edge-container" style="width:${maxWidth}px; color:${edgeColor2}">${daughterEdge1}</span>`;
+                            const edgeLabel3 = `<span id="edge-${outgoingEdges[1] ? outgoingEdges[1].id : '0'}" class="edge-container" style="width:${maxWidth}px; color:${edgeColor3}">${daughterEdge2}</span>`;
+                            const colon = `<span class="colon">:</span>`;
+                            const brackets = `<span class="brackets">[</span>${edgeLabel1}<span class="brackets">,</span>${edgeLabel2}<span class="brackets">,</span>${edgeLabel3}<span class="brackets">]</span>`;
+
+                            nodeFeaturesList[node.id] = `<div id="node-feature-${node.id}" class="row-container">
+            <span class="node-label" style="color:${nodeColor}">${node.label}</span>${colon}${brackets}</div>`;
+                        });
+
+                        let listString = '';
+                        Object.keys(nodeFeaturesList).forEach(key => {
+                            listString += nodeFeaturesList[key];
+                        });
+
+                        document.getElementById('node-features').innerHTML = listString;
+
+                        // Add hover listeners to the node features list containers
+                        addHoverListenersToNodeFeaturesList();
+                    }
+
+                    // Function to calculate text width
+                    function getTextWidth(text, font) {
+                        const canvas = document.createElement("canvas");
+                        const context = canvas.getContext("2d");
+                        context.font = font;
+                        const width = context.measureText(text).width;
+                        return width;
+                    }
+
+                    // Function to add hover listeners to the adjacency list containers
+                    function addHoverListenersToAdjacencyList() {
+                        // Hover listeners for rows (entire rows will highlight the corresponding edge)
+                        document.querySelectorAll('.row-container').forEach(container => {
+                            container.addEventListener('mouseenter', function() {
+                                const edgeId = container.id.replace('row-', '');
+                                highlightEdgeInNetwork(edgeId, true);
+                                highlightEdgeInLists(edgeId, true);
+                            });
+                            container.addEventListener('mouseleave', function() {
+                                const edgeId = container.id.replace('row-', '');
+                                highlightEdgeInNetwork(edgeId, false);
+                                highlightEdgeInLists(edgeId, false);
+                            });
+                        });
+
+                        // Hover listeners for nodes
+                        document.querySelectorAll('.node-container').forEach(container => {
+                            container.addEventListener('mouseenter', function() {
+                                const nodeId = container.id.replace('node-', '');
+                                // change node color to yellow
+                                highlightNodeInNetwork(nodeId, true);
+                                highlightNodeInLists(nodeId, true);
+                            });
+                            container.addEventListener('mouseleave', function() {
+                                const nodeId = container.id.replace('node-', '');
+                                highlightNodeInNetwork(nodeId, false);
+                                highlightNodeInLists(nodeId, false);
+                            });
+                        });
+                    }
+
+                    // Function to add hover listeners to the node features list containers
+                    function addHoverListenersToNodeFeaturesList() {
+                        // Hover listeners for rows (entire rows will highlight the corresponding node)
+                        document.querySelectorAll('.row-container').forEach(container => {
+                            container.addEventListener('mouseenter', function() {
+                                const nodeId = container.id.replace('node-feature-', '');
+                                highlightNodeInNetwork(nodeId, true);
+                                highlightNodeInLists(nodeId, true);
+                            });
+                            container.addEventListener('mouseleave', function() {
+                                const nodeId = container.id.replace('node-feature-', '');
+                                highlightNodeInNetwork(nodeId, false);
+                                highlightNodeInLists(nodeId, false);
+                            });
+                        });
+
+                        // Hover listeners for edges in node features
+                        document.querySelectorAll('.edge-container').forEach(container => {
+                            container.addEventListener('mouseenter', function() {
+                                const edgeId = container.id.replace('edge-', '');
+                                if (edgeId !== '0') {
+                                    highlightEdgeInNetwork(edgeId, true);
+                                    highlightEdgeInLists(edgeId, true);
+                                } else {
+                                    // Highlight the entire row if edge is 0 and disable row hover effect
+                                    const rowContainer = container.closest('.row-container');
+                                    rowContainer.classList.add('highlight-node-feature');
+                                    rowContainer.style.pointerEvents = 'none'; // Disable hover effect
+                                    highlightNodeInNetwork(rowContainer.id.replace('node-feature-', ''), true);
+                                    highlightNodeInLists(rowContainer.id.replace('node-feature-', ''), true);
+                                }
+                            });
+                            container.addEventListener('mouseleave', function() {
+                                const edgeId = container.id.replace('edge-', '');
+                                if (edgeId !== '0') {
+                                    highlightEdgeInNetwork(edgeId, false);
+                                    highlightEdgeInLists(edgeId, false);
+                                } else {
+                                    // Unhighlight the entire row if edge is 0 and re-enable row hover effect
+                                    const rowContainer = container.closest('.row-container');
+                                    rowContainer.classList.remove('highlight-node-feature');
+                                    rowContainer.style.pointerEvents = 'auto'; // Re-enable hover effect
+                                    highlightNodeInNetwork(rowContainer.id.replace('node-feature-', ''), false);
+                                    highlightNodeInLists(rowContainer.id.replace('node-feature-', ''), false);
+                                }
+                            });
+                        });
+                    }
+
+                    // Function to highlight or unhighlight an edge in both the adjacency list and node features list
+                    function highlightEdgeInLists(edgeId, highlight) {
+                        highlightEdgeInList(edgeId, highlight);
+                        highlightEdgeInNodeFeatures(edgeId, highlight);
+                    }
+
+                    // Function to highlight or unhighlight an edge in the adjacency list
+                    function highlightEdgeInList(edgeId, highlight) {
+                        const rowElement = document.getElementById(`row-${edgeId}`);
+                        if (rowElement) {
+                            if (highlight) {
+                                rowElement.classList.add('highlight');
+                            } else {
+                                rowElement.classList.remove('highlight');
+                            }
+                        }
+                    }
+
+                    // Function to highlight or unhighlight an edge in the node features list
+                    function highlightEdgeInNodeFeatures(edgeId, highlight) {
+                        const edgeElements = document.querySelectorAll(`.edge-container[id='edge-${edgeId}']`);
+                        edgeElements.forEach(element => {
+                            if (highlight) {
+                                element.classList.add('highlight');
+                            } else {
+                                element.classList.remove('highlight');
+                            }
+                        });
+                    }
+
+                    // Function to highlight or unhighlight node labels in both the adjacency list and node features list
+                    function highlightNodeInLists(nodeId, highlight) {
+                        highlightNodeInListLabels(nodeId, highlight);
+                        highlightNodeInNodeFeatures(nodeId, highlight);
+                    }
+
+                    // Function to highlight or unhighlight node labels in the adjacency list
+                    function highlightNodeInListLabels(nodeId, highlight) {
+                        const nodeElements = document.querySelectorAll(`.node-label-${nodeId}`);
+                        nodeElements.forEach(element => {
+                            if (highlight) {
+                                element.classList.add('label-highlight');
+                            } else {
+                                element.classList.remove('label-highlight');
+                            }
+                        });
+                    }
+
+                    // Function to highlight or unhighlight node labels in the node features list
+                    function highlightNodeInNodeFeatures(nodeId, highlight) {
+                        const rowElement = document.getElementById(`node-feature-${nodeId}`);
+                        if (rowElement) {
+                            if (highlight) {
+                                rowElement.classList.add('highlight-node-feature');
+                            } else {
+                                rowElement.classList.remove('highlight-node-feature');
+                                rowElement.classList.remove('highlight');
+                            }
+                        }
+                    }
+
+                    // Function to highlight or unhighlight an edge in the network
+                    function highlightEdgeInNetwork(edgeId, highlight) {
+                        const edgeOptions = highlight ? { color: { color: 'yellow' }, width: 3 } : { color: edgeColor, width: 1 };
+                        edgesDataSet.update({ id: edgeId, ...edgeOptions });
+                    }
+
+                    // Function to highlight or unhighlight a node in the network without altering the network structure
+                    function highlightNodeInNetwork(nodeId, highlight) {
+                        if (highlight) {
+                            network.selectNodes([nodeId], highlightEdges = false);
+                        } else {
+                            network.unselectAll();
+                        }
+                    }
+
+                    // Function to change the border dashes of a chosen node
+                    function changeChosenNode(values, id, selected, hovering) {
+                        values.borderDashes = [2, 2];
+                        values.borderColor = "blue";
+                        values.borderWidth = 2;
+                        values.shadowColor = "lightblue";
+                        values.shadowX = 0;
+                        values.shadowY = 0;
+                    }
+
+                    // Function to change the line dashes of a chosen edge
+                    function changeChosenEdge(values, id, selected, hovering) {
+                        values.dashes = [5, 5];
+                        values.edgeColor = "yellow";
+                    }
+
+                    // maintain a list of UD, LR, DU, RL,
+                    // create two functions for two rotation buttons (90 and -90) to change the layout by scrolling within the list
+                    var layoutList = ["UD", "LR", "DU", "RL"];
+                    var layoutIndex = 0;
+                    function rotateLayoutClockwise() {
+                        layoutIndex = (layoutIndex + 1) % layoutList.length;
+                        network.setOptions({
+                            layout: {
+                                hierarchical: {
+                                    direction: layoutList[layoutIndex],
+                                    sortMethod: "directed",
+                                },
+                            },
+                        });
+                    }
+
+                    function rotateLayoutCounterClockwise() {
+                        layoutIndex = (layoutIndex - 1 + layoutList.length) % layoutList.length;
+                        network.setOptions({
+                            layout: {
+                                hierarchical: {
+                                    direction: layoutList[layoutIndex],
+                                    sortMethod: "directed",
+                                },
+                            },
+                        });
+                    }
+                </script>
+
+                <p>You migh have noticed two things: first, the edges are directed and represented by arrows; second, below the interactive  graph there are an <b>Adjacency List</b> and a <b>Node Features</b> matrix.</p>
+                <p>In the context of phylogenies, edges are typically considered undirected, however, conventional phylogeny encoding contains only single-directional edges pointing from the ancestor nodes to their descendants. Popular deep learning frameworks recognize edges under such encoding as directed.</p>
+                <p>How exactly are phylogenies encoded conventionally? The core idea is to maintain an adjacency list. The list stores all the edges in the format <code>[ni, nj]</code>, where <code>ni</code> and <code>nj</code> are the starting and ending nodes of the edge.</p>
+
+                <p>When you hover over an edge or node in the graph, its associated entries in the adjacency list will be highlighted. Similarly, hovering over a row or element in the list will highlight the corresponding node or edge in the tree. This interactive highlighting helps to easily trace connections and understand how an adjacency list sufficiently encodes a phylogeny.</p>
+                <p>You can ignore the node feature matrix for now an go back later after you read the next section.</p>
+
+                <h3 class="mt-5 mb-3">Bridging Phylogenies and GCNs</h3>
                 <p>
                     Graph Convolutional Networks (GCNs) are a type of neural network specifically designed to operate on graph-structured data.
-                    Unlike traditional convolutional networks that work on regular grid data like images, GCNs can process data represented as nodes and edges,
-                    such as social networks, molecule structures, and knowledge graphs. The core idea of GCNs is to aggregate features from a node's neighbors
+                    Unlike traditional convolutional networks that work on regular grid data like images, GCNs can process data represented as nodes and edges. The core idea of GCNs is to aggregate features from a node's neighbors
                     to capture both local graph topology and feature information. This is achieved through convolutional operations that combine and transform
                     node features based on their connections. Visit Thomas Kipf's <a href="https://tkipf.github.io/graph-convolutional-networks/">original blog</a> for more information.
                 </p>
 
-                <h3 class="mt-5 mb-3">Phylogenetic Trees</h3>
                 <p>
-                    A phylogenetic tree is a diagram that represents the evolutionary relationships among various biological species or entities based on their
-                    physical or genetic characteristics. These trees illustrate how species or groups have evolved from common ancestors over time. In a phylogenetic
-                    tree, each node represents a species or a common ancestor, and each edge represents the evolutionary connection between them. Moreover, in a
-                    time-calibrated phylogenetic tree, the edges have lengths, which can be interpreted as the time taken to evolve from the ancestors to the descendants.
+                    I proposed a protocol to directly embed the evolutionary relationships (lengths
+                    of adjacent edges) into the nodes as their features. This protocol does not require the involvement of edge features in computation.
                 </p>
 
-                <h3 class="mt-5 mb-3">Viewing Phylogeny as a Graph</h3>
-                <p>
-                    Phylogenetic trees can be viewed as graphs, where the nodes represent species or ancestors, and the edges represent evolutionary relationships.
-                    By interpreting a phylogenetic tree as a graph, we can apply Graph Convolutional Networks (GCNs) to analyze and learn from the phylogeny.
-                    GCNs can leverage the graph structure of phylogenetic trees to extract meaningful patterns and insights that might not be apparent through
-                    traditional analysis methods.
-                </p>
+                <p>Each row of the node feature matrix stores features of a node in the format <code>[ei, ej, ek]</code>, where <code>ei</code> is the length of the edge connecting the node to its ancestor, <code>ej</code> and <code>ek</code> are the lengths of the edges connecting the node to its two descendants.</p>
 
-                <h3 class="mt-5 mb-3">Utilizing GCNs to Learn from Phylogeny</h3>
-                <p>
-                    To efficiently use GCNs for learning from phylogenetic trees, I propose a protocol to directly embed the evolutionary relationships (lengths
-                    of adjacent edges) into the node features. This method can simplify the process of applying GCNs to phylogenetic trees to capture the
-                    evolutionary patterns present in the data.
-                </p>
+                <figure>
+                    <img class="img-fluid" src="assets/images/blog/protocol.png" alt="node-features">
+                    <figcaption class="mt-2 text-center image-caption">An illustration of the protocol, <a class="theme-link" href="https://www.biorxiv.org/content/10.1101/2024.08.02.606350v3" target="_blank">Qin et.al (2024)</a></figcaption>
+                </figure>
 
-                <p>We use <code>yargs</code> to configure the command line arguments for our script. These arguments allow the user to specify various parameters such as the URL, output file path, DPI, page size, and margins.</p>
-                <pre><code class="javascript">const argv = yargs(hideBin(process.argv))
-    .usage('Usage: $0 --url &lt;string&gt; --output &lt;string&gt; [--dpi &lt;number&gt;] [--scale &lt;number&gt;] [--pageSize &lt;string&gt; | --width &lt;number&gt; --height &lt;number&gt;] [--top &lt;number&gt;] [--right &lt;number&gt;] [--bottom &lt;number&gt;] [--left &lt;number&gt;] [--no-background] [--no-margin]')
-    .demandOption(['url', 'output'])
-    .describe('dpi', 'The DPI (dots per inch) for the PDF')
-    .describe('scale', 'The scale factor for the PDF')
-    .describe('url', 'The URL of the HTML file to convert to PDF')
-    .describe('output', 'The file path to write the generated PDF')
-    .describe('pageSize', 'The standard page size (A4, Letter, Legal, Tabloid, Executive, A5, A3)')
-    .describe('width', 'The custom width for the PDF (in inches)')
-    .describe('height', 'The custom height for the PDF (in inches)')
-    .describe('top', 'Top margin in mm')
-    .describe('right', 'Right margin in mm')
-    .describe('bottom', 'Bottom margin in mm')
-    .describe('left', 'Left margin in mm')
-    .describe('no-background', 'Disable printing background (default: false)')
-    .describe('no-margin', 'Set all margins to 0 (conflicts with individual margin settings)')
-    .default('dpi', 300)
-    .default('scale', 1.0)
-    .default('pageSize', 'A4')
-    .default('top', 10)
-    .default('right', 10)
-    .default('bottom', 10)
-    .default('left', 10)
-    .boolean('no-background')
-    .boolean('no-margin')
-    .conflicts('no-margin', ['top', 'right', 'bottom', 'left'])
-    .help('h')
-    .alias('h', 'help')
-    .argv;
-
-const dpi = parseInt(argv.dpi, 10);
-const scale = parseFloat(argv.scale);
-const url = argv.url;
-const outputPath = argv.output;
-const noBackground = argv['no-background'];
-const noMargin = argv['no-margin'];
-
-let width, height;
-
-if (argv.pageSize) {
-    const pageSize = pageSizes[argv.pageSize];
-    if (pageSize) {
-        width = pageSize.width;
-        height = pageSize.height;
-    } else {
-        console.error('Invalid page size. Valid options are: A4, Letter, Legal, Tabloid, Executive, A5, A3.');
-        process.exit(1);
-    }
-} else if (argv.width && argv.height) {
-    width = parseFloat(argv.width);
-    height = parseFloat(argv.height);
-} else {
-    console.error('Please provide either a standard page size or custom width and height.');
-    process.exit(1);
-}
-
-const widthPx = Math.round(width * dpi);
-const heightPx = Math.round(height * dpi);
-
-let top, right, bottom, left;
-if (noMargin) {
-    top = right = bottom = left = 0;
-} else {
-    top = parseFloat(argv.top);
-    right = parseFloat(argv.right);
-    bottom = parseFloat(argv.bottom);
-    left = parseFloat(argv.left);
-}
-
-const topInches = top / 25.4;
-const rightInches = right / 25.4;
-const bottomInches = bottom / 25.4;
-const leftInches = left / 25.4;</code></pre>
-
-                <h3 class="mt-5 mb-3">Generating the PDF</h3>
-                <p>Now, we create an async function to generate the PDF using Puppeteer. This function launches a headless browser, navigates to the specified URL, sets the viewport, and generates the PDF with the specified settings.</p>
-                <pre><code class="javascript">async function generatePDF(url, outputPath) {
-    const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-    const page = await browser.newPage();
-    await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
-
-    await page.setViewport({
-        width: widthPx,
-        height: heightPx,
-        deviceScaleFactor: 1,
-    });
-
-    await page.pdf({
-        path: outputPath,
-        width: `${widthPx}px`,
-        height: `${heightPx}px`,
-        printBackground: !noBackground,
-        margin: {
-            top: topInches,
-            right: rightInches,
-            bottom: bottomInches,
-            left: leftInches
-        },
-        scale: scale
-    });
-
-    await browser.close();
-}
-
-generatePDF(url, outputPath)
-    .then(() => console.log('PDF generated successfully'))
-    .catch(err => console.error('Error generating PDF:', err));</code></pre>
-
-                <h3 class="mt-5 mb-3">Flexibility</h3>
-                <p>
-                    This script allows you to customize various parameters such as:
-                </p>
-                <ul>
-                    <li><strong>DPI:</strong> The dots per inch for the PDF, with a default value of 300 DPI.</li>
-                    <li><strong>Scale:</strong> The scale factor for the PDF, defaulting to 1.0.</li>
-                    <li><strong>Page Size:</strong> Standard page sizes like A4, Letter, Legal, etc.</li>
-                    <li><strong>Custom Dimensions:</strong> Specify custom width and height in inches if needed.</li>
-                    <li><strong>Margins:</strong> Customize top, right, bottom, and left margins in millimeters, or set all margins to zero.</li>
-                    <li><strong>Background:</strong> Option to disable printing the background.</li>
-                </ul>
-
-                <h3 class="mt-5 mb-3">Getting Started</h3>
-                <p>
-                    To use this script, you need to have Node.js and Puppeteer installed. You can find the script and detailed instructions in my GitHub repository, click the image below to open it:</a>.
-                </p>
-                <div class="center-repo">
-                    <a href="https://github.com/EvoLandEco/WebToolBox">
-                        <img alt="" src="https://github-readme-stats.vercel.app/api/pin/?username=EvoLandEco&repo=WebToolBox&theme=transparent" />
-                    </a>
-                </div>
-                <h3 class="mt-5 mb-3">Example Usage</h3>
-                <p>
-                    Here is an example command to generate a PDF:
-                </p>
-                <pre><code class="bash">node pdfgen.js --url https://example.com --output example.pdf --dpi 300 --scale 1.0 --pageSize A4 --top 10 --right 10 --bottom 10 --left 10</code></pre>
-                <p>
-                    This command converts the HTML page at <code>https://example.com</code> to a PDF named <code>example.pdf</code> with 300 DPI, a scale factor of 1.0, A4 page size, and 10mm margins on all sides.
-                </p>
+                <p><a class="btn btn-block btn-outline-primary" href="#treeForm">Click Here</a> to go back to the playground and revisit the node feature matrix.</p>
 
             </div>
 
