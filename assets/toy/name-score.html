@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>看看你名字多少分</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #4CAF50;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            font-size: 1em;
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+            width: 80%;
+            max-width: 300px;
+            margin-bottom: 15px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f0f4c3;
+            color: #333;
+            font-size: 1.5em;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    <script>
+        // Simple seeded random number generator
+        function seededRandom(seed) {
+            let x = Math.sin(seed) * 10000;
+            return x - Math.floor(x);
+        }
+
+        // Generate score and classification based on seed
+        function generateScore() {
+            // Get the seed from the input box
+            const seedInput = document.getElementById("seed").value;
+
+            // Convert the seed to a number
+            let seed = 0;
+            for (let i = 0; i < seedInput.length; i++) {
+                seed += seedInput.charCodeAt(i);
+            }
+
+            // Generate a random score between 0 and 100 using the seed
+            const score = Math.floor(seededRandom(seed) * 101);
+
+            // Classify the score
+            let classification;
+            if (score < 40) {
+                classification = "较差";
+            } else if (score < 60) {
+                classification = "差";
+            } else if (score < 70) {
+                classification = "一般";
+            } else if (score < 80) {
+                classification = "好";
+            } else if (score < 90) {
+                classification = "较好";
+            } else if (score < 95) {
+                classification = "优秀";
+            } else {
+                classification = "顶级";
+            }
+
+            // Display the score and classification
+            document.getElementById("result").innerHTML = `得分: ${score} - 等级: ${classification}`;
+        }
+    </script>
+</head>
+<body>
+<div class="container">
+    <h1>看看你名字多少分</h1>
+    <input type="text" id="seed" placeholder="请输入你的名字">
+    <button onclick="generateScore()">一键测试</button>
+    <div id="result"></div>
+</div>
+</body>
+</html>
