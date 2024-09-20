@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Sub-Species Level Diversification and Phylogeny Reconstruction - Blog - Tianjian Qin</title>
+
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Blog Post">
+    <meta name="author" content="Tianjian Qin">
+    <link rel="shortcut icon" href="favicon.ico">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
+
+    <!-- FontAwesome JS -->
+    <script defer src="assets/fontawesome/js/all.js"></script>
+
+    <!-- Plugin CSS -->
+    <link rel="stylesheet" href="assets/plugins/highlight/styles/monokai-sublime.min.css">
+
+    <!-- Theme CSS -->
+    <link id="theme-style" rel="stylesheet" href="assets/css/theme-1.css">
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
+
+    <style type="text/css">
+        /* Container styles */
+        #graph-container,
+        #coarsened-graph-container,
+        #plot-container,
+        #trait-container {
+            aspect-ratio: 1 / 1;
+            border: 1px solid #ddd;
+            background-color: #fffdf9;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+
+            /* Flexbox for centering content */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Text styling for containers */
+        #graph-container p,
+        #coarsened-graph-container p,
+        #plot-container p,
+        #trait-container p {
+            margin: 0;
+            padding: 0;
+            font-size: 1.5em;
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        /* Hover effect to add a subtle shadow */
+        #graph-container:hover,
+        #coarsened-graph-container:hover,
+        #plot-container:hover,
+        #trait-container:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel-title {
+            color: #757ca3;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 0;
+            padding: 10px;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+        }
+
+        /* Style for error or informational text */
+        .error-text {
+            color: #c67351; /* Color for error */
+        }
+
+        /* Namespace for the toggle switch */
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-switch-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+        }
+
+        .toggle-switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+
+        .toggle-switch-input:checked + .toggle-switch-slider {
+            background-color: #2196F3;
+        }
+
+        .toggle-switch-input:checked + .toggle-switch-slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Rounded sliders */
+        .toggle-switch-round {
+            border-radius: 34px;
+        }
+
+        .toggle-switch-round:before {
+            border-radius: 50%;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header class="header text-center">
+    <div class="force-overflow">
+        <h1 class="blog-name pt-lg-4 mb-0"><a class="no-text-decoration" href="index.html">Tianjian Qin</a></h1>
+
+        <nav class="navbar navbar-expand-lg navbar-dark" >
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navigation" aria-controls="navigation" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div id="navigation" class="collapse navbar-collapse flex-column" >
+                <div class="profile-section pt-3 pt-lg-0">
+                    <img class="profile-image mb-3 rounded-circle mx-auto" src="assets/images/profile.png" alt="image" >
+
+                    <div class="bio mb-3">Hi, my name is Tianjian. I'm a theoretical biologist.</div><!--//bio-->
+                    <ul class="social-list list-inline py-2 mx-auto">
+                        <li class="list-inline-item"><a href="https://www.linkedin.com/in/tjqin/"><i class="fab fa-linkedin-in fa-fw"></i></a></li>
+                        <li class="list-inline-item"><a href="https://github.com/EvoLandEco"><i class="fab fa-github-alt fa-fw"></i></a></li>
+                        <li class="list-inline-item"><a href="https://www.researchgate.net/profile/Tianjian-Qin"><i class="fa-brands fa-researchgate"></i></a></li>
+                        <li class="list-inline-item"><a href="https://qtj.me/gallery"><i class="fa-regular fa-lightbulb fa-beat"></i></a></li>
+                    </ul><!--//social-list-->
+                    <hr>
+                </div><!--//profile-section-->
+
+                <ul class="navbar-nav flex-column text-start">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html"><i class="fas fa-user fa-fw me-2"></i>About Me</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="portfolio.html"><i class="fas fa-laptop-code fa-fw me-2"></i>Portfolio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="resume.html"><i class="fas fa-file-alt fa-fw me-2"></i>Resume</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="blog-home.html"><i class="fas fa-blog fa-fw me-2"></i>Blog</a>
+                    </li>
+                </ul>
+
+                <div class="my-2">
+                    <a class="btn btn-primary" href="mailto:tianjianqin@outlook.com" target="_blank"><i class="fas fa-paper-plane me-2"></i>Contact Me</a>
+                </div>
+
+
+                <div class="dark-mode-toggle text-center w-100">
+                    <hr class="mb-4">
+                    <h4 class="toggle-name mb-3 "><i class="fas fa-adjust me-1"></i>Dark Mode</h4>
+
+                    <input class="toggle" id="darkmode" type="checkbox">
+                    <label class="toggle-btn mx-auto mb-0" for="darkmode"></label>
+
+                </div><!--//dark-mode-toggle-->
+            </div>
+        </nav>
+    </div><!--//force-overflow-->
+</header>
+
+<div class="main-wrapper">
+
+    <article class="blog-post px-3 py-5 p-md-5">
+        <div class="container single-col-max-width">
+            <header class="blog-post-header">
+                <h2 class="title mb-2">Sub-Species Level Diversification and Phylogeny Reconstruction</h2>
+                <div class="meta mb-3"><span class="date"><i class="fa-solid fa-calendar-days me-2"></i>Published on 20 Aug 2024</span><span class="time"><i class="fa-solid fa-clock me-2"></i>15 min read</span><span class="comment"><i class="fa-solid fa-comment me-2"></i><a href="https://qtj.me/blog-Subspecies-Level-Diversification.html#disqus_thread" data-disqus-identifier="BLOG_POST_SUBSPECIES">Link</a></span></div>
+            </header>
+
+            <div class="blog-post-body">
+                <figure class="blog-banner">
+                    <a href="#"><img class="img-fluid" src="assets/images/blog/blog-post-banner-subspecies.jpg" alt="image"></a>
+                    <figcaption class="mt-2 text-center image-caption">Image Credit: <a class="theme-link" href="https://leonardo.ai" target="_blank">leonardo.ai</a></figcaption>
+                </figure>
+
+                <h3 class="mt-5 mb-3">TL;DR</h3>
+                <p>It is not mandatory to visualize species diversification process as trees. We can instead show a graph of relationships between incipient species, or in other words, the chain of evolutionary events.</p>
+                <p>To illustrate the idea, I developed an interactive simulator to explore different evolutionary trajectories in four aspects of view. The simulation is based on Gillespie's algorithm. The <strong>coarsen level</strong> determines how many consecutive (theoretically meaningful) mutations  are needed to form a new species, with associated traits gradually evolving with each mutation.</p>
+
+
+
+                <p>To begin, press the <strong>Grow</strong> button to start the simulation. If the simulation becomes unresponsive (e.g., all nodes go extinct), simply press the <strong>Reset</strong> button. Blue nodes are non-mutating sub-species and red nodes are mutating sub-species. Extinction sub-species become grey. Feel free to experiment with the simulator first, and then dive into the technical details for a deeper understanding.</p>
+
+                <p>Hint: You can drag the nodes in the graph panels. Hover your mouse on a node/tip in one panel, corresponding node/tips will be highlighted in all the other panels. You may observe strange trees, this is due to lacking of information.</p>
+
+                <div class="row col-12">
+                    <div class="col-4">
+                        <div class="row mt-3 mb-3 mx-lg-1 my-3">
+                            <label for="birthRate">Birth Rate:</label>
+                            <input type="range" id="birthRate" min="0.00" max="1.00" step="0.05" value="0.4">
+                            <span id="birthRateValue">0.40</span>
+                        </div>
+                        <div class="row mt-3 mb-3 mx-lg-1 my-3">
+                            <label for="mutateRate">Mutation Rate:</label>
+                            <input type="range" id="mutateRate" min="0.00" max="1.00" step="0.05" value="0.4">
+                            <span id="mutateRateValue">0.40</span>
+                        </div>
+                        <div class="row mt-3 mb-3 mx-lg-1 my-3">
+                            <label for="deathRate">Death Rate:</label>
+                            <input type="range" id="deathRate" min="0.00" max="1.00" step="0.05" value="0.1">
+                            <span id="deathRateValue">0.10</span>
+                        </div>
+                    </div>
+
+                    <div class="col-4">
+                        <div class="row mt-3 mb-3 mx-lg-1 my-3">
+                            <label for="maxSteps">Simulation Steps:</label>
+                            <input type="range" id="maxSteps" value="25" min="1" max="50" step="1" oninput="document.getElementById('maxStepsValue').innerText = this.value;">
+                            <span id="maxStepsValue">25</span> <!-- Display the current value -->
+                        </div>
+                        <div class="row mt-3 mb-3 mx-lg-1 my-3">
+                            <label for="mstep">Coarsen Level:</label>
+                            <input type="range" id="mstep" value="1" min="0" max="6" step="1" oninput="document.getElementById('mstepValue').innerText = this.value;">
+                            <span id="mstepValue">1</span> <!-- Display the current value -->
+                        </div>
+                        <div class="row mt-3 mb-3 mx-lg-1 my-3">
+                            <label for="traitDimensions">Trait Dimensions:</label>
+                            <input type="range" id="traitDimensions" value="5" min="1" max="10" step="1" oninput="document.getElementById('traitDimensionsValue').innerText = this.value;">
+                            <span id="traitDimensionsValue">5</span> <!-- Display the current value -->
+                        </div>
+                    </div>
+
+                    <div class="col-4">
+                        <div class="row mt-3 mb-3 my-lg-3 ">
+                            <div>
+                                <label for="traitModel">Mutation Model:</label>
+                                <select id="traitModel">
+                                    <option value="brownian" selected>Brownian Motion</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-3 mb-3 m-lg-2 my-lg-4">
+                            <div class="row">
+                                Show Branch Lengths
+                            </div>
+                            <div class="row toggle-switch">
+                                <div>
+                                    <label for="showBranchLengths" class="toggle-switch-label">
+                                        <input type="checkbox" id="showBranchLengths" class="toggle-switch-input">
+                                        <span class="toggle-switch-slider toggle-switch-round"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3 mb-3 m-lg-2 my-lg-4">
+                            <div class="row ">
+                                Prune Extinct Lineages
+                            </div>
+                            <div class="row toggle-switch">
+                                <div>
+                                    <label for="pruneExtinct" class="toggle-switch-label">
+                                        <input type="checkbox" id="pruneExtinct" class="toggle-switch-input">
+                                        <span class="toggle-switch-slider toggle-switch-round"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-3 col-md-2">
+                        <button class="btn btn-primary" id="startButton">Grow</button>
+                    </div>
+                    <div class="col-3 col-md-2">
+                        <button class="btn btn-primary" id="pauseButton" disabled>Pause</button>
+                    </div>
+                    <div class="col-3 col-md-2">
+                        <button class="btn btn-outline-primary" id="resetButton">Reset</button>
+                    </div>
+                </div>
+
+                <div class="row col-12">
+                    <div class="col-6 mb-4">
+                        <div id="graph-container"></div>
+                    </div>
+                    <div class="col-6 mb-4">
+                        <div id="coarsened-graph-container"></div>
+                    </div>
+                    <div class="col-6 mb-4">
+                        <div id="plot-container"></div>
+                    </div>
+                    <div class="col-6 mb-4">
+                        <div id="trait-container"></div>
+                    </div>
+                </div>
+
+                <script src="/assets/js/evonet.js"></script>
+
+                <p>The simulator provides four panels for visualization:
+                <ul>
+                    <li><strong>Panel 1:</strong> Displays the complete network, illustrating the ancestral relationships between sub-species (nodes).</li>
+                    <li><strong>Panel 2:</strong> Shows a coarsened network, representing species formation after multiple mutations, depending on the coarsen level.</li>
+                    <li><strong>Panel 3:</strong> Shows a tree reconstructed from the coarsened network.</li>
+                    <li><strong>Panel 4:</strong> Shows a tree reconstructed from the trait values of the species.</li>
+                </ul>
+                </p>
+
+                <h3 class="mt-5 mb-3">Traditional Era: Morphological Tree Construction</h3>
+                <p>In the pre-phylogenetics era, researchers classified organisms based on observable traits, often using <strong>Linnaean taxonomy</strong>. Morphological similarities, such as body structure or bone shapes, were grouped into hierarchical categories. Tools like <strong>homology studies</strong> helped identify shared ancestry based on physical features. Branch lengths in these trees were calibrated using the <strong>fossil record</strong>, estimating divergence times from known fossil dates. This approach provided a rough timeline of evolution, representing the passage of time between ancestral and descendant species.</p>
+
+                <h3 class="mt-5 mb-3">Modern Era: Molecular Phylogenetics</h3>
+                <p>With the rise of molecular biology, phylogenetic trees are now built using DNA sequence data. Tools like <strong>MAFFT</strong> align sequences, followed by <strong>RAxML</strong> or <strong>IQ-TREE</strong> to infer relationships. The model selection step uses software like <strong>jModelTest</strong> to pick the best evolutionary model. Branch lengths are derived from the <strong>amount of genetic change</strong>, where mutations accumulate over time. This approach often results in a tree that reflects genetic distances, rather than explicit time.</p>
+
+                <h3 class="mt-5 mb-3">Branch Length Interpretations</h3>
+                <p>The branch lengths in phylogenetic trees can have different interpretations depending on the method used. In time-calibrated trees (fossil-based), they represent the actual time elapsed, while in molecular trees, branch lengths typically indicate the amount of genetic change between species.</p>
+
+                <h3 class="mt-5 mb-3">Stochastic Diversification Models</h3>
+                <p>In stochastic simulations of species diversification, branch lengths are often aligned with fossil-based timelines, although implicitly. In those models, branch lengths represent the duration of survival of lineages.</p>
+
+                <h3 class="mt-5 mb-3">Brownian Motion and Trait Change</h3>
+                <p>Under the <strong>Brownian Motion model</strong>, there is a correlation between the amount of genetic change and the evolution of traits over time. Genetic changes are assumed to accumulate randomly, which mirrors gradual shifts in species traits.</p>
+
+                <h3 class="mt-5 mb-3">Aligning Trait Trees with Phylogenetic Trees</h3>
+                <p>Increasing the dimensionality of trait space can help better approximate genetic change. By accounting for a broader spectrum of characteristics, the resulting <strong>trait trees</strong> may align more closely with <strong>phylogenetic trees</strong> based on genetic data. Traits are often the phenotypic expression of underlying genetic variation, capturing more traits reduces the gap between observable features and the genetic changes that drive evolution.</p>
+
+                <h3 class="mt-5 mb-3">The Discrepancy between Different Trees</h3>
+                <p>The duration of survival may not directly relate to the amount of genetic change, therefore not directly relate to the traits. Can we expect a discrepancy between trees based on time of survival and tree based on trait differences? Can we observe lessened discrepancy if the trait space has more dimensions?</p>
+
+                <h3 class="mt-5 mb-3">The Impossible Reconstruction</h3>
+                <p>Given a full network of incipient species, or the chain of historical events, there are various cases in which we cannot reconstruct a valid phylogenetic tree, even if we have all the information at hand. One example is that the initial ancestor went extinct. Theoretically, we may also encounter various cases that we cannot reconstruct valid trees even from trait tables.</p>
+
+                <h3 class="mt-5 mb-3">Seeing is Believing</h3>
+                <p>Several serious papers have already discussed these issues mathematically. However, I have decided to see it with my own eyes. Under what circumstances can we expect no valid tree or erroneous trees? Does the increase of trait dimensions really bring phylogenetic trees closer to trait trees, even if the phylogenetic tree is simulated? With my simulator the exploration can be fun and intuitive.</p>
+
+                <p>There are 7 adjustable parameters in the simulator, four of them can be changed during simulation while the other three must be set at the beginning of each simulation cycle. Internally, the simulator is running on Gillespie's algorithm, but the displaying time intervals between events are stretched for better visualization. In the simulator, a mutation is assumed as a theoretical standardized unit mutation (?), its concept may be ambiguous, but I think it is fine for a toy project.</p>
+
+                <p>Below is a list of the parameters you can play with:</p>
+                <ul>
+                    <li><strong>Birth Rate:</strong> The rate at which new sub-species are born but not mutated meaningfully.</li>
+                    <li><strong>Mutation Rate:</strong> The rate at which new sub-species are born and accumulated meaningful mutation.</li>
+                    <li><strong>Death Rate:</strong> The rate at which an entire sub-species go extinct.</li>
+                    <li><strong>Simulation Steps:</strong> The number of steps the simulation will run before stopping. Cannot be changed during simulation</li>
+                    <li><strong>Coarsen Level:</strong> The number of consecutive mutations needed to form a new species. CAN be changed at any time.</li>
+                    <li><strong>Trait Dimensions:</strong> The number of traits each sub-species has. This cannot be changed if simulation has started</li>
+                    <li><strong>Mutation Model:</strong> The model used to simulate gradual trait evolution. Currently, only Brownian Motion is available for now.</li>
+                    <li><strong>Show Branch Lengths:</strong> Whether to show branch lengths in the trees. Can be toggled at any time.</li>
+                    <li><strong>Prune Extinct Lineages:</strong> Whether to remove extinct lineages from the trees. Can be toggled at any time.</li>
+                </ul>
+                <p>You can pause and resume simulation at will. If all the sub-species go extinct, the simulation will stop, you must manually reset the simulator.</p>
+                </p>
+
+            </div>
+
+            <nav class="blog-nav nav nav-justified my-5">
+                <a class="nav-link-prev nav-item nav-link rounded-left" href="#">Previous<i class="arrow-prev fas fa-long-arrow-alt-left"></i></a>
+                <a class="nav-link-next nav-item nav-link rounded-right" href="#">Next<i class="arrow-next fas fa-long-arrow-alt-right"></i></a>
+            </nav>
+
+            <div class="blog-comments-section">
+                <div id="disqus_thread"></div>
+                <script>
+                    /**
+                     *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT
+                     *  THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR
+                     *  PLATFORM OR CMS.
+                     *
+                     *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT:
+                     *  https://disqus.com/admin/universalcode/#configuration-variables
+                     */
+
+                    var disqus_config = function () {
+                        // Replace PAGE_URL with your page's canonical URL variable
+                        this.page.url = "https://qtj.me/blog-Subspecies-Level-Diversification.html";
+
+                        // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+                        this.page.identifier = "BLOG_POST_SUBSPECIES";
+                    };
+
+
+                    (function() {  // REQUIRED CONFIGURATION VARIABLE: EDIT THE SHORTNAME BELOW
+                        var d = document, s = d.createElement('script');
+
+                        // IMPORTANT: use website shortname
+                        s.src = 'https://qtj-me.disqus.com/embed.js';
+
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s);
+                    })();
+                </script>
+                <noscript>
+                    Please enable JavaScript to view the
+                    <a href="https://disqus.com/?ref_noscript" rel="nofollow">
+                        comments powered by Disqus.
+                    </a>
+                </noscript>
+            </div><!--//blog-comments-section-->
+
+        </div><!--//container-->
+    </article>
+
+    <footer class="footer text-center py-4">
+        <small class="copyright">Copyright &copy; Tianjian Qin</small>
+    </footer>
+
+</div><!--//main-wrapper-->
+
+
+<!-- *****CONFIGURE STYLE (REMOVE ON YOUR PRODUCTION SITE)****** -->
+<div id="config-panel" class="config-panel config-panel-hide d-none d-lg-block">
+    <div class="panel-inner">
+        <a id="config-trigger" class="config-trigger text-center" href="#"><i class="fas fa-cog mx-auto" data-fa-transform="down-6" ></i></a>
+        <h5 class="panel-title">Choose Colour</h5>
+        <ul id="color-options" class="list-inline mb-0">
+            <li class="theme-1 active list-inline-item"><a data-style="assets/css/theme-1.css" href="#"></a></li>
+            <li class="theme-2  list-inline-item"><a data-style="assets/css/theme-2.css" href="#"></a></li>
+            <li class="theme-3  list-inline-item"><a data-style="assets/css/theme-3.css" href="#"></a></li>
+            <li class="theme-4  list-inline-item"><a data-style="assets/css/theme-4.css" href="#"></a></li>
+            <li class="theme-5  list-inline-item"><a data-style="assets/css/theme-5.css" href="#"></a></li>
+            <li class="theme-6  list-inline-item"><a data-style="assets/css/theme-6.css" href="#"></a></li>
+            <li class="theme-7  list-inline-item"><a data-style="assets/css/theme-7.css" href="#"></a></li>
+            <li class="theme-8  list-inline-item"><a data-style="assets/css/theme-8.css" href="#"></a></li>
+            <li class="theme-9  list-inline-item"><a data-style="assets/css/theme-9.css" href="#"></a></li>
+            <li class="theme-10  list-inline-item"><a data-style="assets/css/theme-10.css" href="#"></a></li>
+        </ul>
+        <a id="config-close" class="close" href="#"><i class="fa fa-times-circle"></i></a>
+    </div><!--//panel-inner-->
+</div><!--//configure-panel-->
+
+
+<!-- Javascript -->
+<script src="assets/plugins/popper.min.js"></script>
+<script src="assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+
+<!-- Page Specific JS -->
+<link
+        rel="stylesheet"
+        href="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.css"
+/>
+<script src="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+<script>hljs.addPlugin(new CopyButtonPlugin());</script>
+
+<!-- Custom JS -->
+<script src="assets/js/blog.js"></script>
+
+<!-- Dark Mode -->
+<script src="assets/plugins/js-cookie.min.js"></script>
+<script src="assets/js/dark-mode.js"></script>
+
+<!-- Style Switcher (REMOVE ON YOUR PRODUCTION SITE) -->
+<script src="assets/js/demo/style-switcher.js"></script>
+
+<!-- Disqus Counter -->
+<script id="dsq-count-scr" src="//qtj-me.disqus.com/count.js" async></script>
+
+</body>
+</html>

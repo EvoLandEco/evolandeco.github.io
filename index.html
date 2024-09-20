@@ -23,6 +23,21 @@
 	<!-- Theme CSS -->  
 	<link id="theme-style" rel="stylesheet" href="assets/css/theme-1.css">
 
+	<style>
+		.custom-icon {
+			width: 2.8em;
+			height: 2.8em;
+			fill: gray;
+			margin-top: -0.5px;
+		}
+		.custom-icon-alt {
+			width: 0.9em;
+			height: 0.9em;
+			fill: gray;
+			margin-top: -6.9px;
+		}
+	</style>
+
 </head> 
 
 <body>
@@ -43,11 +58,10 @@
 						
 						<div class="bio mb-3">Hi, my name is Tianjian. I'm a theoretical biologist.</div><!--//bio-->
 						<ul class="social-list list-inline py-2 mx-auto">
-							<li class="list-inline-item"><a href="#"><i class="fab fa-twitter fa-fw"></i></a></li>
-							<li class="list-inline-item"><a href="#"><i class="fab fa-linkedin-in fa-fw"></i></a></li>
-							<li class="list-inline-item"><a href="#"><i class="fab fa-github-alt fa-fw"></i></a></li>
-							<li class="list-inline-item"><a href="#"><i class="fab fa-stack-overflow fa-fw"></i></a></li>
-							<li class="list-inline-item"><a href="#"><i class="fab fa-codepen fa-fw"></i></a></li>
+							<li class="list-inline-item"><a href="https://www.linkedin.com/in/tjqin/"><i class="fab fa-linkedin-in fa-fw"></i></a></li>
+							<li class="list-inline-item"><a href="https://github.com/EvoLandEco"><i class="fab fa-github-alt fa-fw"></i></a></li>
+							<li class="list-inline-item"><a href="https://www.researchgate.net/profile/Tianjian-Qin"><i class="fa-brands fa-researchgate"></i></a></li>
+							<li class="list-inline-item"><a href="https://qtj.me/gallery"><i class="fa-regular fa-lightbulb fa-beat"></i></a></li>
 						</ul><!--//social-list-->
 						<hr> 
 					</div><!--//profile-section-->
@@ -65,13 +79,10 @@
 						<li class="nav-item">
 							<a class="nav-link" href="blog-home.html"><i class="fas fa-blog fa-fw me-2"></i>Blog</a>
 						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="contact.html"><i class="fas fa-envelope-open-text fa-fw me-2"></i>Contact</a>
-						</li>
 					</ul>
 					
 					<div class="my-2">
-						<a class="btn btn-primary" href="contact.html" target="_blank"><i class="fas fa-paper-plane me-2"></i>Contact Me</a>
+						<a class="btn btn-primary" href="mailto:tianjianqin@outlook.com" target="_blank"><i class="fas fa-paper-plane me-2"></i>Contact Me</a>
 					</div>
 					
 	
@@ -96,8 +107,8 @@
 					
 					<div class="col">
 						<h2 class="name font-weight-bold mb-1">Tianjian</h2>
-						<div class="tagline mb-3">PhD, Theoretical Biologist</div>
-						<div class="bio mb-4">I study ecological and evolutionary mechanisms by coding and simulation. I'm currently interested in the application of machine learning in my field.
+						<div class="tagline mb-3">PhD candidate, Theoretical Biologist</div>
+						<div class="bio mb-4">I study systems biology by modeling and simulation. I am interested in phylogenetic comparative methods and parameter estimation approaches.
 						</div><!--//bio-->
 						<div class="mb-4">
 							<a class="btn btn-primary me-2 mb-3" href="portfolio.html"><i class="fas fa-arrow-alt-circle-right me-2"></i><span class="d-none d-md-inline">View</span> Portfolio</a>
@@ -115,64 +126,64 @@
 		<section class="overview-section p-3 p-lg-5">
 			<div class="container">
 				<h2 class="section-title font-weight-bold mb-3">What I do</h2>
-				<div class="section-intro mb-5">I develop stochastic diversification models and apply machine learning techniques to bridge theoretical and empirical studies. Below is an overview of my skill sets and the technologies I use or am familiar with:</div>
+				<div class="section-intro mb-5">In my current project, I develop stochastic models to bridge theoretical and empirical studies at different phylogenetic scales. In my spare time, I try to bring data to life. Below is an overview of my skill sets, you can find out more in my blogs and projects.</div>
 				<div class="row">
 					<div class="item col-6 col-lg-3">
 						<div class="item-inner">
-							<div class="item-icon"><i class="fa-brands fa-r-project"></i>  <i class="fab fa-markdown"></i></div>
-							<h3 class="item-title">R, Markdown</h3>
-							<div class="item-desc">Visualization, statistical analyses, modelling and simulation. R package development.</div>
+							<div class="item-icon"><i class="fa-brands fa-r-project" style="color: #2167ba;"></i>  <i class="fa-solid fa-code-compare" style="color: #2167ba;"></i></div>
+							<h3 class="item-title">R</h3>
+							<div class="item-desc">Package development, data analysis, visualization, modeling, simulation.</div>
 						</div><!--//item-inner-->
 					</div><!--//item-->
 					<div class="item col-6 col-lg-3">
 						<div class="item-inner">
-							<div class="item-icon"><i class="fab fa-cuttlefish"></i></div>
+							<div class=""><img class="custom-icon" src="assets/icons/cplusplus.svg" alt="C++ Icon"></div>
 							<h3 class="item-title">C, C++</h3>
-							<div class="item-desc">Efficient programming, integration with R/Python to solve performance bottlenecks.</div>
+							<div class="item-desc">Software development, integration with R/Python, modeling, simulation.</div>
 						</div><!--//item-inner-->
 					</div><!--//item-->
 					
 					<div class="item col-6 col-lg-3">
 						<div class="item-inner">
-							<div class="item-icon"><i class="fa-brands fa-python"></i>  <i class="fa-solid fa-robot"></i></div>
+							<div class="item-icon"><i class="fa-brands fa-python"></i>  <img class="custom-icon-alt" src="assets/icons/pytorch.svg" alt="PyTorch Icon"></div>
 							<h3 class="item-title">Python</h3>
-							<div class="item-desc">Machine learning with Sklearn, Tensorflow, PyTorch and PyTorch Geometric.</div>
+							<div class="item-desc">Machine learning with PyTorch, PyTorch Geometric, Sklearn, Tensorflow.</div>
 						</div><!--//item-inner-->
 					</div><!--//item-->
 					
 					<div class="item col-6 col-lg-3">
 						<div class="item-inner">
-							<div class="item-icon"><i class="fa-brands fa-html5"></i>  <i class="fa-brands fa-css3-alt"></i>  <i class="fa-brands fa-node-js"></i>  <i class="fa-brands fa-npm"></i></div>
-							<h3 class="item-title">HTML, CSS, Node.js</h3>
-							<div class="item-desc">Fundamental front-end and back-end development. Webpage deployment.</div>
+							<div class="item-icon"><i class="fa-brands fa-html5"></i>  <i class="fa-brands fa-css3-alt"></i>  <i class="fa-brands fa-node-js" style="color: #f7d724;"></i>  <img class="custom-icon-alt" src="assets/icons/d3-dot-js.svg" alt="d3.js Icon"></div>
+							<h3 class="item-title">HTML, CSS, JS</h3>
+							<div class="item-desc">Web development, interactive data visualization with D3.js.</div>
 						</div><!--//item-inner-->
 					</div><!--//item-->
 					<div class="item col-6 col-lg-3">
 						<div class="item-inner">
 							<div class="item-icon"><i class="fa-solid fa-terminal"></i>  <i class="fa-solid fa-server"></i></div>
 							<h3 class="item-title">Bash, Server, HPC</h3>
-							<div class="item-desc">Familiar with UNIX-like systems, experienced in HPC job management, skilled in running cloud servers.</div>
+							<div class="item-desc">Server-side software maintenance, HPC management.</div>
 						</div><!--//item-inner-->
 					</div><!--//item-->
 					<div class="item col-6 col-lg-3">
 						<div class="item-inner">
 							<div class="item-icon"><i class="fa-solid fa-square-root-variable"></i>   <i class="fa-solid fa-chart-gantt"></i></div>
-							<h3 class="item-title">LaTeX, TikZ</h3>
-							<div class="item-desc">Proficient with LaTeX. Expertise in TikZ based graphics and visualization.</div>
+							<h3 class="item-title">TeX</h3>
+							<div class="item-desc">Graphical design and data visualization with LaTex, TikZ and PGFPlots.</div>
 						</div><!--//item-inner-->
 					</div><!--//item-->
 					<div class="item col-6 col-lg-3">
 						<div class="item-inner">
 							<div class="item-icon"><i class="fa-solid fa-earth-asia"></i>  <i class="fa-solid fa-dna"></i></div>
 							<h3 class="item-title">GIS, Bioinformatics</h3>
-							<div class="item-desc">Familiar with ArcGIS and QGIS, well-versed in common bioinformatics toolchains</div>
+							<div class="item-desc">Geospatial analysis, phylogeny reconstruction, metagenomics</div>
 						</div><!--//item-inner-->
 					</div><!--//item-->
 					<div class="item col-6 col-lg-3">
 						<div class="item-inner">
 							<div class="item-icon"><i class="fa-solid fa-database"></i>  <i class="fa-solid fa-download"></i></div>
-							<h3 class="item-title">Database, Webscraping</h3>
-							<div class="item-desc">Database management with MySQL and SQLite. Browser automation with Selenium, BeautifulSoup and Puppeteer.</div>
+							<h3 class="item-title">Big Data Tools</h3>
+							<div class="item-desc">SQL, browser automation with Selenium, BeautifulSoup and Puppeteer.</div>
 						</div><!--//item-inner-->
 					</div><!--//item-->
 				</div><!--//row-->
@@ -182,163 +193,53 @@
 		
 		<div class="container"><hr></div>
 
-		<section class="featured-section p-3 p-lg-5">
-			<div class="container">
-				<h2 class="section-title font-weight-bold mb-5">Featured Projects</h2>
-				<div class="row">
-					<div class="col-md-6 mb-5">
-						<div class="card project-card">
-							<div class="row no-gutters">
-								<div class="col-12 col-xl-5 card-img-holder">
-									<img src="assets/images/project/project-1.jpg" class="card-img" alt="image">
-								</div>
-								<div class="col-12 col-xl-7">
-									<div class="card-body">
-										<h5 class="card-title"><a href="project.html" class="theme-link">Project Heading</a></h5>
-										<p class="card-text">Project intro lorem ipsum dolor sit amet, consectetuer adipiscing elit. Cum sociis natoque penatibus et magnis dis parturient montes.</p>
-										<p class="card-text"><small class="text-muted">Client: Google</small></p>
-									</div>
-								</div>
-							</div>
-							<div class="link-mask">
-								<a class="link-mask-link" href="project.html"></a>
-								<div class="link-mask-text">
-									<a class="btn btn-secondary" href="project.html">
-										<i class="fas fa-eye me-2"></i>View Case Study
-									</a>
-								</div>
-							</div><!--//link-mask-->
-						</div><!--//card-->
-					</div><!--//col-->
-					<div class="col-md-6 mb-5">	
-						<div class="card project-card">
-							<div class="row no-gutters">
-								<div class="col-12 col-xl-5 card-img-holder">
-									<img src="assets/images/project/project-2.jpg" class="card-img" alt="image">
-								</div>
-								<div class="col-12 col-xl-7">
-									<div class="card-body">
-										<h5 class="card-title"><a href="project.html" class="theme-link">Project Heading</a></h5>
-										<p class="card-text">Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. </p>
-										<p class="card-text"><small class="text-muted">Client: Dropbox</small></p>
-									</div>
-								</div>
-							</div>
-							<div class="link-mask">
-								<a class="link-mask-link" href="project.html"></a>
-								<div class="link-mask-text">
-									<a class="btn btn-secondary" href="project.html">
-										<i class="fas fa-eye me-2"></i>View Case Study
-									</a>
-								</div>
-							</div><!--//link-mask-->
-						</div><!--//card-->
-					</div><!--//col-->
-					<div class="col-md-6 mb-5">
-						<div class="card project-card">
-							<div class="row no-gutters">
-								<div class="col-12 col-xl-5 card-img-holder">
-									<img src="assets/images/project/project-3.jpg" class="card-img" alt="image">
-								</div>
-								<div class="col-12 col-xl-7">
-									<div class="card-body">
-										<h5 class="card-title"><a href="project.html" class="theme-link">Project Heading</a></h5>
-										<p class="card-text">Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. </p>
-										<p class="card-text"><small class="text-muted">Client: Google</small></p>
-									</div>
-								</div>
-							</div>
-							<div class="link-mask">
-								<a class="link-mask-link" href="project.html"></a>
-								<div class="link-mask-text">
-									<a class="btn btn-secondary" href="project.html">
-										<i class="fas fa-eye me-2"></i>View Case Study
-									</a>
-								</div>
-							</div><!--//link-mask-->
-						</div><!--//card-->
-					</div><!--//col-->
-					<div class="col-md-6 mb-5">
-						<div class="card project-card">
-							<div class="row no-gutters">
-								<div class="col-12 col-xl-5 card-img-holder">
-									<img src="assets/images/project/project-4.jpg" class="card-img" alt="image">
-								</div>
-								<div class="col-12 col-xl-7">
-									<div class="card-body">
-										<h5 class="card-title"><a href="project.html" class="theme-link">Project Heading</a></h5>
-										<p class="card-text">Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. </p>
-										<p class="card-text"><small class="text-muted">Client: Uber</small></p>
-									</div>
-								</div>
-							</div>
-							<div class="link-mask">
-								<a class="link-mask-link" href="project.html"></a>
-								<div class="link-mask-text">
-									<a class="btn btn-secondary" href="project.html">
-										<i class="fas fa-eye me-2"></i>View Case Study
-									</a>
-								</div>
-							</div><!--//link-mask-->
-						</div><!--//card-->
-					</div><!--//col-->
-				</div><!--//row-->
-				<div class="text-center py-3"><a href="portfolio.html" class="btn btn-primary"><i class="fas fa-arrow-alt-circle-right me-2"></i>View Portfolio</a></div>
-				
-			</div><!--//container-->
-		</section><!--//featured-section-->
-		
-		<div class="container"><hr></div>
-		
 		<section class="latest-blog-section p-3 p-lg-5">
 			<div class="container">
 				<h2 class="section-title font-weight-bold mb-5">Latest Blog Posts</h2>
 				<div class="row">
 					<div class="col-md-4 mb-5">
 						<div class="card blog-post-card">
-							<img class="card-img-top" src="assets/images/blog/blog-post-thumb-card-1.jpg" alt="image">
+							<img class="card-img-top" src="assets/images/blog/blog-post-thumb-card-subspecies.jpg" alt="image">
 							<div class="card-body">
-								<h5 class="card-title"><a class="theme-link" href="blog-post.html">Top 3 JavaScript Frameworks</a></h5>
+								<h5 class="card-title"><a class="theme-link" href="blog-Subspecies-Level-Diversification.html">Sub-Species Level Diversification and Tree Coarsening</a></h5>
 								<p class="card-text">Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient...</p>
-								<p class="mb-0"><a class="text-link" href="blog-post.html">Read more &rarr;</a></p>
-								
+								<p class="mb-0"><a class="text-link" href="blog-Subspecies-Level-Diversification.html">Read more &rarr;</a></p>
 							</div>
 							<div class="card-footer">
-								<small class="text-muted">Published 2 days ago</small>
+								<small class="text-muted"><i class="fa-solid fa-calendar-days me-1"></i>20 Aug 2024&nbsp;&nbsp;&nbsp;&nbsp;<i class="fa-solid fa-clock me-1"></i>15 min read</small>
 							</div>
 						</div><!--//card-->
 					</div><!--//col-->
 					<div class="col-md-4 mb-5">
 						<div class="card blog-post-card">
-							<img class="card-img-top" src="assets/images/blog/blog-post-thumb-card-2.jpg" alt="image">
+							<img class="card-img-top" src="assets/images/blog/blog-post-thumb-card-pytorch-r.png" alt="image">
 							<div class="card-body">
-								<h5 class="card-title"><a class="theme-link" href="blog-post.html">About Remote Working</a></h5>
-								<p class="card-text">Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient...</p>
-								<p class="mb-0"><a class="text-link" href="blog-post.html">Read more &rarr;</a></p>
+								<h5 class="card-title"><a class="theme-link" href="blog-Integrating-PyTorch-Models-in-R-Package.html">Integrating Pre-Trained PyTorch Models into Your R Package</a></h5>
+								<p class="card-text">Pre-trained neural network models can significantly enhance your R projects. This tutorial will walk you through the process taking my R package EvoNN as an example...</p>
+								<p class="mb-0"><a class="text-link" href="blog-Integrating-PyTorch-Models-in-R-Package.html">Read more &rarr;</a></p>
 							</div>
 							<div class="card-footer">
-								<small class="text-muted">Published a week ago</small>
-								
+								<small class="text-muted"><i class="fa-solid fa-calendar-days me-1"></i>20 Jun 2024&nbsp;&nbsp;&nbsp;&nbsp;<i class="fa-solid fa-clock me-1"></i>15 min read</small>
 							</div>
 						</div><!--//card-->
 					</div><!--//col-->
 					<div class="col-md-4 mb-5">
 						<div class="card blog-post-card">
-							<img class="card-img-top" src="assets/images/blog/blog-post-thumb-card-3.jpg" alt="image">
+							<img class="card-img-top" src="assets/images/blog/blog-post-thumb-card-protocol.jpg" alt="image">
 							<div class="card-body">
-								<h5 class="card-title"><a class="theme-link" href="blog-post.html">A Guide to Becoming a Full-Stack Developer</a></h5>
-								<p class="card-text">Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient...</p>
-								<p class="mb-0"><a class="text-link" href="blog-post.html">Read more &rarr;</a></p>
+								<h5 class="card-title"><a class="theme-link" href="blog-Protocol-Transforming-Phylogeny-to-GCN.html">A Protocol to Bridge Phylogeny and GCN</a></h5>
+								<p class="card-text">Phylogenies are essentially graphs. Therefore, we can utilize a specific class of neural networks-the graph convolutional networks-to extract valuable information. But how? ...</p>
+								<p class="mb-0"><a class="text-link" href="blog-Protocol-Transforming-Phylogeny-to-GCN.html">Read more &rarr;</a></p>
 							</div>
 							<div class="card-footer">
-								<small class="text-muted">Published 3 weeks ago</small>
+								<small class="text-muted"><i class="fa-solid fa-calendar-days me-1"></i>8 Nov 2023&nbsp;&nbsp;&nbsp;&nbsp;<i class="fa-solid fa-clock me-1"></i>15 min read</small>
 							</div>
 						</div><!--//card-->
 					</div><!--//col-->
 				</div><!--//row-->
 				<div class="text-center py-3"><a href="blog-home.html" class="btn btn-primary"><i class="fas fa-arrow-alt-circle-right me-2"></i>View Blog</a></div>
 			</div><!--//container-->
-			
+
 		</section><!--//latest-blog-section-->
 
 		<footer class="footer text-center py-4">
