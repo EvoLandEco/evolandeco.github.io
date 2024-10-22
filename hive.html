@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hexagon Grid Simulation</title>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <script src="https://unpkg.com/honeycomb-grid@4.1.5/dist/honeycomb-grid.umd.js"></script>
+  <link rel="stylesheet" href="assets/css/hive.css">
+</head>
+<body>
+<div id="controlPanel">
+  <div>
+    <label for="gridRadius">Grid Radius: <span id="gridRadiusValue">10</span></label>
+    <input type="range" id="gridRadius" value="10" min="1" max="12" step="1" oninput="document.getElementById('gridRadiusValue').textContent = this.value;">
+
+    <label for="obstacleProbability">Obstacle Probability: <span id="obstacleProbabilityValue">0.1</span></label>
+    <input type="range" id="obstacleProbability" value="0.1" min="0" max="1" step="0.01" oninput="document.getElementById('obstacleProbabilityValue').textContent = this.value;">
+
+    <label for="methodHexZero">Initial Hexagon:</label>
+    <select id="methodHexZero">
+      <option value="center" selected>Center</option>
+      <option value="random">Random</option>
+      <option value="border">Border</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="globalBetaN">globalBetaN: <span id="globalBetaNValue">-0.01</span></label>
+    <input type="range" id="globalBetaN" value="-0.01" min="-1" max="1" step="0.001" oninput="document.getElementById('globalBetaNValue').textContent = this.value;">
+
+    <label for="globalBetaPhi">globalBetaPhi: <span id="globalBetaPhiValue">-0.01</span></label>
+    <input type="range" id="globalBetaPhi" value="-0.01" min="-1" max="1" step="0.001" oninput="document.getElementById('globalBetaPhiValue').textContent = this.value;">
+
+    <label for="globalGammaN">globalGammaN: <span id="globalGammaNValue">0.01</span></label>
+    <input type="range" id="globalGammaN" value="0.01" min="-1" max="1" step="0.001" oninput="document.getElementById('globalGammaNValue').textContent = this.value;">
+
+    <label for="globalGammaPhi">globalGammaPhi: <span id="globalGammaPhiValue">0.001</span></label>
+    <input type="range" id="globalGammaPhi" value="0.001" min="-1" max="1" step="0.001" oninput="document.getElementById('globalGammaPhiValue').textContent = this.value;">
+
+    <label for="globalDeltaN">globalDeltaN: <span id="globalDeltaNValue">0.01</span></label>
+    <input type="range" id="globalDeltaN" value="0.01" min="-1" max="1" step="0.001" oninput="document.getElementById('globalDeltaNValue').textContent = this.value;">
+
+    <label for="globalDeltaPhi">globalDeltaPhi: <span id="globalDeltaPhiValue">0.00</span></label>
+    <input type="range" id="globalDeltaPhi" value="0.00" min="-1" max="1" step="0.001" oninput="document.getElementById('globalDeltaPhiValue').textContent = this.value;">
+  </div>
+
+  <div>
+    <label for="intrinsicBirthRate">Intrinsic Birth Rate: <span id="intrinsicBirthRateValue">0.5</span></label>
+    <input type="range" id="intrinsicBirthRate" value="0.5" min="0" max="1" step="0.01" oninput="document.getElementById('intrinsicBirthRateValue').textContent = this.value;">
+
+    <label for="intrinsicMutationRate">Intrinsic Mutation Rate: <span id="intrinsicMutationRateValue">0.5</span></label>
+    <input type="range" id="intrinsicMutationRate" value="0.5" min="0" max="1" step="0.01" oninput="document.getElementById('intrinsicMutationRateValue').textContent = this.value;">
+
+    <label for="intrinsicDeathRate">Intrinsic Death Rate: <span id="intrinsicDeathRateValue">0.1</span></label>
+    <input type="range" id="intrinsicDeathRate" value="0.1" min="0" max="1" step="0.01" oninput="document.getElementById('intrinsicDeathRateValue').textContent = this.value;">
+
+    <label for="intrinsicMigrationRate">Intrinsic Migration Rate: <span id="intrinsicMigrationRateValue">0.5</span></label>
+    <input type="range" id="intrinsicMigrationRate" value="0.5" min="0" max="1" step="0.01" oninput="document.getElementById('intrinsicMigrationRateValue').textContent = this.value;">
+  </div>
+
+  <div>
+    <label for="simulationTime">Simulation Time: <span id="simulationTimeValue">20</span></label>
+    <input type="range" id="simulationTime" value="20" min="1" max="30" step="1" oninput="document.getElementById('simulationTimeValue').textContent = this.value;">
+
+    <button id="startButton">Start Simulation</button>
+    <button id="pauseButton" disabled="true">Pause Simulation</button>
+    <button id="resetButton">Reset Simulation</button>
+  </div>
+</div>
+
+<svg id="svgCanvas"></svg>
+<div id="tooltip" class="tooltip" style="opacity: 0;"></div>
+  <script src="assets/js/hive.js"></script>
+</body>
+</html>

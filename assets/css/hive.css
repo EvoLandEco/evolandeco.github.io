@@ -1,0 +1,92 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden; /* Prevents overflow */
+}
+
+#controlPanel {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding-left: 10px;
+    padding-right: 20px;
+    padding-top: 30px;
+    background-color: #f0f0f0;
+    min-width: 120px;
+    max-width: 15%;
+    width: 15%;
+    height: 100vh; /* Occupy the full viewport height */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+#controlPanel > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background-color: #fff;
+    padding: 5px;
+    border-radius: 8px;
+    width: 100%;
+    flex-grow: 1; /* Allow elements to expand proportionally */
+    justify-content: space-between; /* Spread content evenly within each section */
+}
+
+#controlPanel h3 {
+    margin: 0;
+    font-size: 1em; /* Ensure headers are not too large */
+}
+
+#controlPanel label {
+    font-weight: bold;
+    font-size: 0.9em; /* Reduce label size slightly */
+}
+
+#controlPanel input[type="range"] {
+    width: 100%;
+}
+
+#controlPanel .slider-value {
+    font-size: 0.8em; /* Slightly smaller font size for value */
+    color: #333;
+}
+
+#controlPanel button {
+    padding: 8px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 0.9em; /* Slightly smaller buttons */
+}
+
+#controlPanel button[disabled] {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+#svgCanvas {
+    flex-grow: 1;
+    border: 1px solid #ccc;
+    max-height: 100vh;  /* Maximum height is the window height */
+    max-width: 100vw;   /* Maximum width is the window width */
+    height: 100vh;      /* Set the height to the window height */
+    width: min(100vh, 85vw);  /* Width is at least the height but no more than 70% of the viewport width */
+}
+
+#tooltip {
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
+    font-size: 14px;
+    min-width: 100px;
+    max-width: 15%;
+}
