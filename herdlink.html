@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>HerdLink - NL Livestock Trade Network Analyser</title>
+    <!-- Load Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Load Local CSS -->
+    <link rel="stylesheet" type="text/css" href="assets/css/herdlink.css">
+    <!-- Load D3.js -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script type="text/javascript" src="assets/js/jLouvain.js"></script>
+</head>
+
+<body>
+    <div id="tooltip" class="tooltip"></div>
+    <!-- Main container: three columns -->
+    <div id="mainContainer">
+        <!-- Left Column: Controls and Network Stats -->
+        <div id="col1">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h4>HerdLink</h4>
+                </div>
+                <div class="card-body">
+                    <div id="controls" class="mb-3">
+                        <input type="file" id="csvFileInput" class="form-control mb-2" accept=".csv" />
+                        <!-- Initially disabled until CSV is loaded -->
+                        <button id="toggleModeButton" class="btn btn-primary w-100" disabled>Switch to Map
+                            Presentation</button>
+                    </div>
+                    <div id="networkStats" class="panel"></div>
+                    <div id="topMetrics"></div>
+                    <div id="sccOutput" class="panel"></div>
+                </div>
+            </div>
+        </div>
+        <!-- Middle Column: Graph/Map -->
+        <div id="col2">
+            <svg></svg>
+        </div>
+        <!-- Right Column: Trade Table -->
+        <div id="col3">
+            <div id="tradeInfo"">
+                <div class=" card mb-3">
+                <div class="card-header">
+                    <h4>Trade Information</h4>
+                </div>
+                <div id="tradeCardBody" class="card-body">
+                    <div id="tradePanel" class="panel"></div>
+                    <div id="inArboContainer">
+                        <h4>Max In-Arborescence</h4>
+                        <svg id="inArboSVG"></svg>
+                    </div>
+                    <div id="cliqueContainer">
+                        <h4>Maximum Clique</h4>
+                        <svg id="cliqueSVG"></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <script>
+        // ---- Global Variables ----
+        const svg = d3.select("#col2 svg");
+        let containerCol2 = document.getElementById("col2");
+        let w = containerCol2.clientWidth, h = containerCol2.clientHeight;
+        svg.attr("viewBox", `0 0 ${w} ${h}`);
+        let currentMode = "graph";
+        let nlMapData = null, nlLabelPoints = null;
+        let forceSim = null, linkSelection, nodeEnter, labelSelection;
+        let allLinks = [], allNodes = [];
+        let selectedNodeData = null, selectedNodeBubble = null;
+        let hotspots = null;
+        let hotspotColors = {
+            inDegree: "blue",
+            outDegree: "red",
+            betweenness: "orange",
+            pageRank: "black"
+        };
+
+        // ---- Load GeoJSON Files ----
+        d3.json("assets/files/herdlink/nl_corop.geojson").then(data => { nlMapData = data; })
+            .catch(error => { console.error("Error loading nl_corop.geojson:", error); });
+        d3.json("assets/files/herdlink/nl_corop_labelpoint.geojson").then(data => { nlLabelPoints = data; })
+            .catch(error => { console.error("Error loading nl_corop_labelpoint.geojson:", error); });
+
+        // ---- Define Arrow Marker ----
+        svg.append("defs").append("marker")
+            .attr("id", "arrow")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 15)
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "#fafceb");
+
+        // ---- Disable Toggle Button Until CSV is Loaded ----
+        document.getElementById("toggleModeButton").disabled = true;
+
+        // ---- Toggle Button Event ----
+        d3.select("#toggleModeButton").on("click", () => {
+            if (currentMode === "graph") {
+                switchToMapMode();
+                d3.select("#toggleModeButton").text("Switch to Graph Presentation");
+                currentMode = "map";
+            } else {
+                switchToGraphMode();
+                d3.select("#toggleModeButton").text("Switch to Map Presentation");
+                currentMode = "graph";
+            }
+        });
+
+        // ---- Helper: Map COROP Code to statnaam ----
+        function getStatnaam(code) {
+            if (nlLabelPoints && nlLabelPoints.features) {
+                let feat = nlLabelPoints.features.find(f => f.properties.statcode === code);
+                return feat ? feat.properties.statnaam : code;
+            }
+            return code;
+        }
+
+        /**
+         * updateNetworkStats
+         *  - connectivity (number of connected components if view the graph as undirected)
+         *  - modularity (placeholder; requires a community detection algorithm)
+         */
+        function updateNetworkStats(nodes, links) {
+            const totalNodes = nodes.length,
+                totalEdges = links.length,
+                totalTradeVolume = d3.sum(links, d => d.weight),
+                avgTradeEdge = totalEdges > 0 ? (totalTradeVolume / totalEdges).toFixed(2) : 0,
+                avgTradeNode = totalNodes > 0 ? (d3.sum(nodes, d => d.tradeTotal) / totalNodes).toFixed(2) : 0;
+
+            // Compute connectivity: how many connected components (undirected) exist?
+            const numComponents = getNumberOfConnectedComponents(nodes, links);
+
+            // Compute (or approximate) modularity by first detecting communities
+            let { partition, modularity } = computeModularity(nodes, links);
+
+            let html = `<h4>Statistics</h4>
+                            <table class="table table-bordered table-sm">
+                                <tr><th>Total Nodes</th><td>${totalNodes}</td></tr>
+                                <tr><th>Total Edges</th><td>${totalEdges}</td></tr>
+                                <tr><th>Total Trade Volume</th><td>${totalTradeVolume}</td></tr>
+                                <tr><th>Avg Freight/Edge</th><td>${avgTradeEdge}</td></tr>
+                                <tr><th>Avg Trade/Node</th><td>${avgTradeNode}</td></tr>
+                                <tr><th>Connected Components</th><td>${numComponents}</td></tr>
+                                <tr><th>Max Community Number</th><td>${modularity.toFixed(0)}</td></tr>
+                            </table>`;
+            document.getElementById("networkStats").innerHTML = html;
+        }
+
+        /**
+         * getNumberOfConnectedComponents(nodes, links)
+         * Treats links as undirected, returns how many connected components are in the graph.
+         */
+        function getNumberOfConnectedComponents(nodes, links) {
+            // Build an undirected adjacency list
+            const adjList = {};
+            nodes.forEach(n => { adjList[n.id] = new Set(); });
+
+            links.forEach(e => {
+                // Note: if e.source or e.target is an object, use e.source.id, e.target.id
+                const s = (typeof e.source === "object") ? e.source.id : e.source;
+                const t = (typeof e.target === "object") ? e.target.id : e.target;
+                // add each direction for undirected
+                adjList[s].add(t);
+                adjList[t].add(s);
+            });
+
+            // BFS or DFS to count components
+            let visited = new Set();
+            let componentCount = 0;
+
+            function bfs(startId) {
+                let queue = [startId];
+                visited.add(startId);
+                while (queue.length > 0) {
+                    let curr = queue.shift();
+                    adjList[curr].forEach(neighborId => {
+                        if (!visited.has(neighborId)) {
+                            visited.add(neighborId);
+                            queue.push(neighborId);
+                        }
+                    });
+                }
+            }
+
+            // For each node, if not visited, BFS from it => found a new component
+            nodes.forEach(n => {
+                if (!visited.has(n.id)) {
+                    componentCount++;
+                    bfs(n.id);
+                }
+            });
+
+            return componentCount;
+        }
+
+        function buildLouvainGraph(nodes, links) {
+            let nodeIds = nodes.map(n => n.id);
+
+            // The library expects a map-of-maps for edges, like:
+            // edges[nodeId1][nodeId2] = weight
+            let edges = {};
+            nodeIds.forEach(id => {
+                edges[id] = {};
+            });
+
+            // Build undirected edges from links
+            links.forEach(link => {
+                // unify references (source might be object or string)
+                let s = (typeof link.source === "object") ? link.source.id : link.source;
+                let t = (typeof link.target === "object") ? link.target.id : link.target;
+
+                if (!edges[s][t]) edges[s][t] = 0;
+                if (!edges[t][s]) edges[t][s] = 0;
+                edges[s][t] += link.weight;
+                edges[t][s] += link.weight;
+            });
+
+            return { nodeIds, edges };
+        }
+
+        function computeModularity(nodes, links) {
+            // Build an array of [sourceId, targetId, weight].
+            let edgesForLouvain = [];
+            links.forEach(link => {
+                let s = (typeof link.source === "object") ? link.source.id : link.source;
+                let t = (typeof link.target === "object") ? link.target.id : link.target;
+                let w = link.weight;
+                // For an undirected approach, add just once.
+                edgesForLouvain.push([s, t, w]);
+            });
+
+            let nodeIds = nodes.map(n => n.id);
+
+            // Now pass an array to .edges(...)
+            let community = jLouvain()
+                .nodes(nodeIds)
+                .edges(edgesForLouvain);
+
+            // Run the algorithm
+            let assignments = community();    // node => community
+            var max_community_number = 0;
+            nodeIds.forEach(function (d) {
+                nodes.find(function (n) {
+                    return n.id == d;
+                }).community = assignments[d];
+                max_community_number = max_community_number < assignments[d] ?
+                    assignments[d] : max_community_number;
+            });
+
+            return {
+                partition: assignments,
+                modularity: max_community_number
+            };
+        }
+
+        /**
+         * computeHotSpotMetrics(allNodes, allLinks)
+         *
+         * For each node, computes:
+         *  1) Weighted In-Degree
+         *  2) Weighted Out-Degree
+         *  3) Weighted Betweenness Centrality (using a simplified Brandes approach)
+         *  4) Weighted PageRank (iterative approach)
+         *
+         * Returns an object: {
+         *    [nodeId]: {
+         *       inDegree: Number,
+         *       outDegree: Number,
+         *       betweenness: Number,
+         *       pageRank: Number
+         *    },
+         *    ...
+         * }
+         *
+         * allNodes: array of { id, ... }
+         * allLinks: array of { source, target, weight }
+         */
+        function computeHotSpotMetrics(allNodes, allLinks) {
+            //////////////////////////////////////////////
+            // 1) Weighted In-Degree & Out-Degree
+            //////////////////////////////////////////////
+            const metrics = {};
+            allNodes.forEach(n => {
+                metrics[n.id] = {
+                    inDegree: 0,
+                    outDegree: 0,
+                    betweenness: 0,
+                    pageRank: 1, // initial PR guess
+                };
+            });
+
+            // Weighted in/out-degree is just sum of "weight" on incoming/outgoing edges
+            allLinks.forEach(link => {
+                const s = (typeof link.source === "object") ? link.source.id : link.source;
+                const t = (typeof link.target === "object") ? link.target.id : link.target;
+                const w = link.weight || 1;
+                if (metrics[s]) {
+                    metrics[s].outDegree += w;
+                }
+                if (metrics[t]) {
+                    metrics[t].inDegree += w;
+                }
+            });
+
+            //////////////////////////////////////////////
+            // 2) Weighted Betweenness Centrality
+            //    (Simplified Brandes approach)
+            //////////////////////////////////////////////
+            // NOTE: A simplified approach that uses 1/weight as the "cost."
+            //////////////////////////////////////////////
+
+            // Build adjacency for a weighted directed graph
+            const adj = {};
+            allNodes.forEach(n => { adj[n.id] = []; });
+            allLinks.forEach(e => {
+                const s = (typeof e.source === "object") ? e.source.id : e.source;
+                const t = (typeof e.target === "object") ? e.target.id : e.target;
+                const w = e.weight || 1;
+                adj[s].push({ target: t, cost: 1 / w }); // cost is 1/weight
+            });
+
+            function brandesBetweenness() {
+                allNodes.forEach(n => {
+                    metrics[n.id].betweenness = 0;
+                });
+
+                // For each node s:
+                allNodes.forEach(sNode => {
+                    const s = sNode.id;
+                    // S: stack, P: predecessors, sigma: # of shortest paths, dist: distance
+                    let S = [];
+                    let P = {};
+                    let sigma = {};
+                    let dist = {};
+                    let delta = {};
+                    allNodes.forEach(n => {
+                        P[n.id] = [];
+                        sigma[n.id] = 0;
+                        dist[n.id] = Infinity;
+                        delta[n.id] = 0;
+                    });
+                    sigma[s] = 1;
+                    dist[s] = 0;
+
+                    // Use a D' BFS with a priority queue or a simple Dijkstra, but let's do a naive approach:
+                    let queue = [s];
+                    while (queue.length > 0) {
+                        let v = queue.shift();
+                        S.push(v);
+                        // Explore adjacency
+                        adj[v].forEach(edge => {
+                            let w = edge.target;
+                            let cost = edge.cost;
+                            let vwDist = dist[v] + cost;
+                            if (vwDist < dist[w]) {
+                                dist[w] = vwDist;
+                                sigma[w] = 0;
+                                P[w] = [];
+                                queue.push(w);
+                            }
+                            if (Math.abs(vwDist - dist[w]) < 1e-9) {
+                                // same shortest path => update
+                                sigma[w] += sigma[v];
+                                P[w].push(v);
+                            }
+                        });
+                        // Sort queue by dist for correctness (makes it Dijkstra)
+                        queue.sort((a, b) => dist[a] - dist[b]);
+                    }
+
+                    // Back-propagation
+                    while (S.length > 0) {
+                        let w = S.pop();
+                        P[w].forEach(v => {
+                            delta[v] += (sigma[v] / sigma[w]) * (1 + delta[w]);
+                        });
+                        if (w !== s) {
+                            metrics[w].betweenness += delta[w];
+                        }
+                    }
+                });
+            }
+
+            brandesBetweenness();
+
+            //////////////////////////////////////////////
+            // 3) Weighted PageRank (Simplified)
+            //////////////////////////////////////////////
+            // Iterative approach:
+            // pageRank(u) = (1 - d)/N + d * Sum_over_incoming( pageRank(v) * (weight_uv / sum_of_outgoing_weights_of(v)) )
+            // d ~ 0.85
+            //////////////////////////////////////////////
+
+            let d = 0.85;
+            let N = allNodes.length;
+            // Precompute outWeight sums to do Weighted PR
+            let outWeightSum = {};
+            allNodes.forEach(n => {
+                outWeightSum[n.id] = 0;
+            });
+            allLinks.forEach(link => {
+                const s = (typeof link.source === "object") ? link.source.id : link.source;
+                const w = link.weight || 1;
+                outWeightSum[s] += w;
+            });
+
+            function doPageRankIteration() {
+                let newPR = {};
+                allNodes.forEach(n => {
+                    newPR[n.id] = (1 - d) / N;
+                });
+
+                // For each edge v->u with weight w, contribute Weighted PR fraction
+                allLinks.forEach(link => {
+                    let vId = (typeof link.source === "object") ? link.source.id : link.source;
+                    let uId = (typeof link.target === "object") ? link.target.id : link.target;
+                    let w = link.weight || 1;
+                    // Weighted fraction of v's PR
+                    if (outWeightSum[vId] > 0) {
+                        let contrib = d * (metrics[vId].pageRank * (w / outWeightSum[vId]));
+                        newPR[uId] += contrib;
+                    }
+                });
+
+                // Overwrite
+                allNodes.forEach(n => {
+                    metrics[n.id].pageRank = newPR[n.id];
+                });
+            }
+
+            // run 20 iterations
+            for (let i = 0; i < 20; i++) {
+                doPageRankIteration();
+            }
+
+            //////////////////////////////////////////////
+            // Return final metrics
+            //////////////////////////////////////////////
+            return metrics;
+        }
+
+        // ---- Helper: Adjust Arrow Endpoint ----
+        function getAdjustedTarget(d) {
+            let dx = d.target.x - d.source.x,
+                dy = d.target.y - d.source.y,
+                dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist === 0) return { x: d.target.x, y: d.target.y };
+            return { x: d.target.x - (dx / dist) * d.target.r, y: d.target.y - (dy / dist) * d.target.r };
+        }
+
+        /**
+         * printHotSpots(metrics, containerId)
+         *
+         * Creates multiple sub-tables, one per metric (inDegree, outDegree, betweenness, pageRank).
+         * Each sub-table lists the nodes in descending order of that metric.
+         * 
+         * Layout example:
+         *   <h4>inDegree</h4>
+         *   <table>
+         *     <tr><th>Node</th><th>inDegree</th></tr>
+         *     <tr><td>A</td><td>30.00</td></tr>
+         *     ...
+         *   </table>
+         *
+         * @param {Object} metrics - e.g. {
+         *     "A": { inDegree: 10, outDegree: 20, betweenness: 5.3, pageRank: 0.12 },
+         *     "B": { inDegree: 12, outDegree: 9,  betweenness: 3.8, pageRank: 0.20 },
+         *   }
+         * @param {String} containerId - e.g. "topMetrics"
+         * @param {Number} n - Number of top nodes per metric to display
+         */
+        function printHotSpots(metrics, containerId, n) {
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.warn("No container found for ID:", containerId);
+                return;
+            }
+
+            // Clear the container
+            container.innerHTML = "";
+
+            const metricNames = ["inDegree", "outDegree", "betweenness", "pageRank"];
+
+            // Helper: sort all nodes by the specified metric (descending)
+            function sortByMetric(metricName) {
+                const arr = Object.keys(metrics).map(nodeId => {
+                    return {
+                        nodeId,
+                        value: metrics[nodeId][metricName] || 0
+                    };
+                });
+                arr.sort((a, b) => b.value - a.value); // descending
+                return arr;
+            }
+
+            titleString = "<h4> Hotspots </h4>";
+            container.innerHTML += titleString;
+
+            // Build sub-table for each metric, only shows top N
+            metricNames.forEach(metricName => {
+                // Sort nodes by this metric
+                const sortedList = sortByMetric(metricName);
+                if (n) sortedList.splice(n); // keep only top N
+
+                // Start sub-table HTML
+                let subHtml = `
+                <table class="table table-bordered table-sm mb-3">
+                    <thead>
+                    <tr>
+                        <th>Node</th>
+                        <th>${metricName}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                `;
+
+                sortedList.forEach(item => {
+                    // Format numeric value
+                    const valStr = item.value.toFixed(2);
+                    subHtml += `
+                    <tr>
+                    <td>${item.nodeId}</td>
+                    <td>${valStr}</td>
+                    </tr>
+                `;
+                });
+
+                subHtml += `
+                    </tbody>
+                </table>
+                `;
+
+                container.innerHTML += subHtml;
+            });
+        }
+
+        // ---- Create Network ----
+        function createNetwork(nodes, links) {
+            // Use a log scale for edge colors.
+            const edgeExtent = d3.extent(links, d => Math.log(d.weight));
+            const edgeColor = d3.scaleSequential(d3.interpolateSpectral)
+                .domain([edgeExtent[1], edgeExtent[0]]);
+            const nodeColor = d3.scaleOrdinal(d3.schemeCategory10);
+            const nodeSize = d3.scaleSqrt()
+                .domain(d3.extent(nodes, d => d.tradeTotal))
+                .range([5, 20]);
+
+            forceSim = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(links).id(d => d.id).distance(150))
+                .force("charge", d3.forceManyBody().strength(-300))
+                .force("center", d3.forceCenter(w / 2, h / 2));
+
+            const linkGroup = svg.append("g").attr("class", "links");
+            linkSelection = linkGroup.selectAll("path")
+                .data(links)
+                .enter().append("path")
+                .attr("class", "link")
+                .attr("stroke", d => edgeColor(Math.log(d.weight)))
+                .attr("stroke-width", d => Math.sqrt(d.weight));
+
+            const nodeGroup = svg.append("g").attr("class", "nodes");
+
+            // Compute top-3 lists for each metric from the hotspots object.
+            const metricNames = ["inDegree", "outDegree", "betweenness", "pageRank"];
+            let top3ForMetric = {};
+            metricNames.forEach(metric => {
+                // Sort the keys (node IDs) of hotspots by descending metric value.
+                top3ForMetric[metric] = Object.keys(hotspots)
+                    .sort((a, b) => hotspots[b][metric] - hotspots[a][metric])
+                    .slice(0, 3);
+            });
+
+            // Create a group for each node (will contain circle, hotspot strokes, and label)
+            nodeEnter = nodeGroup.selectAll(".nodeGroup")
+                .data(nodes)
+                .enter().append("g")
+                .attr("class", "nodeGroup")
+                .call(drag(forceSim))
+                .on("click", onClickNode)
+                .on("mouseover", function (event, d) {
+                    d3.select(this).raise();
+                    d3.select(this).select("circle.primary")
+                        .attr("stroke", "black");
+                    const tooltipDiv = d3.select("#tooltip");
+                    tooltipDiv.style("opacity", 1)
+                        .html(`${d.id} ${d.statnaam} (Trade: ${d.tradeTotal})`);
+                })
+                .on("mousemove", function (event, d) {
+                    d3.select("#tooltip")
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY + 10) + "px");
+                })
+                .on("mouseout", function (event, d) {
+                    d3.select(this).select("circle.primary")
+                        .attr("stroke", null)
+                        .attr("stroke-width", null);
+                    d3.select("#tooltip").style("opacity", 0);
+                });
+
+            // Append primary node circle.
+            nodeEnter.append("circle")
+                .attr("class", "primary")
+                .attr("r", d => { d.r = nodeSize(d.tradeTotal); return d.r; })
+                .attr("fill", d => {
+                    let cid = d.community;
+                    return nodeColor(cid);
+                })
+                .attr("stroke", null)
+                .attr("stroke-width", null);
+
+            // Append extra hotspot strokes based on top3ForMetric.
+            // Instead of reselecting ".nodeLabel", iterate over nodeEnter.
+            nodeEnter.each(function (d) {
+                let metricsForNode = [];
+                metricNames.forEach(metric => {
+                    // If this node is in the top-3 for the metric, add it.
+                    if (top3ForMetric[metric].includes(d.id)) {
+                        metricsForNode.push(metric);
+                    }
+                });
+                // Optional: sort for consistent ordering
+                metricsForNode.sort();
+                let group = d3.select(this);
+                metricsForNode.forEach((metric, i) => {
+                    group.append("circle")
+                        .attr("class", "hotspotStroke")
+                        .attr("r", d.r + (i + 1) * 3) // each extra ring offset by 3px per metric
+                        .attr("fill", "none")
+                        .attr("stroke", hotspotColors[metric])
+                        .attr("stroke-width", 2);
+                });
+            });
+
+            // Append text labels for nodes.
+            labelSelection = nodeGroup.selectAll(".nodeLabel")
+                .data(nodes)
+                .enter().append("text")
+                .attr("class", "nodeLabel")
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", "black")
+                .text(d => d.id);
+
+            forceSim.on("tick", () => {
+                if (currentMode === "graph") {
+                    linkSelection.attr("d", function (d) {
+                        const dx = d.target.x - d.source.x,
+                            dy = d.target.y - d.source.y,
+                            dr = Math.sqrt(dx * dx + dy * dy),
+                            adj = getAdjustedTarget(d);
+                        return "M" + d.source.x + "," + d.source.y +
+                            "A" + dr + "," + dr + " 0 0,1 " + adj.x + "," + adj.y;
+                    });
+                    // Update positions of the node groups (circle + hotspot strokes)
+                    nodeEnter.attr("transform", d => `translate(${d.x},${d.y})`);
+                    // Update text labels positions.
+                    labelSelection
+                        .attr("x", d => d.x)
+                        .attr("y", d => d.y - (d.r + 13));
+                    if (currentMode === "graph" && selectedNodeBubble && selectedNodeData) {
+                        selectedNodeBubble.attr("transform", "translate(" + selectedNodeData.x + "," + (selectedNodeData.y - 20) + ")");
+                    }
+                }
+            });
+
+            linkSelection
+                .on("mouseover", function (event, d) {
+                    if (d3.select(this).classed("linkSelect")) {
+                        d3.select(this).attr("class", "linkSelectOver").raise();
+                    } else {
+                        d3.select(this).attr("class", "linkOver").raise();
+                    }
+                    const tooltipDiv = d3.select("#tooltip");
+                    tooltipDiv.style("opacity", 1)
+                        .html(`${d.source.id} ${getStatnaam((typeof d.source === "object" ? d.source.id : d.source))} → ${d.target.id} ${getStatnaam((typeof d.target === "object" ? d.target.id : d.target))}: ${d.weight}`);
+                })
+                .on("mousemove", function (event, d) {
+                    d3.select("#tooltip")
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY + 10) + "px");
+                })
+                .on("mouseout", function (event, d) {
+                    if (d3.select(this).classed("linkSelectOver")) {
+                        d3.select(this).attr("class", "linkSelect");
+                    } else {
+                        d3.select(this).attr("class", "link");
+                    }
+                    d3.select("#tooltip").style("opacity", 0);
+                });
+
+            // ---- Add Hotspot Stroke Legend ----
+            addHotspotLegend(svg);
+
+            const defs = svg.append("defs");
+            const edgeGlow = defs.append("filter")
+            .attr("id", "edgeGlow")
+            .attr("x", "-50%")
+            .attr("y", "-50%")
+            .attr("width", "200%")
+            .attr("height", "200%");
+
+            edgeGlow.append("feGaussianBlur")
+            .attr("in", "SourceGraphic")
+            .attr("stdDeviation", 3)
+            .attr("result", "blur");
+
+            const feMerge = edgeGlow.append("feMerge");
+            feMerge.append("feMergeNode")
+            .attr("in", "blur");
+            feMerge.append("feMergeNode")
+            .attr("in", "SourceGraphic");
+        }
+
+        function addHotspotLegend(svg) {
+            const legendData = [
+                { name: "Vulnerable Nodes", color: hotspotColors.inDegree },
+                { name: "Seeding Nodes", color: hotspotColors.outDegree },
+                { name: "Gateway Nodes", color: hotspotColors.betweenness },
+                { name: "Network Bottlenecks", color: hotspotColors.pageRank }
+            ];
+
+            const legend = svg.append("g")
+                .attr("class", "hotspotLegend")
+                .attr("transform", `translate(${w - 900}, 50)`); // Adjust position near top-right
+
+            const legendItem = legend.selectAll(".legendItem")
+                .data(legendData)
+                .enter().append("g")
+                .attr("class", "legendItem")
+                .attr("transform", (d, i) => `translate(0, ${i * 25})`);
+
+            legendItem.append("circle")
+                .attr("r", 10)
+                .attr("fill", "none")
+                .attr("stroke", d => d.color)
+                .attr("stroke-width", 3)
+                .attr("stroke-dasharray", "5 5");
+
+            legendItem.append("text")
+                .attr("x", 25)
+                .attr("y", 7)
+                .attr("font-size", "18px")
+                .attr("fill", "black")
+                .text(d => d.name);
+        }
+
+        // ---- Node Click Handler ----
+        function onClickNode(event, d) {
+            if (event.defaultPrevented) return;
+            if (selectedNodeData && selectedNodeData.id === d.id) { clearSelection(); return; }
+            clearSelection();
+            selectedNodeData = d;
+            if (currentMode === "graph") {
+                selectedNodeBubble = svg.append("g")
+                    .attr("class", "bubble")
+                    .attr("pointer-events", "none");
+                let bubbleText = selectedNodeBubble.append("text")
+                    .attr("text-anchor", "middle")
+                    .attr("dy", "0.3em")
+                    .text(d.statnaam);
+                const bbox = bubbleText.node().getBBox();
+                selectedNodeBubble.insert("rect", "text")
+                    .attr("x", bbox.x - 4)
+                    .attr("y", bbox.y - 2)
+                    .attr("width", bbox.width + 8)
+                    .attr("height", bbox.height + 4)
+                    .attr("fill", "#fff")
+                    .attr("stroke", "#000")
+                    .attr("rx", 3)
+                    .attr("ry", 3);
+                selectedNodeBubble.raise();
+                selectedNodeBubble.attr("transform", "translate(" + d.x + "," + (d.y - 20) + ")");
+            }
+            // If clicked, change node labels to white
+            labelSelection.attr("fill", "white");
+            // If clicked, change legend text to white
+            d3.selectAll(".legendItem text").attr("fill", "white");
+            linkSelection.attr("display", function (linkData) {
+                const srcId = (typeof linkData.source === "object" ? linkData.source.id : linkData.source),
+                    tgtId = (typeof linkData.target === "object" ? linkData.target.id : linkData.target);
+                if (srcId === d.id) {
+                    d3.select(this)
+                        .attr("class", "linkSelect")
+                        .attr("stroke", "#46fa46")
+                        .attr("stroke-width", Math.sqrt(linkData.weight) + 2)
+                        .attr("opacity", 1)
+                        .attr("filter", "url(#edgeGlow)");
+                    return "block";
+                } else if (tgtId === d.id) {
+                    d3.select(this)
+                        .attr("class", "linkSelect")
+                        .attr("stroke", "#fcc67e")
+                        .attr("stroke-width", Math.sqrt(linkData.weight) + 2)
+                        .attr("opacity", 1)
+                        .attr("filter", "url(#edgeGlow)");
+                    return "block";
+                } else { return "none"; }
+            })
+                .attr("marker-end", function (linkData) {
+                    const srcId = (typeof linkData.source === "object" ? linkData.source.id : linkData.source),
+                        tgtId = (typeof linkData.target === "object" ? linkData.target.id : linkData.target);
+                    if (srcId === d.id || tgtId === d.id) { return "url(#arrow)"; }
+                    else { return null; }
+                });
+
+            updateTradeTable(d);
+            replotInOutArbos(d.id);
+
+            // Add overlay to gray out the background map.
+            // Insert a rectangle as the first child of the SVG.
+            if (svg.select("#mapOverlay").empty()) {
+                svg.insert("rect", ":first-child")
+                    .attr("id", "mapOverlay")
+                    .attr("x", 0)
+                    .attr("y", 0)
+                    .attr("width", w)
+                    .attr("height", h)
+                    .attr("fill", "black")
+                    .attr("opacity", 0.7);
+            }
+
+            // Unhide the trade information panel
+            document.getElementById("tradeInfo").style.display = "block";
+        }
+
+        function clearSelection() {
+            if (selectedNodeBubble) { selectedNodeBubble.remove(); selectedNodeBubble = null; }
+            selectedNodeData = null;
+
+            const colorScale = d3.scaleSequential(d3.interpolateSpectral)
+                .domain(d3.extent(allLinks, d => Math.log(d.weight)).reverse()); // Inverted domain
+
+            labelSelection.attr("fill", "black");
+            d3.selectAll(".legendItem text").attr("fill", "black");
+            linkSelection.attr("display", "block")
+                .attr("class", "link")
+                .attr("marker-end", null)
+                .attr("stroke", d => colorScale(Math.log(d.weight))) // Use the inverted scale
+                .attr("stroke-width", d => Math.sqrt(d.weight))
+                .attr("opacity", 0.5)
+                .attr("filter", null);
+
+            updateTradeTable(null);
+            replotInOutArbos(null);
+
+            // Hide the trade information panel
+            document.getElementById("tradeInfo").style.display = "none";
+
+            // Remove the background overlay if it exists.
+            svg.select("#mapOverlay").remove();
+        }
+
+        function updateTradeTable(selectedNode) {
+            const tradePanelDiv = document.getElementById("tradePanel");
+            if (!selectedNode) { tradePanelDiv.innerHTML = ""; return; }
+
+            const outgoing = allLinks.filter(d => (typeof d.source === "object" ? d.source.id : d.source) === selectedNode.id);
+            const incoming = allLinks.filter(d => (typeof d.target === "object" ? d.target.id : d.target) === selectedNode.id);
+
+            outgoing.sort((a, b) => b.weight - a.weight);
+            incoming.sort((a, b) => b.weight - a.weight);
+
+            let html = `<h4>${selectedNode.id} ${selectedNode.statnaam}</h4>
+                        <div class="d-flex gap-2">
+                            <div class="trade-col flex-fill" style="overflow-y:auto; max-height:30vh;">
+                                <table class="table table-striped table-bordered table-sm">
+                                    <thead class="sticky-header">
+                                        <tr><th>Outgoing Trades</th><th>Freight</th></tr>
+                                    </thead>
+                                    <tbody>`;
+            if (outgoing.length > 0) {
+                outgoing.forEach(trade => {
+                    const dest = getStatnaam((typeof trade.target === "object" ? trade.target.id : trade.target));
+                    html += `<tr><td>${dest}</td><td>${trade.weight}</td></tr>`;
+                });
+            } else {
+                html += `<tr><td colspan="2">No outgoing trades.</td></tr>`;
+            }
+            html += `</tbody></table></div>
+                    <div class="trade-col flex-fill" style="overflow-y:auto; max-height:30vh;">
+                        <table class="table table-striped table-bordered table-sm">
+                            <thead class="sticky-header">
+                                <tr><th>Incoming Trades</th><th>Freight</th></tr>
+                            </thead>
+                            <tbody>`;
+            if (incoming.length > 0) {
+                incoming.forEach(trade => {
+                    const src = getStatnaam((typeof trade.source === "object" ? trade.source.id : trade.source));
+                    html += `<tr><td>${src}</td><td>${trade.weight}</td></tr>`;
+                });
+            } else {
+                html += `<tr><td colspan="2">No incoming trades.</td></tr>`;
+            }
+            html += `</tbody></table></div></div>`;
+
+            tradePanelDiv.innerHTML = html;
+        }
+
+        function drag(simulation) {
+            function dragstarted(event, d) { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
+            function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
+            function dragended(event, d) { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
+            return d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended);
+        }
+
+        // ---- Map Mode Functions ----
+        function switchToMapMode() {
+            if (forceSim) forceSim.stop();
+            if (!nlMapData) { console.error("NL map data not loaded."); return; }
+            const projection = d3.geoIdentity().reflectY(true).fitSize([w, h], nlMapData);
+            const path = d3.geoPath().projection(projection);
+            const mapLayer = svg.insert("g", ":first-child").attr("class", "map");
+            mapLayer.selectAll("path")
+                .data(nlMapData.features)
+                .enter().append("path")
+                .attr("d", path)
+                .attr("fill", "none")
+                .attr("stroke", "#999");
+            if (!svg.select("#mapOverlay").empty()) {
+                svg.select("#mapOverlay").remove();
+                svg.insert("rect", ":first-child")
+                    .attr("id", "mapOverlay")
+                    .attr("x", 0)
+                    .attr("y", 0)
+                    .attr("width", w)
+                    .attr("height", h)
+                    .attr("fill", "black")
+                    .attr("opacity", 0.7);
+            }
+            if (!nlLabelPoints) { console.error("NL label point data not loaded."); }
+            else {
+                nodeEnter.each(function (d) {
+                    const labelFeature = nlLabelPoints.features.find(f => f.properties.statcode === d.id);
+                    if (labelFeature) {
+                        const coords = projection(labelFeature.geometry.coordinates);
+                        d.x = coords[0];
+                        d.y = coords[1];
+                    }
+                });
+            }
+            updateMapPositionsWithTransition();
+        }
+
+        function switchToGraphMode() {
+            svg.selectAll(".map").remove();
+            nodeEnter.each(function (d) { d.fx = null; d.fy = null; });
+            if (forceSim) { forceSim.alpha(1).restart(); }
+        }
+
+        function updateMapPositionsWithTransition() {
+            nodeEnter.transition().duration(1000)
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+
+            linkSelection.transition().duration(1000)
+                .attr("d", function (d) {
+                    const dx = d.target.x - d.source.x,
+                        dy = d.target.y - d.source.y,
+                        dr = Math.sqrt(dx * dx + dy * dy),
+                        adj = getAdjustedTarget(d);
+                    return "M" + d.source.x + "," + d.source.y +
+                        "A" + dr + "," + dr + " 0 0,1 " + adj.x + "," + adj.y;
+                });
+
+            labelSelection.transition().duration(1000)
+                .attr("x", d => d.x)
+                .attr("y", d => d.y - (d.r + 13));
+        }
+
+        /**
+         * chuLiuEdmonds(nodes, edges, root, direction)
+         * 
+         * Computes a maximum spanning arborescence using a simplified Chu-Liu/Edmonds approach.
+         * 
+         * @param {Array} nodes - Array of node objects, each with at least {id: string}.
+         * @param {Array} edges - Array of edge objects, each with {source, target, weight}.
+         *                        source/target can be either a node object or an ID string.
+         * @param {Object} root - The root node object for the arborescence, e.g. {id: "Root"}
+         * @param {String} direction - "in" or "out".
+         *    - "in":   each node except root has exactly one incoming edge (a standard in-arborescence).
+         *    - "out":  each node except root has exactly one outgoing edge (equivalent to reversing edges, 
+         *              computing an in-arbo, then reversing them back).
+         * @returns {Array} an array of edges ( {source, target, weight} ) forming the maximum arborescence.
+         */
+        function chuLiuEdmonds(nodes, edges, root, direction) {
+            // If OUT-arborescence, reverse edges first.
+            let reversed = false;
+            let workingEdges = edges;
+            if (direction === "out") {
+                reversed = true;
+                workingEdges = edges.map(e => ({
+                    source: e.target,
+                    target: e.source,
+                    weight: e.weight
+                }));
+            }
+
+            // ---------------------------
+            // Step 1: For each node (except root), pick the single incoming edge of maximum weight
+            //         in the (possibly reversed) graph
+            // ---------------------------
+            let inEdges = {};
+            nodes.forEach(node => {
+                if (node.id === root.id) return;
+                // all edges that lead *into* this node
+                const incoming = workingEdges.filter(e => {
+                    const t = (typeof e.target === "object") ? e.target.id : e.target;
+                    return t === node.id;
+                });
+                if (incoming.length > 0) {
+                    // pick the heaviest edge
+                    inEdges[node.id] = incoming.reduce((a, b) => a.weight > b.weight ? a : b);
+                }
+            });
+
+            // ---------------------------
+            // Step 2: Detect a cycle by DFS
+            // ---------------------------
+            let cycle = null;
+            let visited = {};
+
+            function dfsCycle(nodeId, path) {
+                if (visited[nodeId]) {
+                    // if visited before in the current path, then there's a cycle
+                    const idx = path.indexOf(nodeId);
+                    if (idx !== -1) {
+                        cycle = path.slice(idx);
+                    }
+                    return;
+                }
+                visited[nodeId] = true;
+                if (inEdges[nodeId]) {
+                    // follow the one incoming edge
+                    const src = (typeof inEdges[nodeId].source === "object")
+                        ? inEdges[nodeId].source.id
+                        : inEdges[nodeId].source;
+                    dfsCycle(src, path.concat([nodeId]));
+                }
+            }
+
+            // run DFS for each node except root
+            nodes.forEach(node => {
+                if (node.id !== root.id && !visited[node.id]) {
+                    dfsCycle(node.id, []);
+                }
+            });
+
+            // if there's no cycle, there's a valid arborescence
+            if (!cycle) {
+                // collecting all the inEdges values is enough to define the arborescence
+                let result = Object.values(inEdges);
+
+                // if reversed edges for "out", should also reverse the result back
+                if (reversed) {
+                    result = result.map(e => ({
+                        source: e.target,
+                        target: e.source,
+                        weight: e.weight
+                    }));
+                }
+                return result;
+            }
+
+            // ---------------------------
+            // Step 3: Contract the cycle
+            // ---------------------------
+            // create a synthetic node ID for the entire cycle
+            let cycleId = cycle.join("_");
+
+            // remove cycle nodes from 'nodes' and add one new "contracted" node
+            let contractedNodes = nodes.filter(n => !cycle.includes(n.id));
+            contractedNodes.push({ id: cycleId });
+
+            // build new edges with cycle references replaced by 'cycleId'
+            let contractedEdges = [];
+            for (const e of workingEdges) {
+                const s = (typeof e.source === "object") ? e.source.id : e.source;
+                const t = (typeof e.target === "object") ? e.target.id : e.target;
+                let newS = cycle.includes(s) ? cycleId : s;
+                let newT = cycle.includes(t) ? cycleId : t;
+
+                // skip self loops
+                if (newS === newT) continue;
+
+                let newWeight = e.weight;
+                // if t is in the cycle, but s is not, subtract the weight of that node's chosen edge
+                if (cycle.includes(t) && !cycle.includes(s)) {
+                    newWeight = e.weight - inEdges[t].weight;
+                }
+
+                contractedEdges.push({ source: newS, target: newT, weight: newWeight });
+            }
+
+            // recursively compute arbo on contracted graph
+            const contractedRoot = (root.id === cycleId) ? { id: cycleId } : root;
+            let T = chuLiuEdmonds(contractedNodes, contractedEdges, contractedRoot, "in");
+            // ^ pass direction = "in" here
+
+            // ---------------------------
+            // Step 4: Expand the cycle
+            // ---------------------------
+            // find the edge pointing to the cycleId in T
+            let cycleEdge = T.find(e => {
+                const tid = (typeof e.target === "object") ? e.target.id : e.target;
+                return tid === cycleId;
+            });
+
+            // remove that edge from T
+            T = T.filter(e => {
+                const tid = (typeof e.target === "object") ? e.target.id : e.target;
+                return tid !== cycleId;
+            });
+
+            // restore the cycle's chosen edges
+            cycle.forEach(id => {
+                T.push(inEdges[id]);
+            });
+
+            // if reversed edges for "out", should also reverse the final result back
+            if (reversed) {
+                T = T.map(e => ({
+                    source: e.target,
+                    target: e.source,
+                    weight: e.weight
+                }));
+            }
+
+            return T;
+        }
+
+        /**
+         * visualizeArborescence(treeEdges, containerSelector, rootId)
+         *
+         * Displays a directed arborescence in a top-down tree layout using d3.tree().
+         * If 'treeEdges' is empty, shows "No arborescence found."
+         *
+         * @param {Array} treeEdges - Arborescence edges: {source, target, weight}
+         * @param {String} containerSelector - e.g. "#inArboSVG"
+         * @param {String} rootId - ID of the root node
+         */
+        function visualizeArborescence(treeEdges, containerSelector, rootId) {
+            // 1) Clear the container
+            const container = d3.select(containerSelector);
+            container.selectAll("*").remove();
+
+            // If no edges, display message
+            if (!treeEdges || treeEdges.length === 0) {
+                container.append("text")
+                    .attr("x", 10)
+                    .attr("y", 20)
+                    .text("No arborescence found.");
+                return;
+            }
+
+            // 2) Collect node IDs from edges
+            let nodeIds = new Set();
+            treeEdges.forEach(e => {
+                let s = (typeof e.source === "object") ? e.source.id : e.source;
+                let t = (typeof e.target === "object") ? e.target.id : e.target;
+                nodeIds.add(s);
+                nodeIds.add(t);
+            });
+
+            // 3) Filter allNodes to only those in arbo
+            let treeNodes = allNodes.filter(n => nodeIds.has(n.id));
+
+            // 4) Build adjacency: childrenMap[parentId] = [childId1, childId2, ...]
+            let childrenMap = {};
+            treeNodes.forEach(n => {
+                childrenMap[n.id] = [];
+            });
+            // Each edge is parent -> child
+            treeEdges.forEach(e => {
+                let s = (typeof e.source === "object") ? e.source.id : e.source;
+                let t = (typeof e.target === "object") ? e.target.id : e.target;
+                if (childrenMap[s]) {
+                    childrenMap[s].push(t);
+                }
+            });
+
+            // 5) Build a nested structure for d3.tree with 'rootId' as the root
+            function buildHierarchy(nodeId) {
+                return {
+                    name: nodeId,
+                    children: (childrenMap[nodeId] || []).map(childId => buildHierarchy(childId))
+                };
+            }
+
+            // If rootId not in treeNodes, show error
+            let rootNode = treeNodes.find(n => n.id === rootId);
+            if (!rootNode) {
+                container.append("text")
+                    .attr("x", 10)
+                    .attr("y", 20)
+                    .text(`Root ${rootId} not found in arborescence.`);
+                return;
+            }
+
+            let rootData = buildHierarchy(rootId);
+
+            // 6) Create an <svg> inside the container
+            let width = parseInt(container.style("width"), 10);
+            let height = parseInt(container.style("height"), 10);
+
+            let svg = container.append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            // 7) Use d3.tree() for a top-down layout
+            let layout = d3.tree().size([width - 40, height - 40]);
+
+            // 8) Convert to a d3.hierarchy
+            let root = d3.hierarchy(rootData, d => d.children);
+
+            // 9) Compute node/link positions
+            layout(root);
+            // After layout, each node has: d.x => horizontal, d.y => vertical
+
+            // 10) Draw edges (links)
+            svg.selectAll(".link")
+                .data(root.links())
+                .enter()
+                .append("path")
+                .attr("class", "link")
+                .attr("fill", "none")
+                .attr("stroke", "#555")
+                .attr("stroke-width", 2)
+                .attr("d", d3.linkVertical()
+                    .x(d => d.x + 20) // shift horizontally by 20
+                    .y(d => d.y + 30) // shift vertically by 20
+                );
+
+            // 11) Draw nodes
+            let nodeGroup = svg.selectAll(".node")
+                .data(root.descendants())
+                .enter()
+                .append("g")
+                .attr("class", "node")
+                // place each node at (d.x, d.y), plus some offset
+                .attr("transform", d => `translate(${d.x + 20},${d.y + 30})`);
+
+            // 12) Circles for each node
+            nodeGroup.append("circle")
+                .attr("r", 5)
+                .attr("fill", d => (d.data.name === rootId) ? "orange" : "#69b3a2");
+
+            // 13) Labels
+            nodeGroup.append("text")
+                .attr("dy", -10)
+                .attr("font-size", "8px")
+                .attr("text-anchor", "middle")
+                .text(d => d.data.name);
+        }
+
+
+        // ---- Maximum Clique Computation with Reciprocal Edges ----
+        // Only consider an undirected edge between two nodes if both A->B and B->A exist.
+        function computeMaximumClique() {
+            let directedEdges = new Set();
+            // Record all directed edges.
+            allLinks.forEach(link => {
+                const s = (typeof link.source === "object") ? link.source.id : link.source;
+                const t = (typeof link.target === "object") ? link.target.id : link.target;
+                directedEdges.add(s + "->" + t);
+            });
+            // Build the undirected graph using only reciprocal edges.
+            let adjList = {};
+            allNodes.forEach(n => { adjList[n.id] = new Set(); });
+            allLinks.forEach(link => {
+                const s = (typeof link.source === "object") ? link.source.id : link.source;
+                const t = (typeof link.target === "object") ? link.target.id : link.target;
+                // Only add the edge if both directions exist.
+                if (directedEdges.has(s + "->" + t) && directedEdges.has(t + "->" + s)) {
+                    adjList[s].add(t);
+                    adjList[t].add(s);
+                }
+            });
+
+            let maxClique = [];
+
+            function bronKerboschPivot(R, P, X) {
+                if (P.length === 0 && X.length === 0) {
+                    if (R.length > maxClique.length) {
+                        maxClique = R;
+                    }
+                    return;
+                }
+                // Choose a pivot from P ∪ X.
+                let pivotCandidates = P.concat(X);
+                let pivot = pivotCandidates[0];
+                let pivotNeighbors = adjList[pivot.id];
+                // Only consider vertices in P that are not neighbors of the pivot.
+                let PwithoutNeighbors = P.filter(v => !pivotNeighbors.has(v.id));
+                for (let v of PwithoutNeighbors) {
+                    let newR = R.concat([v]);
+                    let newP = P.filter(u => adjList[v.id].has(u.id));
+                    let newX = X.filter(u => adjList[v.id].has(u.id));
+                    bronKerboschPivot(newR, newP, newX);
+                    P = P.filter(u => u.id !== v.id);
+                    X.push(v);
+                }
+            }
+
+            bronKerboschPivot([], allNodes.slice(), []);
+            return maxClique;
+        }
+
+        /**
+         * computeMaxCliqueReciprocal()
+         * 
+         * Finds the maximum cardinality clique in the “undirected” subgraph formed by
+         * reciprocal edges
+         *
+         * Returns an array of node objects forming the largest clique.
+         */
+        function computeMaxCliqueReciprocal() {
+            // 1) Gather all directed edges into a set like "A->B"
+            let directedEdges = new Set();
+            allLinks.forEach(link => {
+                const s = (typeof link.source === "object") ? link.source.id : link.source;
+                const t = (typeof link.target === "object") ? link.target.id : link.target;
+                directedEdges.add(s + "->" + t);
+            });
+
+            // 2) Build adjacency for the "undirected" subgraph (reciprocal edges only)
+            let adjList = {};
+            allNodes.forEach(n => {
+                adjList[n.id] = new Set();
+            });
+
+            allLinks.forEach(link => {
+                const s = (typeof link.source === "object") ? link.source.id : link.source;
+                const t = (typeof link.target === "object") ? link.target.id : link.target;
+                // Only add s<->t if s->t and t->s are both present
+                if (directedEdges.has(s + "->" + t) && directedEdges.has(t + "->" + s)) {
+                    adjList[s].add(t);
+                    adjList[t].add(s);
+                }
+            });
+
+            // 3) The Bron–Kerbosch recursive approach
+            let maxClique = [];
+
+            /**
+             * bronKerboschPivot(R, P, X)
+             * @param {Array} R - array of node objects currently in the clique
+             * @param {Array} P - array of node objects that can still join the clique
+             * @param {Array} X - array of node objects that must be excluded
+             */
+            function bronKerboschPivot(R, P, X) {
+                // If neither P nor X has possible candidates, R is a maximal clique
+                if (P.length === 0 && X.length === 0) {
+                    // Update maxClique if this clique is larger
+                    if (R.length > maxClique.length) {
+                        // Store a copy, not a reference
+                        maxClique = R.slice();
+                    }
+                    return;
+                }
+
+                if (P.length === 0 && X.length > 0) {
+                    // There's no candidate to expand with, so it's done
+                    if (R.length > maxClique.length) {
+                        maxClique = R.slice();
+                    }
+                    return;
+                }
+                if (P.length + R.length <= maxClique.length) {
+                    // Pruning: no chance to exceed current maximum
+                    return;
+                }
+
+                // Combine P ∪ X to choose a pivot
+                let pivotCandidates = P.concat(X);
+                if (pivotCandidates.length === 0) {
+                    // If there's no pivot, just stop
+                    if (R.length > maxClique.length) {
+                        maxClique = R.slice();
+                    }
+                    return;
+                }
+
+                // Choose a pivot arbitrarily
+                let pivot = pivotCandidates[0];
+                // pivotNeighbors is the set of string IDs adjacent to pivot.id
+                let pivotNeighbors = adjList[pivot.id] || new Set();
+
+                // P \ pivotNeighbors
+                let PwithoutNeighbors = P.filter(v => !pivotNeighbors.has(v.id));
+
+                for (let v of PwithoutNeighbors) {
+                    // vNeighbors is the set of neighbors for node v
+                    let vNeighbors = adjList[v.id] || new Set();
+
+                    // newR = R ∪ {v}
+                    let newR = R.concat([v]);
+
+                    // newP = P ∩ N(v)
+                    let newP = P.filter(u => vNeighbors.has(u.id));
+
+                    // newX = X ∩ N(v)
+                    let newX = X.filter(u => vNeighbors.has(u.id));
+
+                    bronKerboschPivot(newR, newP, newX);
+
+                    // Remove v from P, add to X
+                    P = P.filter(u => u.id !== v.id);
+                    X.push(v);
+                }
+            }
+
+            // 4) Initially, R = empty, P = allNodes, X = empty
+            let R = [];
+            let P = allNodes.slice(); // copy all node objects
+            let X = [];
+
+            bronKerboschPivot(R, P, X);
+
+            return maxClique;
+        }
+
+        /**
+         * findSCCs(nodes, edges)
+         *
+         * Uses Tarjan’s Algorithm to find strongly connected components (SCCs)
+         * in a directed graph.
+         *
+         * @param {Array} nodes - Array of node objects, each with at least {id: string}.
+         * @param {Array} edges - Array of directed edges: {source, target}.
+         *                        source/target may be node objects or strings.
+         * @returns {Array} array of SCCs, where each SCC is array of node IDs
+         *
+         * Complexity: O(V + E)
+         */
+        function findSCCs(nodes, edges) {
+            // 1) Build adjacency list from edges
+            const adj = buildAdjList(nodes, edges);
+
+            // 2) Tarjan’s data structures
+            let indexCounter = 0;
+            const stack = [];
+            const onStack = {};
+            const index = {};     // index[nodeId]
+            const lowLink = {};   // lowLink[nodeId]
+            const sccList = [];   // final array of SCCs
+
+            nodes.forEach(n => {
+                index[n.id] = -1;     // uninitialized
+                lowLink[n.id] = -1;
+                onStack[n.id] = false;
+            });
+
+            // Tarjan’s stronglyConnected procedure
+            function strongConnect(v) {
+                // Set the depth index for v
+                index[v] = indexCounter;
+                lowLink[v] = indexCounter;
+                indexCounter++;
+                stack.push(v);
+                onStack[v] = true;
+
+                // Consider successors of v
+                for (let w of adj[v]) {
+                    if (index[w] === -1) {
+                        // Successor w has not yet been visited; recurse on it
+                        strongConnect(w);
+                        lowLink[v] = Math.min(lowLink[v], lowLink[w]);
+                    } else if (onStack[w]) {
+                        // Successor w is in the stack => v is part of a cycle => update lowLink[v]
+                        lowLink[v] = Math.min(lowLink[v], index[w]);
+                    }
+                }
+
+                // If v is a root node, pop the stack and generate an SCC
+                if (lowLink[v] === index[v]) {
+                    const scc = [];
+                    let w = null;
+                    do {
+                        w = stack.pop();
+                        onStack[w] = false;
+                        scc.push(w);
+                    } while (w !== v);
+                    sccList.push(scc);
+                }
+            }
+
+            // 3) Run Tarjan’s procedure for each unvisited node
+            nodes.forEach(n => {
+                if (index[n.id] === -1) {
+                    strongConnect(n.id);
+                }
+            });
+
+            return sccList;
+        }
+
+        // Helper: build adjacency list for a directed graph
+        function buildAdjList(nodes, edges) {
+            const adj = {};
+            nodes.forEach(n => { adj[n.id] = []; });
+            edges.forEach(e => {
+                const s = (typeof e.source === "object") ? e.source.id : e.source;
+                const t = (typeof e.target === "object") ? e.target.id : e.target;
+                if (!adj[s]) {
+                    adj[s] = [];
+                }
+                adj[s].push(t);
+            });
+            return adj;
+        }
+
+        /**
+         * displaySCCsInTable(sccs, containerId)
+         *
+         * Renders the array of strongly connected components (SCCs) into an HTML table.
+         *
+         * @param {Array} sccs - Array of SCCs, where each SCC is an array of node IDs
+         * @param {String} containerId - The DOM element ID where the table will be placed
+         */
+        function displaySCCsInTable(sccs, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.warn("Container with ID", containerId, "not found.");
+                return;
+            }
+
+            // If no SCCs, display a simple message
+            if (!sccs || sccs.length === 0) {
+                container.innerHTML = "<p>No strongly connected components found.</p>";
+                return;
+            }
+
+            // Start building an HTML table
+            let html = `
+                <h5>Strongly Connected Components</h5>
+                <table class="table table-bordered table-sm">
+                <thead>
+                    <tr>
+                    <th>Group</th>
+                    <th>Connected Nodes</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+
+            // For each SCC, create a row
+            sccs.forEach((component, index) => {
+                // Convert array of node IDs into a comma-separated string
+                const nodeList = component.join(", ");
+                html += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${nodeList}</td>
+                </tr>
+                `;
+            });
+
+            html += `
+                </tbody>
+                </table>
+            `;
+
+            // Insert the final HTML into the container
+            container.innerHTML = html;
+        }
+
+        // Visualize the maximum clique using a circular layout.
+        function visualizeClique(cliqueNodes) {
+            let cliqueSVG = d3.select("#cliqueSVG");
+            cliqueSVG.selectAll("*").remove();
+            if (cliqueNodes.length === 0) {
+                cliqueSVG.append("text")
+                    .attr("x", 10)
+                    .attr("y", 20)
+                    .text("No reciprocal clique found.");
+                return;
+            }
+            // Create edges for every pair of nodes in the clique.
+            let edges = [];
+            for (let i = 0; i < cliqueNodes.length; i++) {
+                for (let j = i + 1; j < cliqueNodes.length; j++) {
+                    edges.push({ source: cliqueNodes[i], target: cliqueNodes[j] });
+                }
+            }
+            // Arrange nodes in a circle.
+            let width = parseInt(cliqueSVG.style("width"));
+            let height = parseInt(cliqueSVG.style("height"));
+            let cx = width / 2, cy = height / 2;
+            let radius = Math.min(width, height) / 2 - 40;
+            let n = cliqueNodes.length;
+            cliqueNodes.forEach((node, i) => {
+                let angle = 2 * Math.PI * i / n;
+                node.cx = cx + radius * Math.cos(angle);
+                node.cy = cy + radius * Math.sin(angle);
+            });
+            // Draw edges.
+            cliqueSVG.selectAll("line")
+                .data(edges)
+                .enter()
+                .append("line")
+                .attr("x1", d => d.source.cx)
+                .attr("y1", d => d.source.cy)
+                .attr("x2", d => d.target.cx)
+                .attr("y2", d => d.target.cy)
+                .attr("stroke", "#999")
+                .attr("stroke-width", 1);
+            // Draw nodes.
+            cliqueSVG.selectAll("circle")
+                .data(cliqueNodes)
+                .enter()
+                .append("circle")
+                .attr("cx", d => d.cx)
+                .attr("cy", d => d.cy)
+                .attr("r", 10)
+                .attr("fill", "#69b3a2")
+                .attr("stroke", "red")
+                .attr("stroke-width", 2);
+            // Add labels.
+            cliqueSVG.selectAll("text")
+                .data(cliqueNodes)
+                .enter()
+                .append("text")
+                .attr("x", d => d.cx)
+                .attr("y", d => d.cy)
+                .attr("dy", ".35em")
+                .attr("text-anchor", "middle")
+                .text(d => d.id);
+        }
+
+        /**
+         * visualizeCliqueAsForce(cliqueNodes)
+         *
+         * Uses a d3 force layout to display the maximum clique as a standard graph (with edges and node labels),
+         * instead of placing them in a circle with circles.
+         *
+         * @param {Array} cliqueNodes - Each element is an object representing a node, e.g. { id, statnaam }.
+         */
+        function visualizeCliqueAsForce(cliqueNodes) {
+            const svg = d3.select("#cliqueSVG");
+            svg.selectAll("*").remove();
+
+            // If no clique nodes, show text
+            if (!cliqueNodes || cliqueNodes.length === 0) {
+                svg.append("text")
+                    .attr("x", 10)
+                    .attr("y", 20)
+                    .text("No reciprocal clique found.");
+                return;
+            }
+
+            // Build pairwise edges for the clique
+            const edges = [];
+            for (let i = 0; i < cliqueNodes.length; i++) {
+                for (let j = i + 1; j < cliqueNodes.length; j++) {
+                    edges.push({ source: cliqueNodes[i], target: cliqueNodes[j] });
+                }
+            }
+
+            // Convert style to numeric
+            const width = parseInt(svg.style("width"), 10);
+            const height = parseInt(svg.style("height"), 10);
+
+            // D3 force simulation
+            const simulation = d3.forceSimulation(cliqueNodes)
+                .force("charge", d3.forceManyBody().strength(-80))  // repel
+                .force("center", d3.forceCenter(width / 2, height / 2))
+                .force("collide", d3.forceCollide(40))              // spacing
+                .force("link", d3.forceLink(edges).distance(80).strength(1));
+
+            // Draw edges
+            const link = svg.selectAll("line")
+                .data(edges)
+                .enter()
+                .append("line")
+                .attr("stroke", "#999")
+                .attr("stroke-width", 1);
+
+            // Draw node "boxes" or "labels"
+            const node = svg.selectAll(".cliqueNode")
+                .data(cliqueNodes, d => d.id)
+                .enter()
+                .append("g")
+                .attr("class", "cliqueNode");
+
+            // Draw a rect instead of a circle, purely for variety
+            node.append("rect")
+                .attr("width", 60)
+                .attr("height", 30)
+                .attr("fill", "#69b3a2")
+                .attr("rx", 5)
+                .attr("ry", 5)
+                .attr("stroke", "red")
+                .attr("stroke-width", 2)
+                .attr("x", -30)   // center rect around the node’s x,y
+                .attr("y", -15);
+
+            // Add text label inside the rect
+            node.append("text")
+                .attr("text-anchor", "middle")
+                .attr("dy", "0.35em")
+                .text(d => d.id);
+
+            // On each tick, update positions
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node
+                    .attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+        }
+
+        function replotInOutArbos(newRootId) {
+            // 0) Clear the existing SVGs if newRootId is null
+            if (!newRootId) {
+                d3.select("#inArboSVG").selectAll("*").remove();
+                d3.select("#outArboSVG").selectAll("*").remove();
+                return;
+            }
+
+            // 1) Find the new root node object
+            let newRoot = allNodes.find(n => n.id === newRootId);
+            if (!newRoot) {
+                console.warn("No root found for ID:", newRootId);
+                return;
+            }
+
+            // 2) Compute in-arbo and out-arbo
+            let inArbo = chuLiuEdmonds(allNodes, allLinks, newRoot, "in");
+            let outArbo = chuLiuEdmonds(allNodes, allLinks, newRoot, "out");
+            visualizeArborescence(inArbo, "#inArboSVG", newRootId);
+            // visualizeArborescence(outArbo, "#outArboSVG", newRootId);
+        }
+
+        // ---- CSV File Upload ----
+        document.getElementById('csvFileInput').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const text = e.target.result;
+                const data = d3.csvParse(text);
+                const nodesMap = {}, links = [];
+
+                data.forEach(d => {
+                    const source = d.COROP_LEV, target = d.COROP_AFN, weight = +d.AANTAL;
+                    // Skip rows if the source or target is missing/NA.
+                    if (!source || !target || source.toUpperCase() === "NA" || target.toUpperCase() === "NA") {
+                        return; // Just skip this row.
+                    }
+                    if (!nodesMap[source]) {
+                        nodesMap[source] = { id: source, tradeTotal: 0 };
+                    }
+                    if (!nodesMap[target]) {
+                        nodesMap[target] = { id: target, tradeTotal: 0 };
+                    }
+                    nodesMap[source].tradeTotal += weight;
+                    nodesMap[target].tradeTotal += weight;
+                    links.push({ source, target, weight });
+                });
+
+                const nodes = Object.values(nodesMap);
+                allNodes = nodes;
+                nodes.forEach(d => {
+                    d.statnaam = (nlLabelPoints && nlLabelPoints.features) ?
+                        (nlLabelPoints.features.find(f => f.properties.statcode === d.id)?.properties.statnaam || d.id)
+                        : d.id;
+                });
+                allLinks = links;
+
+                updateNetworkStats(nodes, links);
+
+                // Compute and print 3 hotpots per metric
+                hotspots = computeHotSpotMetrics(allNodes, allLinks);
+                printHotSpots(hotspots, "topMetrics", 3);
+
+                createNetwork(nodes, links);
+
+                // Find strongly connected components (SCCs) and display them in a table
+                const sccs = findSCCs(nodes, links);
+                displaySCCsInTable(sccs, "sccOutput");
+
+                // Compute and visualize the maximum clique (using reciprocal edges only)
+                let maxClique = computeMaxCliqueReciprocal();
+                visualizeCliqueAsForce(maxClique);
+
+                // Enable toggle button now that CSV is loaded.
+                document.getElementById("toggleModeButton").disabled = false;
+            };
+            reader.readAsText(file);
+        });
+    </script>
+</body>
+
+</html>
