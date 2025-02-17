@@ -1,0 +1,187 @@
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: sans-serif;
+}
+
+/* Main container with three columns: 20%, 50%, 30% */
+/* Main container with 10px padding around */
+#mainContainer {
+    display: flex;
+    height: 100vh;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Left Column: 20% width, full height minus container padding */
+#col1 {
+    width: 20%;
+    overflow-y: auto;
+    padding: 10px;
+    box-sizing: border-box;
+    height: calc(100vh - 20px); /* 10px top + 10px bottom */
+}
+
+/* Middle Column: 50% width, full height minus container padding, with a rounded border */
+#col2 {
+    width: 50%;
+    overflow: hidden;
+    margin: 10px; /* you can adjust this if needed */
+    box-sizing: border-box;
+    position: relative;
+    border: 2px solid #999;
+    border-radius: 15px;
+    height: calc(100vh - 40px);
+    margin-top : 10px;
+    margin-bottom : 10px;
+}
+
+/* Right Column: 30% width, full height minus container padding */
+#col3 {
+    width: 30%;
+    /* "disabled" is not valid, so use auto or hidden (here we allow vertical scrolling) */
+    overflow-y: auto;
+    padding: 10px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 20px);
+}
+
+/* Trade Info Panel within col3 */
+#tradeInfo {
+    display: none;
+    height: calc(100vh - 40px);
+}
+
+/* Additional inner elements can be adjusted accordingly */
+#tradeCardBody {
+    height: 94vh; /* you might adjust this as needed */
+    box-sizing: border-box;
+}
+
+#tradePanel {
+    height: 40%;
+}
+  
+#inArboContainer {
+    height: 40%;
+}
+
+#cliqueContainer {
+    height: 20%;
+}
+
+#cliqueSVG {
+    margin: auto;
+    width: 27vw;
+    height: 12vh;
+    border: none;
+    display: block;
+}
+
+#inArboSVG {
+    margin: auto;
+    width: 27vw;
+    height: 22vh;
+    border: none;
+    display: block;
+}
+
+
+/* D3 styles */
+.node {
+    cursor: pointer;
+    stroke-width: 4.5px;
+    stroke-dasharray: 5 5;
+    animation: dash 2s linear infinite;
+}
+
+.nodeOver {
+    cursor: pointer;
+}
+
+@keyframes breathing {
+    0% { stroke-opacity: 1; stroke-width: 2px; }
+    50% { stroke-opacity: 0.5; stroke-width: 3.5px; }
+    100% { stroke-opacity: 1; stroke-width: 2px; }
+}
+
+.hotspotStroke {
+    stroke-dasharray: 5 5;
+    animation: dash 2s linear infinite, breathing 2.5s ease-in-out infinite;
+    filter: url(#glow);
+}
+
+.hotspotStroke:hover {
+    filter: url(#strongGlow);
+}
+
+.hotspotLegend {
+    animation: dash 2s linear infinite, breathing 2.5s ease-in-out infinite;
+    filter: url(#glow);
+}
+
+.link {
+    fill: none;
+    stroke-width: 1.5px;
+    opacity: 0.15;
+}
+
+.linkOver {
+    fill: none;
+    stroke: #2ca02c;
+    stroke-width: 4px;
+    opacity: 1;
+    stroke-dasharray: 5 5;
+    animation: dash 2s linear infinite;
+}
+
+.linkSelect {
+    fill: none;
+    stroke-width: 1.5px;
+    stroke-dasharray: 5 5;
+    animation: dash 2s linear infinite;
+}
+
+@keyframes dash {
+    to {
+        stroke-dashoffset: -10;
+    }
+}
+
+.linkSelectOver {
+    fill: none;
+    stroke: fuchsia;
+    stroke-width: 1.5px;
+    stroke-dasharray: 5 5;
+    animation: dash 2s linear infinite;
+}
+
+.bubble text {
+    font: 12px sans-serif;
+    fill: black;
+}
+
+.map path {
+    fill: none;
+    stroke: #999;
+    stroke-width: 1;
+}
+
+.tooltip {
+    position: absolute;
+    pointer-events: none;
+    /* ignore mouse */
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    opacity: 0;
+    /* hidden by default */
+    transition: opacity 0.1s;
+}
