@@ -10,53 +10,208 @@
     <link rel="stylesheet" type="text/css" href="assets/css/herdlink.css">
     <!-- Load D3.js -->
     <script src="https://d3js.org/d3.v6.min.js"></script>
+    <!-- Load jLouvain -->
     <script type="text/javascript" src="assets/js/jLouvain.js"></script>
+    <!-- Load fontawesome -->
+    <script src="https://kit.fontawesome.com/a14764fea8.js" crossorigin="anonymous"></script>
+    <!-- Load Vivus -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vivus/0.3.1/vivus.min.js"></script>
 </head>
 
 <body>
+    <!-- Introductory overlay -->
+    <div id="introOverlay" class="intro-overlay">
+        <div class="intro-content">
+            <h2>About HerdLink</h2>
+            <p>
+                HerdLink handles network data locally. Here’s a quick guide on how to use it:
+            <ul>
+                <li>Choose your CSV file using the file input on the left.</li>
+                <li>Switch between graph and map views using the button.</li>
+                <li>Click on a node to enter focus mode.</li>
+                <li>Explore detailed stats and information in the right panel.</li>
+                <li>Click on the focal node again to quit focus mode.</li>
+            </ul>
+            </p>
+            <label>
+                <input type="checkbox" id="dontShowAgain"> Do not show again
+            </label>
+            <br>
+            <button id="introOkButton">OK</button>
+        </div>
+    </div>
+
+    <!-- Hover tooltip for nodes and edges -->
     <div id="tooltip" class="tooltip"></div>
+
     <!-- Main container: three columns -->
     <div id="mainContainer">
         <!-- Left Column: Controls and Network Stats -->
         <div id="col1">
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h4>HerdLink</h4>
-                </div>
-                <div class="card-body">
-                    <div id="controls" class="mb-3">
-                        <input type="file" id="csvFileInput" class="form-control mb-2" accept=".csv" />
-                        <!-- Initially disabled until CSV is loaded -->
-                        <button id="toggleModeButton" class="btn btn-primary w-100" disabled>Switch to Map
-                            Presentation</button>
+            <div class="card">
+                <!-- TOP SECTION: Fixed header & controls -->
+                <div class="col1-top">
+                    <div class="card-header">
+                        <!-- Row 1: Logo/Banner -->
+                        <div class="header-row header-row-1">
+                            <div class="logo-container">
+                                <h4>HerdLink</h4>
+                            </div>
+                            <div class="svg-container">
+                                <svg id="mySVG" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 300">
+                                    <circle class="circle blue-bg" cx="58.14" cy="114.94" r="10.72" />
+                                    <circle class="line" cx="58.25" cy="115" r="15.33" />
+                                    <!-- Step 1 -->
+                                    <!-- Connectors -->
+                                    <path data-async class="line" d="M58.25 99.67V70" />
+                                    <path data-async class="line" d="M70.06 105.22l32.11-26.66" />
+                                    <path data-async class="line" d="M70.54 124.17l23.61 19.3" />
+                                    <path data-async class="line" d="M55.75 130.13L40.25 211" />
+                                    <path class="line" d="M45.96 124.17l-31.81 19.72" />
+                                    <!-- Node Outlines -->
+                                    <circle data-async class="line" cx="58.25" cy="66" r="4.25" />
+                                    <circle data-async class="line" cx="105.25" cy="76" r="4.25" />
+                                    <circle data-async class="line" cx="97.25" cy="146" r="4.25" />
+                                    <circle data-async class="line" cx="40.25" cy="215" r="4.25" />
+                                    <circle class="line" cx="10.75" cy="146" r="4.25" />
+                                    <!-- Node Fills -->
+                                    <circle data-async class="circle step1" cx="58.25" cy="66" r="4" />
+                                    <circle data-async class="circle step1" cx="105.25" cy="76" r="4" />
+                                    <circle data-async class="circle step1" cx="97.25" cy="146" r="4" />
+                                    <circle data-async class="circle step1" cx="40.25" cy="215" r="4" />
+                                    <circle class="circle step1" cx="10.75" cy="146" r="4" />
+                                    <!-- Step 2 -->
+                                    <!-- Connectors -->
+                                    <path data-async class="line" d="M61.42 63.56l46.62-34.68" />
+                                    <path data-async class="line" d="M109.25 76l42-.01" />
+                                    <path data-async class="line" d="M99.8 142.92l52.9-63.84" />
+                                    <path data-async class="line" d="M94.7 149.08l-52 62.76" />
+                                    <path class="line" d="M38.55 211.38l-26.23-61.7" />
+                                    <!-- Node Outlines -->
+                                    <circle data-async class="line" cx="111.25" cy="26.5" r="4.25" />
+                                    <circle class="line" cx="155.25" cy="75.99" r="4.25" />
+                                    <!-- Node Fills -->
+                                    <circle data-async class="circle step2" cx="111.25" cy="26.5" r="4" />
+                                    <circle class="circle step2" cx="155.25" cy="75.99" r="4" />
+                                    <!-- Step 3 -->
+                                    <!-- Connectors -->
+                                    <path data-async class="line" d="M152.44 73.14L113.89 29.5" />
+                                    <path data-async class="line" d="M155.25 71.99l-7.5-54.49" />
+                                    <path data-async class="line" d="M158.18 78.71l34.13 33.41" />
+                                    <path class="line" d="M43.97 213.54l67.78-25.53" />
+                                    <!-- Node Outlines -->
+                                    <circle data-async class="line" cx="147.75" cy="13.5" r="4.25" />
+                                    <circle data-async class="line" cx="195.08" cy="115" r="4.25" />
+                                    <circle class="line" cx="115.75" cy="186.5" r="4.25" />
+                                    <!-- Node Fills -->
+                                    <circle data-async class="circle step3" cx="147.75" cy="13.5" r="4" />
+                                    <circle data-async class="circle step3" cx="195.08" cy="115" r="4" />
+                                    <circle data-async class="circle step3" cx="115.75" cy="186.5" r="4" />
+                                    <!-- Step 4 -->
+                                    <!-- Connectors -->
+                                    <path data-async class="line" d="M195.77 111.06l9.29-53.12" />
+                                    <path data-async class="line" d="M197.84 117.9l38.66 40.7" />
+                                    <path data-async class="line" d="M119.69 185.82l53.56-8.67" />
+                                    <path class="line" d="M118.46 189.43l96.11 94.43" />
+                                    <!-- Node Outlines -->
+                                    <circle data-async class="line" cx="205.75" cy="54" r="4.25" />
+                                    <circle data-async class="line" cx="239.25" cy="161.5" r="4.25" />
+                                    <circle data-async class="line" cx="177.25" cy="176.5" r="4.25" />
+                                    <circle class="line" cx="217.42" cy="286.67" r="4.25" />
+                                    <!-- Node Fills -->
+                                    <circle data-async class="circle step4" cx="205.75" cy="54" r="4" />
+                                    <circle data-async class="circle step4" cx="239.25" cy="161.5" r="4" />
+                                    <circle data-async class="circle step4" cx="177.25" cy="176.5" r="4" />
+                                    <circle class="circle step4" cx="217.42" cy="286.67" r="4" />
+                                    <!-- Step 5 -->
+                                    <!-- Connectors -->
+                                    <path data-async class="line" d="M235.46 162.78l-54.21 12.78" />
+                                    <path data-async class="line" d="M237 164.81l-36.21 47.1" />
+                                    <path class="line" d="M179.12 180.03l17.33 31.4" />
+                                    <!-- Node Outlines -->
+                                    <circle class="line" cx="198.25" cy="215" r="4.25" />
+                                    <!-- Node Fills -->
+                                    <circle class="circle step5" cx="198.25" cy="215" r="4" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: File Input -->
+                        <div class="header-row header-row-2">
+                            <div class="file-upload-container">
+                                <label for="csvFileInput">
+                                    <i class="fa-solid fa-file-arrow-up"></i></p>Choose File
+                                </label>
+                                <input type="file" id="csvFileInput" accept=".csv">
+                                <span id="fileName" class="file-name">No file selected</span>
+                            </div>
+                        </div>
+
+                        <!-- Row 3: Switch Button -->
+                        <div class="header-row header-row-3">
+                            <div class="switch-button-container">
+                                <button id="toggleModeButton" class="btn graph-mode" disabled>
+                                    <span class="btn-text"><i class="fa-solid fa-map-location-dot"></i> Switch to
+                                        Map</span>
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
-                    <div id="networkStats" class="panel"></div>
-                    <div id="topMetrics"></div>
-                    <div id="sccOutput" class="panel"></div>
+                </div>
+                <!-- BOTTOM SECTION: Scrollable content -->
+                <div class="col1-bottom">
+                    <details class="collapsible-section" open>
+                        <summary>
+                            <span class="header-text"><i class="fa-solid fa-chart-simple"></i> Statistics</span>
+                        </summary>
+                        <div class="section-content">
+                            <div id="networkStats" class="panel"></div>
+                        </div>
+                    </details>
+                    <details class="collapsible-section" open>
+                        <summary>
+                            <span class="header-text"><i class="fa-solid fa-arrows-to-dot"></i> Hotspots</span>
+                        </summary>
+                        <div class="section-content">
+                            <div id="topMetrics"></div>
+                        </div>
+                    </details>
+                    <details class="collapsible-section" open>
+                        <summary>
+                            <span class="header-text"><i class="fa-solid fa-circle-nodes"></i> Trade Clusters</span>
+                        </summary>
+                        <div class="section-content">
+                            <div id="sccOutput" class="panel"></div>
+                        </div>
+                    </details>
                 </div>
             </div>
         </div>
+
         <!-- Middle Column: Graph/Map -->
         <div id="col2">
             <svg></svg>
         </div>
+
         <!-- Right Column: Trade Table -->
         <div id="col3">
-            <div id="tradeInfo"">
-                <div class=" card mb-3">
-                <div class="card-header">
-                    <h4>Trade Information</h4>
-                </div>
-                <div id="tradeCardBody" class="card-body">
-                    <div id="tradePanel" class="panel"></div>
-                    <div id="inArboContainer">
-                        <h4>Max In-Arborescence</h4>
-                        <svg id="inArboSVG"></svg>
-                    </div>
-                    <div id="cliqueContainer">
-                        <h4>Maximum Clique</h4>
-                        <svg id="cliqueSVG"></svg>
-                    </div>
+            <div id="tradeInfo">
+                <div id="tradePanel" class="panel"></div>
+                <p></p>
+                <div id="inArboContainer" class="panel">
+                    <h4>
+                        <i class="fa-solid fa-sitemap"></i> Major Import Structure
+                        <span class="info-container">
+                            <i class="fa-solid fa-circle-question"></i>
+                            <span class="info-box">
+                                In a trade network, "major import structure" is an "in-arborescence", which is a
+                                directed tree where each node (except the root) has exactly one major incoming route,
+                                showing how livestocks flow (mainly) inward toward the chosen root region.
+                            </span>
+                        </span>
+                    </h4>
+                    <svg id="inArboSVG"></svg>
                 </div>
             </div>
         </div>
@@ -75,12 +230,14 @@
         let allLinks = [], allNodes = [];
         let selectedNodeData = null, selectedNodeBubble = null;
         let hotspots = null;
-        let hotspotColors = {
-            inDegree: "blue",
-            outDegree: "red",
-            betweenness: "orange",
-            pageRank: "black"
+        const hotspotColors = {
+            inDegree: "#08FF08",   // Fluorescent Green
+            outDegree: "#05C3DD",  // Aqua Blue
+            betweenness: "#ff007f", // Bright Pink
+            pageRank: "#FFD600"    // Vivid Yellow
         };
+
+
 
         // ---- Load GeoJSON Files ----
         d3.json("assets/files/herdlink/nl_corop.geojson").then(data => { nlMapData = data; })
@@ -101,18 +258,24 @@
             .attr("d", "M0,-5L10,0L0,5")
             .attr("fill", "#fafceb");
 
-        // ---- Disable Toggle Button Until CSV is Loaded ----
-        document.getElementById("toggleModeButton").disabled = true;
+        // ---- Disable mode toggle button initially ----
+        d3.select("#toggleModeButton").attr("disabled", true);
 
         // ---- Toggle Button Event ----
         d3.select("#toggleModeButton").on("click", () => {
             if (currentMode === "graph") {
                 switchToMapMode();
-                d3.select("#toggleModeButton").text("Switch to Graph Presentation");
+                d3.select("#toggleModeButton")
+                    .html('<span class="btn-text"><i class="fa-solid fa-hexagon-nodes"></i> Switch to Graph</span>')
+                    .classed("map-mode", true)
+                    .classed("graph-mode", false);
                 currentMode = "map";
             } else {
                 switchToGraphMode();
-                d3.select("#toggleModeButton").text("Switch to Map Presentation");
+                d3.select("#toggleModeButton")
+                    .html('<span class="btn-text"><i class="fa-solid fa-map-location-dot"></i> Switch to Map</span>')
+                    .classed("graph-mode", true)
+                    .classed("map-mode", false);
                 currentMode = "graph";
             }
         });
@@ -126,11 +289,6 @@
             return code;
         }
 
-        /**
-         * updateNetworkStats
-         *  - connectivity (number of connected components if view the graph as undirected)
-         *  - modularity (placeholder; requires a community detection algorithm)
-         */
         function updateNetworkStats(nodes, links) {
             const totalNodes = nodes.length,
                 totalEdges = links.length,
@@ -144,17 +302,55 @@
             // Compute (or approximate) modularity by first detecting communities
             let { partition, modularity } = computeModularity(nodes, links);
 
-            let html = `<h4>Statistics</h4>
-                            <table class="table table-bordered table-sm">
-                                <tr><th>Total Nodes</th><td>${totalNodes}</td></tr>
-                                <tr><th>Total Edges</th><td>${totalEdges}</td></tr>
-                                <tr><th>Total Trade Volume</th><td>${totalTradeVolume}</td></tr>
-                                <tr><th>Avg Freight/Edge</th><td>${avgTradeEdge}</td></tr>
-                                <tr><th>Avg Trade/Node</th><td>${avgTradeNode}</td></tr>
-                                <tr><th>Connected Components</th><td>${numComponents}</td></tr>
-                                <tr><th>Max Community Number</th><td>${modularity.toFixed(0)}</td></tr>
-                            </table>`;
+            let html = `
+                        <div class="stats-container">
+                            <div class="stat-item">
+                            <span class="stat-label">COROP Areas</span>
+                            <span class="stat-value">${totalNodes}</span>
+                            </div>
+                            <div class="stat-item">
+                            <span class="stat-label">Trade Routes</span>
+                            <span class="stat-value">${totalEdges}</span>
+                            </div>
+                            <div class="stat-item">
+                            <span class="stat-label">Total Volume</span>
+                            <span class="stat-value">${totalTradeVolume}</span>
+                            </div>
+                            <div class="stat-item">
+                            <span class="stat-label">Avg. Volume/Route</span>
+                            <span class="stat-value">${avgTradeEdge}</span>
+                            </div>
+                            <div class="stat-item">
+                            <span class="stat-label">Avg. Volume/Area</span>
+                            <span class="stat-value">${avgTradeNode}</span>
+                            </div>
+                            <div class="stat-item">
+                            <span class="stat-label">Connected Components
+                                <span class="info-container">
+                                    <i class="fa-solid fa-circle-question"></i>
+                                    <span class="info-box">
+                                        Count of “connected components” in the network. A “connected component” is a set of nodes where each node is reachable from any other node in that set (via some path of edges). Therefore, the number of connected components is a measure of how fragmented the network is.
+                                    </span>
+                                </span>
+                            </span>
+                            <span class="stat-value">${numComponents}</span>
+                            </div>
+                            <div class="stat-item">
+                            <span class="stat-label">Modularity
+                                <span class="info-container">
+                                    <i class="fa-solid fa-circle-question"></i>
+                                    <span class="info-box">
+                                        "Modularity" measures the strength of community structure in a network. It compares the actual density of links within communities to a random network. Higher modularity value (0 to 1) indicates well-separated, strongly connected communities, while lower value suggests weaker or no community structure.
+                                    </span>
+                                </span>
+                            </span>
+                            <span class="stat-value">${modularity.toFixed(0)}</span>
+                            </div>
+                        </div>`;
+
             document.getElementById("networkStats").innerHTML = html;
+
+            attachInfoBoxListeners();
         }
 
         /**
@@ -204,31 +400,6 @@
             return componentCount;
         }
 
-        function buildLouvainGraph(nodes, links) {
-            let nodeIds = nodes.map(n => n.id);
-
-            // The library expects a map-of-maps for edges, like:
-            // edges[nodeId1][nodeId2] = weight
-            let edges = {};
-            nodeIds.forEach(id => {
-                edges[id] = {};
-            });
-
-            // Build undirected edges from links
-            links.forEach(link => {
-                // unify references (source might be object or string)
-                let s = (typeof link.source === "object") ? link.source.id : link.source;
-                let t = (typeof link.target === "object") ? link.target.id : link.target;
-
-                if (!edges[s][t]) edges[s][t] = 0;
-                if (!edges[t][s]) edges[t][s] = 0;
-                edges[s][t] += link.weight;
-                edges[t][s] += link.weight;
-            });
-
-            return { nodeIds, edges };
-        }
-
         function computeModularity(nodes, links) {
             // Build an array of [sourceId, targetId, weight].
             let edgesForLouvain = [];
@@ -248,7 +419,10 @@
                 .edges(edgesForLouvain);
 
             // Run the algorithm
-            let assignments = community();    // node => community
+            let results = community();    // node => community
+            let assignments = results['communities']
+            let modularity = results['modularity'];
+
             var max_community_number = 0;
             nodeIds.forEach(function (d) {
                 nodes.find(function (n) {
@@ -260,7 +434,7 @@
 
             return {
                 partition: assignments,
-                modularity: max_community_number
+                modularity: modularity
             };
         }
 
@@ -353,7 +527,7 @@
                     sigma[s] = 1;
                     dist[s] = 0;
 
-                    // Use a D' BFS with a priority queue or a simple Dijkstra, but let's do a naive approach:
+                    // Graph search:
                     let queue = [s];
                     while (queue.length > 0) {
                         let v = queue.shift();
@@ -492,54 +666,47 @@
 
             const metricNames = ["inDegree", "outDegree", "betweenness", "pageRank"];
 
+            // Mapping from metricNames to display names
+            const metricDisplayNames = {
+                inDegree: "Vulnerable (by In-Degree)",
+                outDegree: "Seeding (by Out-Degree)",
+                betweenness: "Gateway (by Betweenness)",
+                pageRank: "Bottleneck (by PageRank)"
+            };
+
             // Helper: sort all nodes by the specified metric (descending)
             function sortByMetric(metricName) {
-                const arr = Object.keys(metrics).map(nodeId => {
-                    return {
-                        nodeId,
-                        value: metrics[nodeId][metricName] || 0
-                    };
-                });
+                const arr = Object.keys(metrics).map(nodeId => ({
+                    nodeId,
+                    value: metrics[nodeId][metricName] || 0
+                }));
                 arr.sort((a, b) => b.value - a.value); // descending
                 return arr;
             }
 
-            titleString = "<h4> Hotspots </h4>";
-            container.innerHTML += titleString;
-
-            // Build sub-table for each metric, only shows top N
+            // For each metric, show top N items
             metricNames.forEach(metricName => {
-                // Sort nodes by this metric
                 const sortedList = sortByMetric(metricName);
                 if (n) sortedList.splice(n); // keep only top N
 
-                // Start sub-table HTML
                 let subHtml = `
-                <table class="table table-bordered table-sm mb-3">
-                    <thead>
-                    <tr>
-                        <th>Node</th>
-                        <th>${metricName}</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                `;
+                <details class="collapsible-subsection" open>
+                <summary class="hotspot-section-header">${metricDisplayNames[metricName]}</summary>
+            `;
 
+                // Add each hotspot as a row-like item
                 sortedList.forEach(item => {
-                    // Format numeric value
-                    const valStr = item.value.toFixed(2);
                     subHtml += `
-                    <tr>
-                    <td>${item.nodeId}</td>
-                    <td>${valStr}</td>
-                    </tr>
+                    <div class="hotspot-item">
+                    <span class="hotspot-area">${item.nodeId}</span>
+                    <span class="hotspot-value">${item.value.toFixed(2)}</span>
+                    </div>
                 `;
                 });
 
                 subHtml += `
-                    </tbody>
-                </table>
-                `;
+                </details>
+            `;
 
                 container.innerHTML += subHtml;
             });
@@ -620,7 +787,6 @@
                 .attr("stroke-width", null);
 
             // Append extra hotspot strokes based on top3ForMetric.
-            // Instead of reselecting ".nodeLabel", iterate over nodeEnter.
             nodeEnter.each(function (d) {
                 let metricsForNode = [];
                 metricNames.forEach(metric => {
@@ -629,7 +795,6 @@
                         metricsForNode.push(metric);
                     }
                 });
-                // Optional: sort for consistent ordering
                 metricsForNode.sort();
                 let group = d3.select(this);
                 metricsForNode.forEach((metric, i) => {
@@ -638,7 +803,8 @@
                         .attr("r", d.r + (i + 1) * 3) // each extra ring offset by 3px per metric
                         .attr("fill", "none")
                         .attr("stroke", hotspotColors[metric])
-                        .attr("stroke-width", 2);
+                        .attr("stroke-width", 2)
+                        .attr("stroke-dashoffset", 0);
                 });
             });
 
@@ -702,50 +868,56 @@
             // ---- Add Hotspot Stroke Legend ----
             addHotspotLegend(svg);
 
+            // ---- Define Edge Glow Filter ----
             const defs = svg.append("defs");
             const edgeGlow = defs.append("filter")
-            .attr("id", "edgeGlow")
-            .attr("x", "-50%")
-            .attr("y", "-50%")
-            .attr("width", "200%")
-            .attr("height", "200%");
+                .attr("id", "edgeGlow")
+                .attr("x", "-50%")
+                .attr("y", "-50%")
+                .attr("width", "200%")
+                .attr("height", "200%");
 
             edgeGlow.append("feGaussianBlur")
-            .attr("in", "SourceGraphic")
-            .attr("stdDeviation", 3)
-            .attr("result", "blur");
+                .attr("in", "SourceGraphic")
+                .attr("stdDeviation", 3)
+                .attr("result", "blur");
 
             const feMerge = edgeGlow.append("feMerge");
             feMerge.append("feMergeNode")
-            .attr("in", "blur");
+                .attr("in", "blur");
             feMerge.append("feMergeNode")
-            .attr("in", "SourceGraphic");
+                .attr("in", "SourceGraphic");
         }
 
         function addHotspotLegend(svg) {
+            const legendWidth = w / 3;
+
+            const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+
             const legendData = [
-                { name: "Vulnerable Nodes", color: hotspotColors.inDegree },
-                { name: "Seeding Nodes", color: hotspotColors.outDegree },
-                { name: "Gateway Nodes", color: hotspotColors.betweenness },
-                { name: "Network Bottlenecks", color: hotspotColors.pageRank }
+                { name: "Vulnerable", color: hotspotColors.inDegree },
+                { name: "Seeding", color: hotspotColors.outDegree },
+                { name: "Gateway", color: hotspotColors.betweenness },
+                { name: "Bottleneck", color: hotspotColors.pageRank }
             ];
 
             const legend = svg.append("g")
                 .attr("class", "hotspotLegend")
-                .attr("transform", `translate(${w - 900}, 50)`); // Adjust position near top-right
+                .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
             const legendItem = legend.selectAll(".legendItem")
                 .data(legendData)
                 .enter().append("g")
                 .attr("class", "legendItem")
-                .attr("transform", (d, i) => `translate(0, ${i * 25})`);
+                .attr("transform", (d, i) => `translate(${margin.left}, ${margin.top + i * 25})`);
 
             legendItem.append("circle")
                 .attr("r", 10)
                 .attr("fill", "none")
                 .attr("stroke", d => d.color)
                 .attr("stroke-width", 3)
-                .attr("stroke-dasharray", "5 5");
+                .attr("stroke-dasharray", "5 5")
+                .attr("stroke-dashoffset", 0);
 
             legendItem.append("text")
                 .attr("x", 25)
@@ -758,8 +930,15 @@
         // ---- Node Click Handler ----
         function onClickNode(event, d) {
             if (event.defaultPrevented) return;
-            if (selectedNodeData && selectedNodeData.id === d.id) { clearSelection(); return; }
-            clearSelection();
+            // Save previous selection before clearing
+            let wasSelected = !!selectedNodeData;
+            let wasSameNode = selectedNodeData && selectedNodeData.id === d.id;
+            // If clicking the same node, clear selection and return.
+            if (wasSameNode) {
+                clearSelection(false);
+                return;
+            }
+            clearSelection(wasSelected && !wasSameNode);
             selectedNodeData = d;
             if (currentMode === "graph") {
                 selectedNodeBubble = svg.append("g")
@@ -786,6 +965,11 @@
             labelSelection.attr("fill", "white");
             // If clicked, change legend text to white
             d3.selectAll(".legendItem text").attr("fill", "white");
+            // If clicked, add glowing filter to legend circles
+            d3.selectAll(".legendItem circle").attr("filter", "url(#edgeGlow)");
+            // If clicked, add glowing filter to main figure's hotspot strokes
+            d3.selectAll(".hotspotStroke").attr("filter", "url(#edgeGlow)");
+            // If clicked, change link colors, add arrowheads and glowing filter
             linkSelection.attr("display", function (linkData) {
                 const srcId = (typeof linkData.source === "object" ? linkData.source.id : linkData.source),
                     tgtId = (typeof linkData.target === "object" ? linkData.target.id : linkData.target);
@@ -814,35 +998,60 @@
                     else { return null; }
                 });
 
+            // Show/Update trade table and (re)-plot in/out arborescences
             updateTradeTable(d);
             replotInOutArbos(d.id);
 
-            // Add overlay to gray out the background map.
+            // Add an overlay to gray out the background map.
             // Insert a rectangle as the first child of the SVG.
+            // Add/update overlay.
             if (svg.select("#mapOverlay").empty()) {
-                svg.insert("rect", ":first-child")
-                    .attr("id", "mapOverlay")
-                    .attr("x", 0)
-                    .attr("y", 0)
-                    .attr("width", w)
-                    .attr("height", h)
-                    .attr("fill", "black")
-                    .attr("opacity", 0.7);
+                if (wasSelected) {
+                    // If a node was already selected, do NOT animate.
+                    svg.insert("rect", ":first-child")
+                        .attr("id", "mapOverlay")
+                        .attr("x", 0)
+                        .attr("y", 0)
+                        .attr("width", w)
+                        .attr("height", h)
+                        .attr("fill", "black")
+                        .attr("opacity", 0.7);
+                } else {
+                    // If no node was previously selected, animate the overlay.
+                    svg.insert("rect", ":first-child")
+                        .attr("id", "mapOverlay")
+                        .attr("x", 0)
+                        .attr("y", 0)
+                        .attr("width", w)
+                        .attr("height", h)
+                        .attr("fill", "black")
+                        .attr("opacity", 0)
+                        .transition()
+                        .duration(300)
+                        .attr("opacity", 0.7);
+                }
             }
-
             // Unhide the trade information panel
             document.getElementById("tradeInfo").style.display = "block";
         }
 
-        function clearSelection() {
+        // ---- Clear Selection (If Clicking Again/Unclicked) ----
+        function clearSelection(flag) {
             if (selectedNodeBubble) { selectedNodeBubble.remove(); selectedNodeBubble = null; }
             selectedNodeData = null;
 
             const colorScale = d3.scaleSequential(d3.interpolateSpectral)
-                .domain(d3.extent(allLinks, d => Math.log(d.weight)).reverse()); // Inverted domain
+                .domain(d3.extent(allLinks, d => Math.log(d.weight)).reverse()); // Inverted color scale
 
+            // If unclicked, change node labels back to black
             labelSelection.attr("fill", "black");
+            // If unclicked, change legend text back to black
             d3.selectAll(".legendItem text").attr("fill", "black");
+            // If unclicked, remove glowing filter from legend circles
+            d3.selectAll(".legendItem circle").attr("filter", null);
+            // If unclicked, remove glowing filter from main figure's hotspot strokes
+            d3.selectAll(".hotspotStroke").attr("filter", null);
+            // If unclicked, change link colors back, remove arrowheads and glowing filter
             linkSelection.attr("display", "block")
                 .attr("class", "link")
                 .attr("marker-end", null)
@@ -851,62 +1060,103 @@
                 .attr("opacity", 0.5)
                 .attr("filter", null);
 
+            // Clear the trade table and arborescences
             updateTradeTable(null);
             replotInOutArbos(null);
 
             // Hide the trade information panel
             document.getElementById("tradeInfo").style.display = "none";
 
-            // Remove the background overlay if it exists.
-            svg.select("#mapOverlay").remove();
+            // Remove the background overlay if select another node
+            if (!flag) {
+                svg.select("#mapOverlay").transition().duration(300).attr("opacity", 0).remove();
+            } else {
+                svg.select("#mapOverlay").remove();
+            }
         }
 
+        // ---- Update Trade Table ----
         function updateTradeTable(selectedNode) {
             const tradePanelDiv = document.getElementById("tradePanel");
-            if (!selectedNode) { tradePanelDiv.innerHTML = ""; return; }
+            if (!selectedNode) {
+                tradePanelDiv.innerHTML = "";
+                return;
+            }
 
-            const outgoing = allLinks.filter(d => (typeof d.source === "object" ? d.source.id : d.source) === selectedNode.id);
-            const incoming = allLinks.filter(d => (typeof d.target === "object" ? d.target.id : d.target) === selectedNode.id);
+            // Filter outgoing and incoming links
+            const outgoing = allLinks.filter(d =>
+                (typeof d.source === "object" ? d.source.id : d.source) === selectedNode.id
+            );
+            const incoming = allLinks.filter(d =>
+                (typeof d.target === "object" ? d.target.id : d.target) === selectedNode.id
+            );
 
+            // Sort descending by weight
             outgoing.sort((a, b) => b.weight - a.weight);
             incoming.sort((a, b) => b.weight - a.weight);
 
-            let html = `<h4>${selectedNode.id} ${selectedNode.statnaam}</h4>
-                        <div class="d-flex gap-2">
-                            <div class="trade-col flex-fill" style="overflow-y:auto; max-height:30vh;">
-                                <table class="table table-striped table-bordered table-sm">
-                                    <thead class="sticky-header">
-                                        <tr><th>Outgoing Trades</th><th>Freight</th></tr>
-                                    </thead>
-                                    <tbody>`;
+            let html = `
+                        <div class="trade-info-header">
+                            <h4><i class="fa-solid fa-location-dot"></i> ${selectedNode.statnaam} [${selectedNode.id}] </h4>
+                        </div>
+                        <div class="trade-sections d-flex gap-3">
+                            
+                            <!-- Outgoing trades section -->
+                            <div class="trade-section flex-fill">
+                            <div class="trade-section-header"><i class="fa-solid fa-arrow-right-from-bracket"></i> Outgoing Trades</div>
+                            <div class="trade-list" style="max-height: 17vh; overflow-y: auto;">
+                        `;
+
             if (outgoing.length > 0) {
                 outgoing.forEach(trade => {
                     const dest = getStatnaam((typeof trade.target === "object" ? trade.target.id : trade.target));
-                    html += `<tr><td>${dest}</td><td>${trade.weight}</td></tr>`;
+                    html += `
+                            <div class="trade-item d-flex justify-content-between">
+                                <span class="trade-dest">${dest}</span>
+                                <span class="trade-volume">${trade.weight}</span>
+                            </div>
+                            `;
                 });
             } else {
-                html += `<tr><td colspan="2">No outgoing trades.</td></tr>`;
+                html += `<div class="trade-item no-trades">No outgoing trades.</div>`;
             }
-            html += `</tbody></table></div>
-                    <div class="trade-col flex-fill" style="overflow-y:auto; max-height:30vh;">
-                        <table class="table table-striped table-bordered table-sm">
-                            <thead class="sticky-header">
-                                <tr><th>Incoming Trades</th><th>Freight</th></tr>
-                            </thead>
-                            <tbody>`;
+
+            html += `
+                        </div> <!-- .trade-list -->
+                        </div> <!-- .trade-section -->
+
+                        <!-- Incoming trades section -->
+                        <div class="trade-section flex-fill">
+                        <div class="trade-section-header"><i class="fa-solid fa-arrow-right-to-bracket"></i> Incoming Trades</div>
+                        <div class="trade-list" style="max-height: 17vh; overflow-y: auto;">
+                    `;
+
             if (incoming.length > 0) {
                 incoming.forEach(trade => {
                     const src = getStatnaam((typeof trade.source === "object" ? trade.source.id : trade.source));
-                    html += `<tr><td>${src}</td><td>${trade.weight}</td></tr>`;
+                    html += `
+                            <div class="trade-item d-flex justify-content-between">
+                                <span class="trade-src">${src}</span>
+                                <span class="trade-volume">${trade.weight}</span>
+                            </div>
+                            `;
                 });
             } else {
-                html += `<tr><td colspan="2">No incoming trades.</td></tr>`;
+                html += `<div class="trade-item no-trades">No incoming trades.</div>`;
             }
-            html += `</tbody></table></div></div>`;
 
+            html += `
+                        </div> <!-- .trade-list -->
+                        </div> <!-- .trade-section -->
+
+                    </div> <!-- .trade-sections -->
+                    `;
+
+            // Inject the final HTML
             tradePanelDiv.innerHTML = html;
         }
 
+        // ---- Force Simulation Drag Handler ----
         function drag(simulation) {
             function dragstarted(event, d) { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
             function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
@@ -914,7 +1164,7 @@
             return d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended);
         }
 
-        // ---- Map Mode Functions ----
+        // ---- Functions to switch between graph and map mode ----
         function switchToMapMode() {
             if (forceSim) forceSim.stop();
             if (!nlMapData) { console.error("NL map data not loaded."); return; }
@@ -958,6 +1208,7 @@
             if (forceSim) { forceSim.alpha(1).restart(); }
         }
 
+        // ---- Update Node Positions When Switching to Map Mode ----
         function updateMapPositionsWithTransition() {
             nodeEnter.transition().duration(1000)
                 .attr("transform", d => `translate(${d.x},${d.y})`);
@@ -1029,6 +1280,7 @@
             let cycle = null;
             let visited = {};
 
+            // DFS to detect a cycle
             function dfsCycle(nodeId, path) {
                 if (visited[nodeId]) {
                     // if visited before in the current path, then there's a cycle
@@ -1158,7 +1410,7 @@
                 container.append("text")
                     .attr("x", 10)
                     .attr("y", 20)
-                    .text("No arborescence found.");
+                    .text("No major routes found.");
                 return;
             }
 
@@ -1256,9 +1508,11 @@
 
             // 13) Labels
             nodeGroup.append("text")
-                .attr("dy", -10)
+                .attr("dy", -2)
+                .attr("dx", 14)
                 .attr("font-size", "8px")
                 .attr("text-anchor", "middle")
+                .attr("transform", (d) => `rotate(-45)`)
                 .text(d => d.data.name);
         }
 
@@ -1520,14 +1774,14 @@
         }
 
         /**
-         * displaySCCsInTable(sccs, containerId)
+         * displaySCCsInCards(sccs, containerId)
          *
-         * Renders the array of strongly connected components (SCCs) into an HTML table.
+         * Renders the array of strongly connected components (SCCs) as cards with a collapsible details section.
          *
          * @param {Array} sccs - Array of SCCs, where each SCC is an array of node IDs
-         * @param {String} containerId - The DOM element ID where the table will be placed
+         * @param {String} containerId - The DOM element ID where the cards will be placed
          */
-        function displaySCCsInTable(sccs, containerId) {
+        function displaySCCsInCards(sccs, containerId) {
             const container = document.getElementById(containerId);
             if (!container) {
                 console.warn("Container with ID", containerId, "not found.");
@@ -1540,39 +1794,37 @@
                 return;
             }
 
-            // Start building an HTML table
-            let html = `
-                <h5>Strongly Connected Components</h5>
-                <table class="table table-bordered table-sm">
-                <thead>
-                    <tr>
-                    <th>Group</th>
-                    <th>Connected Nodes</th>
-                    </tr>
-                </thead>
-                <tbody>
-            `;
+            // Start building the HTML
+            let html = ``;
 
-            // For each SCC, create a row
             sccs.forEach((component, index) => {
-                // Convert array of node IDs into a comma-separated string
-                const nodeList = component.join(", ");
-                html += `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${nodeList}</td>
-                </tr>
-                `;
+                // For brevity, show first three nodes as a summary.
+                const summaryCount = 3;
+                const summaryNodes = component.slice(0, summaryCount).join(", ");
+                const remainingCount = component.length - summaryCount;
+                const fullList = component.join(", ");
+
+                html += `<div class="scc-card">
+                <div class="scc-header">
+                    <span class="scc-index">Cluster ${index + 1}</span>
+                    <span class="scc-summary">
+                    ${summaryNodes}${remainingCount > 0 ? " ..." : ""}
+                    </span>
+                </div>`;
+
+                if (remainingCount > 0) {
+                    html += `<details class="scc-details">
+                    <summary>Show full list</summary>
+                    <p>${fullList}</p>
+                </details>`;
+                }
+
+                html += `</div>`;
             });
 
-            html += `
-                </tbody>
-                </table>
-            `;
-
-            // Insert the final HTML into the container
             container.innerHTML = html;
         }
+
 
         // Visualize the maximum clique using a circular layout.
         function visualizeClique(cliqueNodes) {
@@ -1640,8 +1892,7 @@
         /**
          * visualizeCliqueAsForce(cliqueNodes)
          *
-         * Uses a d3 force layout to display the maximum clique as a standard graph (with edges and node labels),
-         * instead of placing them in a circle with circles.
+         * Uses a d3 force layout to display the maximum clique as a standard graph (with edges and node labels).
          *
          * @param {Array} cliqueNodes - Each element is an object representing a node, e.g. { id, statnaam }.
          */
@@ -1692,7 +1943,7 @@
                 .append("g")
                 .attr("class", "cliqueNode");
 
-            // Draw a rect instead of a circle, purely for variety
+            // Draw a rect
             node.append("rect")
                 .attr("width", 60)
                 .attr("height", 30)
@@ -1745,16 +1996,54 @@
             // visualizeArborescence(outArbo, "#outArboSVG", newRootId);
         }
 
+        function attachInfoBoxListeners() {
+            document.querySelectorAll('.info-container').forEach(container => {
+                const infoBox = container.querySelector('.info-box');
+
+                container.addEventListener('mouseenter', () => {
+                    // Get the container's position relative to the viewport
+                    const rect = container.getBoundingClientRect();
+
+                    // Detach the tooltip from its current parent and append it to the body
+                    document.body.appendChild(infoBox);
+
+                    // Set the tooltip's style to fixed positioning so it's not cropped
+                    infoBox.style.position = 'fixed';
+                    // Position it above the container (adjust offsets as needed)
+                    infoBox.style.top = (rect.top - infoBox.offsetHeight - 5) + 'px';
+                    infoBox.style.left = (rect.left + rect.width / 2 - infoBox.offsetWidth / 2) + 'px';
+
+                    // Show the tooltip
+                    infoBox.style.visibility = 'visible';
+                    infoBox.style.opacity = '0.85';
+                });
+
+                container.addEventListener('mouseleave', () => {
+                    // Hide the tooltip
+                    infoBox.style.visibility = 'hidden';
+                    infoBox.style.opacity = '0';
+
+                    // Reattach the tooltip to the original container
+                    container.appendChild(infoBox);
+                    // Reset the tooltip's position so it can be absolutely positioned within the container again
+                    infoBox.style.position = 'absolute';
+                });
+            });
+        }
+
         // ---- CSV File Upload ----
         document.getElementById('csvFileInput').addEventListener('change', function (event) {
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
+            // When the file is loaded, parse it as CSV
             reader.onload = function (e) {
+                // Initialize data structures
                 const text = e.target.result;
                 const data = d3.csvParse(text);
                 const nodesMap = {}, links = [];
 
+                // Iterate over each row in the CSV
                 data.forEach(d => {
                     const source = d.COROP_LEV, target = d.COROP_AFN, weight = +d.AANTAL;
                     // Skip rows if the source or target is missing/NA.
@@ -1772,6 +2061,7 @@
                     links.push({ source, target, weight });
                 });
 
+                // Convert nodesMap to an array of nodes
                 const nodes = Object.values(nodesMap);
                 allNodes = nodes;
                 nodes.forEach(d => {
@@ -1781,27 +2071,100 @@
                 });
                 allLinks = links;
 
+                // Update network stats
                 updateNetworkStats(nodes, links);
 
                 // Compute and print 3 hotpots per metric
                 hotspots = computeHotSpotMetrics(allNodes, allLinks);
                 printHotSpots(hotspots, "topMetrics", 3);
 
+                // Create the network visualization
                 createNetwork(nodes, links);
 
                 // Find strongly connected components (SCCs) and display them in a table
                 const sccs = findSCCs(nodes, links);
-                displaySCCsInTable(sccs, "sccOutput");
+                displaySCCsInCards(sccs, "sccOutput");
 
                 // Compute and visualize the maximum clique (using reciprocal edges only)
-                let maxClique = computeMaxCliqueReciprocal();
-                visualizeCliqueAsForce(maxClique);
+                // let maxClique = computeMaxCliqueReciprocal();
+                // visualizeCliqueAsForce(maxClique);
 
                 // Enable toggle button now that CSV is loaded.
-                document.getElementById("toggleModeButton").disabled = false;
+                document.getElementById("toggleModeButton").disabled = null;
             };
+
+            // Read the file as text
             reader.readAsText(file);
         });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const introOverlay = document.getElementById('introOverlay');
+            const okButton = document.getElementById('introOkButton');
+            const dontShowAgain = document.getElementById('dontShowAgain');
+
+            // If the user already opted to hide the intro, skip showing it entirely
+            if (localStorage.getItem('hideIntro') === 'true') {
+                // Immediately hide (no animation)
+                introOverlay.style.display = 'none';
+            }
+
+            // Otherwise, the overlay is visible by default and can fade in
+            okButton.addEventListener('click', function () {
+                // If the user checked "Do not show again", store that choice.
+                if (dontShowAgain.checked) {
+                    localStorage.setItem('hideIntro', 'true');
+                }
+
+                // Trigger the fade-out animation by adding a 'hide' class
+                introOverlay.classList.add('hide');
+            });
+
+            // Once the fade-out completes, fully remove overlay from view
+            introOverlay.addEventListener('animationend', function (e) {
+                // Only hide if the 'hide' animation has been triggered
+                if (introOverlay.classList.contains('hide')) {
+                    introOverlay.style.display = 'none';
+                }
+            });
+        });
+
+        // Initialize Vivus on the SVG inside the card header
+        var drawDuration = 24;
+        var myAnim = new Vivus('mySVG', {
+            duration: drawDuration,
+            start: 'autostart',
+            type: 'scenario-sync'
+        });
+
+        var animator = function () {
+            myAnim.play();
+        };
+
+        function fadeInNodes(step, maxStep) {
+            setTimeout(() => {
+                // Select all nodes for the current step
+                const nodes = document.querySelectorAll('.circle.step' + step);
+                nodes.forEach(node => {
+                    node.classList.add('blue-bg');
+                });
+                if (step < maxStep) {
+                    fadeInNodes(++step, maxStep);
+                }
+            }, 1000);
+        }
+
+        window.addEventListener('load', function () {
+            setTimeout(() => {
+                fadeInNodes(1, 5);
+            }, 1000);
+        });
+
+        // Event listener for the file upload widget
+        document.getElementById("csvFileInput").addEventListener("change", function (event) {
+            const fileNameDisplay = document.getElementById("fileName");
+            fileNameDisplay.textContent = event.target.files.length > 0 ? event.target.files[0].name : "No file selected";
+        });
+
     </script>
 </body>
 
