@@ -83,19 +83,19 @@ body {
     color: #fff;
 }
 
-.svg-container {
+.logo-svg-container {
     width: 80px;
     flex-shrink: 0;
     opacity: 0.85;
     transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
 
-.svg-container svg {
+.logo-svg-container svg {
     width: 100%;
     height: auto;
 }
 
-.svg-container:hover {
+.logo-svg-container:hover {
     opacity: 1;
     transform: scale(1.05);
     filter: brightness(1.2);
@@ -136,6 +136,10 @@ body {
     cursor: pointer;
     transition: all 0.3s ease-in-out;
     box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.file-upload-container label i {
+    margin-right: 5px;
 }
 
 .file-upload-container label:hover {
@@ -183,8 +187,8 @@ body {
     overflow: hidden;
     background: transparent;
     filter: brightness(1);
-    transition: transform 0.3s ease-in-out, filter 0.3s ease-in-out;
-    will-change: filter;
+    transition: transform 0.3s ease-in-out, filter 0.3s ease-in-out, opacity 0.3s ease;
+    will-change: filter, opacity;
     z-index: 0;
     box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.15);
 }
@@ -246,6 +250,18 @@ body {
     transform: scale(0.98);
 }
 
+.switch-button-container .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: brightness(0.8);
+}
+
+.switch-button-container .btn:disabled::before,
+.switch-button-container .btn:disabled::after {
+    opacity: 0.5 !important;
+    transition: opacity 0.3s ease;
+}
+
 /*******************************/
 /*  MIDDLE COLUMN (Col 2)      */
 /*******************************/
@@ -263,6 +279,62 @@ body {
     margin-top: 10px;
     margin-bottom: 10px;
     overflow: hidden;
+}
+  
+  .watermark {
+    position: absolute;
+    bottom: 20px;
+    left: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.5;
+    font-size: 0.8rem;
+    color: #fff;
+  }
+  
+  .watermark-text {
+    font-family: sans-serif;
+    font-weight: bold;
+  }
+  
+  .watermark-logo {
+    width: 140px;
+    height: 40px;
+  }
+  
+
+.screenshot-button {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: background 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+}
+
+.screenshot-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #7a21dc, #3585fd);
+}
+
+.screenshot-button:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.screenshot-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: linear-gradient(135deg, #999, #ccc);
+    box-shadow: none;
+    transform: none;
 }
 
 /*******************************/

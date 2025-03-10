@@ -16,6 +16,8 @@
     <script src="https://kit.fontawesome.com/a14764fea8.js" crossorigin="anonymous"></script>
     <!-- Load Vivus -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vivus/0.3.1/vivus.min.js"></script>
+    <!-- Load savesvg.js -->
+    <script src="assets/js/savesvg.js"></script>
 </head>
 
 <body>
@@ -49,7 +51,7 @@
         <!-- Left Column: Controls and Network Stats -->
         <div id="col1">
             <div class="card">
-                <!-- TOP SECTION: Fixed header & controls -->
+                <!-- TOP SECTION: Fixed heasder & controls -->
                 <div class="col1-top">
                     <div class="card-header">
                         <!-- Row 1: Logo/Banner -->
@@ -57,7 +59,7 @@
                             <div class="logo-container">
                                 <h4>HerdLink</h4>
                             </div>
-                            <div class="svg-container">
+                            <div class="logo-svg-container">
                                 <svg id="mySVG" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 300">
                                     <circle class="circle blue-bg" cx="58.14" cy="114.94" r="10.72" />
                                     <circle class="line" cx="58.25" cy="115" r="15.33" />
@@ -140,7 +142,7 @@
                         <div class="header-row header-row-2">
                             <div class="file-upload-container">
                                 <label for="csvFileInput">
-                                    <i class="fa-solid fa-file-arrow-up"></i></p>Choose File
+                                    <i class="fa-solid fa-upload"></i>Choose File
                                 </label>
                                 <input type="file" id="csvFileInput" accept=".csv">
                                 <span id="fileName" class="file-name">No file selected</span>
@@ -163,7 +165,8 @@
                 <div class="col1-bottom">
                     <details class="collapsible-section" open>
                         <summary>
-                            <span class="header-text"><i class="fa-solid fa-chart-simple"></i> Statistics</span>
+                            <span class="header-text"><i class="fa-solid fa-chart-simple" id="statsHeader"></i>
+                                Statistics</span>
                         </summary>
                         <div class="section-content">
                             <div id="networkStats" class="panel"></div>
@@ -171,7 +174,8 @@
                     </details>
                     <details class="collapsible-section" open>
                         <summary>
-                            <span class="header-text"><i class="fa-solid fa-arrows-to-dot"></i> Hotspots</span>
+                            <span class="header-text"><i class="fa-solid fa-arrows-to-dot" id="hotspotsHeader"></i>
+                                Hotspots</span>
                         </summary>
                         <div class="section-content">
                             <div id="topMetrics"></div>
@@ -179,7 +183,8 @@
                     </details>
                     <details class="collapsible-section" open>
                         <summary>
-                            <span class="header-text"><i class="fa-solid fa-circle-nodes"></i> Trade Clusters</span>
+                            <span class="header-text"><i class="fa-solid fa-circle-nodes" id="sccHeader"></i> Trade
+                                Clusters</span>
                         </summary>
                         <div class="section-content">
                             <div id="sccOutput" class="panel"></div>
@@ -191,8 +196,16 @@
 
         <!-- Middle Column: Graph/Map -->
         <div id="col2">
-            <svg></svg>
+            <button id="screenshotButton" class="screenshot-button" disabled>
+                <i class="fa-solid fa-camera"></i> Screenshot
+            </button>
+            <svg id="mainFigureSVG"></svg>
+            <div class="watermark">
+                <span class="watermark-text"></span>
+                <img src="assets/files/herdlink/WUR_ZW_standard_2021.svg" class="watermark-logo">
+            </div>
         </div>
+
 
         <!-- Right Column: Trade Table -->
         <div id="col3">
@@ -1033,6 +1046,9 @@
             }
             // Unhide the trade information panel
             document.getElementById("tradeInfo").style.display = "block";
+
+            // Switch university logo to white version
+            document.querySelector('.watermark-logo').src = 'assets/files/herdlink/WUR_W_standard_2021.svg';
         }
 
         // ---- Clear Selection (If Clicking Again/Unclicked) ----
@@ -1073,6 +1089,9 @@
             } else {
                 svg.select("#mapOverlay").remove();
             }
+
+            // Switch the university logo back to the black version
+            document.querySelector('.watermark-logo').src = 'assets/files/herdlink/WUR_ZW_standard_2021.svg';
         }
 
         // ---- Update Trade Table ----
@@ -2089,8 +2108,11 @@
                 // let maxClique = computeMaxCliqueReciprocal();
                 // visualizeCliqueAsForce(maxClique);
 
-                // Enable toggle button now that CSV is loaded.
+                // Enable toggle button after CSV is loaded.
                 document.getElementById("toggleModeButton").disabled = null;
+
+                // Enable screenshot button after CSV is loaded.
+                document.getElementById("screenshotButton").disabled = null;
             };
 
             // Read the file as text
@@ -2163,6 +2185,128 @@
         document.getElementById("csvFileInput").addEventListener("change", function (event) {
             const fileNameDisplay = document.getElementById("fileName");
             fileNameDisplay.textContent = event.target.files.length > 0 ? event.target.files[0].name : "No file selected";
+        });
+
+        function downloadSvg() {
+            // Generate filename based on current timestamp and a random suffix
+            const timestamp = new Date().toISOString().replace(/[-:]/g, "").replace("T", "_").split(".")[0];
+            const filename = `network_${timestamp}_${Math.random().toString(36).substring(7)}.png`;
+
+            // Download the SVG as PNG
+            saveSvgAsPng(document.getElementById("mainFigureSVG"), filename);
+        }
+
+        // Event listener for the screenshot button to trigger the download
+        document.getElementById("screenshotButton").addEventListener("click", downloadSvg);
+
+        // Define Keyboard Shortcuts for the functionalities
+        // Shortcut for opening a csv file: Press 'o'
+        document.addEventListener("DOMContentLoaded", function () {
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "o") {  // Press 'o' to open a CSV file
+                    document.getElementById("csvFileInput").click();
+                }
+            });
+        });
+
+        // Shortcut for taking a screenshot: Press 'r'
+        document.addEventListener("DOMContentLoaded", function () {
+            const screenshotButton = document.getElementById("screenshotButton");
+
+            // Enable keyboard shortcut when the screenshot button is enabled
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "r") {  // Press 'r' to take a screenshot
+                    if (!screenshotButton.disabled) {
+                        event.preventDefault(); // Prevent browser save shortcut
+                        screenshotButton.click(); // Trigger button click
+                    }
+                }
+            });
+        });
+        // Shortcut for toggling the network mode: Press 'm'
+        document.addEventListener("DOMContentLoaded", function () {
+            const toggleModeButton = document.getElementById("toggleModeButton");
+
+            // Enable keyboard shortcut when the toggle button is enabled
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "m") {  // Press 'm' to toggle network mode
+                    if (!toggleModeButton.disabled) {
+                        event.preventDefault(); // Prevent browser save shortcut
+                        toggleModeButton.click(); // Trigger button click
+                    }
+                }
+            });
+        });
+
+        // Shortcut for quitting the focus mode: Press 'q'
+        // Calls clearSelection(false) to remove the focus from the selected node
+        document.addEventListener("DOMContentLoaded", function () {
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "q") {  // Press 'q' to quit focus mode
+                    clearSelection(false);
+                }
+            });
+        });
+
+        // Shortcut to simulate click on Statistics header: Press 's'
+        document.addEventListener("DOMContentLoaded", function () {
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "s") {  // Press 's' to simulate click on Statistics header
+                    document.getElementById("statsHeader").click();
+                }
+            });
+        });
+
+        // Shortcut to simulate click on Hotspots header: Press 'h'
+        document.addEventListener("DOMContentLoaded", function () {
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "h") {  // Press 'h' to simulate click on Hotspots header
+                    document.getElementById("hotspotsHeader").click();
+                }
+            });
+        });
+
+        // Shortcut to simulate click on SCCs (Trade Clusters) header: Press 'c'
+        document.addEventListener("DOMContentLoaded", function () {
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "c") {  // Press 'c' to simulate click on SCCs header
+                    document.getElementById("sccHeader").click();
+                }
+            });
+        });
+
+        // Shortcut to switch between focal nodes: Press 'up' or 'down' arrow keys
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                e.preventDefault();
+
+                // Get all node elements. They should have been attached to .nodeGroup.
+                const nodesArray = d3.selectAll(".nodeGroup").nodes();
+                if (!nodesArray.length) return;
+
+                // Determine the current index based on selectedNodeData (if any)
+                let currentIndex = -1;
+                if (selectedNodeData) {
+                    currentIndex = nodesArray.findIndex(el => el.__data__.id === selectedNodeData.id);
+                }
+                // If no node is selected or not found, default to the first node.
+                if (currentIndex === -1) {
+                    currentIndex = 0;
+                } else {
+                    // Update index: ArrowDown goes to the next node; ArrowUp to the previous.
+                    if (e.key === "ArrowDown") {
+                        currentIndex = (currentIndex + 1) % nodesArray.length;
+                    } else if (e.key === "ArrowUp") {
+                        currentIndex = (currentIndex - 1 + nodesArray.length) % nodesArray.length;
+                    }
+                }
+
+                // Dispatch a synthetic click event on the selected node element.
+                nodesArray[currentIndex].dispatchEvent(new MouseEvent("click", {
+                    bubbles: true,
+                    cancelable: true
+                }));
+            }
         });
 
     </script>
