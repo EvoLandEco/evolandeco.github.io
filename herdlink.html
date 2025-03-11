@@ -199,6 +199,7 @@
             <button id="screenshotButton" class="screenshot-button" disabled>
                 <i class="fa-solid fa-camera"></i> Screenshot
             </button>
+            <button id="restoreButton" class="restore-button"><i class="fa-solid fa-arrows-rotate"></i> Restore</button>
             <svg id="mainFigureSVG"></svg>
             <div class="watermark">
                 <span class="watermark-text"></span>
@@ -249,8 +250,8 @@
             betweenness: "#ff007f", // Bright Pink
             pageRank: "#FFD600"    // Vivid Yellow
         };
-
-
+        const metricNames = ["inDegree", "outDegree", "betweenness", "pageRank"];
+        let top3ForMetric = {};
 
         // ---- Load GeoJSON Files ----
         d3.json("assets/files/herdlink/nl_corop.geojson").then(data => { nlMapData = data; })
@@ -303,66 +304,69 @@
         }
 
         function updateNetworkStats(nodes, links) {
-            const totalNodes = nodes.length,
-                totalEdges = links.length,
-                totalTradeVolume = d3.sum(links, d => d.weight),
-                avgTradeEdge = totalEdges > 0 ? (totalTradeVolume / totalEdges).toFixed(2) : 0,
-                avgTradeNode = totalNodes > 0 ? (d3.sum(nodes, d => d.tradeTotal) / totalNodes).toFixed(2) : 0;
+            // Filter out disabled links
+            const enabledLinks = links.filter(d => !d.disabled);
+
+            const totalNodes = nodes.length;
+            const totalEdges = enabledLinks.length;
+            const totalTradeVolume = d3.sum(enabledLinks, d => d.weight);
+            const avgTradeEdge = totalEdges > 0 ? (totalTradeVolume / totalEdges).toFixed(2) : 0;
+            const avgTradeNode = totalNodes > 0 ? (d3.sum(nodes, d => d.tradeTotal) / totalNodes).toFixed(2) : 0;
 
             // Compute connectivity: how many connected components (undirected) exist?
-            const numComponents = getNumberOfConnectedComponents(nodes, links);
+            const numComponents = getNumberOfConnectedComponents(nodes, enabledLinks);
 
-            // Compute (or approximate) modularity by first detecting communities
-            let { partition, modularity } = computeModularity(nodes, links);
+            // Compute (or approximate) modularity on the enabled links
+            let { partition, modularity } = computeModularity(nodes, enabledLinks);
 
             let html = `
-                        <div class="stats-container">
-                            <div class="stat-item">
-                            <span class="stat-label">COROP Areas</span>
-                            <span class="stat-value">${totalNodes}</span>
-                            </div>
-                            <div class="stat-item">
-                            <span class="stat-label">Trade Routes</span>
-                            <span class="stat-value">${totalEdges}</span>
-                            </div>
-                            <div class="stat-item">
-                            <span class="stat-label">Total Volume</span>
-                            <span class="stat-value">${totalTradeVolume}</span>
-                            </div>
-                            <div class="stat-item">
-                            <span class="stat-label">Avg. Volume/Route</span>
-                            <span class="stat-value">${avgTradeEdge}</span>
-                            </div>
-                            <div class="stat-item">
-                            <span class="stat-label">Avg. Volume/Area</span>
-                            <span class="stat-value">${avgTradeNode}</span>
-                            </div>
-                            <div class="stat-item">
-                            <span class="stat-label">Connected Components
-                                <span class="info-container">
-                                    <i class="fa-solid fa-circle-question"></i>
-                                    <span class="info-box">
-                                        Count of “connected components” in the network. A “connected component” is a set of nodes where each node is reachable from any other node in that set (via some path of edges). Therefore, the number of connected components is a measure of how fragmented the network is.
-                                    </span>
-                                </span>
-                            </span>
-                            <span class="stat-value">${numComponents}</span>
-                            </div>
-                            <div class="stat-item">
-                            <span class="stat-label">Modularity
-                                <span class="info-container">
-                                    <i class="fa-solid fa-circle-question"></i>
-                                    <span class="info-box">
-                                        "Modularity" measures the strength of community structure in a network. It compares the actual density of links within communities to a random network. Higher modularity value (0 to 1) indicates well-separated, strongly connected communities, while lower value suggests weaker or no community structure.
-                                    </span>
-                                </span>
-                            </span>
-                            <span class="stat-value">${modularity.toFixed(0)}</span>
-                            </div>
-                        </div>`;
+                <div class="stats-container">
+                <div class="stat-item">
+                    <span class="stat-label">COROP Areas</span>
+                    <span class="stat-value">${totalNodes}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Trade Routes</span>
+                    <span class="stat-value">${totalEdges}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Volume</span>
+                    <span class="stat-value">${totalTradeVolume}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Avg. Volume/Route</span>
+                    <span class="stat-value">${avgTradeEdge}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Avg. Volume/Area</span>
+                    <span class="stat-value">${avgTradeNode}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Connected Components
+                    <span class="info-container">
+                        <i class="fa-solid fa-circle-question"></i>
+                        <span class="info-box">
+                        Count of “connected components” in the network. A “connected component” is a set of nodes where each node is reachable from any other node in that set (via some path of edges). Therefore, the number of connected components is a measure of how fragmented the network is.
+                        </span>
+                    </span>
+                    </span>
+                    <span class="stat-value">${numComponents}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Modularity
+                    <span class="info-container">
+                        <i class="fa-solid fa-circle-question"></i>
+                        <span class="info-box">
+                        "Modularity" measures the strength of community structure in a network. It compares the actual density of links within communities to a random network. Higher modularity value (0 to 1) indicates well-separated, strongly connected communities, while lower value suggests weaker or no community structure.
+                        </span>
+                    </span>
+                    </span>
+                    <span class="stat-value">${modularity.toFixed(0)}</span>
+                </div>
+                </div>
+            `;
 
             document.getElementById("networkStats").innerHTML = html;
-
             attachInfoBoxListeners();
         }
 
@@ -474,6 +478,9 @@
          * allLinks: array of { source, target, weight }
          */
         function computeHotSpotMetrics(allNodes, allLinks) {
+            // Filter out disabled links
+            const enabledLinks = allLinks.filter(link => !link.disabled);
+
             //////////////////////////////////////////////
             // 1) Weighted In-Degree & Out-Degree
             //////////////////////////////////////////////
@@ -487,8 +494,8 @@
                 };
             });
 
-            // Weighted in/out-degree is just sum of "weight" on incoming/outgoing edges
-            allLinks.forEach(link => {
+            // Weighted in/out-degree: use only enabled links.
+            enabledLinks.forEach(link => {
                 const s = (typeof link.source === "object") ? link.source.id : link.source;
                 const t = (typeof link.target === "object") ? link.target.id : link.target;
                 const w = link.weight || 1;
@@ -504,17 +511,15 @@
             // 2) Weighted Betweenness Centrality
             //    (Simplified Brandes approach)
             //////////////////////////////////////////////
-            // NOTE: A simplified approach that uses 1/weight as the "cost."
-            //////////////////////////////////////////////
-
-            // Build adjacency for a weighted directed graph
+            // Build adjacency for a weighted directed graph using only enabled links.
             const adj = {};
             allNodes.forEach(n => { adj[n.id] = []; });
-            allLinks.forEach(e => {
+            enabledLinks.forEach(e => {
                 const s = (typeof e.source === "object") ? e.source.id : e.source;
                 const t = (typeof e.target === "object") ? e.target.id : e.target;
                 const w = e.weight || 1;
-                adj[s].push({ target: t, cost: 1 / w }); // cost is 1/weight
+                // Use cost = 1/weight
+                adj[s].push({ target: t, cost: 1 / w });
             });
 
             function brandesBetweenness() {
@@ -525,7 +530,6 @@
                 // For each node s:
                 allNodes.forEach(sNode => {
                     const s = sNode.id;
-                    // S: stack, P: predecessors, sigma: # of shortest paths, dist: distance
                     let S = [];
                     let P = {};
                     let sigma = {};
@@ -545,7 +549,7 @@
                     while (queue.length > 0) {
                         let v = queue.shift();
                         S.push(v);
-                        // Explore adjacency
+                        // Explore neighbors from the adjacency list
                         adj[v].forEach(edge => {
                             let w = edge.target;
                             let cost = edge.cost;
@@ -557,12 +561,11 @@
                                 queue.push(w);
                             }
                             if (Math.abs(vwDist - dist[w]) < 1e-9) {
-                                // same shortest path => update
                                 sigma[w] += sigma[v];
                                 P[w].push(v);
                             }
                         });
-                        // Sort queue by dist for correctness (makes it Dijkstra)
+                        // Sort queue to mimic Dijkstra's algorithm (by distance)
                         queue.sort((a, b) => dist[a] - dist[b]);
                     }
 
@@ -584,19 +587,14 @@
             //////////////////////////////////////////////
             // 3) Weighted PageRank (Simplified)
             //////////////////////////////////////////////
-            // Iterative approach:
-            // pageRank(u) = (1 - d)/N + d * Sum_over_incoming( pageRank(v) * (weight_uv / sum_of_outgoing_weights_of(v)) )
-            // d ~ 0.85
-            //////////////////////////////////////////////
-
+            // Precompute outWeight sums using only enabled links.
             let d = 0.85;
             let N = allNodes.length;
-            // Precompute outWeight sums to do Weighted PR
             let outWeightSum = {};
             allNodes.forEach(n => {
                 outWeightSum[n.id] = 0;
             });
-            allLinks.forEach(link => {
+            enabledLinks.forEach(link => {
                 const s = (typeof link.source === "object") ? link.source.id : link.source;
                 const w = link.weight || 1;
                 outWeightSum[s] += w;
@@ -608,25 +606,22 @@
                     newPR[n.id] = (1 - d) / N;
                 });
 
-                // For each edge v->u with weight w, contribute Weighted PR fraction
-                allLinks.forEach(link => {
+                enabledLinks.forEach(link => {
                     let vId = (typeof link.source === "object") ? link.source.id : link.source;
                     let uId = (typeof link.target === "object") ? link.target.id : link.target;
                     let w = link.weight || 1;
-                    // Weighted fraction of v's PR
                     if (outWeightSum[vId] > 0) {
                         let contrib = d * (metrics[vId].pageRank * (w / outWeightSum[vId]));
                         newPR[uId] += contrib;
                     }
                 });
 
-                // Overwrite
                 allNodes.forEach(n => {
                     metrics[n.id].pageRank = newPR[n.id];
                 });
             }
 
-            // run 20 iterations
+            // Run a fixed number of iterations
             for (let i = 0; i < 20; i++) {
                 doPageRankIteration();
             }
@@ -636,6 +631,7 @@
             //////////////////////////////////////////////
             return metrics;
         }
+
 
         // ---- Helper: Adjust Arrow Endpoint ----
         function getAdjustedTarget(d) {
@@ -751,9 +747,6 @@
 
             const nodeGroup = svg.append("g").attr("class", "nodes");
 
-            // Compute top-3 lists for each metric from the hotspots object.
-            const metricNames = ["inDegree", "outDegree", "betweenness", "pageRank"];
-            let top3ForMetric = {};
             metricNames.forEach(metric => {
                 // Sort the keys (node IDs) of hotspots by descending metric value.
                 top3ForMetric[metric] = Object.keys(hotspots)
@@ -983,10 +976,12 @@
             // If clicked, add glowing filter to main figure's hotspot strokes
             d3.selectAll(".hotspotStroke").attr("filter", "url(#edgeGlow)");
             // If clicked, change link colors, add arrowheads and glowing filter
+            // ... inside onClickNode, after setting selectedNodeData, etc.
             linkSelection.attr("display", function (linkData) {
                 const srcId = (typeof linkData.source === "object" ? linkData.source.id : linkData.source),
                     tgtId = (typeof linkData.target === "object" ? linkData.target.id : linkData.target);
-                if (srcId === d.id) {
+                // Only highlight if the link is connected to the clicked node AND not disabled.
+                if (srcId === d.id && !linkData.disabled) {
                     d3.select(this)
                         .attr("class", "linkSelect")
                         .attr("stroke", "#46fa46")
@@ -994,7 +989,7 @@
                         .attr("opacity", 1)
                         .attr("filter", "url(#edgeGlow)");
                     return "block";
-                } else if (tgtId === d.id) {
+                } else if (tgtId === d.id && !linkData.disabled) {
                     d3.select(this)
                         .attr("class", "linkSelect")
                         .attr("stroke", "#fcc67e")
@@ -1002,14 +997,20 @@
                         .attr("opacity", 1)
                         .attr("filter", "url(#edgeGlow)");
                     return "block";
-                } else { return "none"; }
+                } else {
+                    return "none";
+                }
             })
                 .attr("marker-end", function (linkData) {
                     const srcId = (typeof linkData.source === "object" ? linkData.source.id : linkData.source),
                         tgtId = (typeof linkData.target === "object" ? linkData.target.id : linkData.target);
-                    if (srcId === d.id || tgtId === d.id) { return "url(#arrow)"; }
-                    else { return null; }
+                    if ((srcId === d.id || tgtId === d.id) && !linkData.disabled) {
+                        return "url(#arrow)";
+                    } else {
+                        return null;
+                    }
                 });
+
 
             // Show/Update trade table and (re)-plot in/out arborescences
             updateTradeTable(d);
@@ -1090,11 +1091,13 @@
                 svg.select("#mapOverlay").remove();
             }
 
+            // Call the updateNetwork function to reset the network with instant=true
+            updateNetwork(instant = true);
+
             // Switch the university logo back to the black version
             document.querySelector('.watermark-logo').src = 'assets/files/herdlink/WUR_ZW_standard_2021.svg';
         }
 
-        // ---- Update Trade Table ----
         function updateTradeTable(selectedNode) {
             const tradePanelDiv = document.getElementById("tradePanel");
             if (!selectedNode) {
@@ -1102,7 +1105,7 @@
                 return;
             }
 
-            // Filter outgoing and incoming links
+            // Filter outgoing and incoming links for the focal node.
             const outgoing = allLinks.filter(d =>
                 (typeof d.source === "object" ? d.source.id : d.source) === selectedNode.id
             );
@@ -1110,53 +1113,70 @@
                 (typeof d.target === "object" ? d.target.id : d.target) === selectedNode.id
             );
 
-            // Sort descending by weight
+            // Sort descending by weight.
             outgoing.sort((a, b) => b.weight - a.weight);
             incoming.sort((a, b) => b.weight - a.weight);
 
+            // For each section, determine if all trades are enabled.
+            const allOutgoingEnabled = outgoing.every(trade => !trade.disabled);
+            const allIncomingEnabled = incoming.every(trade => !trade.disabled);
+
             let html = `
-                        <div class="trade-info-header">
-                            <h4><i class="fa-solid fa-location-dot"></i> ${selectedNode.statnaam} [${selectedNode.id}] </h4>
-                        </div>
-                        <div class="trade-sections d-flex gap-3">
-                            
-                            <!-- Outgoing trades section -->
-                            <div class="trade-section flex-fill">
-                            <div class="trade-section-header"><i class="fa-solid fa-arrow-right-from-bracket"></i> Outgoing Trades</div>
-                            <div class="trade-list" style="max-height: 17vh; overflow-y: auto;">
-                        `;
+                <div class="trade-info-header">
+                <h4><i class="fa-solid fa-location-dot"></i> ${selectedNode.statnaam} [${selectedNode.id}] </h4>
+                </div>
+                <div class="trade-sections d-flex gap-3">
+                <!-- Outgoing trades section -->
+                <div class="trade-section flex-fill">
+                    <div class="trade-section-header">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Outgoing Trades
+                    <input type="checkbox" class="trade-header-checkbox" data-section="outgoing" ${allOutgoingEnabled ? "checked" : ""}>
+                    </div>
+                    <div class="trade-list" style="max-height: 17vh; overflow-y: auto;">`;
 
             if (outgoing.length > 0) {
                 outgoing.forEach(trade => {
                     const dest = getStatnaam((typeof trade.target === "object" ? trade.target.id : trade.target));
+                    let s = (typeof trade.source === "object") ? trade.source.id : trade.source;
+                    let t = (typeof trade.target === "object") ? trade.target.id : trade.target;
                     html += `
-                            <div class="trade-item d-flex justify-content-between">
-                                <span class="trade-dest">${dest}</span>
-                                <span class="trade-volume">${trade.weight}</span>
-                            </div>
-                            `;
+                    <div class="trade-item d-flex align-items-center">
+                        <div class="flex-grow-1 d-flex justify-content-between">
+                            <span class="trade-dest">${dest}</span>
+                            <span class="trade-volume">${trade.weight}</span>
+                        </div>
+                        <input type="checkbox" class="trade-checkbox" data-section="outgoing" data-source="${s}" data-target="${t}" ${!trade.disabled ? "checked" : ""}>
+                    </div>
+                `;
                 });
             } else {
                 html += `<div class="trade-item no-trades">No outgoing trades.</div>`;
             }
 
             html += `
-                        </div> <!-- .trade-list -->
-                        </div> <!-- .trade-section -->
+                    </div> <!-- .trade-list -->
+                </div> <!-- .trade-section -->
 
-                        <!-- Incoming trades section -->
-                        <div class="trade-section flex-fill">
-                        <div class="trade-section-header"><i class="fa-solid fa-arrow-right-to-bracket"></i> Incoming Trades</div>
-                        <div class="trade-list" style="max-height: 17vh; overflow-y: auto;">
-                    `;
+                <!-- Incoming trades section -->
+                <div class="trade-section flex-fill">
+                    <div class="trade-section-header">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Incoming Trades
+                    <input type="checkbox" class="trade-header-checkbox" data-section="incoming" ${allIncomingEnabled ? "checked" : ""}>
+                    </div>
+                    <div class="trade-list" style="max-height: 17vh; overflow-y: auto;">`;
 
             if (incoming.length > 0) {
                 incoming.forEach(trade => {
                     const src = getStatnaam((typeof trade.source === "object" ? trade.source.id : trade.source));
+                    let s = (typeof trade.source === "object") ? trade.source.id : trade.source;
+                    let t = (typeof trade.target === "object") ? trade.target.id : trade.target;
                     html += `
-                            <div class="trade-item d-flex justify-content-between">
-                                <span class="trade-src">${src}</span>
-                                <span class="trade-volume">${trade.weight}</span>
+                            <div class="trade-item d-flex align-items-center">
+                                <div class="flex-grow-1 d-flex justify-content-between">
+                                    <span class="trade-src">${src}</span>
+                                    <span class="trade-volume">${trade.weight}</span>
+                                </div>
+                                <input type="checkbox" class="trade-checkbox" data-section="incoming" data-source="${s}" data-target="${t}" ${!trade.disabled ? "checked" : ""}>
                             </div>
                             `;
                 });
@@ -1165,14 +1185,295 @@
             }
 
             html += `
-                        </div> <!-- .trade-list -->
-                        </div> <!-- .trade-section -->
+                    </div> <!-- .trade-list -->
+                </div> <!-- .trade-section -->
+                </div> <!-- .trade-sections -->
+            `;
 
-                    </div> <!-- .trade-sections -->
-                    `;
-
-            // Inject the final HTML
             tradePanelDiv.innerHTML = html;
+            attachTradeCheckboxListeners();
+        }
+
+        function attachTradeCheckboxListeners() {
+            // Header checkboxes toggle all trade checkboxes in that section.
+            d3.selectAll('.trade-header-checkbox').on('change', function () {
+                const section = this.dataset.section;  // "outgoing" or "incoming"
+                const checked = this.checked;
+                d3.selectAll(`.trade-checkbox[data-section='${section}']`)
+                    .property('checked', checked);
+                updateNetwork();
+                updateNetworkStats(allNodes, allLinks);
+                replotInOutArbos(selectedNodeData.id);
+                hotspots = computeHotSpotMetrics(allNodes, allLinks);
+                printHotSpots(hotspots, "topMetrics", 3);
+                replotHotspots();
+                const newsccs = findSCCs(allNodes, allLinks);
+                displaySCCsInCards(newsccs, "sccOutput");
+            });
+
+            // Individual trade checkbox changes trigger a network update.
+            d3.selectAll('.trade-checkbox').on('change', function () {
+                updateNetwork();
+                updateNetworkStats(allNodes, allLinks);
+                replotInOutArbos(selectedNodeData.id);
+                hotspots = computeHotSpotMetrics(allNodes, allLinks);
+                printHotSpots(hotspots, "topMetrics", 3);
+                replotHotspots();
+                const newsccs = findSCCs(allNodes, allLinks);
+                displaySCCsInCards(newsccs, "sccOutput");
+            });
+        }
+
+        function updateNetwork(instant = false) {
+            // Disable buttons during transitions.
+            d3.select("#toggleModeButton").attr("disabled", true);
+            d3.select("#screenshotButton").attr("disabled", true);
+
+            // 1. Update link.disabled based on checkboxes.
+            d3.selectAll('.trade-checkbox').each(function () {
+                const checkbox = this;
+                const source = checkbox.dataset.source;
+                const target = checkbox.dataset.target;
+                const isEnabled = checkbox.checked;
+                allLinks.forEach(link => {
+                    let s = (typeof link.source === "object") ? link.source.id : link.source;
+                    let t = (typeof link.target === "object") ? link.target.id : link.target;
+                    if (s === source && t === target) {
+                        link.disabled = !isEnabled;
+                    }
+                });
+            });
+
+            // 2. Update link attributes.
+            if (selectedNodeData) {
+                // When a node is selected: highlight only links connected to that node and enabled.
+                linkSelection.each(function (d) {
+                    const srcId = (typeof d.source === "object") ? d.source.id : d.source;
+                    const tgtId = (typeof d.target === "object") ? d.target.id : d.target;
+                    const relevant = (srcId === selectedNodeData.id || tgtId === selectedNodeData.id);
+
+                    if (d.disabled || !relevant) {
+                        if (instant) {
+                            d3.select(this)
+                                .attr("opacity", 0)
+                                .attr("display", "none")
+                                .attr("class", "link")
+                                .attr("filter", null)
+                                .attr("marker-end", null);
+                        } else {
+                            d3.select(this)
+                                .interrupt()
+                                .transition().duration(500)
+                                .attr("opacity", 0)
+                                .on("end", function () {
+                                    d3.select(this)
+                                        .attr("display", "none")
+                                        .attr("class", "link")
+                                        .attr("filter", null)
+                                        .attr("marker-end", null);
+                                });
+                        }
+                    } else {
+                        const isOutgoing = (srcId === selectedNodeData.id);
+                        let color = isOutgoing ? "#46fa46" : "#fcc67e";
+                        if (instant) {
+                            d3.select(this)
+                                .attr("display", "block")
+                                .attr("opacity", 1)
+                                .attr("class", "linkSelect")
+                                .attr("stroke", color)
+                                .attr("stroke-width", Math.sqrt(d.weight) + 2)
+                                .attr("filter", "url(#edgeGlow)")
+                                .attr("marker-end", "url(#arrow)");
+                        } else {
+                            d3.select(this)
+                                .interrupt()
+                                .attr("display", "block")
+                                .transition().duration(500)
+                                .attr("opacity", 1)
+                                .on("start", function () {
+                                    d3.select(this)
+                                        .attr("class", "linkSelect")
+                                        .attr("stroke", color)
+                                        .attr("stroke-width", Math.sqrt(d.weight) + 2)
+                                        .attr("filter", "url(#edgeGlow)")
+                                        .attr("marker-end", "url(#arrow)");
+                                });
+                        }
+                    }
+                });
+            } else {
+                // When no node is selected: iterate over all links and show only enabled links.
+                const edgeExtent = d3.extent(allLinks, d => Math.log(d.weight));
+                const edgeColor = d3.scaleSequential(d3.interpolateSpectral)
+                    .domain([edgeExtent[1], edgeExtent[0]]);
+                linkSelection.each(function (d) {
+                    if (d.disabled) {
+                        if (instant) {
+                            d3.select(this)
+                                .attr("opacity", 0)
+                                .attr("display", "none")
+                                .attr("class", "link")
+                                .attr("filter", null)
+                                .attr("marker-end", null);
+                        } else {
+                            d3.select(this)
+                                .interrupt()
+                                .transition().duration(500)
+                                .attr("opacity", 0)
+                                .on("end", function () {
+                                    d3.select(this)
+                                        .attr("display", "none")
+                                        .attr("class", "link")
+                                        .attr("filter", null)
+                                        .attr("marker-end", null);
+                                });
+                        }
+                    } else {
+                        if (instant) {
+                            d3.select(this)
+                                .attr("display", "block")
+                                .attr("opacity", 0.5)
+                                .attr("class", "link")
+                                .attr("stroke", edgeColor(Math.log(d.weight)))
+                                .attr("stroke-width", Math.sqrt(d.weight))
+                                .attr("filter", null)
+                                .attr("marker-end", null);
+                        } else {
+                            d3.select(this)
+                                .interrupt()
+                                .attr("display", "block")
+                                .transition().duration(500)
+                                .attr("opacity", 0.5)
+                                .on("start", function (d) {
+                                    d3.select(this)
+                                        .attr("class", "link")
+                                        .attr("stroke", edgeColor(Math.log(d.weight)))
+                                        .attr("stroke-width", Math.sqrt(d.weight))
+                                        .attr("filter", null)
+                                        .attr("marker-end", null);
+                                });
+                        }
+                    }
+                });
+            }
+
+            // 3. Update node/label positions only if in "graph" mode.
+            if (currentMode === "graph") {
+                if (instant) {
+                    nodeEnter.attr("transform", d => `translate(${d.x},${d.y})`);
+                    labelSelection
+                        .attr("x", d => d.x)
+                        .attr("y", d => d.y - (d.r + 13));
+                } else {
+                    nodeEnter.transition().duration(500)
+                        .attr("transform", d => `translate(${d.x},${d.y})`);
+                    labelSelection.transition().duration(500)
+                        .attr("x", d => d.x)
+                        .attr("y", d => d.y - (d.r + 13));
+                }
+            }
+
+            // Re-enable the toggle and screenshot buttons after transitions are done.
+            if (instant) {
+                d3.select("#toggleModeButton").attr("disabled", null);
+                d3.select("#screenshotButton").attr("disabled", null);
+            } else {
+                d3.timeout(() => {
+                    d3.select("#toggleModeButton").attr("disabled", null);
+                    d3.select("#screenshotButton").attr("disabled", null);
+                }, 550);
+            }
+        }
+
+        function replotHotspots() {
+            metricNames.forEach(metric => {
+                // Sort the keys (node IDs) of hotspots by descending metric value.
+                top3ForMetric[metric] = Object.keys(hotspots)
+                    .sort((a, b) => hotspots[b][metric] - hotspots[a][metric])
+                    .slice(0, 3);
+            });
+            // Use all node groups, not only the initial enter selection.
+            d3.selectAll(".nodeGroup").each(function (d) {
+                let group = d3.select(this);
+
+                // Compute the updated list of metrics (hotspots) for this node.
+                let newMetrics = [];
+                metricNames.forEach(metric => {
+                    if (top3ForMetric[metric].includes(d.id)) {
+                        newMetrics.push(metric);
+                    }
+                });
+                newMetrics.sort(); // ensure consistent order
+
+                // Bind newMetrics to the existing hotspot stroke circles.
+                let strokes = group.selectAll("circle.hotspotStroke")
+                    .data(newMetrics, m => m); // key is the metric
+
+                // Remove any strokes that are no longer needed.
+                strokes.exit()
+                    .transition().duration(500)
+                    .attr("r", d.r)      // shrink back to the node's radius
+                    .style("opacity", 0)
+                    .remove();
+
+                // Update existing strokes: adjust radius and stroke color.
+                strokes.transition().duration(500)
+                    .attr("r", (m, i) => d.r + (i + 1) * 3)
+                    .attr("stroke", m => hotspotColors[m]);
+
+                // Append new strokes for any newly added metrics.
+                strokes.enter().append("circle")
+                    .attr("class", "hotspotStroke")
+                    .attr("data-metric", m => m)
+                    .attr("fill", "none")
+                    .attr("stroke-width", 2)
+                    .attr("stroke-dashoffset", 0)
+                    .attr("stroke", m => hotspotColors[m])
+                    .attr("r", d.r)  // start at the node's radius
+                    .style("opacity", 0)
+                    .transition().duration(500)
+                    .style("opacity", 1)
+                    .attr("r", (m, i) => d.r + (i + 1) * 3);
+            });
+        }
+
+        // Restore function: re-enable all links and update the trade panel checkboxes.
+        function restoreLinks() {
+            d3.select("#toggleModeButton").attr("disabled", true);
+            d3.select("#screenshotButton").attr("disabled", true);
+
+            // Set all links to enabled.
+            allLinks.forEach(link => {
+                link.disabled = false;
+            });
+
+            // Force all trade checkboxes to be checked.
+            d3.selectAll('.trade-checkbox').property('checked', true);
+            d3.selectAll('.trade-header-checkbox').property('checked', true);
+
+            console.log(allLinks);
+
+            // Update the network so that all links are shown.
+            updateNetwork();
+            updateNetworkStats(allNodes, allLinks);
+            hotspots = computeHotSpotMetrics(allNodes, allLinks);
+            printHotSpots(hotspots, "topMetrics", 3);
+            replotHotspots();
+            const newsccs = findSCCs(allNodes, allLinks);
+            displaySCCsInCards(newsccs, "sccOutput");
+
+            // If a node is currently selected, update its trade table checkboxes to be checked.
+            if (selectedNodeData) {
+                updateTradeTable(selectedNodeData);
+                replotInOutArbos(selectedNodeData.id);
+            }
+
+            // Re-enable the toggle and screenshot buttons after transitions are done.
+            d3.timeout(() => {
+                d3.select("#toggleModeButton").attr("disabled", null);
+                d3.select("#screenshotButton").attr("disabled", null);
+            }, 550);
         }
 
         // ---- Force Simulation Drag Handler ----
@@ -1716,8 +2017,11 @@
          * Complexity: O(V + E)
          */
         function findSCCs(nodes, edges) {
-            // 1) Build adjacency list from edges
-            const adj = buildAdjList(nodes, edges);
+            // Filter out disabled links.
+            const enabledEdges = edges.filter(e => !e.disabled);
+
+            // 1) Build adjacency list from enabled edges
+            const adj = buildAdjList(nodes, enabledEdges);
 
             // 2) Tarjan’s data structures
             let indexCounter = 0;
@@ -1735,26 +2039,26 @@
 
             // Tarjan’s stronglyConnected procedure
             function strongConnect(v) {
-                // Set the depth index for v
+                // Set the depth index for v.
                 index[v] = indexCounter;
                 lowLink[v] = indexCounter;
                 indexCounter++;
                 stack.push(v);
                 onStack[v] = true;
 
-                // Consider successors of v
+                // Consider successors of v.
                 for (let w of adj[v]) {
                     if (index[w] === -1) {
-                        // Successor w has not yet been visited; recurse on it
+                        // Successor w has not yet been visited; recurse on it.
                         strongConnect(w);
                         lowLink[v] = Math.min(lowLink[v], lowLink[w]);
                     } else if (onStack[w]) {
-                        // Successor w is in the stack => v is part of a cycle => update lowLink[v]
+                        // Successor w is in the stack, meaning v is part of a cycle.
                         lowLink[v] = Math.min(lowLink[v], index[w]);
                     }
                 }
 
-                // If v is a root node, pop the stack and generate an SCC
+                // If v is a root node, pop the stack and generate an SCC.
                 if (lowLink[v] === index[v]) {
                     const scc = [];
                     let w = null;
@@ -1767,7 +2071,7 @@
                 }
             }
 
-            // 3) Run Tarjan’s procedure for each unvisited node
+            // 3) Run Tarjan’s procedure for each unvisited node.
             nodes.forEach(n => {
                 if (index[n.id] === -1) {
                     strongConnect(n.id);
@@ -1776,6 +2080,7 @@
 
             return sccList;
         }
+
 
         // Helper: build adjacency list for a directed graph
         function buildAdjList(nodes, edges) {
@@ -2008,12 +2313,18 @@
                 return;
             }
 
-            // 2) Compute in-arbo and out-arbo
-            let inArbo = chuLiuEdmonds(allNodes, allLinks, newRoot, "in");
-            let outArbo = chuLiuEdmonds(allNodes, allLinks, newRoot, "out");
+            // 2) Filter out disabled links from allLinks.
+            const enabledLinks = allLinks.filter(link => !link.disabled);
+
+            // 3) Compute in-arbo and out-arbo using only enabled links.
+            let inArbo = chuLiuEdmonds(allNodes, enabledLinks, newRoot, "in");
+            let outArbo = chuLiuEdmonds(allNodes, enabledLinks, newRoot, "out");
+
+            // 4) Visualize the computed arbos.
             visualizeArborescence(inArbo, "#inArboSVG", newRootId);
             // visualizeArborescence(outArbo, "#outArboSVG", newRootId);
         }
+
 
         function attachInfoBoxListeners() {
             document.querySelectorAll('.info-container').forEach(container => {
@@ -2064,7 +2375,7 @@
 
                 // Iterate over each row in the CSV
                 data.forEach(d => {
-                    const source = d.COROP_LEV, target = d.COROP_AFN, weight = +d.AANTAL;
+                    const source = d.COROP_LEV, target = d.COROP_AFN, weight = +d.AANTAL, disabled = 0;
                     // Skip rows if the source or target is missing/NA.
                     if (!source || !target || source.toUpperCase() === "NA" || target.toUpperCase() === "NA") {
                         return; // Just skip this row.
@@ -2077,7 +2388,7 @@
                     }
                     nodesMap[source].tradeTotal += weight;
                     nodesMap[target].tradeTotal += weight;
-                    links.push({ source, target, weight });
+                    links.push({ source, target, weight, disabled });
                 });
 
                 // Convert nodesMap to an array of nodes
@@ -2091,17 +2402,17 @@
                 allLinks = links;
 
                 // Update network stats
-                updateNetworkStats(nodes, links);
+                updateNetworkStats(allNodes, allLinks);
 
                 // Compute and print 3 hotpots per metric
                 hotspots = computeHotSpotMetrics(allNodes, allLinks);
                 printHotSpots(hotspots, "topMetrics", 3);
 
                 // Create the network visualization
-                createNetwork(nodes, links);
+                createNetwork(allNodes, allLinks);
 
                 // Find strongly connected components (SCCs) and display them in a table
-                const sccs = findSCCs(nodes, links);
+                const sccs = findSCCs(allNodes, allLinks);
                 displaySCCsInCards(sccs, "sccOutput");
 
                 // Compute and visualize the maximum clique (using reciprocal edges only)
@@ -2198,6 +2509,10 @@
 
         // Event listener for the screenshot button to trigger the download
         document.getElementById("screenshotButton").addEventListener("click", downloadSvg);
+
+        // Attach an event listener to the restore button.
+        document.getElementById("restoreButton").addEventListener("click", restoreLinks);
+
 
         // Define Keyboard Shortcuts for the functionalities
         // Shortcut for opening a csv file: Press 'o'
@@ -2308,6 +2623,23 @@
                 }));
             }
         });
+
+        // Match the widths of the screenshot and restore buttons
+        function matchButtonWidths() {
+            const screenshotButton = document.getElementById("screenshotButton");
+            const restoreButton = document.getElementById("restoreButton");
+
+            if (screenshotButton && restoreButton) {
+                const width = screenshotButton.offsetWidth; // Get the screenshot button's width
+                restoreButton.style.width = width + "px"; // Apply the same width to restore button
+            }
+        }
+
+        // Run the function after page load
+        window.onload = matchButtonWidths;
+
+        // Reapply on window resize to ensure consistency
+        window.addEventListener("resize", matchButtonWidths);
 
     </script>
 </body>

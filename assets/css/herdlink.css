@@ -280,8 +280,8 @@ body {
     margin-bottom: 10px;
     overflow: hidden;
 }
-  
-  .watermark {
+
+.watermark {
     position: absolute;
     bottom: 20px;
     left: 10px;
@@ -291,18 +291,17 @@ body {
     opacity: 0.5;
     font-size: 0.8rem;
     color: #fff;
-  }
-  
-  .watermark-text {
+}
+
+.watermark-text {
     font-family: sans-serif;
     font-weight: bold;
-  }
-  
-  .watermark-logo {
+}
+
+.watermark-logo {
     width: 140px;
     height: 40px;
-  }
-  
+}
 
 .screenshot-button {
     position: absolute;
@@ -335,6 +334,44 @@ body {
     background: linear-gradient(135deg, #999, #ccc);
     box-shadow: none;
     transform: none;
+}
+
+.restore-button {
+    position: absolute;
+    bottom: 70px;
+    right: 20px;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: background 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+}
+
+.restore-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #7a21dc, #3585fd);
+}
+
+.restore-button:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.restore-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: linear-gradient(135deg, #999, #ccc);
+    box-shadow: none;
+    transform: none;
+}
+
+.screenshot-button,
+.restore-button {
+    min-width: 122px;
 }
 
 /*******************************/
@@ -729,6 +766,71 @@ body {
 .trade-volume {
     font-weight: 600;
     color: #444;
+}
+
+.trade-header-checkbox {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    position: relative;
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    bottom: 1px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease, border-color 0.3s ease;
+    vertical-align: middle;
+    margin-left: 10px;
+}
+
+.trade-header-checkbox:checked {
+    background: #6a6a6a;
+    border-color: transparent;
+}
+
+.trade-header-checkbox:checked::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 0px;
+    width: 5px;
+    height: 10px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.trade-checkbox {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease, border-color 0.3s ease;
+    margin-left: 10px;
+    position: relative;
+}
+
+.trade-checkbox:checked {
+    background: #6a6a6a;
+    border-color: transparent;
+}
+
+.trade-checkbox:checked::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 0px;
+    width: 6px;
+    height: 12px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
 }
 
 .no-trades {
