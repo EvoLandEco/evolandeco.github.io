@@ -199,14 +199,18 @@
             <button id="screenshotButton" class="screenshot-button" disabled>
                 <i class="fa-solid fa-camera"></i> Screenshot
             </button>
-            <button id="restoreButton" class="restore-button"><i class="fa-solid fa-arrows-rotate"></i> Restore</button>
+            <button id="restoreButton" class="restore-button">
+                <i class="fa-solid fa-arrows-rotate"></i> Restore
+            </button>
+            <div id="spectralRadiusDisplay" class="spectral-radius-display">
+                Risk Score: <span class="current-sr">----</span> <span class="initial-sr">(----)</span>
+            </div>
             <svg id="mainFigureSVG"></svg>
             <div class="watermark">
                 <span class="watermark-text"></span>
                 <img src="assets/files/herdlink/WUR_ZW_standard_2021.svg" class="watermark-logo">
             </div>
         </div>
-
 
         <!-- Right Column: Trade Table -->
         <div id="col3">
@@ -252,6 +256,7 @@
         };
         const metricNames = ["inDegree", "outDegree", "betweenness", "pageRank"];
         let top3ForMetric = {};
+        let initialSpectralRadius = 0;
 
         // ---- Load GeoJSON Files ----
         d3.json("assets/files/herdlink/nl_corop.geojson").then(data => { nlMapData = data; })
@@ -1202,6 +1207,7 @@
                 d3.selectAll(`.trade-checkbox[data-section='${section}']`)
                     .property('checked', checked);
                 updateNetwork();
+                updateSpectralRadiusDisplay();
                 updateNetworkStats(allNodes, allLinks);
                 replotInOutArbos(selectedNodeData.id);
                 hotspots = computeHotSpotMetrics(allNodes, allLinks);
@@ -1214,6 +1220,7 @@
             // Individual trade checkbox changes trigger a network update.
             d3.selectAll('.trade-checkbox').on('change', function () {
                 updateNetwork();
+                updateSpectralRadiusDisplay();
                 updateNetworkStats(allNodes, allLinks);
                 replotInOutArbos(selectedNodeData.id);
                 hotspots = computeHotSpotMetrics(allNodes, allLinks);
@@ -1386,6 +1393,39 @@
             }
         }
 
+        // Function to update the current spectral radius display
+        function updateSpectralRadiusDisplay() {
+            // Compute the current spectral radius based on enabled links.
+            const currentSR = computeSpectralRadius(allNodes, allLinks);
+
+            // Normalize current spectral radius relative to the initial one.
+            const normalizedValue = currentSR / initialSpectralRadius; // 1.0 means no change
+            // To three decimal places
+            const formattedNormal = normalizedValue.toFixed(3);
+
+            // Create a linear color scale:
+            // 0.0 maps to avocado green, 1.0 maps to salmon, 2.0 maps to orange.
+            const colorScale = d3.scaleLinear()
+                .domain([0, 1, 2])
+                .range(["#b2c248", "salmon", "orange"])
+                .clamp(true);
+
+            // Update the display element.
+            const displayElement = document.getElementById("spectralRadiusDisplay");
+            displayElement.innerHTML = `
+                Risk Score: <span class="current-sr">${formattedNormal}</span> <span class="initial-sr">(1.000)</span>
+            `;
+
+            // Set the initial color to always red
+            const initialSpan = displayElement.querySelector(".initial-sr");
+            initialSpan.style.color = "salmon";
+
+            // Set the color of the current value based on its normalized value.
+            const currentSpan = displayElement.querySelector(".current-sr");
+            currentSpan.style.color = colorScale(normalizedValue);
+        }
+
+
         function replotHotspots() {
             metricNames.forEach(metric => {
                 // Sort the keys (node IDs) of hotspots by descending metric value.
@@ -1456,6 +1496,7 @@
 
             // Update the network so that all links are shown.
             updateNetwork();
+            updateSpectralRadiusDisplay();
             updateNetworkStats(allNodes, allLinks);
             hotspots = computeHotSpotMetrics(allNodes, allLinks);
             printHotSpots(hotspots, "topMetrics", 3);
@@ -1547,6 +1588,28 @@
                 .attr("x", d => d.x)
                 .attr("y", d => d.y - (d.r + 13));
         }
+
+        // Function to bridge native graph data and JSNetworkX
+        // function createJSNetworkxGraph(nodes, links) {
+        //     // Create a new directed graph.
+        //     const G = new jsnx.DiGraph();
+
+        //     // Add all nodes with their attributes.
+        //     nodes.forEach(n => {
+        //         G.addNode(n.id, n);
+        //     });
+
+        //     // Add only enabled edges.
+        //     links.forEach(link => {
+        //         if (!link.disabled) {
+        //             const source = (typeof link.source === 'object') ? link.source.id : link.source;
+        //             const target = (typeof link.target === 'object') ? link.target.id : link.target;
+        //             G.addEdge(source, target, { weight: link.weight });
+        //         }
+        //     });
+
+        //     return G;
+        // }
 
         /**
          * chuLiuEdmonds(nodes, edges, root, direction)
@@ -2081,6 +2144,73 @@
             return sccList;
         }
 
+        function computeSpectralRadius(allNodes, allLinks, maxIter = 100, tol = 1e-6) {
+            // 1. Filter out disabled links.
+            const enabledLinks = allLinks.filter(link => !link.disabled);
+
+            // 2. Create a mapping from node id to index.
+            const n = allNodes.length;
+            const idToIndex = {};
+            allNodes.forEach((node, i) => {
+                idToIndex[node.id] = i;
+            });
+
+            // 3. Build the adjacency matrix.
+            // Here use a 2D array with dimensions n x n, initialized to 0.
+            const A = Array.from({ length: n }, () => Array(n).fill(0));
+            enabledLinks.forEach(link => {
+                const source = (typeof link.source === "object") ? link.source.id : link.source;
+                const target = (typeof link.target === "object") ? link.target.id : link.target;
+                const i = idToIndex[source];
+                const j = idToIndex[target];
+                if (i !== undefined && j !== undefined) {
+                    A[i][j] += link.weight || 1;
+                }
+            });
+
+            // 4. Use power iteration to estimate the spectral radius.
+            // Start with a random vector (or a vector of ones).
+            let v = Array(n).fill(1);
+
+            // Function to compute matrix-vector multiplication.
+            function matVecMult(matrix, vec) {
+                const result = Array(vec.length).fill(0);
+                for (let i = 0; i < matrix.length; i++) {
+                    for (let j = 0; j < matrix[i].length; j++) {
+                        result[i] += matrix[i][j] * vec[j];
+                    }
+                }
+                return result;
+            }
+
+            // Function to compute the Euclidean norm of a vector.
+            function norm(vec) {
+                return Math.sqrt(vec.reduce((sum, x) => sum + x * x, 0));
+            }
+
+            let eigenvalue = 0;
+            for (let iter = 0; iter < maxIter; iter++) {
+                // Multiply matrix by vector.
+                let newV = matVecMult(A, v);
+                const newNorm = norm(newV);
+                // Normalize the new vector.
+                newV = newV.map(x => x / newNorm);
+
+                // Estimate eigenvalue using Rayleigh quotient.
+                const Av = matVecMult(A, newV);
+                const rayleigh = newV.reduce((sum, x, i) => sum + x * Av[i], 0);
+
+                // Check for convergence.
+                if (Math.abs(rayleigh - eigenvalue) < tol) {
+                    eigenvalue = rayleigh;
+                    break;
+                }
+                eigenvalue = rayleigh;
+                v = newV;
+            }
+
+            return eigenvalue;
+        }
 
         // Helper: build adjacency list for a directed graph
         function buildAdjList(nodes, edges) {
@@ -2415,6 +2545,9 @@
                 const sccs = findSCCs(allNodes, allLinks);
                 displaySCCsInCards(sccs, "sccOutput");
 
+                // Initialize spectral radius display
+                initSpectralRadiusDisplay();
+
                 // Compute and visualize the maximum clique (using reciprocal edges only)
                 // let maxClique = computeMaxCliqueReciprocal();
                 // visualizeCliqueAsForce(maxClique);
@@ -2429,6 +2562,20 @@
             // Read the file as text
             reader.readAsText(file);
         });
+
+        function initSpectralRadiusDisplay() {
+            // Compute the initial spectral radius using all nodes/links (only enabled links if applicable).
+            initialSpectralRadius = computeSpectralRadius(allNodes, allLinks);
+
+            // Update the display: we fix the initial value at 1.0 reference.
+            const displayElement = document.getElementById("spectralRadiusDisplay");
+            displayElement.innerHTML = `
+                Risk Score: <span class="current-sr">1.000</span> <span class="initial-sr">(1.000)</span>
+            `;
+
+            displayElement.querySelector(".initial-sr").style.color = "salmon";
+            displayElement.querySelector(".current-sr").style.color = "salmon";
+        }
 
         document.addEventListener('DOMContentLoaded', function () {
             const introOverlay = document.getElementById('introOverlay');
@@ -2512,7 +2659,6 @@
 
         // Attach an event listener to the restore button.
         document.getElementById("restoreButton").addEventListener("click", restoreLinks);
-
 
         // Define Keyboard Shortcuts for the functionalities
         // Shortcut for opening a csv file: Press 'o'

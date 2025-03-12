@@ -721,6 +721,29 @@ body {
     line-height: 1.4;
 }
 
+.spectral-radius-display {
+    position: absolute;
+    bottom: 20px;
+    left: 170px;
+    background: linear-gradient(135deg, #7a21dc, #3585fd);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.spectral-radius-display:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #5d93e3, #1e2a4c);
+}
+
+.initial-sr,
+.current-sr {
+    font-family: sans-serif;
+}
 
 .trade-info-header {
     margin-bottom: 1rem;
