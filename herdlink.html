@@ -199,11 +199,11 @@
             <button id="screenshotButton" class="screenshot-button" disabled>
                 <i class="fa-solid fa-camera"></i> Screenshot
             </button>
-            <button id="restoreButton" class="restore-button">
+            <button id="restoreButton" class="restore-button" disabled>
                 <i class="fa-solid fa-arrows-rotate"></i> Restore
             </button>
             <div id="spectralRadiusDisplay" class="spectral-radius-display">
-                Risk Score: <span class="current-sr">----</span> <span class="initial-sr">(----)</span>
+                <i class="fa-solid fa-virus"></i> Risk Score: <span class="current-sr">----</span> <span class="initial-sr">(----)</span>
             </div>
             <svg id="mainFigureSVG"></svg>
             <div class="watermark">
@@ -1413,7 +1413,7 @@
             // Update the display element.
             const displayElement = document.getElementById("spectralRadiusDisplay");
             displayElement.innerHTML = `
-                Risk Score: <span class="current-sr">${formattedNormal}</span> <span class="initial-sr">(1.000)</span>
+                <i class="fa-solid fa-virus"></i> Risk Score: <span class="current-sr">${formattedNormal}</span> <span class="initial-sr">(1.000)</span>
             `;
 
             // Set the initial color to always red
@@ -2557,6 +2557,9 @@
 
                 // Enable screenshot button after CSV is loaded.
                 document.getElementById("screenshotButton").disabled = null;
+
+                // Enable restore button after CSV is loaded.
+                document.getElementById("restoreButton").disabled = null;
             };
 
             // Read the file as text
@@ -2570,7 +2573,7 @@
             // Update the display: we fix the initial value at 1.0 reference.
             const displayElement = document.getElementById("spectralRadiusDisplay");
             displayElement.innerHTML = `
-                Risk Score: <span class="current-sr">1.000</span> <span class="initial-sr">(1.000)</span>
+                <i class="fa-solid fa-virus"></i> Risk Score: <span class="current-sr">1.000</span> <span class="initial-sr">(1.000)</span>
             `;
 
             displayElement.querySelector(".initial-sr").style.color = "salmon";
