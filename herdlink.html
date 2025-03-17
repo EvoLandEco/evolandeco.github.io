@@ -1103,7 +1103,7 @@
             }), link => link.weight);
 
             // Calculate self-trade ratio. If outgoingTrade is zero, default to 0.
-            const selfTradeRatio = outgoingTrade > 0 ? (selfTrade / outgoingTrade).toFixed(3) * 100 : "0.000";
+            const selfTradeRatio = outgoingTrade > 0 ? ((selfTrade / outgoingTrade) * 100).toFixed(1) : "0.0";
 
             const noteLabel = `Community ID: ${d.community}\nIncoming Trade: ${incomingTrade}\nOutgoing Trade: ${outgoingTrade}\nSelf-Trade Ratio: ${selfTradeRatio}%`;
 
