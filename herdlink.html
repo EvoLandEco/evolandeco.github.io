@@ -7,7 +7,7 @@
     <!-- Load Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Load Local CSS -->
-    <link rel="stylesheet" type="text/css" href="assets/css/herdlink.css">
+    <link rel="stylesheet" type="text/css" href="assets//css/herdlink.css">
     <!-- Load D3.js -->
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <!-- Load jLouvain -->
@@ -18,6 +18,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vivus/0.3.1/vivus.min.js"></script>
     <!-- Load savesvg.js -->
     <script src="assets/js/savesvg.js"></script>
+    <!-- Load jsnetworkx.js -->
+    <!-- <script src="script/jsnetworkx.js"></script> -->
+    <!-- Load d3-annotation -->
+    <script src="assets/js/d3anno.js"></script>
 </head>
 
 <body>
@@ -43,8 +47,9 @@
         </div>
     </div>
 
-    <!-- Hover tooltip for nodes and edges -->
-    <div id="tooltip" class="tooltip"></div>
+    <!-- Radial Labels Container -->
+    <div id="radial-labels-container"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;"></div>
 
     <!-- Main container: three columns -->
     <div id="mainContainer">
@@ -203,7 +208,8 @@
                 <i class="fa-solid fa-arrows-rotate"></i> Restore
             </button>
             <div id="spectralRadiusDisplay" class="spectral-radius-display">
-                <i class="fa-solid fa-virus"></i> Risk Score: <span class="current-sr">----</span> <span class="initial-sr">(----)</span>
+                <i class="fa-solid fa-virus"></i> Risk Score: <span class="current-sr">----</span> <span
+                    class="initial-sr">(----)</span>
             </div>
             <svg id="mainFigureSVG"></svg>
             <div class="watermark">
@@ -246,15 +252,22 @@
         let nlMapData = null, nlLabelPoints = null;
         let forceSim = null, linkSelection, nodeEnter, labelSelection;
         let allLinks = [], allNodes = [];
-        let selectedNodeData = null, selectedNodeBubble = null;
+        let selectedNodeData = null;
         let hotspots = null;
+        let hotspotsMax = null;
         const hotspotColors = {
             inDegree: "#08FF08",   // Fluorescent Green
             outDegree: "#05C3DD",  // Aqua Blue
             betweenness: "#ff007f", // Bright Pink
-            pageRank: "#FFD600"    // Vivid Yellow
+            pageRank: "#FFD600",    // Vivid Yellow
+            eigenvector: "#8a2be2" // Strong Purple
         };
-        const metricNames = ["inDegree", "outDegree", "betweenness", "pageRank"];
+        const nodeAnnoType = d3.annotationCallout;
+        const linkAnnoType = d3.annotationCallout;
+        let hoveredNode = null;
+        let hoveredLink = null;
+        let annotationGroup = null;
+        const metricNames = ["inDegree", "outDegree", "betweenness", "pageRank", "eigenvector"];
         let top3ForMetric = {};
         let initialSpectralRadius = 0;
 
@@ -461,6 +474,82 @@
         }
 
         /**
+         * Computes eigenvector centrality for the graph using only enabled links.
+         * The graph is treated as undirected.
+         *
+         * @param {Array} nodes - Array of node objects, each with at least { id: string }.
+         * @param {Array} links - Array of link objects, each with { source, target, weight, disabled }.
+         * @param {Object} [options] - Optional parameters: { maxIter, tol }.
+         * @returns {Object} An object mapping node IDs to their computed eigenvector centrality.
+         */
+        function computeEigenvectorCentrality(nodes, links, options = {}) {
+            // Default options: maximum iterations and tolerance.
+            const maxIter = options.maxIter || 100;
+            const tol = options.tol || 1e-6;
+
+            // Filter out disabled links.
+            const enabledLinks = links.filter(link => !link.disabled);
+
+            // Build an undirected adjacency list.
+            // For each node, create an object to map each neighbor to the sum of weights.
+            const adj = {};
+            nodes.forEach(n => {
+                adj[n.id] = {};
+            });
+            enabledLinks.forEach(link => {
+                const s = (typeof link.source === "object") ? link.source.id : link.source;
+                const t = (typeof link.target === "object") ? link.target.id : link.target;
+                const w = link.weight || 1;
+                if (!adj[s][t]) {
+                    adj[s][t] = 0;
+                }
+                if (!adj[t][s]) {
+                    adj[t][s] = 0;
+                }
+                adj[s][t] += w;
+                adj[t][s] += w;
+            });
+
+            // Initialize centrality for each node with a value of 1.
+            let centrality = {};
+            nodes.forEach(n => {
+                centrality[n.id] = 1;
+            });
+
+            // Power iteration: update centrality until convergence.
+            for (let iter = 0; iter < maxIter; iter++) {
+                let newCentrality = {};
+                let norm = 0;
+
+                // Compute new centrality values.
+                nodes.forEach(n => {
+                    let sum = 0;
+                    for (let neighbor in adj[n.id]) {
+                        sum += adj[n.id][neighbor] * centrality[neighbor];
+                    }
+                    newCentrality[n.id] = sum;
+                    norm += sum * sum;
+                });
+                norm = Math.sqrt(norm);
+
+                // Normalize the new centrality vector.
+                nodes.forEach(n => {
+                    newCentrality[n.id] /= norm;
+                });
+
+                // Check convergence.
+                let diff = 0;
+                nodes.forEach(n => {
+                    diff = Math.max(diff, Math.abs(newCentrality[n.id] - centrality[n.id]));
+                });
+                centrality = newCentrality;
+                if (diff < tol) break;
+            }
+
+            return centrality;
+        }
+
+        /**
          * computeHotSpotMetrics(allNodes, allLinks)
          *
          * For each node, computes:
@@ -468,22 +557,24 @@
          *  2) Weighted Out-Degree
          *  3) Weighted Betweenness Centrality (using a simplified Brandes approach)
          *  4) Weighted PageRank (iterative approach)
+         *  5) Eigenvector Centrality (new metric for disease transmission importance)
          *
          * Returns an object: {
          *    [nodeId]: {
          *       inDegree: Number,
          *       outDegree: Number,
          *       betweenness: Number,
-         *       pageRank: Number
+         *       pageRank: Number,
+         *       eigenvector: Number
          *    },
          *    ...
          * }
          *
          * allNodes: array of { id, ... }
-         * allLinks: array of { source, target, weight }
+         * allLinks: array of { source, target, weight, disabled }
          */
         function computeHotSpotMetrics(allNodes, allLinks) {
-            // Filter out disabled links
+            // Filter out disabled links.
             const enabledLinks = allLinks.filter(link => !link.disabled);
 
             //////////////////////////////////////////////
@@ -496,10 +587,11 @@
                     outDegree: 0,
                     betweenness: 0,
                     pageRank: 1, // initial PR guess
+                    eigenvector: 0  // will be computed later
                 };
             });
 
-            // Weighted in/out-degree: use only enabled links.
+            // Use only enabled links.
             enabledLinks.forEach(link => {
                 const s = (typeof link.source === "object") ? link.source.id : link.source;
                 const t = (typeof link.target === "object") ? link.target.id : link.target;
@@ -523,7 +615,7 @@
                 const s = (typeof e.source === "object") ? e.source.id : e.source;
                 const t = (typeof e.target === "object") ? e.target.id : e.target;
                 const w = e.weight || 1;
-                // Use cost = 1/weight
+                // For cost, use 1/weight.
                 adj[s].push({ target: t, cost: 1 / w });
             });
 
@@ -531,7 +623,6 @@
                 allNodes.forEach(n => {
                     metrics[n.id].betweenness = 0;
                 });
-
                 // For each node s:
                 allNodes.forEach(sNode => {
                     const s = sNode.id;
@@ -554,7 +645,6 @@
                     while (queue.length > 0) {
                         let v = queue.shift();
                         S.push(v);
-                        // Explore neighbors from the adjacency list
                         adj[v].forEach(edge => {
                             let w = edge.target;
                             let cost = edge.cost;
@@ -570,11 +660,11 @@
                                 P[w].push(v);
                             }
                         });
-                        // Sort queue to mimic Dijkstra's algorithm (by distance)
+                        // Sorting queue to simulate Dijkstra's algorithm.
                         queue.sort((a, b) => dist[a] - dist[b]);
                     }
 
-                    // Back-propagation
+                    // Back-propagation.
                     while (S.length > 0) {
                         let w = S.pop();
                         P[w].forEach(v => {
@@ -586,13 +676,11 @@
                     }
                 });
             }
-
             brandesBetweenness();
 
             //////////////////////////////////////////////
             // 3) Weighted PageRank (Simplified)
             //////////////////////////////////////////////
-            // Precompute outWeight sums using only enabled links.
             let d = 0.85;
             let N = allNodes.length;
             let outWeightSum = {};
@@ -610,7 +698,6 @@
                 allNodes.forEach(n => {
                     newPR[n.id] = (1 - d) / N;
                 });
-
                 enabledLinks.forEach(link => {
                     let vId = (typeof link.source === "object") ? link.source.id : link.source;
                     let uId = (typeof link.target === "object") ? link.target.id : link.target;
@@ -620,31 +707,27 @@
                         newPR[uId] += contrib;
                     }
                 });
-
                 allNodes.forEach(n => {
                     metrics[n.id].pageRank = newPR[n.id];
                 });
             }
-
-            // Run a fixed number of iterations
             for (let i = 0; i < 20; i++) {
                 doPageRankIteration();
             }
 
             //////////////////////////////////////////////
-            // Return final metrics
+            // 4) Eigenvector Centrality
+            //////////////////////////////////////////////
+            // Compute eigenvector centrality using only enabled links.
+            const eigenCentrality = computeEigenvectorCentrality(allNodes, enabledLinks);
+            allNodes.forEach(n => {
+                metrics[n.id].eigenvector = eigenCentrality[n.id];
+            });
+
+            //////////////////////////////////////////////
+            // Return final metrics.
             //////////////////////////////////////////////
             return metrics;
-        }
-
-
-        // ---- Helper: Adjust Arrow Endpoint ----
-        function getAdjustedTarget(d) {
-            let dx = d.target.x - d.source.x,
-                dy = d.target.y - d.source.y,
-                dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist === 0) return { x: d.target.x, y: d.target.y };
-            return { x: d.target.x - (dx / dist) * d.target.r, y: d.target.y - (dy / dist) * d.target.r };
         }
 
         /**
@@ -678,14 +761,13 @@
             // Clear the container
             container.innerHTML = "";
 
-            const metricNames = ["inDegree", "outDegree", "betweenness", "pageRank"];
-
             // Mapping from metricNames to display names
             const metricDisplayNames = {
                 inDegree: "Vulnerable (by In-Degree)",
                 outDegree: "Seeding (by Out-Degree)",
-                betweenness: "Gateway (by Betweenness)",
-                pageRank: "Bottleneck (by PageRank)"
+                betweenness: "Bottleneck (by Betweenness)",
+                pageRank: "Sink (by PageRank)",
+                eigenvector: "Amplifier (by Eigenvector)"
             };
 
             // Helper: sort all nodes by the specified metric (descending)
@@ -726,6 +808,24 @@
             });
         }
 
+        // ---- Helper: Compute the maximum value for each metric ----
+        function computeHotspotMax(metrics) {
+            let max = {};
+            metricNames.forEach(metric => {
+                max[metric] = d3.max(Object.values(metrics).map(d => d[metric]));
+            });
+            return max;
+        }
+
+        // ---- Helper: Adjust Arrow Endpoint ----
+        function getAdjustedTarget(d) {
+            let dx = d.target.x - d.source.x,
+                dy = d.target.y - d.source.y,
+                dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist === 0) return { x: d.target.x, y: d.target.y };
+            return { x: d.target.x - (dx / dist) * d.target.r, y: d.target.y - (dy / dist) * d.target.r };
+        }
+
         // ---- Create Network ----
         function createNetwork(nodes, links) {
             // Use a log scale for edge colors.
@@ -736,6 +836,9 @@
             const nodeSize = d3.scaleSqrt()
                 .domain(d3.extent(nodes, d => d.tradeTotal))
                 .range([5, 20]);
+
+            // Create annotation group
+            annotationGroup = svg.append("g").attr("class", "annotation-group");
 
             forceSim = d3.forceSimulation(nodes)
                 .force("link", d3.forceLink(links).id(d => d.id).distance(150))
@@ -767,23 +870,28 @@
                 .call(drag(forceSim))
                 .on("click", onClickNode)
                 .on("mouseover", function (event, d) {
+                    hoveredNode = d;
                     d3.select(this).raise();
                     d3.select(this).select("circle.primary")
                         .attr("stroke", "black");
-                    const tooltipDiv = d3.select("#tooltip");
-                    tooltipDiv.style("opacity", 1)
-                        .html(`${d.id} ${d.statnaam} (Trade: ${d.tradeTotal})`);
+
+                    updateAnnotationForNode(d, annotationGroup);
                 })
                 .on("mousemove", function (event, d) {
-                    d3.select("#tooltip")
-                        .style("left", (event.pageX + 10) + "px")
-                        .style("top", (event.pageY + 10) + "px");
+                    if (hoveredNode === d) {
+                        updateAnnotationForNode(d, annotationGroup);
+                    }
                 })
                 .on("mouseout", function (event, d) {
+                    hoveredNode = null;
                     d3.select(this).select("circle.primary")
                         .attr("stroke", null)
                         .attr("stroke-width", null);
-                    d3.select("#tooltip").style("opacity", 0);
+
+                    annotationGroup.selectAll("*").remove();
+
+                    // Remove content in #radial-labels-container
+                    d3.select("#radial-labels-container").selectAll("*").remove();
                 });
 
             // Append primary node circle.
@@ -829,6 +937,60 @@
                 .attr("fill", "black")
                 .text(d => d.id);
 
+            // Append trade donut visualization for each node.
+            nodeEnter.each(function (d) {
+                // Compute self trade volume: sum of weights for links where source and target are the same.
+                const selfVolume = d3.sum(allLinks.filter(link => {
+                    let src = (typeof link.source === "object") ? link.source.id : link.source;
+                    let tgt = (typeof link.target === "object") ? link.target.id : link.target;
+                    return src === d.id && tgt === d.id;
+                }), link => link.weight);
+
+                // Compute external trade volume: sum of weights for links where source is d.id and target is not d.id.
+                const otherVolume = d3.sum(allLinks.filter(link => {
+                    let src = (typeof link.source === "object") ? link.source.id : link.source;
+                    let tgt = (typeof link.target === "object") ? link.target.id : link.target;
+                    return src === d.id && tgt !== d.id;
+                }), link => link.weight);
+
+                const totalVolume = selfVolume + otherVolume;
+
+                // Only add the donut if there's any trade volume.
+                if (totalVolume > 0) {
+                    // Define inner and outer radii for the donut relative to the node's radius.
+                    const innerRadius = d.r * 0.3;
+                    const outerRadius = d.r * 0.8;
+
+                    // Compute the fraction (and angle) of self trade.
+                    const selfFraction = selfVolume / totalVolume;
+                    const selfAngle = 2 * Math.PI * selfFraction;
+
+                    // Create an arc generator.
+                    const arc = d3.arc()
+                        .innerRadius(innerRadius)
+                        .outerRadius(outerRadius);
+
+                    // Append a new group for the donut; since the node group is already transformed,
+                    // this donut will be centered at (0,0) within that group.
+                    const donutGroup = d3.select(this)
+                        .append("g")
+                        .attr("class", "trade-donut")
+                        .attr("transform", "translate(0,0)");
+
+                    // Append arc for self trade (e.g., orange).
+                    donutGroup.append("path")
+                        .attr("d", arc({ startAngle: 0, endAngle: selfAngle }))
+                        .attr("fill", "white")
+                        .attr("opacity", 0.8);
+
+                    // Append arc for external trade (e.g., blue).
+                    donutGroup.append("path")
+                        .attr("d", arc({ startAngle: selfAngle, endAngle: 2 * Math.PI }))
+                        .attr("fill", "black")
+                        .attr("opacity", 0.1);
+                }
+            });
+
             forceSim.on("tick", () => {
                 if (currentMode === "graph") {
                     linkSelection.attr("d", function (d) {
@@ -845,42 +1007,53 @@
                     labelSelection
                         .attr("x", d => d.x)
                         .attr("y", d => d.y - (d.r + 13));
-                    if (currentMode === "graph" && selectedNodeBubble && selectedNodeData) {
-                        selectedNodeBubble.attr("transform", "translate(" + selectedNodeData.x + "," + (selectedNodeData.y - 20) + ")");
+                    // If a node is hovered, update its annotation.
+                    if (hoveredNode) {
+                        updateAnnotationForNode(hoveredNode, annotationGroup);
                     }
+                    // // If a link is hovered, update its annotation.
+                    // if (hoveredLink) {
+                    //     updateAnnotationForLink(hoveredLink, annotationGroup);
+                    // }
                 }
             });
 
             linkSelection
                 .on("mouseover", function (event, d) {
+                    hoveredLink = d;
                     if (d3.select(this).classed("linkSelect")) {
                         d3.select(this).attr("class", "linkSelectOver").raise();
                     } else {
                         d3.select(this).attr("class", "linkOver").raise();
                     }
-                    const tooltipDiv = d3.select("#tooltip");
-                    tooltipDiv.style("opacity", 1)
-                        .html(`${d.source.id} ${getStatnaam((typeof d.source === "object" ? d.source.id : d.source))} → ${d.target.id} ${getStatnaam((typeof d.target === "object" ? d.target.id : d.target))}: ${d.weight}`);
+                    updateAnnotationForLink(d, annotationGroup);
                 })
-                .on("mousemove", function (event, d) {
-                    d3.select("#tooltip")
-                        .style("left", (event.pageX + 10) + "px")
-                        .style("top", (event.pageY + 10) + "px");
-                })
+                // .on("mousemove", function (event, d) {
+                //     if (hoveredLink === d) {
+                //         updateAnnotationForLink(d, annotationGroup);
+                //     }
+                // })
                 .on("mouseout", function (event, d) {
                     if (d3.select(this).classed("linkSelectOver")) {
                         d3.select(this).attr("class", "linkSelect");
                     } else {
                         d3.select(this).attr("class", "link");
                     }
-                    d3.select("#tooltip").style("opacity", 0);
+                    // Clear annotations.
+                    annotationGroup.selectAll("*").remove();
                 });
 
             // ---- Add Hotspot Stroke Legend ----
             addHotspotLegend(svg);
 
-            // ---- Define Edge Glow Filter ----
-            const defs = svg.append("defs");
+            // ---- Define Edge Glow and Drop Shadow Filters ----
+            // Select existing defs or create one if not present.
+            let defs = svg.select("defs");
+            if (defs.empty()) {
+                defs = svg.append("defs");
+            }
+
+            // Define the edge glow filter.
             const edgeGlow = defs.append("filter")
                 .attr("id", "edgeGlow")
                 .attr("x", "-50%")
@@ -900,16 +1073,435 @@
                 .attr("in", "SourceGraphic");
         }
 
+        function updateAnnotationForNode(d, annotationGroup) {
+            if (!d) {
+                annotationGroup.selectAll("*").remove();
+                return;
+            }
+
+            // Use fixed coordinates in map mode if available.
+            const xPos = (currentMode === "map" && d.x0 !== undefined) ? d.x0 : d.x;
+            const yPos = (currentMode === "map" && d.y0 !== undefined) ? d.y0 : d.y;
+
+            const offsets = getAnnotationOffset(xPos, yPos, w, h);
+
+            // --- Compute trade volumes using only enabled links ---
+            const incomingTrade = d3.sum(allLinks.filter(link => {
+                const tgt = (typeof link.target === "object") ? link.target.id : link.target;
+                return tgt === d.id && !link.disabled;
+            }), link => link.weight);
+
+            const outgoingTrade = d3.sum(allLinks.filter(link => {
+                const src = (typeof link.source === "object") ? link.source.id : link.source;
+                return src === d.id && !link.disabled;
+            }), link => link.weight);
+
+            const selfTrade = d3.sum(allLinks.filter(link => {
+                const src = (typeof link.source === "object") ? link.source.id : link.source;
+                const tgt = (typeof link.target === "object") ? link.target.id : link.target;
+                return src === d.id && tgt === d.id && !link.disabled;
+            }), link => link.weight);
+
+            // Calculate self-trade ratio. If outgoingTrade is zero, default to 0.
+            const selfTradeRatio = outgoingTrade > 0 ? (selfTrade / outgoingTrade).toFixed(3) * 100 : "0.000";
+
+            const noteLabel = `Community ID: ${d.community}\nIncoming Trade: ${incomingTrade}\nOutgoing Trade: ${outgoingTrade}\nSelf-Trade Ratio: ${selfTradeRatio}%`;
+
+            const annotations = [{
+                note: {
+                    title: `${d.id} ${d.statnaam}`,
+                    label: noteLabel,
+                    wrapSplitter: /\n/,
+                    wrap: 200,
+                    bgPadding: { top: 6, left: 6, right: 4, bottom: 4 }
+                },
+                x: xPos,
+                y: yPos,
+                dx: offsets.dx,
+                dy: offsets.dy
+            }];
+
+            const makeAnnotations = d3.annotation()
+                .type(nodeAnnoType)
+                .notePadding(10)
+                .annotations(annotations);
+
+            annotationGroup.call(makeAnnotations).raise();
+
+            // Style the annotation note background.
+            annotationGroup.selectAll("rect.annotation-note-bg")
+                .attr("fill", selectedNodeData ? "white" : "green")
+                .attr("fill-opacity", 0.8)
+                .attr("rx", 4)
+                .attr("ry", 4);
+
+            // Update connector and note-line colors.
+            d3.selectAll(".annotation-connector .connector")
+                .attr("stroke", selectedNodeData ? "white" : "green");
+            d3.selectAll(".annotation-note .note-line")
+                .attr("stroke", selectedNodeData ? "white" : "green");
+            d3.selectAll(".annotation text")
+                .attr("fill", selectedNodeData ? "gray" : "white");
+
+            // Draw the radar chart inside the annotation.
+            const noteContent = annotationGroup.select(".annotation-note-content");
+            drawRadarChart(noteContent, offsets, d);
+
+            // Update radial axis labels.
+            const radarElem = d3.select("svg.custom-radar").node();
+            const bbox = radarElem.getBoundingClientRect();
+            const centerX = bbox.x + bbox.width / 2;
+            const centerY = bbox.y + bbox.height / 2;
+
+            // Define radar chart dimensions.
+            const radarChartWidth = 130;
+            const radarChartHeight = 130;
+            const radarChartPadding = 20;
+            const drawWidth = radarChartWidth - radarChartPadding * 2;
+            const drawHeight = radarChartHeight - radarChartPadding * 2;
+            const radarRadius = Math.min(drawWidth, drawHeight) / 2 - 10;
+
+            const axisLabels = ["ID", "OD", "BT", "PR", "EC"]; // EC: Eigenvector Centrality.
+            drawRadialAxisLabels(centerX, centerY + 5, radarRadius, axisLabels, "#radial-labels-container");
+        }
+
+        function drawRadarChart(noteContent, offsets, d) {
+            // Remove any existing radar chart.
+            noteContent.select("svg.custom-radar").remove();
+
+            // Define dimensions for the radar chart.
+            const radarChartWidth = 130;
+            const radarChartHeight = 130;
+            const radarChartGap = 10;
+            const radarChartPadding = 20;
+
+            let radarSVG;
+            if (offsets.dy < 0) {
+                // Annotation goes upward: place radar chart above the note title.
+                const titleElem = noteContent.select(".annotation-note-title").node();
+                const bbox = titleElem.getBBox();
+                radarSVG = noteContent.insert("svg", ".annotation-note-title")
+                    .attr("class", "custom-radar")
+                    .attr("width", radarChartWidth)
+                    .attr("height", radarChartHeight)
+                    .attr("x", 0)
+                    .attr("y", bbox.y - radarChartHeight - radarChartGap);
+            } else {
+                // Annotation goes downward: place radar chart below the note label.
+                const labelElem = noteContent.select(".annotation-note-label").node();
+                const bbox = labelElem.getBBox();
+                radarSVG = noteContent.insert("svg", ".annotation-note-title")
+                    .attr("class", "custom-radar")
+                    .attr("width", radarChartWidth)
+                    .attr("height", radarChartHeight)
+                    .attr("x", 0)
+                    .attr("y", bbox.y + bbox.height + radarChartGap);
+            }
+
+            // Append a background rectangle with padding and rounded corners.
+            radarSVG.append("rect")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("width", radarChartWidth)
+                .attr("height", radarChartHeight)
+                .attr("fill", selectedNodeData ? "white" : "green")
+                .attr("fill-opacity", 0.8)
+                .attr("rx", 4)
+                .attr("ry", 4);
+
+            // Define padding for the radar drawing.
+            const padding = {
+                top: radarChartPadding - 5,
+                left: radarChartPadding + 5,
+                right: radarChartPadding + 5,
+                bottom: radarChartPadding - 10
+            };
+            const drawWidth = radarChartWidth - padding.left - padding.right;
+            const drawHeight = radarChartHeight - padding.top - padding.bottom;
+
+            // Append group for radar drawing.
+            const drawingGroup = radarSVG.append("g")
+                .attr("class", "radar-drawing")
+                .attr("transform", `translate(${padding.left},${padding.top})`);
+
+            // --- Normalize hotspot metrics ---
+            // Get the hotspot metrics for the node.
+            const nodeMetrics = hotspots[d.id];
+            if (!nodeMetrics) return;
+
+            // Log normalization for inDegree and outDegree.
+            const normIn = Math.log(nodeMetrics.inDegree + 1) / Math.log(hotspotsMax.inDegree + 1);
+            const normOut = Math.log(nodeMetrics.outDegree + 1) / Math.log(hotspotsMax.outDegree + 1);
+            const normBet = nodeMetrics.betweenness / hotspotsMax.betweenness;
+            const normPR = nodeMetrics.pageRank / hotspotsMax.pageRank;
+            const normEigen = nodeMetrics.eigenvector / hotspotsMax.eigenvector;
+            const values = [normIn, normOut, normBet, normPR, normEigen];
+
+            // --- Radar chart geometry ---
+            const radarRadius = Math.min(drawWidth, drawHeight) / 2 + 3;
+            const numAxes = 5;
+            const baseAngle = -Math.PI / 2;  // start at the top.
+            const centerX = drawWidth / 2;
+            const centerY = drawHeight / 2 + 3;
+
+            // Points for the node's radar polygon.
+            const points = values.map((val, i) => {
+                const angle = baseAngle + (2 * Math.PI * i / numAxes);
+                return [
+                    radarRadius * val * Math.cos(angle) + centerX,
+                    radarRadius * val * Math.sin(angle) + centerY
+                ];
+            });
+
+            // Baseline points: each axis at maximum value.
+            const baselinePoints = [];
+            for (let i = 0; i < numAxes; i++) {
+                const angle = baseAngle + (2 * Math.PI * i / numAxes);
+                baselinePoints.push([
+                    radarRadius * 1.0 * Math.cos(angle) + centerX,
+                    radarRadius * 1.0 * Math.sin(angle) + centerY
+                ]);
+            }
+
+            // --- Draw axis lines ---
+            for (let i = 0; i < numAxes; i++) {
+                const angle = baseAngle + (2 * Math.PI * i / numAxes);
+                const x2 = radarRadius * Math.cos(angle) + centerX;
+                const y2 = radarRadius * Math.sin(angle) + centerY;
+                drawingGroup.append("line")
+                    .attr("x1", centerX)
+                    .attr("y1", centerY)
+                    .attr("x2", x2)
+                    .attr("y2", y2)
+                    .attr("stroke", selectedNodeData ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)")
+                    .attr("stroke-dasharray", "2,2")
+                    .attr("stroke-width", 1);
+            }
+
+            // --- Draw baseline radar polygon (maximum values) as a dashed outline.
+            const radarLine = d3.line().curve(d3.curveLinearClosed);
+            drawingGroup.append("path")
+                .attr("d", radarLine(baselinePoints))
+                .attr("fill", "none")
+                .attr("stroke", selectedNodeData ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.7)")
+                .attr("stroke-width", 1)
+                .attr("stroke-dasharray", "4,4");
+
+            // --- Draw the node's radar polygon ---
+            drawingGroup.append("path")
+                .attr("d", radarLine(points))
+                .attr("fill", selectedNodeData ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.2)")
+                .attr("stroke", selectedNodeData ? "rgba(0,0,0,1)" : "rgba(255,255,255,1)")
+                .attr("stroke-width", 2);
+
+            // --- Add vertices ---
+            drawingGroup.selectAll("circle.vertex")
+                .data(points)
+                .enter().append("circle")
+                .attr("class", "vertex")
+                .attr("cx", d => d[0])
+                .attr("cy", d => d[1])
+                .attr("r", 2)
+                .attr("fill", selectedNodeData ? "rgba(0,0,0,1)" : "rgba(255,255,255,1)");
+        }
+
+        /**
+         * Draws radial axis labels as independent HTML elements.
+         * The labels are appended to a container that is taken out of the normal layout flow.
+         *
+         * @param {number} centerX - X-coordinate of the radar chart center.
+         * @param {number} centerY - Y-coordinate of the radar chart center.
+         * @param {number} radarRadius - The radar chart radius.
+         * @param {Array} labels - Array of five axis label strings.
+         * @param {string} containerSelector - Selector for the overlay container.
+         */
+        function drawRadialAxisLabels(centerX, centerY, radarRadius, labels, containerSelector) {
+            // Select or create the overlay container.
+            let container = d3.select(containerSelector);
+            if (container.empty()) {
+                container = d3.select("body").append("div")
+                    .attr("id", containerSelector.replace("#", ""))
+                    .style("position", "fixed")
+                    .style("top", "0px")
+                    .style("left", "0px")
+                    .style("width", "100%")
+                    .style("height", "100%")
+                    .style("pointer-events", "none")
+                    .style("z-index", "9999");
+            }
+
+            // Clear any previous labels.
+            container.selectAll(".radial-axis-label").remove();
+
+            // Base angle: start at the top.
+            const baseAngle = -Math.PI / 2;
+            // Define offset (in pixels) beyond the radar radius.
+            const offset = 20;
+
+            // For each label, compute its absolute (viewport) position.
+            labels.forEach((label, i) => {
+                const angle = baseAngle + (2 * Math.PI * i / labels.length);
+                // Compute position relative to the provided center and radius.
+                const x = centerX + (radarRadius + offset) * Math.cos(angle);
+                const y = centerY + (radarRadius + offset) * Math.sin(angle);
+
+                // Append an independent label element.
+                container.append("div")
+                    .attr("class", "radial-axis-label")
+                    .style("position", "fixed")
+                    .style("left", `${x}px`)
+                    .style("top", `${y}px`)
+                    .style("transform", "translate(-50%, -50%)")
+                    .style("background", "rgba(0, 0, 0, 0)")
+                    .style("color", selectedNodeData ? "gray" : "white")
+                    .style("padding", "2px 4px")
+                    .style("border-radius", "3px")
+                    .style("font-size", "10px")
+                    .style("pointer-events", "none")
+                    .text(label);
+            });
+        }
+
+        function updateAnnotationForLink(d, annotationGroup) {
+            // Determine source and target coordinates:
+            let sx, sy, tx, ty;
+            if (currentMode === "map" &&
+                d.x0 !== undefined && d.y0 !== undefined &&
+                d.x1 !== undefined && d.y1 !== undefined) {
+                // Use fixed coordinates when in map mode.
+                sx = d.x0;
+                sy = d.y0;
+                tx = d.x1;
+                ty = d.y1;
+            } else {
+                // Use dynamic positions.
+                sx = (typeof d.source === "object") ? d.source.x : d.source;
+                sy = (typeof d.source === "object") ? d.source.y : d.source;
+                const adj = getAdjustedTarget(d);
+                tx = adj.x;
+                ty = adj.y;
+            }
+
+            // Compute the chord midpoint.
+            const midChordX = (sx + tx) / 2;
+            const midChordY = (sy + ty) / 2;
+
+            // Compute chord vector and its length.
+            const dx = tx - sx;
+            const dy = ty - sy;
+            const L = Math.sqrt(dx * dx + dy * dy);
+            if (L === 0) return;  // avoid division by zero
+
+            // For an arc drawn as "A L,L,0,0,1,..." the subtended angle is 60° (π/3).
+            // The distance from the chord midpoint to the arc midpoint is:
+            // arcOffset = L * (1 - cos(θ/2))
+            const thetaOver2 = Math.asin(0.5); // 30° in radians.
+            const arcOffset = L * (1 - Math.cos(thetaOver2));
+
+            // Compute a unit perpendicular vector to the chord (using -dy, dx).
+            const ux = -dy / L,
+                uy = dx / L;
+
+            // Compute the arc midpoint by offsetting the chord midpoint by arcOffset along the perpendicular.
+            const midX = midChordX - ux * arcOffset;
+            const midY = midChordY - uy * arcOffset;
+
+            const offsets = getAnnotationOffsetNoXDefault(midX, midY, w, h);
+
+            const titleStringSource = getStatnaam(d.source.id);
+            const titleStringTarget = getStatnaam(d.target.id);
+            const annotations = [{
+                note: {
+                    title: `${titleStringSource} → ${titleStringTarget}`,
+                    label: `Trade volume: ${d.weight}`,
+                    wrapSplitter: /\n/,
+                    wrap: 0.5 * w - 60,
+                    bgPadding: { top: 6, left: 6, right: 4, bottom: 4 }
+                },
+                x: midX,
+                y: midY,
+                dx: offsets.dx,
+                dy: offsets.dy
+            }];
+
+            const makeAnnotations = d3.annotation()
+                .type(linkAnnoType)
+                .notePadding(10)
+                .annotations(annotations);
+
+            annotationGroup.call(makeAnnotations).raise();
+            annotationGroup.selectAll("rect.annotation-note-bg")
+                .attr("fill", selectedNodeData ? "white" : "green")
+                .attr("fill-opacity", 0.8)
+                .attr("rx", 4)
+                .attr("ry", 4);
+            d3.selectAll(".annotation-connector .connector")
+                .attr("stroke", selectedNodeData ? "white" : "green")
+            d3.selectAll(".annotation-note .note-line")
+                .attr("stroke", selectedNodeData ? "white" : "green");
+            d3.selectAll(".annotation text")
+                .attr("fill", selectedNodeData ? "gray" : "white");
+        }
+
+        // Helper function: Adjust dx, dy based on node position relative to SVG bounds.
+        function getAnnotationOffset(x, y, svgWidth, svgHeight) {
+            let dx = 50;  // default offset
+            let dy = -50; // default offset above the node
+
+            // Horizontal adjustment:
+            if (x < svgWidth * 0.3) {
+                // Node is near left edge: place annotation to the right.
+                dx = 50;
+            } else if (x > svgWidth * 0.7) {
+                // Node is near right edge: place annotation to the left.
+                dx = -50;
+            } else {
+                dx = 0; // Centered horizontally.
+            }
+
+            // Vertical adjustment:
+            if (y < svgHeight * 0.4) {
+                // Node is near top edge: place annotation below.
+                dy = 50;
+            } else if (y > svgHeight * 0.6) {
+                // Node is near bottom edge: place annotation above.
+                dy = -50;
+            } else {
+                dy = -50; // default above node.
+            }
+
+            return { dx, dy };
+        }
+
+        function getAnnotationOffsetNoXDefault(x, y, svgWidth, svgHeight) {
+            // Horizontal offset: if x is more than half the width, place annotation to the left (-50); otherwise, to the right (+50).
+            const dx = (x > svgWidth / 2) ? -50 : 50;
+
+            let dy;
+            if (y < svgHeight * 0.3) {
+                // Near the top edge: shift annotation downward.
+                dy = 50;
+            } else if (y > svgHeight * 0.7) {
+                // Near the bottom edge: shift annotation upward.
+                dy = -50;
+            } else {
+                // Default: place annotation above the point.
+                dy = -50;
+            }
+
+            return { dx, dy };
+        }
+
         function addHotspotLegend(svg) {
             const legendWidth = w / 3;
-
             const margin = { top: 50, right: 50, bottom: 50, left: 50 };
 
             const legendData = [
                 { name: "Vulnerable", color: hotspotColors.inDegree },
                 { name: "Seeding", color: hotspotColors.outDegree },
-                { name: "Gateway", color: hotspotColors.betweenness },
-                { name: "Bottleneck", color: hotspotColors.pageRank }
+                { name: "Bottleneck", color: hotspotColors.betweenness },
+                { name: "Sink", color: hotspotColors.pageRank },
+                { name: "Amplifier", color: hotspotColors.eigenvector }
             ];
 
             const legend = svg.append("g")
@@ -923,20 +1515,156 @@
                 .attr("transform", (d, i) => `translate(${margin.left}, ${margin.top + i * 25})`);
 
             legendItem.append("circle")
-                .attr("r", 10)
+                .attr("r", 8)
                 .attr("fill", "none")
                 .attr("stroke", d => d.color)
-                .attr("stroke-width", 3)
+                .attr("stroke-width", 2.5)
                 .attr("stroke-dasharray", "5 5")
                 .attr("stroke-dashoffset", 0);
 
             legendItem.append("text")
                 .attr("x", 25)
                 .attr("y", 7)
-                .attr("font-size", "18px")
+                .attr("font-size", "15px")
                 .attr("fill", "black")
                 .text(d => d.name);
+
+            // Append a "?" button below the legend items.
+            legend.append("foreignObject")
+                .attr("class", "hotspot-info-button")
+                .attr("x", margin.left - 10)  // Position it below the legend
+                .attr("y", margin.top + legendData.length * 25 - 5)
+                .attr("width", 30)
+                .attr("height", 30)
+                .html('<i class="fas fa-circle-question"></i>')  // FontAwesome icon
+                .style("font-size", "22px")
+                .style("color", "green")
+                .style("cursor", "pointer")
+                .on("click", function () {
+                    showHotspotInfoOverlay();  // Function to display the overlay
+                })
+                .on("mouseover", function () {
+                    d3.select(this).style("transform", "scale(1.1)").style("filter", "brightness(1.2)");
+                })
+                .on("mouseout", function () {
+                    d3.select(this).style("transform", "scale(1)").style("filter", "brightness(1)");
+                });
         }
+
+        function showHotspotInfoOverlay() {
+            // Create or select the overlay container.
+            let overlay = d3.select("body").select("#hotspotInfoOverlay");
+            if (overlay.empty()) {
+                overlay = d3.select("body").append("div")
+                    .attr("id", "hotspotInfoOverlay")
+                    .style("position", "fixed")
+                    .style("top", "0")
+                    .style("left", "0")
+                    .style("width", "100%")
+                    .style("height", "100%")
+                    .style("background", "rgba(0,0,0,0.6)")
+                    .style("display", "flex")
+                    .style("justify-content", "center")
+                    .style("align-items", "center")
+                    .style("z-index", "10000")
+                    .style("pointer-events", "auto");
+            }
+
+            // Clear any previous content.
+            overlay.html("");
+
+            // Create a card container.
+            const card = overlay.append("div")
+                .attr("class", "hotspot-info-card")
+                .style("background", "#fff")
+                .style("padding", "20px")
+                .style("border-radius", "8px")
+                .style("max-width", "800px")
+                .style("width", "80%")
+                .style("box-shadow", "0 2px 8px rgba(0,0,0,0.3)")
+                .style("font-family", "sans-serif")
+                .style("color", "#333")
+                .style("position", "relative");
+
+            // Add a close button.
+            card.append("div")
+                .attr("class", "hotspot-info-close")
+                .style("position", "absolute")
+                .style("top", "10px")
+                .style("right", "10px")
+                .style("cursor", "pointer")
+                .style("font-size", "18px")
+                .html('<i class="fa-solid fa-circle-xmark"></i>')
+                .on("click", function () {
+                    overlay.transition()
+                        .duration(300)
+                        .style("opacity", 0)
+                        .on("end", () => overlay.remove());
+                });
+
+            // Add a title.
+            card.append("h2")
+                .style("margin-top", "0")
+                .text("Hotspot Metrics Overview");
+
+            // Create a table.
+            const tableHTML = `
+                <table style="width:100%; border-collapse: collapse; font-size: 14px;">
+                <thead>
+                    <tr style="background: #4CAF50; color: white;">
+                    <th style="padding: 8px; border: 1px solid #ddd;">Code</th>
+                    <th style="padding: 8px; border: 1px solid #ddd;">Metric</th>
+                    <th style="padding: 8px; border: 1px solid #ddd;">Descriptor</th>
+                    <th style="padding: 8px; border: 1px solid #ddd;">Interpretation</th>
+                    <th style="padding: 8px; border: 1px solid #ddd;">Calculation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">ID</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Weighted In-Degree</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Vulnerable</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Farms frequently receiving livestock (high exposure risk).</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Sum of incoming trade weights (log-scaled).</td>
+                    </tr>
+                    <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">OD</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Weighted Out-Degree</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Seeding</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Farms frequently sending livestock (potential spreaders).</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Sum of outgoing trade weights (log-scaled).</td>
+                    </tr>
+                    <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">BT</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Betweenness</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Bottleneck</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Farms acting as bridges; their disruption can hinder spread.</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Computed via Brandes algorithm (shortest-path based).</td>
+                    </tr>
+                    <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">PR</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">PageRank</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Sink</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Farms that often receive livestock from key hubs.</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Iterative random-walk based model.</td>
+                    </tr>
+                    <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">EC</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Eigenvector Centrality</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Amplifier</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Farms connected to influential nodes, potentially magnifying outbreaks.</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">Computed via power iteration on the adjacency matrix.</td>
+                    </tr>
+                </tbody>
+                </table>
+            `;
+            card.append("div").html(tableHTML);
+
+            overlay.style("opacity", 0)
+                .transition().duration(300)
+                .style("opacity", 1);
+        }
+
 
         // ---- Node Click Handler ----
         function onClickNode(event, d) {
@@ -951,37 +1679,39 @@
             }
             clearSelection(wasSelected && !wasSameNode);
             selectedNodeData = d;
-            if (currentMode === "graph") {
-                selectedNodeBubble = svg.append("g")
-                    .attr("class", "bubble")
-                    .attr("pointer-events", "none");
-                let bubbleText = selectedNodeBubble.append("text")
-                    .attr("text-anchor", "middle")
-                    .attr("dy", "0.3em")
-                    .text(d.statnaam);
-                const bbox = bubbleText.node().getBBox();
-                selectedNodeBubble.insert("rect", "text")
-                    .attr("x", bbox.x - 4)
-                    .attr("y", bbox.y - 2)
-                    .attr("width", bbox.width + 8)
-                    .attr("height", bbox.height + 4)
-                    .attr("fill", "#fff")
-                    .attr("stroke", "#000")
-                    .attr("rx", 3)
-                    .attr("ry", 3);
-                selectedNodeBubble.raise();
-                selectedNodeBubble.attr("transform", "translate(" + d.x + "," + (d.y - 20) + ")");
-            }
-            // If clicked, change node labels to white
+
+            updateAnnotationForNode(d, annotationGroup);
+
+            // If clicked, change all node labels to white
             labelSelection.attr("fill", "white");
+            // Then update node label styling for the selected node.
+            labelSelection.filter(nd => nd.id === d.id)
+                .attr("fill", "white")
+                .attr("font-weight", "bold")
+                .attr("font-size", "21px")
+                .attr("filter", "url(#edgeGlow)")
+                .attr("stroke", "black")
+                .attr("stroke-opacity", 0.8);
             // If clicked, change legend text to white
             d3.selectAll(".legendItem text").attr("fill", "white");
             // If clicked, add glowing filter to legend circles
             d3.selectAll(".legendItem circle").attr("filter", "url(#edgeGlow)");
             // If clicked, add glowing filter to main figure's hotspot strokes
             d3.selectAll(".hotspotStroke").attr("filter", "url(#edgeGlow)");
+            // If clicked, change "?" button color to white
+            d3.select(".hotspot-info-button").style("color", "white");
+
+            // If clicked, change restore and screenshot buttons to white and their text to black
+            d3.select(".restore-button").style("color", "gray");
+            d3.select(".screenshot-button").style("color", "gray");
+            d3.select(".restore-button").style("background", "white");
+            d3.select(".screenshot-button").style("background", "white");
+
+            // If clicked, change spectral radius display background to white and text to black
+            d3.select(".spectral-radius-display").style("background", "white");
+            d3.select(".spectral-radius-display").style("color", "gray");
+
             // If clicked, change link colors, add arrowheads and glowing filter
-            // ... inside onClickNode, after setting selectedNodeData, etc.
             linkSelection.attr("display", function (linkData) {
                 const srcId = (typeof linkData.source === "object" ? linkData.source.id : linkData.source),
                     tgtId = (typeof linkData.target === "object" ? linkData.target.id : linkData.target);
@@ -1059,13 +1789,20 @@
 
         // ---- Clear Selection (If Clicking Again/Unclicked) ----
         function clearSelection(flag) {
-            if (selectedNodeBubble) { selectedNodeBubble.remove(); selectedNodeBubble = null; }
             selectedNodeData = null;
 
             const colorScale = d3.scaleSequential(d3.interpolateSpectral)
                 .domain(d3.extent(allLinks, d => Math.log(d.weight)).reverse()); // Inverted color scale
 
-            // If unclicked, change node labels back to black
+            // Restore node labels: reset fill, font-weight, and font-size.
+            labelSelection
+                .attr("font-weight", "normal")
+                .attr("font-size", "12px")
+                .attr("filter", null)
+                .attr("stroke", null)
+                .attr("stroke-opacity", null);
+
+            // If unclicked, change all node labels back to black
             labelSelection.attr("fill", "black");
             // If unclicked, change legend text back to black
             d3.selectAll(".legendItem text").attr("fill", "black");
@@ -1073,6 +1810,22 @@
             d3.selectAll(".legendItem circle").attr("filter", null);
             // If unclicked, remove glowing filter from main figure's hotspot strokes
             d3.selectAll(".hotspotStroke").attr("filter", null);
+            // If unclicked, change "?" button color back to green
+            d3.select(".hotspot-info-button").style("color", "green");
+
+            // If unclicked, remove annotation by passing d=null
+            updateAnnotationForNode(null, annotationGroup);
+
+            // If unclicked, change restore and screenshot buttons back to green and their text to white
+            d3.select(".restore-button").style("color", "white");
+            d3.select(".screenshot-button").style("color", "white");
+            d3.select(".restore-button").style("background", "linear-gradient(135deg, #4CAF50, #1b872b)");
+            d3.select(".screenshot-button").style("background", "linear-gradient(135deg, #4CAF50, #1b872b)");
+
+            // If unclicked, change spectral radius display background to green and text to white
+            d3.select(".spectral-radius-display").style("background", "linear-gradient(135deg, #4CAF50, #1b872b)");
+            d3.select(".spectral-radius-display").style("color", "white");
+
             // If unclicked, change link colors back, remove arrowheads and glowing filter
             linkSelection.attr("display", "block")
                 .attr("class", "link")
@@ -1204,30 +1957,74 @@
             d3.selectAll('.trade-header-checkbox').on('change', function () {
                 const section = this.dataset.section;  // "outgoing" or "incoming"
                 const checked = this.checked;
+                // Toggle all individual checkboxes for that section.
                 d3.selectAll(`.trade-checkbox[data-section='${section}']`)
                     .property('checked', checked);
+
+                // For self-loops, update all self-loop checkboxes across both sections.
+                d3.selectAll('.trade-checkbox')
+                    .filter(function () {
+                        return this.dataset.source === this.dataset.target;
+                    })
+                    .property('checked', checked);
+
                 updateNetwork();
+                updateDonutCharts();
                 updateSpectralRadiusDisplay();
                 updateNetworkStats(allNodes, allLinks);
-                replotInOutArbos(selectedNodeData.id);
+                replotInOutArbos(selectedNodeData ? selectedNodeData.id : null);
                 hotspots = computeHotSpotMetrics(allNodes, allLinks);
+                hotspotsMax = computeHotspotMax(hotspots);
+                console.log(hotspotsMax);
                 printHotSpots(hotspots, "topMetrics", 3);
                 replotHotspots();
                 const newsccs = findSCCs(allNodes, allLinks);
                 displaySCCsInCards(newsccs, "sccOutput");
+
+                // Update header checkbox state based on the current state of individuals.
+                updateHeaderCheckboxes();
             });
 
             // Individual trade checkbox changes trigger a network update.
             d3.selectAll('.trade-checkbox').on('change', function () {
+                const checkbox = this;
+                const source = checkbox.dataset.source;
+                const target = checkbox.dataset.target;
+                const isEnabled = checkbox.checked;
+                // If it's a self-loop (source equals target), update all self-loop checkboxes across both sections.
+                if (source === target) {
+                    d3.selectAll('.trade-checkbox')
+                        .filter(function () {
+                            return this.dataset.source === source && this.dataset.target === target;
+                        })
+                        .property('checked', isEnabled);
+                }
                 updateNetwork();
+                updateDonutCharts();
                 updateSpectralRadiusDisplay();
                 updateNetworkStats(allNodes, allLinks);
-                replotInOutArbos(selectedNodeData.id);
+                replotInOutArbos(selectedNodeData ? selectedNodeData.id : null);
                 hotspots = computeHotSpotMetrics(allNodes, allLinks);
+                hotspotsMax = computeHotspotMax(hotspots);
                 printHotSpots(hotspots, "topMetrics", 3);
                 replotHotspots();
                 const newsccs = findSCCs(allNodes, allLinks);
                 displaySCCsInCards(newsccs, "sccOutput");
+
+                // Update header checkbox state for both sections.
+                updateHeaderCheckboxes();
+            });
+        }
+
+        // Helper function to update header checkbox states.
+        function updateHeaderCheckboxes() {
+            ['incoming', 'outgoing'].forEach(section => {
+                // Select all individual checkboxes for the section.
+                const checkboxes = d3.selectAll(`.trade-checkbox[data-section='${section}']`).nodes();
+                // If every individual checkbox is checked, then the header is checked.
+                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                d3.select(`.trade-header-checkbox[data-section='${section}']`)
+                    .property('checked', allChecked);
             });
         }
 
@@ -1393,6 +2190,71 @@
             }
         }
 
+        function updateDonutCharts() {
+            // For each node group (each node)
+            d3.selectAll(".nodeGroup").each(function (d) {
+                // Filter enabled links that involve this node.
+                const enabledLinks = allLinks.filter(link => {
+                    const src = (typeof link.source === "object") ? link.source.id : link.source;
+                    const tgt = (typeof link.target === "object") ? link.target.id : link.target;
+                    // For this donut chart, consider outgoing trades for external volume
+                    // and self-loops for self trade.
+                    return !link.disabled && src === d.id;
+                });
+
+                // Compute self trade volume: links where target is the same as the source.
+                const selfVolume = d3.sum(enabledLinks.filter(link => {
+                    const tgt = (typeof link.target === "object") ? link.target.id : link.target;
+                    return tgt === d.id;
+                }), link => link.weight);
+
+                // Compute external trade volume: links where target is different.
+                const otherVolume = d3.sum(enabledLinks.filter(link => {
+                    const tgt = (typeof link.target === "object") ? link.target.id : link.target;
+                    return tgt !== d.id;
+                }), link => link.weight);
+
+                const totalVolume = selfVolume + otherVolume;
+
+                // Select (or create) a group for the donut chart inside the node group.
+                let donutGroup = d3.select(this).select("g.trade-donut");
+
+                donutGroup.remove();
+                donutGroup = d3.select(this)
+                    .append("g")
+                    .attr("class", "trade-donut")
+                    .attr("transform", "translate(0,0)");
+                // Append two paths for the two segments.
+                donutGroup.append("path").attr("class", "donut-self");
+                donutGroup.append("path").attr("class", "donut-other");
+
+                // Define radii for the donut relative to the node's radius.
+                const innerRadius = d.r * 0.3;
+                const outerRadius = d.r * 0.8;
+
+                // Compute fraction of self-trade.
+                const selfFraction = selfVolume / totalVolume;
+                const selfAngle = 2 * Math.PI * selfFraction;
+
+                // Create an arc generator.
+                const arc = d3.arc()
+                    .innerRadius(innerRadius)
+                    .outerRadius(outerRadius);
+
+                // Update self-trade arc with white fill.
+                donutGroup.select(".donut-self")
+                    .attr("d", arc({ startAngle: 0, endAngle: selfAngle }))
+                    .attr("fill", "white")
+                    .attr("opacity", 0.8);
+
+                // Update external trade arc with black fill.
+                donutGroup.select(".donut-other")
+                    .attr("d", arc({ startAngle: selfAngle, endAngle: 2 * Math.PI }))
+                    .attr("fill", "black")
+                    .attr("opacity", 0.1);
+            });
+        }
+
         // Function to update the current spectral radius display
         function updateSpectralRadiusDisplay() {
             // Compute the current spectral radius based on enabled links.
@@ -1492,13 +2354,13 @@
             d3.selectAll('.trade-checkbox').property('checked', true);
             d3.selectAll('.trade-header-checkbox').property('checked', true);
 
-            console.log(allLinks);
-
             // Update the network so that all links are shown.
             updateNetwork();
             updateSpectralRadiusDisplay();
+            updateDonutCharts();
             updateNetworkStats(allNodes, allLinks);
             hotspots = computeHotSpotMetrics(allNodes, allLinks);
+            hotspotsMax = computeHotspotMax(hotspots);
             printHotSpots(hotspots, "topMetrics", 3);
             replotHotspots();
             const newsccs = findSCCs(allNodes, allLinks);
@@ -1572,7 +2434,21 @@
         // ---- Update Node Positions When Switching to Map Mode ----
         function updateMapPositionsWithTransition() {
             nodeEnter.transition().duration(1000)
-                .attr("transform", d => `translate(${d.x},${d.y})`);
+                .attr("transform", d => `translate(${d.x},${d.y})`)
+                .on("end", function (d) {
+                    if (selectedNodeData && selectedNodeData.id === d.id) {
+                        updateAnnotationForNode(d, annotationGroup);
+                    }
+                    if (hoveredNode && hoveredNode.id === d.id) {
+                        updateAnnotationForNode(d, annotationGroup);
+                    }
+                });
+
+            // Record the current node positions for annotation updates.
+            allNodes.forEach(node => {
+                node.x0 = node.x;
+                node.y0 = node.y;
+            });
 
             linkSelection.transition().duration(1000)
                 .attr("d", function (d) {
@@ -1587,6 +2463,14 @@
             labelSelection.transition().duration(1000)
                 .attr("x", d => d.x)
                 .attr("y", d => d.y - (d.r + 13));
+
+            //Record the current link positions for annotation updates.
+            allLinks.forEach(link => {
+                link.x0 = link.source.x;
+                link.y0 = link.source.y;
+                link.x1 = link.target.x;
+                link.y1 = link.target.y;
+            });
         }
 
         // Function to bridge native graph data and JSNetworkX
@@ -2536,6 +3420,7 @@
 
                 // Compute and print 3 hotpots per metric
                 hotspots = computeHotSpotMetrics(allNodes, allLinks);
+                hotspotsMax = computeHotspotMax(hotspots);
                 printHotSpots(hotspots, "topMetrics", 3);
 
                 // Create the network visualization
@@ -2570,7 +3455,6 @@
             // Compute the initial spectral radius using all nodes/links (only enabled links if applicable).
             initialSpectralRadius = computeSpectralRadius(allNodes, allLinks);
 
-            // Update the display: we fix the initial value at 1.0 reference.
             const displayElement = document.getElementById("spectralRadiusDisplay");
             displayElement.innerHTML = `
                 <i class="fa-solid fa-virus"></i> Risk Score: <span class="current-sr">1.000</span> <span class="initial-sr">(1.000)</span>
