@@ -307,7 +307,7 @@ body {
     position: absolute;
     bottom: 20px;
     right: 20px;
-    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    background: linear-gradient(135deg, #4CAF50, #1b872b);
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -321,7 +321,8 @@ body {
 
 .screenshot-button:hover:not(:disabled) {
     transform: translateY(-2px);
-    background: linear-gradient(135deg, #7a21dc, #3585fd);
+    background: linear-gradient(135deg, #4CAF50, #1b872b);
+    filter: brightness(1.2);
 }
 
 .screenshot-button:active:not(:disabled) {
@@ -340,7 +341,7 @@ body {
     position: absolute;
     bottom: 70px;
     right: 20px;
-    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    background: linear-gradient(135deg, #4CAF50, #1b872b);
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -354,7 +355,8 @@ body {
 
 .restore-button:hover:not(:disabled) {
     transform: translateY(-2px);
-    background: linear-gradient(135deg, #7a21dc, #3585fd);
+    background: linear-gradient(135deg, #4CAF50, #1b872b);
+    filter: brightness(1.2);
 }
 
 .restore-button:active:not(:disabled) {
@@ -725,7 +727,7 @@ body {
     position: absolute;
     bottom: 20px;
     left: 170px;
-    background: linear-gradient(135deg, #7a21dc, #3585fd);
+    background: linear-gradient(135deg, #4CAF50, #1b872b);
     color: #fff;
     padding: 8px 12px;
     border-radius: 8px;
@@ -1013,16 +1015,29 @@ body {
     stroke-width: 1;
 }
 
-.tooltip {
-    position: absolute;
+.annotation-group {
     pointer-events: none;
-    background: #fff;
-    border: 1px solid #ccc;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.85em;
-    opacity: 0;
-    transition: opacity 0.1s;
+    position: relative;
+}
+
+/* .annotation text {
+    font-size: 0.9rem;
+    fill: #ffffff;
+    pointer-events: none;
+} */
+
+.annotation-connector {
+    stroke-dasharray: 4, 2;
+    opacity: 0.9;
+}
+
+#radial-labels-container {
+    position: fixed;
+    /* or absolute */
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 9999;
 }
 
 .line {
