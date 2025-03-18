@@ -7,7 +7,7 @@
     <!-- Load Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Load Local CSS -->
-    <link rel="stylesheet" type="text/css" href="assets//css/herdlink.css">
+    <link rel="stylesheet" type="text/css" href="assets/css/herdlink.css">
     <!-- Load D3.js -->
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <!-- Load jLouvain -->
@@ -216,6 +216,13 @@
                 <span class="watermark-text"></span>
                 <img src="assets/files/herdlink/WUR_ZW_standard_2021.svg" class="watermark-logo">
             </div>
+            <div id="timeControlsContainer">
+                <!-- Empty container for the time controls -->
+            </div>
+            <div id="currentDateWidget" class="current-date-widget">
+                <span class="current-date-label"><i class="fa-solid fa-calendar-days"></i> Date:</span>
+                <span class="current-date-value"></span>
+            </div>
         </div>
 
         <!-- Right Column: Trade Table -->
@@ -244,6 +251,10 @@
 
     <script>
         // ---- Global Variables ----
+        let loadedCSVData = null;
+        let uniqueDates = [];
+        let temporalUpdateTimeout;
+        let hasTime = false;
         const svg = d3.select("#col2 svg");
         let containerCol2 = document.getElementById("col2");
         let w = containerCol2.clientWidth, h = containerCol2.clientHeight;
@@ -340,7 +351,7 @@
             let html = `
                 <div class="stats-container">
                 <div class="stat-item">
-                    <span class="stat-label">COROP Areas</span>
+                    <span class="stat-label">Active Regions</span>
                     <span class="stat-value">${totalNodes}</span>
                 </div>
                 <div class="stat-item">
@@ -822,12 +833,13 @@
             let dx = d.target.x - d.source.x,
                 dy = d.target.y - d.source.y,
                 dist = Math.sqrt(dx * dx + dy * dy);
+            const r = (d.target.r !== undefined && !isNaN(d.target.r)) ? d.target.r : 0;
             if (dist === 0) return { x: d.target.x, y: d.target.y };
-            return { x: d.target.x - (dx / dist) * d.target.r, y: d.target.y - (dy / dist) * d.target.r };
+            return { x: d.target.x - (dx / dist) * r, y: d.target.y - (dy / dist) * r };
         }
 
         // ---- Create Network ----
-        function createNetwork(nodes, links) {
+        function createNetwork(nodes, links, isReplot = false) {
             // Use a log scale for edge colors.
             const edgeExtent = d3.extent(links, d => Math.log(d.weight));
             const edgeColor = d3.scaleSequential(d3.interpolateSpectral)
@@ -850,6 +862,7 @@
                 .data(links)
                 .enter().append("path")
                 .attr("class", "link")
+                .attr("opacity", 0.5)
                 .attr("stroke", d => edgeColor(Math.log(d.weight)))
                 .attr("stroke-width", d => Math.sqrt(d.weight));
 
@@ -1044,7 +1057,9 @@
                 });
 
             // ---- Add Hotspot Stroke Legend ----
-            addHotspotLegend(svg);
+            if (!isReplot) {
+                addHotspotLegend(svg);
+            }
 
             // ---- Define Edge Glow and Drop Shadow Filters ----
             // Select existing defs or create one if not present.
@@ -1103,7 +1118,7 @@
             }), link => link.weight);
 
             // Calculate self-trade ratio. If outgoingTrade is zero, default to 0.
-            const selfTradeRatio = outgoingTrade > 0 ? ((selfTrade / outgoingTrade) * 100).toFixed(1) : "0.0";
+            const selfTradeRatio = outgoingTrade > 0 ? ((selfTrade / outgoingTrade) * 100).toFixed(1) : "0.000";
 
             const noteLabel = `Community ID: ${d.community}\nIncoming Trade: ${incomingTrade}\nOutgoing Trade: ${outgoingTrade}\nSelf-Trade Ratio: ${selfTradeRatio}%`;
 
@@ -1494,7 +1509,7 @@
 
         function addHotspotLegend(svg) {
             const legendWidth = w / 3;
-            const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+            const margin = { top: 60, right: 50, bottom: 50, left: 30 };
 
             const legendData = [
                 { name: "Vulnerable", color: hotspotColors.inDegree },
@@ -1526,18 +1541,18 @@
                 .attr("x", 25)
                 .attr("y", 7)
                 .attr("font-size", "15px")
-                .attr("fill", "black")
+                .attr("fill", "gray")
                 .text(d => d.name);
 
             // Append a "?" button below the legend items.
             legend.append("foreignObject")
                 .attr("class", "hotspot-info-button")
-                .attr("x", margin.left - 10)  // Position it below the legend
-                .attr("y", margin.top + legendData.length * 25 - 5)
+                .attr("x", 240)
+                .attr("y", 18)
                 .attr("width", 30)
                 .attr("height", 30)
-                .html('<i class="fas fa-circle-question"></i>')  // FontAwesome icon
-                .style("font-size", "22px")
+                .html('<i class="fas fa-circle-question"></i>')
+                .style("font-size", "18px")
                 .style("color", "green")
                 .style("cursor", "pointer")
                 .on("click", function () {
@@ -1708,8 +1723,16 @@
             d3.select(".screenshot-button").style("background", "white");
 
             // If clicked, change spectral radius display background to white and text to black
-            d3.select(".spectral-radius-display").style("background", "white");
-            d3.select(".spectral-radius-display").style("color", "gray");
+            d3.select(".spectral-radius-display").style("color", "white");
+
+            // If clicked, change the play/pause and restart buttons to white and content to black
+            d3.select("#playPauseBtn").style("background", "white");
+            d3.select("#fromStartBtn").style("background", "white");
+            d3.select("#playPauseBtn").style("color", "black");
+            d3.select("#fromStartBtn").style("color", "black");
+
+            // If clicked, change date display text to white
+            d3.select("#currentDateWidget").style("color", "white");
 
             // If clicked, change link colors, add arrowheads and glowing filter
             linkSelection.attr("display", function (linkData) {
@@ -1805,7 +1828,7 @@
             // If unclicked, change all node labels back to black
             labelSelection.attr("fill", "black");
             // If unclicked, change legend text back to black
-            d3.selectAll(".legendItem text").attr("fill", "black");
+            d3.selectAll(".legendItem text").attr("fill", "gray");
             // If unclicked, remove glowing filter from legend circles
             d3.selectAll(".legendItem circle").attr("filter", null);
             // If unclicked, remove glowing filter from main figure's hotspot strokes
@@ -1823,8 +1846,16 @@
             d3.select(".screenshot-button").style("background", "linear-gradient(135deg, #4CAF50, #1b872b)");
 
             // If unclicked, change spectral radius display background to green and text to white
-            d3.select(".spectral-radius-display").style("background", "linear-gradient(135deg, #4CAF50, #1b872b)");
-            d3.select(".spectral-radius-display").style("color", "white");
+            d3.select(".spectral-radius-display").style("color", "green");
+
+            // If unclicked, change the play/pause and restart buttons back to green and content to white
+            d3.select("#playPauseBtn").style("background", "linear-gradient(135deg, #4CAF50, #1b872b)");
+            d3.select("#fromStartBtn").style("background", "linear-gradient(135deg, #4CAF50, #1b872b)");
+            d3.select("#playPauseBtn").style("color", "white");
+            d3.select("#fromStartBtn").style("color", "white");
+
+            // If unclicked, change the date display text back to gray
+            d3.select("#currentDateWidget").style("color", "gray");
 
             // If unclicked, change link colors back, remove arrowheads and glowing filter
             linkSelection.attr("display", "block")
@@ -1975,7 +2006,6 @@
                 replotInOutArbos(selectedNodeData ? selectedNodeData.id : null);
                 hotspots = computeHotSpotMetrics(allNodes, allLinks);
                 hotspotsMax = computeHotspotMax(hotspots);
-                console.log(hotspotsMax);
                 printHotSpots(hotspots, "topMetrics", 3);
                 replotHotspots();
                 const newsccs = findSCCs(allNodes, allLinks);
@@ -2190,6 +2220,81 @@
             }
         }
 
+        function updateTemporalNetwork(newNodes, newLinks) {
+            // If a node is currently selected, record the node and clear the selection.
+            let recordedNodeData = null;
+            if (selectedNodeData) {
+                recordedNodeData = selectedNodeData;
+                clearSelection(flag = true);
+            }
+
+            // Stop the current force simulation.
+            forceSim.stop();
+
+            // Update global nodes/links.
+            allNodes = newNodes;
+            allLinks = newLinks;
+
+            // Update the force simulation with the new data.
+            forceSim.nodes(allNodes);
+            forceSim.force("link").links(allLinks);
+            forceSim.alpha(1).restart();
+
+            // Fade out the old network elements (nodes, links, annotations, legend) with a short transition.
+            const fadeDuration = 50;
+            svg.select("g.nodes")
+                .transition().duration(fadeDuration)
+                .style("opacity", 0)
+                .on("end", function () { d3.select(this).remove(); });
+            svg.select("g.links")
+                .transition().duration(fadeDuration)
+                .style("opacity", 0)
+                .on("end", function () { d3.select(this).remove(); });
+            annotationGroup.transition().duration(fadeDuration)
+                .style("opacity", 0)
+                .on("end", function () { d3.select(this).selectAll("*").remove(); });
+
+            // Cancel any pending update if the slider is moved quickly.
+            if (temporalUpdateTimeout) {
+                temporalUpdateTimeout.stop();
+            }
+
+            // Debounce: schedule the new network update after a short delay.
+            const debounceDelay = 1.1 * fadeDuration;
+            temporalUpdateTimeout = d3.timeout(() => {
+                createNetwork(allNodes, allLinks, isReplot = true);
+
+                // Immediately set new elements’ opacity to zero.
+                const newNodesGroup = svg.select("g.nodes.new");
+                const newLinksGroup = svg.select("g.links.new");
+                newNodesGroup.style("opacity", 0);
+                newLinksGroup.style("opacity", 0);
+
+                // Crossfade: transition new elements to full opacity.
+                newNodesGroup.transition().duration(fadeDuration)
+                    .style("opacity", 1);
+                newLinksGroup.transition().duration(fadeDuration)
+                    .style("opacity", 1);
+
+                // In map mode, immediately reposition nodes/links.
+                if (currentMode === "map") {
+                    switchToMapMode(instant = true);
+                }
+
+            }, debounceDelay);
+        }
+
+        function updateCurrentDateDisplay(dateObj) {
+            // Firstly make the container visible
+            const dateContainer = document.querySelector(".current-date-widget");
+            dateContainer.style.display = "flex";
+            const dateValueEl = document.querySelector(".current-date-value");
+            if (dateValueEl && dateObj) {
+                const formatter = d3.timeFormat("%d-%m-%Y");
+                dateValueEl.textContent = formatter(dateObj);
+            }
+        }
+
         function updateDonutCharts() {
             // For each node group (each node)
             d3.selectAll(".nodeGroup").each(function (d) {
@@ -2388,18 +2493,33 @@
         }
 
         // ---- Functions to switch between graph and map mode ----
-        function switchToMapMode() {
+        function switchToMapMode(instant = false) {
             if (forceSim) forceSim.stop();
             if (!nlMapData) { console.error("NL map data not loaded."); return; }
+
             const projection = d3.geoIdentity().reflectY(true).fitSize([w, h], nlMapData);
             const path = d3.geoPath().projection(projection);
-            const mapLayer = svg.insert("g", ":first-child").attr("class", "map");
+
+            // Insert the map layer with initial opacity 0.
+            const mapLayer = svg.insert("g", ":first-child")
+                .attr("class", "map")
+                .style("opacity", 0);
+
             mapLayer.selectAll("path")
                 .data(nlMapData.features)
                 .enter().append("path")
                 .attr("d", path)
                 .attr("fill", "none")
                 .attr("stroke", "#999");
+
+            // Fade in the map layer.
+            if (instant) {
+                mapLayer.style("opacity", 1);
+            } else {
+                mapLayer.transition().duration(300).style("opacity", 1);
+            }
+
+            // Re-create the map overlay if needed.
             if (!svg.select("#mapOverlay").empty()) {
                 svg.select("#mapOverlay").remove();
                 svg.insert("rect", ":first-child")
@@ -2411,8 +2531,10 @@
                     .attr("fill", "black")
                     .attr("opacity", 0.7);
             }
-            if (!nlLabelPoints) { console.error("NL label point data not loaded."); }
-            else {
+
+            if (!nlLabelPoints) {
+                console.error("NL label point data not loaded.");
+            } else {
                 nodeEnter.each(function (d) {
                     const labelFeature = nlLabelPoints.features.find(f => f.properties.statcode === d.id);
                     if (labelFeature) {
@@ -2422,18 +2544,24 @@
                     }
                 });
             }
-            updateMapPositionsWithTransition();
+
+            updateMapPositionsWithTransition(instant);
         }
 
         function switchToGraphMode() {
-            svg.selectAll(".map").remove();
+            // Fade out the map layer then remove it.
+            svg.selectAll(".map")
+                .transition().duration(300)
+                .style("opacity", 0)
+                .remove();
             nodeEnter.each(function (d) { d.fx = null; d.fy = null; });
             if (forceSim) { forceSim.alpha(1).restart(); }
         }
 
         // ---- Update Node Positions When Switching to Map Mode ----
-        function updateMapPositionsWithTransition() {
-            nodeEnter.transition().duration(1000)
+        function updateMapPositionsWithTransition(instant = false) {
+            const transitionDuration = instant ? 0 : 1000;
+            nodeEnter.transition().duration(transitionDuration)
                 .attr("transform", d => `translate(${d.x},${d.y})`)
                 .on("end", function (d) {
                     if (selectedNodeData && selectedNodeData.id === d.id) {
@@ -2450,7 +2578,7 @@
                 node.y0 = node.y;
             });
 
-            linkSelection.transition().duration(1000)
+            linkSelection.transition().duration(transitionDuration)
                 .attr("d", function (d) {
                     const dx = d.target.x - d.source.x,
                         dy = d.target.y - d.source.y,
@@ -2460,7 +2588,7 @@
                         "A" + dr + "," + dr + " 0 0,1 " + adj.x + "," + adj.y;
                 });
 
-            labelSelection.transition().duration(1000)
+            labelSelection.transition().duration(transitionDuration)
                 .attr("x", d => d.x)
                 .attr("y", d => d.y - (d.r + 13));
 
@@ -3375,25 +3503,170 @@
             });
         }
 
+        // ------------------------------------------------------------------------------
+        // ---- ******************************************************************** ----
+        // ---- ****************** MAIN ENTRY POINT of HerdLink ******************** ----
+        // ---- ******************************************************************** ----
+        // ------------------------------------------------------------------------------
+
         // ---- CSV File Upload ----
         document.getElementById('csvFileInput').addEventListener('change', function (event) {
+            // Clear any previous network visualization.
+            if (svg && svg.node().hasChildNodes()) {
+                    svg.selectAll("*").remove();
+            }
+
+            // Hide the time controls if they are created and visible.
+            if (document.getElementById("timeControlsContainer")) {
+                document.getElementById("timeControlsContainer").style.display = "none";
+            }
+            // Hide the date display if it is created and visible.
+            if (document.getElementById("currentDateWidget")) {
+                document.getElementById("currentDateWidget").style.display = "none";
+            }
+            
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            // When the file is loaded, parse it as CSV
+
             reader.onload = function (e) {
-                // Initialize data structures
                 const text = e.target.result;
                 const data = d3.csvParse(text);
-                const nodesMap = {}, links = [];
 
-                // Iterate over each row in the CSV
-                data.forEach(d => {
-                    const source = d.COROP_LEV, target = d.COROP_AFN, weight = +d.AANTAL, disabled = 0;
-                    // Skip rows if the source or target is missing/NA.
-                    if (!source || !target || source.toUpperCase() === "NA" || target.toUpperCase() === "NA") {
-                        return; // Just skip this row.
+                // Detect if a time column exists (case-insensitive).
+                const headers = data.columns.map(h => h.toLowerCase());
+                hasTime = headers.includes("time");
+
+                if (hasTime) {
+                    // Find the actual column name that equals "time" (preserving original casing).
+                    const timeCol = data.columns.find(h => h.toLowerCase() === "time");
+                    data.forEach(d => {
+                        d.time = new Date(d[timeCol]);
+                    });
+
+                    // Get unique dates and sort them.
+                    uniqueDates = Array.from(new Set(data.map(d => d.time.getTime())))
+                        .map(t => new Date(t))
+                        .sort((a, b) => a - b);
+
+                    // Append time control widgets to the preexisting container.
+                    let timeControls = document.getElementById("timeControlsContainer");
+                    // Make sure the container is visible.
+                    timeControls.style.display = "flex";
+                    // Clear any previous content.
+                    timeControls.innerHTML = "";
+
+                    // Create "Play/Pause" button.
+                    const playPauseBtn = document.createElement("button");
+                    playPauseBtn.id = "playPauseBtn";
+                    playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                    timeControls.appendChild(playPauseBtn);
+
+                    // Create "From Start" button.
+                    const fromStartBtn = document.createElement("button");
+                    fromStartBtn.id = "fromStartBtn";
+                    fromStartBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i>';
+                    timeControls.appendChild(fromStartBtn);
+
+                    // Create a slider.
+                    const slider = document.createElement("input");
+                    slider.type = "range";
+                    slider.id = "timeSlider";
+                    slider.min = 0;
+                    slider.max = uniqueDates.length - 1;
+                    slider.value = 0;
+                    slider.style.width = "300px";
+                    timeControls.appendChild(slider);
+
+                    let playInterval = null;
+
+                    // Store the loaded data for later use.
+                    loadedCSVData = data;
+
+                    // Function to update the network for a given date.
+                    function updateNetworkForDate(selectedDate, fullData) {
+                        const filteredData = fullData.filter(d => d.time.getTime() === selectedDate.getTime());
+                        const nodesMap = {}, links = [];
+                        filteredData.forEach(d => {
+                            const source = d.COROP_LEV, target = d.COROP_AFN, weight = +d.AANTAL, disabled = 0;
+                            if (!source || !target || source.toUpperCase() === "NA" || target.toUpperCase() === "NA") return;
+                            if (!nodesMap[source]) {
+                                nodesMap[source] = { id: source, tradeTotal: 0 };
+                            }
+                            if (!nodesMap[target]) {
+                                nodesMap[target] = { id: target, tradeTotal: 0 };
+                            }
+                            nodesMap[source].tradeTotal += weight;
+                            nodesMap[target].tradeTotal += weight;
+                            links.push({ source, target, weight, disabled });
+                        });
+                        const nodes = Object.values(nodesMap);
+                        allNodes = nodes;
+                        nodes.forEach(d => {
+                            d.statnaam = (nlLabelPoints && nlLabelPoints.features) ?
+                                (nlLabelPoints.features.find(f => f.properties.statcode === d.id)?.properties.statnaam || d.id)
+                                : d.id;
+                        });
+                        allLinks = links;
+                        updateNetworkStats(allNodes, allLinks);
+                        hotspots = computeHotSpotMetrics(allNodes, allLinks);
+                        hotspotsMax = computeHotspotMax(hotspots);
+                        printHotSpots(hotspots, "topMetrics", 3);
+                        updateTemporalNetwork(allNodes, allLinks);
+                        const sccs = findSCCs(allNodes, allLinks);
+                        displaySCCsInCards(sccs, "sccOutput");
+                        initSpectralRadiusDisplay();
                     }
+
+                    // Slider event.
+                    slider.addEventListener("input", function () {
+                        const idx = +slider.value;
+                        updateNetworkForDate(uniqueDates[idx], loadedCSVData);
+                        updateCurrentDateDisplay(uniqueDates[idx]);
+                    });
+
+                    // Play/Pause event.
+                    playPauseBtn.addEventListener("click", function () {
+                        if (playPauseBtn.innerHTML.includes("play")) {
+                            playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                            playInterval = setInterval(() => {
+                                let currentIdx = +slider.value;
+                                if (currentIdx < uniqueDates.length - 1) {
+                                    slider.value = currentIdx + 1;
+                                    updateNetworkForDate(uniqueDates[slider.value], data);
+                                    updateCurrentDateDisplay(uniqueDates[slider.value]);
+                                } else {
+                                    clearInterval(playInterval);
+                                    playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                                }
+                            }, 1000); // Adjust timing as needed.
+                        } else {
+                            playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                            clearInterval(playInterval);
+                        }
+                    });
+
+                    // "From Start" event.
+                    fromStartBtn.addEventListener("click", function () {
+                        slider.value = 0;
+                        updateNetworkForDate(uniqueDates[0], loadedCSVData);
+                        updateCurrentDateDisplay(uniqueDates[0]);
+                    });
+                }
+
+                // For initial network, if time exists, filter by the first unique date.
+                let initialData = data;
+                if (hasTime && uniqueDates.length > 0) {
+                    const firstDate = uniqueDates[0];
+                    initialData = data.filter(d => d.time.getTime() === firstDate.getTime());
+                    updateCurrentDateDisplay(uniqueDates[0]);
+                }
+
+                // Build nodes and links.
+                const nodesMap = {}, links = [];
+                initialData.forEach(d => {
+                    const source = d.COROP_LEV, target = d.COROP_AFN, weight = +d.AANTAL, disabled = 0;
+                    if (!source || !target || source.toUpperCase() === "NA" || target.toUpperCase() === "NA") return;
                     if (!nodesMap[source]) {
                         nodesMap[source] = { id: source, tradeTotal: 0 };
                     }
@@ -3404,8 +3677,6 @@
                     nodesMap[target].tradeTotal += weight;
                     links.push({ source, target, weight, disabled });
                 });
-
-                // Convert nodesMap to an array of nodes
                 const nodes = Object.values(nodesMap);
                 allNodes = nodes;
                 nodes.forEach(d => {
@@ -3415,39 +3686,20 @@
                 });
                 allLinks = links;
 
-                // Update network stats
                 updateNetworkStats(allNodes, allLinks);
-
-                // Compute and print 3 hotpots per metric
                 hotspots = computeHotSpotMetrics(allNodes, allLinks);
                 hotspotsMax = computeHotspotMax(hotspots);
                 printHotSpots(hotspots, "topMetrics", 3);
-
-                // Create the network visualization
                 createNetwork(allNodes, allLinks);
-
-                // Find strongly connected components (SCCs) and display them in a table
                 const sccs = findSCCs(allNodes, allLinks);
                 displaySCCsInCards(sccs, "sccOutput");
-
-                // Initialize spectral radius display
                 initSpectralRadiusDisplay();
 
-                // Compute and visualize the maximum clique (using reciprocal edges only)
-                // let maxClique = computeMaxCliqueReciprocal();
-                // visualizeCliqueAsForce(maxClique);
-
-                // Enable toggle button after CSV is loaded.
                 document.getElementById("toggleModeButton").disabled = null;
-
-                // Enable screenshot button after CSV is loaded.
                 document.getElementById("screenshotButton").disabled = null;
-
-                // Enable restore button after CSV is loaded.
                 document.getElementById("restoreButton").disabled = null;
             };
 
-            // Read the file as text
             reader.readAsText(file);
         });
 
