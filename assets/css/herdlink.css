@@ -283,8 +283,8 @@ body {
 
 .watermark {
     position: absolute;
-    bottom: 20px;
-    left: 10px;
+    bottom: 130px;
+    right: 10px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -374,6 +374,115 @@ body {
 .screenshot-button,
 .restore-button {
     min-width: 122px;
+}
+
+#timeControlsContainer {
+    position: absolute;
+    align-items: center;
+    gap: 10px;
+    bottom: 20px;
+    left: 20px;
+    z-index: 9999;
+    display: none;
+    border-radius: 8px;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: #fff;
+}
+
+#timeControlsContainer button {
+    background: linear-gradient(135deg, #4CAF50, #1b872b);
+    border: none;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 8px 12px;
+    margin: 0 0px;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: transform 0.3s ease, background 0.3s ease;
+}
+
+#timeControlsContainer button:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.2);
+}
+
+#timeControlsContainer button:active {
+    transform: scale(0.98);
+}
+
+#timeControlsContainer input[type="range"] {
+    width: 250px;
+    margin: 0 5px;
+    -webkit-appearance: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+#timeControlsContainer input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px;
+    background: #ccc;
+    border-radius: 3px;
+}
+
+#timeControlsContainer input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: linear-gradient(135deg, #4CAF50, #1b872b);
+    border-radius: 50%;
+    margin-top: -4px;
+    transition: background 0.3s ease, transform 0.3s ease;
+}
+
+#timeControlsContainer input[type="range"]::-webkit-slider-thumb:hover {
+    background: linear-gradient(135deg, #4CAF50, #1b872b);
+    transform: scale(1.1);
+}
+
+#timeControlsContainer input[type="range"]::-moz-range-track {
+    height: 6px;
+    background: #ccc;
+    border-radius: 3px;
+}
+
+#timeControlsContainer input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: linear-gradient(135deg, #4CAF50, #1b872b);
+    border-radius: 50%;
+    transition: background 0.3s ease, transform 0.3s ease;
+}
+
+#timeControlsContainer input[type="range"]::-moz-range-thumb:hover {
+    background: linear-gradient(135deg, #4CAF50, #1b872b);
+    transform: scale(1.1);
+}
+
+#timeControlsContainer button:focus,
+#timeControlsContainer input[type="range"]:focus {
+    outline: none;
+}
+
+.current-date-widget {
+    position: absolute;
+    display: none;
+    left: 200px;
+    bottom: 45px;
+    z-index: 9999;
+    color: gray;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 0.9rem;
+}
+
+.current-date-label {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.current-date-value {
+    font-weight: normal;
 }
 
 /*******************************/
@@ -723,23 +832,22 @@ body {
     line-height: 1.4;
 }
 
-.spectral-radius-display {
+#spectralRadiusDisplay {
     position: absolute;
-    bottom: 20px;
-    left: 170px;
-    background: linear-gradient(135deg, #4CAF50, #1b872b);
-    color: #fff;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 0.9rem;
+    top: 20px;
+    left: 22px;
+    color: green;
+    font-size: 1.0rem;
     font-weight: 600;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    transition: background 0.3s ease, transform 0.3s ease;
 }
 
-.spectral-radius-display:hover {
-    transform: translateY(-2px);
-    filter: brightness(1.2);
+.spectral-radius-display {
+    position: absolute;
+    top: 20px;
+    left: 22px;
+    color: gray;
+    font-size: 1.0rem;
+    font-weight: 600;
 }
 
 .initial-sr,
