@@ -3481,7 +3481,7 @@
 
                     // Set the tooltip's style to fixed positioning so it's not cropped
                     infoBox.style.position = 'fixed';
-                    // Position it above the container (adjust offsets as needed)
+                    // Position it above the container
                     infoBox.style.top = (rect.top - infoBox.offsetHeight - 5) + 'px';
                     infoBox.style.left = (rect.left + rect.width / 2 - infoBox.offsetWidth / 2) + 'px';
 
@@ -3513,7 +3513,7 @@
         document.getElementById('csvFileInput').addEventListener('change', function (event) {
             // Clear any previous network visualization.
             if (svg && svg.node().hasChildNodes()) {
-                    svg.selectAll("*").remove();
+                svg.selectAll("*").remove();
             }
 
             // Hide the time controls if they are created and visible.
@@ -3524,7 +3524,7 @@
             if (document.getElementById("currentDateWidget")) {
                 document.getElementById("currentDateWidget").style.display = "none";
             }
-            
+
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
@@ -3625,6 +3625,26 @@
                         updateCurrentDateDisplay(uniqueDates[idx]);
                     });
 
+                    // Shortcut for the slider
+                    document.addEventListener("keydown", function (event) {
+                        let currentValue = +slider.value;
+                        if (event.key === "ArrowLeft") {
+                            if (currentValue > +slider.min) {
+                                slider.value = currentValue - 1;
+                                const idx = +slider.value;
+                                updateNetworkForDate(uniqueDates[idx], loadedCSVData);
+                                updateCurrentDateDisplay(uniqueDates[idx]);
+                            }
+                        } else if (event.key === "ArrowRight") {
+                            if (currentValue < +slider.max) {
+                                slider.value = currentValue + 1;
+                                const idx = +slider.value;
+                                updateNetworkForDate(uniqueDates[idx], loadedCSVData);
+                                updateCurrentDateDisplay(uniqueDates[idx]);
+                            }
+                        }
+                    });
+
                     // Play/Pause event.
                     playPauseBtn.addEventListener("click", function () {
                         if (playPauseBtn.innerHTML.includes("play")) {
@@ -3639,10 +3659,20 @@
                                     clearInterval(playInterval);
                                     playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
                                 }
-                            }, 1000); // Adjust timing as needed.
+                            }, 1000);
                         } else {
                             playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
                             clearInterval(playInterval);
+                        }
+                    });
+
+                    // Shorcut for the play/pause button
+                    document.addEventListener("keydown", function (event) {
+                        if (event.key === " ") { // Space key pressed
+                            const playPauseBtn = document.getElementById("playPauseBtn");
+                            if (playPauseBtn && !playPauseBtn.disabled) {
+                                playPauseBtn.click();
+                            }
                         }
                     });
 
@@ -3703,6 +3733,18 @@
             reader.readAsText(file);
         });
 
+        // Event listener for the file upload widget
+        document.getElementById("csvFileInput").addEventListener("change", function (event) {
+            const fileNameDisplay = document.getElementById("fileName");
+            fileNameDisplay.textContent = event.target.files.length > 0 ? event.target.files[0].name : "No file selected";
+        });
+
+        // ------------------------------------------------------------------------------
+        // ---- ******************************************************************** ----
+        // ---- ****************** GLOBAL NETWORK METRIC DISPLAY ******************* ----
+        // ---- ******************************************************************** ----
+        // ------------------------------------------------------------------------------
+
         function initSpectralRadiusDisplay() {
             // Compute the initial spectral radius using all nodes/links (only enabled links if applicable).
             initialSpectralRadius = computeSpectralRadius(allNodes, allLinks);
@@ -3715,6 +3757,12 @@
             displayElement.querySelector(".initial-sr").style.color = "salmon";
             displayElement.querySelector(".current-sr").style.color = "salmon";
         }
+
+        // ------------------------------------------------------------------------------
+        // ---- ******************************************************************** ----
+        // ---- ***************** STARTER's INTRODUCTION OVERLAY ******************* ----
+        // ---- ******************************************************************** ----
+        // ------------------------------------------------------------------------------
 
         document.addEventListener('DOMContentLoaded', function () {
             const introOverlay = document.getElementById('introOverlay');
@@ -3747,6 +3795,12 @@
             });
         });
 
+        // ------------------------------------------------------------------------------
+        // ---- ******************************************************************** ----
+        // ---- ****************** ANIMATED NETWORK LOGO LOGICS ******************** ----
+        // ---- ******************************************************************** ----
+        // ------------------------------------------------------------------------------
+
         // Initialize Vivus on the SVG inside the card header
         var drawDuration = 24;
         var myAnim = new Vivus('mySVG', {
@@ -3778,12 +3832,13 @@
             }, 1000);
         });
 
-        // Event listener for the file upload widget
-        document.getElementById("csvFileInput").addEventListener("change", function (event) {
-            const fileNameDisplay = document.getElementById("fileName");
-            fileNameDisplay.textContent = event.target.files.length > 0 ? event.target.files[0].name : "No file selected";
-        });
+        // ------------------------------------------------------------------------------
+        // ---- ******************************************************************** ----
+        // ---- ***************** OTHER UI LOGICS (BUTTONS etc.) ******************* ----
+        // ---- ******************************************************************** ----
+        // ------------------------------------------------------------------------------
 
+        // Function to save the SVG to PNG file
         function downloadSvg() {
             // Generate filename based on current timestamp and a random suffix
             const timestamp = new Date().toISOString().replace(/[-:]/g, "").replace("T", "_").split(".")[0];
@@ -3799,7 +3854,26 @@
         // Attach an event listener to the restore button.
         document.getElementById("restoreButton").addEventListener("click", restoreLinks);
 
-        // Define Keyboard Shortcuts for the functionalities
+
+        // Match the widths of the screenshot and restore buttons
+        function matchButtonWidths() {
+            const screenshotButton = document.getElementById("screenshotButton");
+            const restoreButton = document.getElementById("restoreButton");
+
+            if (screenshotButton && restoreButton) {
+                const width = screenshotButton.offsetWidth; // Get the screenshot button's width
+                restoreButton.style.width = width + "px"; // Apply the same width to restore button
+            }
+        }
+
+        // Run the function after page load
+        window.onload = matchButtonWidths;
+
+        // Reapply on window resize to ensure consistency
+        window.addEventListener("resize", matchButtonWidths);
+
+        // ----- Define Keyboard Shortcuts for the functionalities -----
+
         // Shortcut for opening a csv file: Press 'o'
         document.addEventListener("DOMContentLoaded", function () {
             document.addEventListener("keydown", function (event) {
@@ -3809,13 +3883,13 @@
             });
         });
 
-        // Shortcut for taking a screenshot: Press 'r'
+        // Shortcut for taking a screenshot: Press 's'
         document.addEventListener("DOMContentLoaded", function () {
             const screenshotButton = document.getElementById("screenshotButton");
 
             // Enable keyboard shortcut when the screenshot button is enabled
             document.addEventListener("keydown", function (event) {
-                if (event.key === "r") {  // Press 'r' to take a screenshot
+                if (event.key === "s") {  // Press 's' to take a screenshot
                     if (!screenshotButton.disabled) {
                         event.preventDefault(); // Prevent browser save shortcut
                         screenshotButton.click(); // Trigger button click
@@ -3823,6 +3897,7 @@
                 }
             });
         });
+
         // Shortcut for toggling the network mode: Press 'm'
         document.addEventListener("DOMContentLoaded", function () {
             const toggleModeButton = document.getElementById("toggleModeButton");
@@ -3843,37 +3918,17 @@
         document.addEventListener("DOMContentLoaded", function () {
             document.addEventListener("keydown", function (event) {
                 if (event.key === "q") {  // Press 'q' to quit focus mode
+                    event.preventDefault();
                     clearSelection(false);
                 }
             });
         });
 
-        // Shortcut to simulate click on Statistics header: Press 's'
-        document.addEventListener("DOMContentLoaded", function () {
-            document.addEventListener("keydown", function (event) {
-                if (event.key === "s") {  // Press 's' to simulate click on Statistics header
-                    document.getElementById("statsHeader").click();
-                }
-            });
-        });
+        // Shortcut for play/pause the time replay: Press 'space'
+        // Note: The listener is defined in the same function to insert the element
 
-        // Shortcut to simulate click on Hotspots header: Press 'h'
-        document.addEventListener("DOMContentLoaded", function () {
-            document.addEventListener("keydown", function (event) {
-                if (event.key === "h") {  // Press 'h' to simulate click on Hotspots header
-                    document.getElementById("hotspotsHeader").click();
-                }
-            });
-        });
-
-        // Shortcut to simulate click on SCCs (Trade Clusters) header: Press 'c'
-        document.addEventListener("DOMContentLoaded", function () {
-            document.addEventListener("keydown", function (event) {
-                if (event.key === "c") {  // Press 'c' to simulate click on SCCs header
-                    document.getElementById("sccHeader").click();
-                }
-            });
-        });
+        // Shortcut for adjusting the time slider: Press 'left' or 'right' arrow keys
+        // Note: The listener is defined in the same function to insert the element
 
         // Shortcut to switch between focal nodes: Press 'up' or 'down' arrow keys
         document.addEventListener("keydown", function (e) {
@@ -3908,23 +3963,6 @@
                 }));
             }
         });
-
-        // Match the widths of the screenshot and restore buttons
-        function matchButtonWidths() {
-            const screenshotButton = document.getElementById("screenshotButton");
-            const restoreButton = document.getElementById("restoreButton");
-
-            if (screenshotButton && restoreButton) {
-                const width = screenshotButton.offsetWidth; // Get the screenshot button's width
-                restoreButton.style.width = width + "px"; // Apply the same width to restore button
-            }
-        }
-
-        // Run the function after page load
-        window.onload = matchButtonWidths;
-
-        // Reapply on window resize to ensure consistency
-        window.addEventListener("resize", matchButtonWidths);
 
     </script>
 </body>

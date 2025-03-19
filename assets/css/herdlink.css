@@ -390,12 +390,13 @@ body {
 }
 
 #timeControlsContainer button {
+    min-width: 37px;
     background: linear-gradient(135deg, #4CAF50, #1b872b);
     border: none;
     color: #fff;
     font-size: 0.9rem;
     font-weight: 600;
-    padding: 8px 12px;
+    padding: 8px 8px;
     margin: 0 0px;
     border-radius: 4px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
