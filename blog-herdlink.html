@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>
+      HerdLink: Exploring NL livestock trade as a network - Blog - Tianjian Qin
+    </title>
+
+    <!-- Meta -->
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Blog post: HerdLink NL livestock trade network analyzer"
+    />
+    <meta name="author" content="Tianjian Qin" />
+    <link rel="shortcut icon" href="favicon.ico" />
+
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700"
+      rel="stylesheet"
+    />
+
+    <!-- FontAwesome JS -->
+    <script defer src="assets/fontawesome/js/all.js"></script>
+
+    <!-- Theme CSS -->
+    <link id="theme-style" rel="stylesheet" href="assets/css/theme-1.css" />
+  </head>
+
+  <body>
+    <header class="header text-center">
+      <div class="force-overflow">
+        <h1 class="blog-name pt-lg-4 mb-0">
+          <a class="no-text-decoration" href="index.html">Tianjian Qin</a>
+        </h1>
+
+        <nav class="navbar navbar-expand-lg navbar-dark">
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navigation"
+            aria-controls="navigation"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div id="navigation" class="collapse navbar-collapse flex-column">
+            <div class="profile-section pt-3 pt-lg-0">
+              <img
+                class="profile-image mb-3 rounded-circle mx-auto"
+                src="assets/images/profile.png"
+                alt="image"
+              />
+
+              <div class="bio mb-3">
+                Hi, my name is Tianjian. I'm a computational biologist &amp;
+                data scientist.
+              </div>
+
+              <ul class="social-list list-inline py-2 mx-auto">
+                <li class="list-inline-item">
+                  <a href="https://www.linkedin.com/in/tjqin/"
+                    ><i class="fab fa-linkedin-in fa-fw"></i
+                  ></a>
+                </li>
+                <li class="list-inline-item">
+                  <a href="https://github.com/EvoLandEco"
+                    ><i class="fab fa-github-alt fa-fw"></i
+                  ></a>
+                </li>
+                <li class="list-inline-item">
+                  <a href="https://www.researchgate.net/profile/Tianjian-Qin"
+                    ><i class="fa-brands fa-researchgate"></i
+                  ></a>
+                </li>
+                <li class="list-inline-item">
+                  <a href="https://qtj.me/gallery"
+                    ><i class="fa-regular fa-lightbulb fa-beat"></i
+                  ></a>
+                </li>
+              </ul>
+              <hr />
+            </div>
+
+            <ul class="navbar-nav flex-column text-start">
+              <li class="nav-item">
+                <a class="nav-link" href="index.html"
+                  ><i class="fas fa-user fa-fw me-2"></i>About Me</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="portfolio.html"
+                  ><i class="fas fa-laptop-code fa-fw me-2"></i>Portfolio</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="resume.html"
+                  ><i class="fas fa-file-alt fa-fw me-2"></i>Resume</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="blog-home.html"
+                  ><i class="fas fa-blog fa-fw me-2"></i>Blog</a
+                >
+              </li>
+            </ul>
+
+            <div class="my-2">
+              <a
+                class="btn btn-primary"
+                href="mailto:tianjianqin@outlook.com"
+                target="_blank"
+              >
+                <i class="fas fa-paper-plane me-2"></i>Contact Me
+              </a>
+            </div>
+
+            <div class="dark-mode-toggle text-center w-100">
+              <hr class="mb-4" />
+              <h4 class="toggle-name mb-3">
+                <i class="fas fa-adjust me-1"></i>Dark Mode
+              </h4>
+              <input class="toggle" id="darkmode" type="checkbox" />
+              <label class="toggle-btn mx-auto mb-0" for="darkmode"></label>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <div class="main-wrapper">
+      <article class="blog-post px-3 py-5 p-md-5">
+        <div class="container single-col-max-width">
+          <header class="blog-post-header">
+            <h2 class="title mb-2">
+              HerdLink: exploring NL livestock trade as a network
+            </h2>
+            <div class="meta mb-3">
+              <span class="date"
+                ><i class="fa-solid fa-calendar-days me-2"></i>Published on 23
+                Sep 2025</span
+              >
+              <span class="time"
+                ><i class="fa-solid fa-clock me-2"></i>6 min read</span
+              >
+              <span class="comment"
+                ><i class="fa-solid fa-comment me-2"></i
+                ><a href="https://qtj.me/blog-herdlink.html#disqus_thread" data-disqus-identifier="BLOG_POST_HERDLINK">Link</a></span
+              >
+            </div>
+          </header>
+
+          <div class="blog-post-body">
+            <!-- Screenshot placeholder -->
+            <figure class="blog-banner">
+              <a href="#"
+                ><img
+                  class="img-fluid"
+                  src="assets/images/blog/blog-post-banner-herdlink.png"
+                  alt="HerdLink screenshot"
+              /></a>
+              <figcaption class="mt-2 text-center image-caption">
+                HerdLink screenshot — a browser-based tool to explore Dutch
+                livestock trade as a network and map.
+              </figcaption>
+            </figure>
+
+            <h3 class="mt-5 mb-3">TL;DR</h3>
+            <ul>
+              <li>
+                <strong>HerdLink</strong> is a browser-based tool to explore
+                Dutch livestock trade as a network (and as a map).
+              </li>
+              <li>
+                It’s designed for quick “what’s going on here?” exploration:
+                focus a node, inspect connections, and compare patterns over
+                time.
+              </li>
+              <li>
+                Keyboard shortcuts are built in so you can move fast without
+                constantly reaching for the mouse.
+              </li>
+            </ul>
+
+            <div class="alert alert-warning mt-4" role="alert">
+              <strong>Note.</strong> HerdLink is still experimental. Expect
+              changes and please treat anything you see as exploratory rather
+              than a final “answer.”
+            </div>
+
+            <h3 class="mt-5 mb-3">What HerdLink is for</h3>
+            <p>
+              I built HerdLink because I kept wanting the same thing when
+              looking at movement/trade data: a way to switch between
+              <strong>network structure</strong> and
+              <strong>geography</strong> without losing context. Tables and figures are
+              great for details, but also painfully slow for pattern-finding.
+            </p>
+
+            <p>
+              HerdLink tries to make the first pass easy: pick a dataset, let it
+              load, then explore. If something looks interesting, you can zoom
+              in on a node, follow its links, close and re-enable some connections, 
+              and quickly compare what changes when you flip views or move through time.
+            </p>
+
+            <h3 class="mt-5 mb-3">How it feels to use</h3>
+            <ul>
+              <li>
+                <strong>Graph ↔ Map</strong> is one key away, so you can keep
+                asking: “is this structure real, or just geography?”
+              </li>
+              <li>
+                <strong>Focus mode</strong> keeps the interface uncluttered:
+                click a node/region to zoom in on “just this story,” then exit
+                when you’re done.
+              </li>
+              <li>
+                <strong>Time controls</strong> let you replay
+                temporalchanges rather than comparing static snapshots.
+              </li>
+            </ul>
+
+            <h3 class="mt-5 mb-3">Shortcuts I actually use</h3>
+            <ul>
+              <li><kbd>M</kbd> Toggle Map / Graph</li>
+              <li><kbd>Q</kbd> Exit focus mode</li>
+              <li><kbd>↑</kbd> / <kbd>↓</kbd> Switch focal nodes</li>
+              <li>
+                <kbd>←</kbd> / <kbd>→</kbd> Step through time (when time
+                controls are available)
+              </li>
+              <li><kbd>Space</kbd> Play / pause time replay</li>
+              <li><kbd>F</kbd> Jump back to the start</li>
+              <li><kbd>R</kbd> Restore links (after filtering/highlighting)</li>
+              <li><kbd>S</kbd> Export a screenshot</li>
+              <li><kbd>H</kbd> Toggle the help overlay</li>
+            </ul>
+
+            <div class="row g-3 my-4">
+              <div class="col-auto">
+                <a class="btn btn-primary" href="https://HerdLink.nl">
+                  <i class="fa-solid fa-arrow-up-right-from-square me-2"></i
+                  >Open HerdLink
+                </a>
+              </div>
+              <div class="col-auto">
+                <a class="btn btn-outline-primary" href="project-herdlink.html">
+                  <i class="fa-solid fa-diagram-project me-2"></i>Project page
+                </a>
+              </div>
+            </div>
+
+            <h3 class="mt-5 mb-3">Project</h3>
+            <p class="mb-4">
+              Visit the project page for technical details:
+            </p>
+
+            <div class="card project-card">
+              <div class="row">
+                <div class="col-12 col-xl-5 card-img-holder">
+                  <img
+                    src="assets/images/project/project-herdlink.png"
+                    class="card-img"
+                    alt="HerdLink thumbnail"
+                  />
+                </div>
+                <div class="col-12 col-xl-7">
+                  <div class="card-body">
+                    <h5 class="card-title">
+                      <a href="project-herdlink.html" class="theme-link"
+                        >HerdLink</a
+                      >
+                    </h5>
+                    <p class="card-text">
+                      NL livestock trade network analyzer — explore structure
+                      and geography side-by-side, with fast keyboard-driven
+                      navigation.
+                    </p>
+                    <p class="card-text">
+                      <i class="fa-brands fa-js me-2"></i>
+                      <i class="fa-solid fa-flask"></i>
+                    </p>
+                    <p class="card-text">
+                      <small class="text-muted"
+                        ><i class="fab fa-github-alt fa-fw"></i>GitHub Open Source</small
+                      >
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="link-mask">
+                <a class="link-mask-link" href="project-herdlink.html"></a>
+                <div class="link-mask-text">
+                  <a class="btn btn-secondary" href="project-herdlink.html">
+                    <i class="fas fa-eye me-2"></i>View Project
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <h3 class="mt-5 mb-3">What’s next</h3>
+            <p>
+              I’m still iterating on what matters most in practice: speed,
+              clarity, more information, and a workflow that doesn’t fight you.
+            </p>
+          </div>
+
+          <nav class="blog-nav nav nav-justified my-5">
+            <a class="nav-link-prev nav-item nav-link rounded-left" href="blog-Subspecies-Level-Diversification.html">
+              Previous<i class="arrow-prev fas fa-long-arrow-alt-left"></i>
+            </a>
+            <a class="nav-link-next nav-item nav-link rounded-right" href="#">
+              Next<i class="arrow-next fas fa-long-arrow-alt-right"></i>
+            </a>
+          </nav>
+
+          <div class="blog-comments-section">
+            <div id="disqus_thread"></div>
+            <script>
+              /**
+               *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT
+               *  THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR
+               *  PLATFORM OR CMS.
+               *
+               *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT:
+               *  https://disqus.com/admin/universalcode/#configuration-variables
+               */
+
+              var disqus_config = function () {
+                // Replace PAGE_URL with your page's canonical URL variable
+                this.page.url =
+                  "https://qtj.me/blog-Subspecies-Level-Diversification.html";
+
+                // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+                this.page.identifier = "BLOG_POST_HERDLINK";
+              };
+
+              (function () {
+                // REQUIRED CONFIGURATION VARIABLE: EDIT THE SHORTNAME BELOW
+                var d = document,
+                  s = d.createElement("script");
+
+                // IMPORTANT: use website shortname
+                s.src = "https://qtj-me.disqus.com/embed.js";
+
+                s.setAttribute("data-timestamp", +new Date());
+                (d.head || d.body).appendChild(s);
+              })();
+            </script>
+            <noscript>
+              Please enable JavaScript to view the
+              <a href="https://disqus.com/?ref_noscript" rel="nofollow">
+                comments powered by Disqus.
+              </a>
+            </noscript>
+          </div>
+          <!--//blog-comments-section-->
+        </div>
+      </article>
+
+      <footer class="footer text-center py-4">
+        <small class="copyright">Copyright &copy; Tianjian Qin</small>
+      </footer>
+    </div>
+
+    <!-- *****CONFIGURE STYLE (REMOVE ON YOUR PRODUCTION SITE)****** -->
+    <div
+      id="config-panel"
+      class="config-panel config-panel-hide d-none d-lg-block"
+    >
+      <div class="panel-inner">
+        <a id="config-trigger" class="config-trigger text-center" href="#">
+          <i class="fas fa-cog mx-auto" data-fa-transform="down-6"></i>
+        </a>
+        <h5 class="panel-title">Choose Colour</h5>
+        <ul id="color-options" class="list-inline mb-0">
+          <li class="theme-1 active list-inline-item">
+            <a data-style="assets/css/theme-1.css" href="#"></a>
+          </li>
+          <li class="theme-2 list-inline-item">
+            <a data-style="assets/css/theme-2.css" href="#"></a>
+          </li>
+          <li class="theme-3 list-inline-item">
+            <a data-style="assets/css/theme-3.css" href="#"></a>
+          </li>
+          <li class="theme-4 list-inline-item">
+            <a data-style="assets/css/theme-4.css" href="#"></a>
+          </li>
+          <li class="theme-5 list-inline-item">
+            <a data-style="assets/css/theme-5.css" href="#"></a>
+          </li>
+          <li class="theme-6 list-inline-item">
+            <a data-style="assets/css/theme-6.css" href="#"></a>
+          </li>
+          <li class="theme-7 list-inline-item">
+            <a data-style="assets/css/theme-7.css" href="#"></a>
+          </li>
+          <li class="theme-8 list-inline-item">
+            <a data-style="assets/css/theme-8.css" href="#"></a>
+          </li>
+          <li class="theme-9 list-inline-item">
+            <a data-style="assets/css/theme-9.css" href="#"></a>
+          </li>
+          <li class="theme-10 list-inline-item">
+            <a data-style="assets/css/theme-10.css" href="#"></a>
+          </li>
+        </ul>
+        <a id="config-close" class="close" href="#"
+          ><i class="fa fa-times-circle"></i
+        ></a>
+      </div>
+    </div>
+
+    <!-- Javascript -->
+    <script src="assets/plugins/popper.min.js"></script>
+    <script src="assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- Custom JS -->
+    <script src="assets/js/blog.js"></script>
+
+    <!-- Dark Mode -->
+    <script src="assets/plugins/js-cookie.min.js"></script>
+    <script src="assets/js/dark-mode.js"></script>
+
+    <!-- Style Switcher (REMOVE ON YOUR PRODUCTION SITE) -->
+    <script src="assets/js/demo/style-switcher.js"></script>
+  </body>
+</html>
