@@ -160,7 +160,7 @@
                 <div class="profile-section pt-3 pt-lg-0">
                     <img class="profile-image mb-3 rounded-circle mx-auto" src="assets/images/profile.png" alt="image" >
 
-                    <div class="bio mb-3">Hi, my name is Tianjian. I'm a theoretical biologist.</div><!--//bio-->
+                    <div class="bio mb-3">Hi, my name is Tianjian. I'm a computational biologist &amp; data scientist.</div><!--//bio-->
                     <ul class="social-list list-inline py-2 mx-auto">
                         <li class="list-inline-item"><a href="https://www.linkedin.com/in/tjqin/"><i class="fab fa-linkedin-in fa-fw"></i></a></li>
                         <li class="list-inline-item"><a href="https://github.com/EvoLandEco"><i class="fab fa-github-alt fa-fw"></i></a></li>
@@ -215,18 +215,54 @@
             <div class="blog-post-body">
                 <figure class="blog-banner">
                     <a href="#"><img class="img-fluid" src="assets/images/blog/blog-post-banner-subspecies.jpg" alt="image"></a>
-                    <figcaption class="mt-2 text-center image-caption">Image Credit: <a class="theme-link" href="https://leonardo.ai" target="_blank">leonardo.ai</a></figcaption>
+                    <figcaption class="mt-2 text-center image-caption">
+                        Image Credit: <a class="theme-link" href="https://leonardo.ai" target="_blank" rel="noopener">leonardo.ai</a>
+                    </figcaption>
                 </figure>
 
                 <h3 class="mt-5 mb-3">TL;DR</h3>
-                <p>It is not mandatory to visualize species diversification process as trees. We can instead show a graph of relationships between incipient species, or in other words, the chain of evolutionary events.</p>
-                <p>To illustrate the idea, I developed an interactive simulator to explore different evolutionary trajectories in four aspects of view. The simulation is based on Gillespie's algorithm. The <strong>coarsen level</strong> determines how many consecutive (theoretically meaningful) mutations  are needed to form a new species, with associated traits gradually evolving with each mutation.</p>
+                <ul>
+                    <li>
+                        Diversification is an event-by-event process. A bifurcating tree is usually a useful summary,
+                        but it is not the only (or always the best) way to represent what happened.
+                    </li>
+                    <li>
+                        If you keep track of “incipient lineages” (sub-species-level entities) and then
+                        coarse-grain them into “species,” the result can naturally look like a <em>network</em>
+                        rather than a clean tree—especially when information is lost through extinction or coarse-graining.
+                    </li>
+                    <li>
+                        A tree reconstructed from <em>traits</em> can agree—or strongly disagree—with a tree reconstructed from
+                        the <em>historical event chain</em>. Increasing trait dimensionality can help under certain models,
+                        but it is not a magic fix.
+                    </li>
+                </ul>
 
+                <div class="alert alert-warning mt-4" role="alert">
+                    <strong>Toy-model disclaimer.</strong>
+                    This simulator is built to make <em>information bottlenecks</em> visible: what you can and cannot infer when
+                    (i) speciation is gradual, (ii) extinction erases history, and (iii) you only observe imperfect proxies
+                    (traits) rather than the full event log. It is <strong>not</strong> intended as a realistic generator of
+                    DNA sequences, genomes, or species boundaries in any particular clade.
+                </div>
 
+                <h3 class="mt-5 mb-3">Interactive simulator</h3>
+                <p>
+                    Press <strong>Grow</strong> to run one diversification trajectory. If the run becomes uninformative
+                    (e.g., everything goes extinct), press <strong>Reset</strong> and try a new parameter regime.
+                    You can <strong>Pause</strong> any time.
+                </p>
 
-                <p>To begin, press the <strong>Grow</strong> button to start the simulation. If the simulation becomes unresponsive (e.g., all nodes go extinct), simply press the <strong>Reset</strong> button. Blue nodes are non-mutating sub-species and red nodes are mutating sub-species. Extinction sub-species become grey. Feel free to experiment with the simulator first, and then dive into the technical details for a deeper understanding.</p>
+                <ul>
+                    <li><strong>Drag</strong> nodes in the graph panels to declutter the layout.</li>
+                    <li><strong>Hover</strong> a node/tip in any panel to highlight its counterpart(s) across all panels.</li>
+                    <li>If you see “strange” trees, treat that as the point: reconstruction can be ambiguous or misleading when information is insufficient.</li>
+                </ul>
 
-                <p>Hint: You can drag the nodes in the graph panels. Hover your mouse on a node/tip in one panel, corresponding node/tips will be highlighted in all the other panels. You may observe strange trees, this is due to lacking of information.</p>
+                <p class="mb-4">
+                    <strong>Legend.</strong>
+                    Blue nodes = non-mutating (clonal) lineages; red nodes = mutating lineages; grey nodes = extinct lineages.
+                </p>
 
                 <div class="row col-12">
                     <div class="col-4">
@@ -250,18 +286,21 @@
                     <div class="col-4">
                         <div class="row mt-3 mb-3 mx-lg-1 my-3">
                             <label for="maxSteps">Simulation Steps:</label>
-                            <input type="range" id="maxSteps" value="25" min="1" max="50" step="1" oninput="document.getElementById('maxStepsValue').innerText = this.value;">
-                            <span id="maxStepsValue">25</span> <!-- Display the current value -->
+                            <input type="range" id="maxSteps" value="25" min="1" max="50" step="1"
+                                oninput="document.getElementById('maxStepsValue').innerText = this.value;">
+                            <span id="maxStepsValue">25</span>
                         </div>
                         <div class="row mt-3 mb-3 mx-lg-1 my-3">
                             <label for="mstep">Coarsen Level:</label>
-                            <input type="range" id="mstep" value="1" min="0" max="6" step="1" oninput="document.getElementById('mstepValue').innerText = this.value;">
-                            <span id="mstepValue">1</span> <!-- Display the current value -->
+                            <input type="range" id="mstep" value="1" min="0" max="6" step="1"
+                                oninput="document.getElementById('mstepValue').innerText = this.value;">
+                            <span id="mstepValue">1</span>
                         </div>
                         <div class="row mt-3 mb-3 mx-lg-1 my-3">
                             <label for="traitDimensions">Trait Dimensions:</label>
-                            <input type="range" id="traitDimensions" value="5" min="1" max="10" step="1" oninput="document.getElementById('traitDimensionsValue').innerText = this.value;">
-                            <span id="traitDimensionsValue">5</span> <!-- Display the current value -->
+                            <input type="range" id="traitDimensions" value="5" min="1" max="10" step="1"
+                                oninput="document.getElementById('traitDimensionsValue').innerText = this.value;">
+                            <span id="traitDimensionsValue">5</span>
                         </div>
                     </div>
 
@@ -274,10 +313,9 @@
                                 </select>
                             </div>
                         </div>
+
                         <div class="row mt-3 mb-3 m-lg-2 my-lg-4">
-                            <div class="row">
-                                Show Branch Lengths
-                            </div>
+                            <div class="row">Show Branch Lengths</div>
                             <div class="row toggle-switch">
                                 <div>
                                     <label for="showBranchLengths" class="toggle-switch-label">
@@ -287,10 +325,9 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="row mt-3 mb-3 m-lg-2 my-lg-4">
-                            <div class="row ">
-                                Prune Extinct Lineages
-                            </div>
+                            <div class="row">Prune Extinct Lineages</div>
                             <div class="row toggle-switch">
                                 <div>
                                     <label for="pruneExtinct" class="toggle-switch-label">
@@ -332,59 +369,331 @@
 
                 <script src="/assets/js/evonet.js"></script>
 
-                <p>The simulator provides four panels for visualization:
-                <ul>
-                    <li><strong>Panel 1:</strong> Displays the complete network, illustrating the ancestral relationships between sub-species (nodes).</li>
-                    <li><strong>Panel 2:</strong> Shows a coarsened network, representing species formation after multiple mutations, depending on the coarsen level.</li>
-                    <li><strong>Panel 3:</strong> Shows a tree reconstructed from the coarsened network.</li>
-                    <li><strong>Panel 4:</strong> Shows a tree reconstructed from the trait values of the species.</li>
-                </ul>
+                <h3 class="mt-5 mb-3">What each panel shows</h3>
+                <ol>
+                    <li>
+                        <strong>Full lineage graph (Panel 1).</strong>
+                        The “event log in picture form”: who descended from whom, including intermediate (incipient) lineages
+                        and extinct lineages.
+                    </li>
+                    <li>
+                        <strong>Coarsened graph (Panel 2).</strong>
+                        A coarse-grained view where multiple consecutive mutational steps are required before you
+                        label the outcome as a “new species” (controlled by <em>Coarsen Level</em>).
+                    </li>
+                    <li>
+                        <strong>Tree reconstructed from the coarsened graph (Panel 3).</strong>
+                        A forced tree summary of Panel 2. When Panel 2 is not tree-like, the reconstruction can become ambiguous
+                        (multiple trees explain the same coarse-grained information).
+                    </li>
+                    <li>
+                        <strong>Tree reconstructed from trait values (Panel 4).</strong>
+                        A tree inferred only from the trait table of the “species” you ended up with.
+                        This mimics real life: we usually observe characters (traits, sequences), not the true event chain.
+                    </li>
+                </ol>
+
+                <h3 class="mt-5 mb-3">Why start from a network instead of a tree</h3>
+                <p>
+                    A rooted tree is the natural mathematical object when descent is strictly bifurcating and there is a single
+                    lineage history shared by everything you measure. That assumption is often a useful approximation, and an
+                    entire literature models diversification as stochastic branching processes (birth–death models) and then asks:
+                    “Given the extant tips, what can we infer about the underlying rates?”<sup><a href="#ref2">[2]</a></sup><sup><a href="#ref3">[3]</a></sup>
                 </p>
 
-                <h3 class="mt-5 mb-3">Traditional Era: Morphological Tree Construction</h3>
-                <p>In the pre-phylogenetics era, researchers classified organisms based on observable traits, often using <strong>Linnaean taxonomy</strong>. Morphological similarities, such as body structure or bone shapes, were grouped into hierarchical categories. Tools like <strong>homology studies</strong> helped identify shared ancestry based on physical features. Branch lengths in these trees were calibrated using the <strong>fossil record</strong>, estimating divergence times from known fossil dates. This approach provided a rough timeline of evolution, representing the passage of time between ancestral and descendant species.</p>
-
-                <h3 class="mt-5 mb-3">Modern Era: Molecular Phylogenetics</h3>
-                <p>With the rise of molecular biology, phylogenetic trees are now built using DNA sequence data. Tools like <strong>MAFFT</strong> align sequences, followed by <strong>RAxML</strong> or <strong>IQ-TREE</strong> to infer relationships. The model selection step uses software like <strong>jModelTest</strong> to pick the best evolutionary model. Branch lengths are derived from the <strong>amount of genetic change</strong>, where mutations accumulate over time. This approach often results in a tree that reflects genetic distances, rather than explicit time.</p>
-
-                <h3 class="mt-5 mb-3">Branch Length Interpretations</h3>
-                <p>The branch lengths in phylogenetic trees can have different interpretations depending on the method used. In time-calibrated trees (fossil-based), they represent the actual time elapsed, while in molecular trees, branch lengths typically indicate the amount of genetic change between species.</p>
-
-                <h3 class="mt-5 mb-3">Stochastic Diversification Models</h3>
-                <p>In stochastic simulations of species diversification, branch lengths are often aligned with fossil-based timelines, although implicitly. In those models, branch lengths represent the duration of survival of lineages.</p>
-
-                <h3 class="mt-5 mb-3">Brownian Motion and Trait Change</h3>
-                <p>Under the <strong>Brownian Motion model</strong>, there is a correlation between the amount of genetic change and the evolution of traits over time. Genetic changes are assumed to accumulate randomly, which mirrors gradual shifts in species traits.</p>
-
-                <h3 class="mt-5 mb-3">Aligning Trait Trees with Phylogenetic Trees</h3>
-                <p>Increasing the dimensionality of trait space can help better approximate genetic change. By accounting for a broader spectrum of characteristics, the resulting <strong>trait trees</strong> may align more closely with <strong>phylogenetic trees</strong> based on genetic data. Traits are often the phenotypic expression of underlying genetic variation, capturing more traits reduces the gap between observable features and the genetic changes that drive evolution.</p>
-
-                <h3 class="mt-5 mb-3">The Discrepancy between Different Trees</h3>
-                <p>The duration of survival may not directly relate to the amount of genetic change, therefore not directly relate to the traits. Can we expect a discrepancy between trees based on time of survival and tree based on trait differences? Can we observe lessened discrepancy if the trait space has more dimensions?</p>
-
-                <h3 class="mt-5 mb-3">The Impossible Reconstruction</h3>
-                <p>Given a full network of incipient species, or the chain of historical events, there are various cases in which we cannot reconstruct a valid phylogenetic tree, even if we have all the information at hand. One example is that the initial ancestor went extinct. Theoretically, we may also encounter various cases that we cannot reconstruct valid trees even from trait tables.</p>
-
-                <h3 class="mt-5 mb-3">Seeing is Believing</h3>
-                <p>Several serious papers have already discussed these issues mathematically. However, I have decided to see it with my own eyes. Under what circumstances can we expect no valid tree or erroneous trees? Does the increase of trait dimensions really bring phylogenetic trees closer to trait trees, even if the phylogenetic tree is simulated? With my simulator the exploration can be fun and intuitive.</p>
-
-                <p>There are 7 adjustable parameters in the simulator, four of them can be changed during simulation while the other three must be set at the beginning of each simulation cycle. Internally, the simulator is running on Gillespie's algorithm, but the displaying time intervals between events are stretched for better visualization. In the simulator, a mutation is assumed as a theoretical standardized unit mutation (?), its concept may be ambiguous, but I think it is fine for a toy project.</p>
-
-                <p>Below is a list of the parameters you can play with:</p>
-                <ul>
-                    <li><strong>Birth Rate:</strong> The rate at which new sub-species are born but not mutated meaningfully.</li>
-                    <li><strong>Mutation Rate:</strong> The rate at which new sub-species are born and accumulated meaningful mutation.</li>
-                    <li><strong>Death Rate:</strong> The rate at which an entire sub-species go extinct.</li>
-                    <li><strong>Simulation Steps:</strong> The number of steps the simulation will run before stopping. Cannot be changed during simulation</li>
-                    <li><strong>Coarsen Level:</strong> The number of consecutive mutations needed to form a new species. CAN be changed at any time.</li>
-                    <li><strong>Trait Dimensions:</strong> The number of traits each sub-species has. This cannot be changed if simulation has started</li>
-                    <li><strong>Mutation Model:</strong> The model used to simulate gradual trait evolution. Currently, only Brownian Motion is available for now.</li>
-                    <li><strong>Show Branch Lengths:</strong> Whether to show branch lengths in the trees. Can be toggled at any time.</li>
-                    <li><strong>Prune Extinct Lineages:</strong> Whether to remove extinct lineages from the trees. Can be toggled at any time.</li>
-                </ul>
-                <p>You can pause and resume simulation at will. If all the sub-species go extinct, the simulation will stop, you must manually reset the simulator.</p>
+                <p>
+                    But there are two big reasons a tree is not the whole story:
                 </p>
 
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4 class="mt-3 mb-2">Reason 1: Biology can be genuinely reticulate</h4>
+                        <p>
+                            Hybridization, introgression, horizontal gene transfer, and other non-tree processes create
+                            evolutionary histories that are better represented by phylogenetic <em>networks</em> rather than
+                            a single bifurcating tree.<sup><a href="#ref7">[7]</a></sup><sup><a href="#ref8">[8]</a></sup><sup><a href="#ref9">[9]</a></sup><sup><a href="#ref10">[10]</a></sup>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h4 class="mt-3 mb-2">Reason 2: Even with a species tree, different loci can disagree</h4>
+                        <p>
+                            Gene trees can differ from the species tree through incomplete lineage sorting (ILS) and other
+                            processes; this is why modern phylogenomics often distinguishes “gene tree” vs “species tree”
+                            inference explicitly.<sup><a href="#ref11">[11]</a></sup><sup><a href="#ref12">[12]</a></sup>
+                        </p>
+                    </div>
+                </div>
+
+                <p class="mt-3">
+                    In this demo, the “network” is also serving a third purpose: it keeps the fine-grained history visible.
+                    Even if your underlying generative model is tree-like, coarse-graining and extinction can erase information
+                    so aggressively that the most honest representation of what you still know can be graph-like.
+                </p>
+
+                <h3 class="mt-5 mb-3">The model behind this demo</h3>
+                <p>
+                    Internally, each run is a continuous-time stochastic process simulated with a
+                    Gillespie-style event sampler (stochastic simulation algorithm).<sup><a href="#ref1">[1]</a></sup>
+                    At any moment, each extant lineage can experience:
+                </p>
+                <ul>
+                    <li>
+                        <strong>Birth:</strong> lineage splits, producing a new lineage that is (in this toy model) “non-mutating” in the sense of not advancing the speciation counter.
+                    </li>
+                    <li>
+                        <strong>Mutation:</strong> lineage splits, producing a new lineage that advances the mutation counter and updates traits.
+                    </li>
+                    <li>
+                        <strong>Death:</strong> the lineage goes extinct (greyed out).
+                    </li>
+                </ul>
+
+                <h4 class="mt-4 mb-3">Coarsen level as a cartoon of gradual speciation</h4>
+                <p>
+                    The <strong>Coarsen Level</strong> is intentionally not a literal “number of mutations in a genome.”
+                    It is a <em>coarse unit of evolutionary differentiation</em>: how many consecutive meaningful steps you require
+                    before you declare “this is a distinct species now.” Conceptually, this rhymes with
+                    <em>protracted speciation</em> models where speciation is a process with an initiation stage (incipient lineages)
+                    and a completion stage (a “good species”).<sup><a href="#ref4">[4]</a></sup><sup><a href="#ref5">[5]</a></sup>
+                </p>
+
+                <h3 class="mt-5 mb-3">Branch lengths without confusion</h3>
+                <p>
+                    “Branch length” is overloaded in evolutionary biology. In different contexts it can mean:
+                </p>
+                <ul>
+                    <li>
+                        <strong>Elapsed time</strong> (e.g., time-calibrated trees, diversification simulations).
+                        In birth–death thinking, internal waiting times are central objects.<sup><a href="#ref2">[2]</a></sup><sup><a href="#ref3">[3]</a></sup>
+                    </li>
+                    <li>
+                        <strong>Expected substitutions per site</strong> (many molecular phylogenies inferred under sequence evolution models).
+                        Branch lengths then measure genetic change, not absolute time.
+                    </li>
+                    <li>
+                        <strong>Expected trait variance</strong> under Brownian motion: the variance of trait change grows linearly with time,
+                        and that time scaling is what makes branch lengths matter in comparative methods.<sup><a href="#ref13">[13]</a></sup><sup><a href="#ref14">[14]</a></sup>
+                    </li>
+                </ul>
+
+                <p>
+                    The toggle <strong>Show Branch Lengths</strong> is there because (i) lengths are informative, but (ii) they can tempt you
+                    into overinterpreting a tree: a “nice-looking” tree with lengths does not guarantee that the underlying history is
+                    identifiable from the information you supplied.
+                </p>
+
+                <h3 class="mt-5 mb-3">Two reconstructions and why they disagree</h3>
+                <p>
+                    The point of this simulator is not to worship a particular reconstruction. It’s to watch
+                    <em>where information is thrown away</em>.
+                </p>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4 class="mt-3 mb-2">Tree from the coarsened graph</h4>
+                        <ul>
+                            <li>
+                                You take a lineage-level history and compress it into “species-level” units.
+                                Compression can merge distinct micro-histories into the same macro-state.
+                            </li>
+                            <li>
+                                If the coarsened object is not strictly tree-like, any tree reconstruction is a choice among multiple
+                                plausible summaries.
+                            </li>
+                            <li>
+                                Extinction can delete the very lineages that would have anchored the root or clarified the branching order,
+                                increasing ambiguity.<sup><a href="#ref2">[2]</a></sup>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h4 class="mt-3 mb-2">Tree from traits</h4>
+                        <ul>
+                            <li>
+                                You infer relationships from observed character data, here simulated under Brownian motion.<sup><a href="#ref13">[13]</a></sup><sup><a href="#ref14">[14]</a></sup>
+                            </li>
+                            <li>
+                                With <em>few</em> traits, noise dominates: multiple trees can explain the same trait table.
+                            </li>
+                            <li>
+                                With <em>more</em> (independent) traits, you average over randomness and can recover signal more reliably—up to the limits imposed by the model.
+                            </li>
+                            <li>
+                                Model mismatch matters: even with lots of characters, inference can be systematically misleading if the assumptions are wrong
+                                (classic examples exist even in simpler discrete-character settings).<sup><a href="#ref15">[15]</a></sup>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3 class="mt-5 mb-3">Experiments to try in the simulator</h3>
+                <ol>
+                    <li>
+                        <strong>Turn extinction up and watch identifiability collapse.</strong>
+                        Increase <em>Death Rate</em> until many lineages die out.
+                        Compare Panel 3 vs Panel 4 and toggle <em>Prune Extinct Lineages</em>.
+                        Ask: “How much of the early history survives into the inferred objects?”
+                    </li>
+                    <li>
+                        <strong>Dial speciation gradualness.</strong>
+                        Sweep <em>Coarsen Level</em> from 0 to 6 while keeping the run going.
+                        Does the coarsened object become more/less tree-like?
+                    </li>
+                    <li>
+                        <strong>Trait dimensionality as “number of characters.”</strong>
+                        Fix the diversification regime, then rerun with Trait Dimensions = 1, 3, 5, 10.
+                        Do you see Panel 4 stabilize? Under Brownian motion, this is the intuition behind “more characters helps,”
+                        but it is not guaranteed in the presence of strong extinction or rapid bursts.
+                    </li>
+                    <li>
+                        <strong>Fast radiation vs slow radiation.</strong>
+                        Try high Birth+Mutation with low Death (many splits quickly), then compare to slower regimes.
+                        Rapid branching compresses internal times and can make different reconstructions disagree more strongly.
+                    </li>
+                </ol>
+
+                <h3 class="mt-5 mb-3">Limitations and ideas for a v2</h3>
+                <ul>
+                    <li>
+                        <strong>Gene trees and ILS are not simulated explicitly.</strong>
+                        If you ever extend this: sampling multiple loci under a multispecies coalescent would let you show gene-tree discordance directly.<sup><a href="#ref11">[11]</a></sup><sup><a href="#ref12">[12]</a></sup>
+                    </li>
+                    <li>
+                        <strong>No explicit hybridization/introgression events.</strong>
+                        Adding reticulation events would connect this toy model more directly to network inference methods.<sup><a href="#ref8">[8]</a></sup><sup><a href="#ref9">[9]</a></sup><sup><a href="#ref10">[10]</a></sup>
+                    </li>
+                    <li>
+                        <strong>Only Brownian motion traits.</strong>
+                        A natural extension is OU/stabilizing selection, trait correlations, and measurement error—each of which can change how “more traits” behaves.
+                    </li>
+                    <li>
+                        <strong>Bridging to real pipelines.</strong>
+                        If you later add a “sequence mode,” it would be natural to cite common steps like alignment (MAFFT),
+                        maximum likelihood inference (RAxML / IQ-TREE), model selection (ModelFinder), and time calibration (BEAST).<sup><a href="#ref16">[16]</a></sup><sup><a href="#ref17">[17]</a></sup><sup><a href="#ref18">[18]</a></sup><sup><a href="#ref19">[19]</a></sup><sup><a href="#ref20">[20]</a></sup>
+                    </li>
+                </ul>
+
+                <h3 class="mt-5 mb-3">References</h3>
+                <p class="mb-3">
+                    Numbers in brackets link to the sources used for the conceptual framing of this post.
+                    (These are deliberately “citable” papers and reviews, not random web pages.)
+                </p>
+
+                <ol class="small">
+                    <li id="ref1">
+                        Gillespie DT. 1977. Exact stochastic simulation of coupled chemical reactions.
+                        <em>J Phys Chem</em>. <a href="https://doi.org/10.1021/j100540a008" target="_blank" rel="noopener">doi:10.1021/j100540a008</a>
+                    </li>
+
+                    <li id="ref2">
+                        Nee S, May RM, Harvey PH. 1994. The reconstructed evolutionary process.
+                        <em>Phil Trans R Soc B</em>.
+                        <a href="https://doi.org/10.1098/rstb.1994.0068" target="_blank" rel="noopener">doi:10.1098/rstb.1994.0068</a>
+                    </li>
+
+                    <li id="ref3">
+                        Lambert A, Stadler T. 2013. Birth–death models and coalescent point processes: The shape and probability of reconstructed phylogenies.
+                        <em>Theor Popul Biol</em>.
+                        <a href="https://doi.org/10.1016/j.tpb.2013.10.002" target="_blank" rel="noopener">doi:10.1016/j.tpb.2013.10.002</a>
+                    </li>
+
+                    <li id="ref4">
+                        Rosindell J, Cornell SJ, Hubbell SP, Etienne RS. 2010. Protracted speciation revitalizes the neutral theory of biodiversity.
+                        <em>Ecol Lett</em>.
+                        <a href="https://doi.org/10.1111/j.1461-0248.2010.01463.x" target="_blank" rel="noopener">doi:10.1111/j.1461-0248.2010.01463.x</a>
+                    </li>
+
+                    <li id="ref5">
+                        Etienne RS, Rosindell J. 2012. Prolonging the past counteracts the pull of the present: Protracted speciation can explain observed slowdowns in diversification.
+                        <em>Syst Biol</em>.
+                        <a href="https://doi.org/10.1093/sysbio/syr091" target="_blank" rel="noopener">doi:10.1093/sysbio/syr091</a>
+                    </li>
+
+                    <li id="ref7">
+                        Huson DH, Bryant D. 2006. Application of phylogenetic networks in evolutionary studies.
+                        <em>Mol Biol Evol</em>.
+                        <a href="https://doi.org/10.1093/molbev/msj030" target="_blank" rel="noopener">doi:10.1093/molbev/msj030</a>
+                    </li>
+
+                    <li id="ref8">
+                        Kong S, et al. 2025. Phylogenetic networks empower biodiversity research.
+                        <em>PNAS</em>.
+                        <a href="https://doi.org/10.1073/pnas.2410934122" target="_blank" rel="noopener">doi:10.1073/pnas.2410934122</a>
+                    </li>
+
+                    <li id="ref9">
+                        Yu Y, Dong J, Liu KJ, Nakhleh L. 2014. Maximum likelihood inference of reticulate evolutionary histories.
+                        <em>PNAS</em>.
+                        <a href="https://doi.org/10.1073/pnas.1407950111" target="_blank" rel="noopener">doi:10.1073/pnas.1407950111</a>
+                    </li>
+
+                    <li id="ref10">
+                        Wen D, Yu Y, Nakhleh L. 2016. Bayesian inference of reticulate phylogenies under the multispecies network coalescent.
+                        <em>PLOS Genetics</em>.
+                        <a href="https://doi.org/10.1371/journal.pgen.1006006" target="_blank" rel="noopener">doi:10.1371/journal.pgen.1006006</a>
+                    </li>
+
+                    <li id="ref11">
+                        Maddison WP. 1997. Gene trees in species trees.
+                        <em>Syst Biol</em>.
+                        <a href="https://doi.org/10.1093/sysbio/46.3.523" target="_blank" rel="noopener">doi:10.1093/sysbio/46.3.523</a>
+                    </li>
+
+                    <li id="ref12">
+                        Degnan JH, Rosenberg NA. 2009. Gene tree discordance, phylogenetic inference and the multispecies coalescent.
+                        <em>Trends Ecol Evol</em>.
+                        <a href="https://doi.org/10.1016/j.tree.2009.01.009" target="_blank" rel="noopener">doi:10.1016/j.tree.2009.01.009</a>
+                    </li>
+
+                    <li id="ref13">
+                        Felsenstein J. 1973. Maximum-likelihood estimation of evolutionary trees from continuous characters.
+                        <em>Am J Hum Genet</em>.
+                        <a href="https://pubmed.ncbi.nlm.nih.gov/4741844/" target="_blank" rel="noopener">PubMed: 4741844</a>
+                    </li>
+
+                    <li id="ref14">
+                        Felsenstein J. 1985. Phylogenies and the comparative method.
+                        <em>Am Nat</em>.
+                        <a href="https://doi.org/10.1086/284325" target="_blank" rel="noopener">doi:10.1086/284325</a>
+                    </li>
+
+                    <li id="ref15">
+                        Felsenstein J. 1978. Cases in which parsimony or compatibility methods will be positively misleading.
+                        <em>Syst Zool</em>.
+                        <a href="https://doi.org/10.2307/2412923" target="_blank" rel="noopener">doi:10.2307/2412923</a>
+                    </li>
+
+                    <li id="ref16">
+                        Katoh K, Standley DM. 2013. MAFFT multiple sequence alignment software version 7: improvements in performance and usability.
+                        <em>Mol Biol Evol</em>.
+                        <a href="https://doi.org/10.1093/molbev/mst010" target="_blank" rel="noopener">doi:10.1093/molbev/mst010</a>
+                    </li>
+
+                    <li id="ref17">
+                        Stamatakis A. 2014. RAxML version 8: a tool for phylogenetic analysis and post-analysis of large phylogenies.
+                        <em>Bioinformatics</em>.
+                        <a href="https://doi.org/10.1093/bioinformatics/btu033" target="_blank" rel="noopener">doi:10.1093/bioinformatics/btu033</a>
+                    </li>
+
+                    <li id="ref18">
+                        Kalyaanamoorthy S, Minh BQ, Wong TKF, von Haeseler A, Jermiin LS. 2017. ModelFinder: fast model selection for accurate phylogenetic estimates.
+                        <em>Nat Methods</em>.
+                        <a href="https://doi.org/10.1038/nmeth.4285" target="_blank" rel="noopener">doi:10.1038/nmeth.4285</a>
+                    </li>
+
+                    <li id="ref19">
+                        Minh BQ, Schmidt HA, Chernomor O, et al. 2020. IQ-TREE 2: New models and efficient methods for phylogenetic inference in the genomic era.
+                        <em>Mol Biol Evol</em>.
+                        <a href="https://doi.org/10.1093/molbev/msaa015" target="_blank" rel="noopener">doi:10.1093/molbev/msaa015</a>
+                    </li>
+
+                    <li id="ref20">
+                        Drummond AJ, Rambaut A. 2007. BEAST: Bayesian evolutionary analysis by sampling trees.
+                        <em>BMC Evol Biol</em>.
+                        <a href="https://doi.org/10.1186/1471-2148-7-214" target="_blank" rel="noopener">doi:10.1186/1471-2148-7-214</a>
+                    </li>
+                </ol>
             </div>
 
             <nav class="blog-nav nav nav-justified my-5">

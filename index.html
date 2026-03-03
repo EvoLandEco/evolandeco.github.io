@@ -15,7 +15,7 @@
 	<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
 	
 	<!-- FontAwesome JS -->
-    <script defer src="assets/fontawesome/js/all.js"></script>
+    <script src="https://kit.fontawesome.com/c5f1d6d0a1.js" crossorigin="anonymous"></script>
     
     <!-- Plugin CSS -->
     <link rel="stylesheet" href="assets/plugins/tiny-slider/tiny-slider.css">
@@ -24,18 +24,48 @@
 	<link id="theme-style" rel="stylesheet" href="assets/css/theme-1.css">
 
 	<style>
-		.custom-icon {
-			width: 2.8em;
-			height: 2.8em;
-			fill: gray;
-			margin-top: -0.5px;
-		}
-		.custom-icon-alt {
-			width: 0.9em;
-			height: 0.9em;
-			fill: gray;
-			margin-top: -6.9px;
-		}
+	:root{
+		--icon-size: 1.8rem;
+		--icon-gap: 0.35rem;
+	}
+
+	.item-inner .item-icon{
+		display: inline-flex;
+		align-items: center;
+		gap: var(--icon-gap);
+		line-height: 1;
+	}
+
+	/* Give every icon (FA + SVG) the same square box */
+	.item-inner .item-icon i,
+	.item-inner .item-icon .svg-box{
+		width: var(--icon-size);	
+		height: var(--icon-size);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* FontAwesome size */
+	.item-inner .item-icon i{
+		font-size: var(--icon-size);
+	}
+
+	/* SVG <img> inside the box */
+	.item-inner .item-icon .svg-box img{
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+	}
+
+	.about-me-section .profile-image {
+		max-width: 260px;
+		width: 100%;
+		height: auto;
+		display: block;
+		margin-left: auto;
+	}
 	</style>
 
 </head> 
@@ -56,7 +86,7 @@
 					<div class="profile-section pt-3 pt-lg-0">
 						<img class="profile-image mb-3 rounded-circle mx-auto" src="assets/images/profile.png" alt="image" >			
 						
-						<div class="bio mb-3">Hi, my name is Tianjian. I'm a theoretical biologist.</div><!--//bio-->
+						<div class="bio mb-3">Hi, my name is Tianjian. I'm a computational biologist &amp; data scientist.</div><!--//bio-->
 						<ul class="social-list list-inline py-2 mx-auto">
 							<li class="list-inline-item"><a href="https://www.linkedin.com/in/tjqin/"><i class="fab fa-linkedin-in fa-fw"></i></a></li>
 							<li class="list-inline-item"><a href="https://github.com/EvoLandEco"><i class="fab fa-github-alt fa-fw"></i></a></li>
@@ -106,9 +136,9 @@
 				<div class="profile-teaser row">
 					
 					<div class="col">
-						<h2 class="name font-weight-bold mb-1">Tianjian</h2>
-						<div class="tagline mb-3">PhD candidate, theoretical biologist</div>
-						<div class="bio mb-4">I study systems biology by modeling and simulation. I am interested in phylogenetic comparative methods and parameter estimation approaches.
+						<h2 class="name font-weight-bold mb-1">Tianjian Qin</h2>
+						<div class="tagline mb-3">PhD candidate, computational scientist</div>
+						<div class="bio mb-4">I study complex biological systems using probabilistic modeling, simulation, and machine learning.
 						</div><!--//bio-->
 						<div class="mb-4">
 							<a class="btn btn-primary me-2 mb-3" href="portfolio.html"><i class="fas fa-arrow-alt-circle-right me-2"></i><span class="d-none d-md-inline">View</span> Portfolio</a>
@@ -117,7 +147,7 @@
 					</div><!--//col-->
 					
 					<div class="col-md-5 col-lg-5">
-					    <img class="profile-image img-fluid mb-3 mb-lg-0 me-md-0" src="assets/images/profile-lg.jpg" alt="">
+					    <img class="profile-image img-fluid mb-3 mb-lg-0 me-md-0" src="assets/icons/icon-high.png" alt="">
 					</div>
 				</div>
 			</div>
@@ -126,52 +156,55 @@
 		<section class="overview-section p-3 p-lg-5">
 			<div class="container">
 				<h2 class="section-title font-weight-bold mb-3">What I do</h2>
-				<div class="section-intro mb-5">In my current project, I develop stochastic models to bridge theoretical and empirical studies at different phylogenetic scales. In my spare time, I try to bring data to life. Below is an overview of my skill sets, you can find out more in my blogs and projects.</div>
+				<div class="section-intro mb-5">In my current project, I build modeling and machine-learning pipelines to turn large spatiotemporal livestock movement data into realistic network “digital twins” and decision-relevant insights; in my spare time, I bring complex data to life through interactive visualizations and open tools—below is an overview of my skill set, and you can find out more in my blogs and projects.</div>
 				<div class="row">
 					<div class="item col-6 col-lg-3">
-						<div class="item-inner">
-							<div class="item-icon"><i class="fa-brands fa-r-project" style="color: #2167ba;"></i>  <i class="fa-solid fa-code-compare" style="color: #2167ba;"></i></div>
-							<h3 class="item-title">R</h3>
-							<div class="item-desc">Package development, data analysis, visualization, modeling, simulation.</div>
-						</div><!--//item-inner-->
+					<div class="item-inner">
+						<div class="item-icon">
+						<i class="fa-brands fa-r-project" style="color:#2167ba;"></i>
+						<i class="fa-brands fa-python"></i>
+						<i class="fa-kit fa-cplusplus"></i>
+						</div>
+						<h3 class="item-title">Scientific Programming</h3>
+						<div class="item-desc">R, Python, C++. Package development, data analysis, visualization, simulation.</div>
+					</div><!--//item-inner-->
 					</div><!--//item-->
+
+					<div class="item col-6 col-lg-3">
+					<div class="item-inner">
+						<div class="item-icon">
+						<i class="fa-solid fa-microchip-ai"></i>
+						<i class="fa-solid fa-brain-circuit"></i>
+						</div>
+						<h3 class="item-title">Machine Learning / AI</h3>
+						<div class="item-desc">Machine learning, deep learning, neural networks, with PyTorch, Sklearn, and more.</div>
+					</div><!--//item-inner-->
+					</div><!--//item-->
+
 					<div class="item col-6 col-lg-3">
 						<div class="item-inner">
-							<div class=""><img class="custom-icon" src="assets/icons/cplusplus.svg" alt="C++ Icon"></div>
-							<h3 class="item-title">C, C++</h3>
-							<div class="item-desc">Software development, integration with R/Python, modeling, simulation.</div>
+							<div class="item-icon"><i class="fa-solid fa-diagram-venn"></i><i class="fa-solid fa-hexagon-nodes"></i></div>
+							<h3 class="item-title">Modeling and Inference</h3>
+							<div class="item-desc">Combining stochastic processes, graph theory, and network science</div>
+						</div><!--//item-inner-->
+					</div><!--//item-->
+
+					<div class="item col-6 col-lg-3">
+						<div class="item-inner">
+							<div class="item-icon"><i class="fa-solid fa-database"></i>  <i class="fa-solid fa-download"></i></div>
+							<h3 class="item-title">Big Data</h3>
+							<div class="item-desc">Learning to use SQL, Spark, and other modern frameworks.</div>
 						</div><!--//item-inner-->
 					</div><!--//item-->
 					
 					<div class="item col-6 col-lg-3">
 						<div class="item-inner">
-							<div class="item-icon"><i class="fa-brands fa-python"></i>  <img class="custom-icon-alt" src="assets/icons/pytorch.svg" alt="PyTorch Icon"></div>
-							<h3 class="item-title">Python</h3>
-							<div class="item-desc">Machine learning with PyTorch, PyTorch Geometric, Sklearn, Tensorflow.</div>
+							<div class="item-icon"><i class="fa-brands fa-html5"></i>  <i class="fa-brands fa-css3-alt"></i>  <i class="fa-brands fa-node-js" style="color: #f7d724;"></i>  <span class="svg-box"><img src="assets/icons/d3-dot-js.svg" alt="d3.js Icon"></span></div>
+							<h3 class="item-title">Web Development</h3>
+							<div class="item-desc">HTML, CSS, JavaScript, interactive data visualization with D3.js.</div>
 						</div><!--//item-inner-->
 					</div><!--//item-->
-					
-					<div class="item col-6 col-lg-3">
-						<div class="item-inner">
-							<div class="item-icon"><i class="fa-brands fa-html5"></i>  <i class="fa-brands fa-css3-alt"></i>  <i class="fa-brands fa-node-js" style="color: #f7d724;"></i>  <img class="custom-icon-alt" src="assets/icons/d3-dot-js.svg" alt="d3.js Icon"></div>
-							<h3 class="item-title">HTML, CSS, JS</h3>
-							<div class="item-desc">Web development, interactive data visualization with D3.js.</div>
-						</div><!--//item-inner-->
-					</div><!--//item-->
-					<div class="item col-6 col-lg-3">
-						<div class="item-inner">
-							<div class="item-icon"><i class="fa-solid fa-terminal"></i>  <i class="fa-solid fa-server"></i></div>
-							<h3 class="item-title">Bash, Server, HPC</h3>
-							<div class="item-desc">Server-side software maintenance, HPC management.</div>
-						</div><!--//item-inner-->
-					</div><!--//item-->
-					<div class="item col-6 col-lg-3">
-						<div class="item-inner">
-							<div class="item-icon"><i class="fa-solid fa-square-root-variable"></i>   <i class="fa-solid fa-chart-gantt"></i></div>
-							<h3 class="item-title">TeX</h3>
-							<div class="item-desc">Typesetting, rendering and visualization with LaTex, TikZ and PGFPlots.</div>
-						</div><!--//item-inner-->
-					</div><!--//item-->
+
 					<div class="item col-6 col-lg-3">
 						<div class="item-inner">
 							<div class="item-icon"><i class="fa-solid fa-earth-asia"></i>  <i class="fa-solid fa-dna"></i></div>
@@ -179,11 +212,20 @@
 							<div class="item-desc">Geospatial analysis, phylogeny reconstruction, metagenomics</div>
 						</div><!--//item-inner-->
 					</div><!--//item-->
+
 					<div class="item col-6 col-lg-3">
 						<div class="item-inner">
-							<div class="item-icon"><i class="fa-solid fa-database"></i>  <i class="fa-solid fa-download"></i></div>
-							<h3 class="item-title">Big Data Tools</h3>
-							<div class="item-desc">Learning to use SQL, browser automation with Selenium, BeautifulSoup and Puppeteer.</div>
+							<div class="item-icon"><i class="fa-solid fa-terminal"></i>  <i class="fa-solid fa-server"></i></div>
+							<h3 class="item-title">Bash, Server, HPC</h3>
+							<div class="item-desc">Server-side software maintenance, HPC management.</div>
+						</div><!--//item-inner-->
+					</div><!--//item-->
+
+					<div class="item col-6 col-lg-3">
+						<div class="item-inner">
+							<div class="item-icon"><i class="fa-solid fa-file-tex"></i> <i class="fa-solid fa-chart-gantt"></i></div>
+							<h3 class="item-title">Scientific Writing</h3>
+							<div class="item-desc">Typesetting, rendering and visualization with LaTeX, TikZ and PGFPlots.</div>
 						</div><!--//item-inner-->
 					</div><!--//item-->
 				</div><!--//row-->
