@@ -1,0 +1,2403 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <title>
+      Hybrid Dynamic Networks and Higher-Order Statistics - Blog - Tianjian Qin
+    </title>
+    <!-- Meta -->
+    <meta charset="utf-8" />
+    <meta content="IE=edge" http-equiv="X-UA-Compatible" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta
+      content="Hybrid COROP–Farm dynamic networks: preprocessing, TEA/TNA, π-mass, and magnetic Laplacian spectra."
+      name="description"
+    />
+    <meta content="Tianjian Qin" name="author" />
+    <link href="favicon.ico" rel="shortcut icon" />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700"
+      rel="stylesheet"
+    />
+    <!-- FontAwesome JS -->
+    <script defer="" src="assets/fontawesome/js/all.js"></script>
+    <!-- Plugin CSS -->
+    <link
+      href="assets/plugins/highlight/styles/monokai-sublime.min.css"
+      rel="stylesheet"
+    />
+    <!-- Theme CSS -->
+    <link href="assets/css/theme-1.css" id="theme-style" rel="stylesheet" />
+    <link
+      href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
+
+    <style>
+      .hybrid-sim-iframe {
+        width: 100%;
+        height: 100vh;
+        min-height: 820px;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 12px;
+        background: #fff;
+        overflow: hidden;
+      }
+
+      /* Small concept figures (D3) */
+      .concept-card {
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 12px;
+        background: #fff;
+        overflow: hidden;
+      }
+      .concept-card .caption {
+        font-size: 0.9rem;
+        color: #6c757d;
+      }
+      .concept-card .toolbar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      }
+      .concept-card .toolbar .title {
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin: 0;
+      }
+      .concept-card .viz {
+        width: 100%;
+        height: 360px;
+      }
+
+      /* Dark-mode harmonization (blog's dark-mode.js toggles a 'dark-mode' class on body) */
+      body.dark-mode .hybrid-sim-iframe,
+      body.dark-mode .concept-card {
+        background: #0b0d10;
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+      body.dark-mode .concept-card .toolbar {
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+      }
+      body.dark-mode .concept-card .caption {
+        color: rgba(255, 255, 255, 0.65);
+      }
+
+      /* Page-specific: widen ONLY containers that opt in */
+      @media (min-width: 692px) {
+        .single-col-max-width.hybrid-wide {
+          max-width: 880px;
+        }
+      }
+      @media (min-width: 1100px) {
+        .single-col-max-width.hybrid-wide {
+          max-width: 980px;
+        }
+      }
+    
+      /* Concept toolbars: compact controls */
+      .concept-card .toolbar input[type="range"] {
+        width: 140px;
+      }
+      .concept-card .toolbar .stat {
+        font-variant-numeric: tabular-nums;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        opacity: 0.85;
+        min-width: 44px;
+        text-align: right;
+        display: inline-block;
+      }
+      body.dark-mode .concept-card .toolbar input[type="range"] {
+        filter: brightness(1.05) contrast(1.05);
+      }
+</style>
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [["$", "$"]],
+          displayMath: [["$$", "$$"]],
+        },
+        options: {
+          skipHtmlTags: [
+            "script",
+            "noscript",
+            "style",
+            "textarea",
+            "pre",
+            "code",
+          ],
+        },
+      };
+    </script>
+    <script
+      async=""
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
+    ></script>
+  </head>
+  <body>
+    <header class="header text-center">
+      <div class="force-overflow">
+        <h1 class="blog-name pt-lg-4 mb-0">
+          <a class="no-text-decoration" href="index.html">Tianjian Qin</a>
+        </h1>
+        <nav class="navbar navbar-expand-lg navbar-dark">
+          <button
+            aria-controls="navigation"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+            class="navbar-toggler"
+            data-bs-target="#navigation"
+            data-bs-toggle="collapse"
+            type="button"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse flex-column" id="navigation">
+            <div class="profile-section pt-3 pt-lg-0">
+              <img
+                alt="image"
+                class="profile-image mb-3 rounded-circle mx-auto"
+                src="assets/images/profile.png"
+              />
+              <div class="bio mb-3">
+                Hi, my name is Tianjian. I'm a computational biologist &amp;
+                data scientist.
+              </div>
+              <!--//bio-->
+              <ul class="social-list list-inline py-2 mx-auto">
+                <li class="list-inline-item">
+                  <a href="https://www.linkedin.com/in/tjqin/"
+                    ><i class="fab fa-linkedin-in fa-fw"></i
+                  ></a>
+                </li>
+                <li class="list-inline-item">
+                  <a href="https://github.com/EvoLandEco"
+                    ><i class="fab fa-github-alt fa-fw"></i
+                  ></a>
+                </li>
+                <li class="list-inline-item">
+                  <a href="https://www.researchgate.net/profile/Tianjian-Qin"
+                    ><i class="fa-brands fa-researchgate"></i
+                  ></a>
+                </li>
+                <li class="list-inline-item">
+                  <a href="https://qtj.me/gallery"
+                    ><i class="fa-regular fa-lightbulb fa-beat"></i
+                  ></a>
+                </li>
+              </ul>
+              <!--//social-list-->
+              <hr />
+            </div>
+            <!--//profile-section-->
+            <ul class="navbar-nav flex-column text-start">
+              <li class="nav-item">
+                <a class="nav-link" href="index.html"
+                  ><i class="fas fa-user fa-fw me-2"></i>About Me</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="portfolio.html"
+                  ><i class="fas fa-laptop-code fa-fw me-2"></i>Portfolio</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="resume.html"
+                  ><i class="fas fa-file-alt fa-fw me-2"></i>Resume</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="blog-home.html"
+                  ><i class="fas fa-blog fa-fw me-2"></i>Blog</a
+                >
+              </li>
+            </ul>
+            <div class="my-2">
+              <a
+                class="btn btn-primary"
+                href="mailto:tianjianqin@outlook.com"
+                target="_blank"
+                ><i class="fas fa-paper-plane me-2"></i>Contact Me</a
+              >
+            </div>
+            <div class="dark-mode-toggle text-center w-100">
+              <hr class="mb-4" />
+              <h4 class="toggle-name mb-3">
+                <i class="fas fa-adjust me-1"></i>Dark Mode
+              </h4>
+              <input class="toggle" id="darkmode" type="checkbox" />
+              <label class="toggle-btn mx-auto mb-0" for="darkmode"></label>
+            </div>
+            <!--//dark-mode-toggle-->
+          </div>
+        </nav>
+      </div>
+      <!--//force-overflow-->
+    </header>
+    <div class="main-wrapper">
+      <article class="blog-post px-3 py-5 p-md-5">
+        <div class="container single-col-max-width hybrid-wide">
+          <header class="blog-post-header">
+            <h2 class="title mb-2">
+              Hybrid Dynamic Networks and Higher-Order Statistics
+            </h2>
+            <div class="meta mb-3">
+              <span class="date"
+                ><i class="fa-solid fa-calendar-days me-2"></i>Published on 04
+                Feb 2026</span
+              ><span class="time"
+                ><i class="fa-solid fa-clock me-2"></i>30 min read</span
+              ><span class="comment"
+                ><i class="fa-solid fa-comment me-2"></i
+                ><a
+                  data-disqus-identifier="BLOG_POST_HYBRID_COROP_FARM"
+                  href="https://qtj.me/blog-Hybrid-COROP-Farm.html#disqus_thread"
+                  >Link</a
+                ></span
+              >
+            </div>
+          </header>
+
+          <div class="blog-post-body">
+            <h3 class="mt-5 mb-3">TL;DR</h3>
+            <ul>
+              <li>
+                <b>Hybrid dynamic networks</b> let you
+                <em>zoom into one region</em> at high resolution (farms) while
+                keeping the rest of the country as <em>regional supernodes</em>.
+                This is a multiscale coarsening strategy: reduce state space
+                without cutting away context.<sup><a href="#ref5">[5]</a></sup>
+              </li>
+              <li>
+                We work with <b>discrete-time temporal graphs</b> (daily
+                snapshots). The key question is not just
+                <em>what is connected</em>, but <em>when</em> connections appear
+                and disappear.<sup><a href="#ref1">[1]</a></sup
+                ><sup><a href="#ref2">[2]</a></sup>
+              </li>
+              <li>
+                To compare hybrid networks (or models that generate them), we
+                use three families of
+                <b>higher-order statistics</b>: <b>TEA/TNA</b> (edge/node
+                turnover), <b>π-mass</b> (random-walk mass on Farms vs Regions),
+                and <b>magnetic Laplacian spectra</b> (direction-sensitive
+                spectral fingerprints).<sup><a href="#ref1">[1]</a></sup
+                ><sup><a href="#ref10">[10]</a></sup
+                ><sup><a href="#ref12">[12]</a></sup>
+              </li>
+            </ul>
+
+            <div class="alert alert-warning mt-4" role="alert">
+              <strong>Toy-model disclaimer.</strong>
+              The simulator below is designed to make the
+              <em>data structure</em> and the <em>statistics</em> tangible. It
+              does not attempt to reproduce the full Dutch trade process
+              (seasonality, production types, transport constraints, etc.). Use
+              it as an interactive “whiteboard” for interpreting the plots you
+              will see in real data.
+            </div>
+
+            <h3 class="mt-5 mb-3" id="hybrid-sim">
+              Interactive hybrid-network simulator
+            </h3>
+            <p class="mb-3">
+              This embedded demo generates a 10-day hybrid network on the
+              Netherlands COROP map (40 regions).<sup
+                ><a href="#ref13">[13]</a></sup
+              >
+              You can pick a focal COROP to keep at farm resolution, tune
+              persistence and birth probabilities, and explore: TEA/TNA
+              (edge/node turnover), π-mass (F vs R), and a magnetic Laplacian
+              spectrum heatmap.
+            </p>
+
+            <div class="alert alert-info mt-3" role="alert">
+              <strong
+                ><i class="fa-solid fa-info-circle me-2"></i>Performance
+                note:</strong
+              >
+              Magnetic spectra are the most expensive step. The simulator shows
+              other panels first; spectra compute last. You can cancel spectra
+              by hovering the progress badge inside the network panel and
+              clicking “Cancel”.
+            </div>
+
+            <div class="my-4">
+              <iframe
+                id="hybridSimIframe"
+                class="hybrid-sim-iframe"
+                loading="lazy"
+                scrolling="no"
+                src="hybrid_simulator.html"
+                title="Hybrid COROP–Farm simulator"
+              ></iframe>
+            </div>
+
+            <hr class="my-5" />
+
+            <h3 class="mt-5 mb-3">Why a hybrid representation?</h3>
+            <p>
+              Livestock movement data is naturally a
+              <em>temporal directed network</em>: a shipment from premise
+              <em>u</em> to premise <em>v</em> on day <em>t</em> is a
+              time-stamped directed edge. Temporal ordering matters because
+              disease, information, and material flows must respect time.<sup
+                ><a href="#ref1">[1]</a></sup
+              >
+            </p>
+            <p>
+              In practice, national-scale premise networks can become very
+              large. But many questions are <em>regional</em>: “What is the
+              import pressure into this region?” “Which local farms are
+              repeatedly connected to outside flows?”. In livestock
+              epidemiology, network-based summaries are routinely used to
+              identify vulnerability, target surveillance, and compare
+              intervention strategies.<sup><a href="#ref4">[4]</a></sup>
+            </p>
+            <p>
+              A hybrid network is a compromise: keep the focal region
+              detailed (farm nodes), and contract everything else into regional
+              “supernodes”. This is a form of <em>graph coarsening</em> tuned
+              for interpretation and computation. We have fewer nodes outside, but
+              still explicit cross-region flows.<sup
+                ><a href="#ref5">[5]</a></sup
+              >
+            </p>
+
+            <div class="concept-card my-4">
+              <div class="toolbar">
+                <p class="title mb-0">Concept sketch: full vs hybrid network</p>
+                <div class="d-flex gap-2">
+                  <button
+                    class="btn btn-sm btn-secondary"
+                    id="btnConceptToggle"
+                  >
+                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i>Contract
+                    / Expand
+                  </button>
+                </div>
+              </div>
+              <div class="viz" id="conceptVizHybrid"></div>
+              <div class="p-3">
+                <div class="caption">
+                  Left: farms everywhere (full premise graph). Right: one focal
+                  region stays farm-level; all other regions are contracted to
+                  one node each. The point is not exact geography, but the
+                  <em>resolution switch</em> and the preserved cross-region
+                  edges.
+                </div>
+              </div>
+            </div>
+
+            <h3 class="mt-5 mb-3">
+              Formal definition: hybrid temporal graph
+            </h3>
+            <p>
+              Start from daily shipment records $$r = (t, u, v, w, c_u, c_v),$$
+              where <em>u</em> and <em>v</em> are premises, <em>w</em> is a
+              shipment weight (e.g., animals moved), and <em>c_u, c_v</em> are
+              COROP codes of origin/destination.<sup
+                ><a href="#ref13">[13]</a></sup
+              >
+              Let $c^*$ be the focal COROP.
+            </p>
+
+            <p>Define the hybrid node set as $V' = F \cup R$:</p>
+            <ul>
+              <li><b>Farms (F):</b> all premises with COROP = $c^*$.</li>
+              <li>
+                <b>Regions (R):</b> one supernode per non-focal COROP $c \neq
+                c^*$.
+              </li>
+            </ul>
+
+            <p>
+              The contraction map $\varphi$ sends each endpoint to either its
+              farm node if in the focal COROP or its region node otherwise:
+            </p>
+            <p>
+              $$ \varphi(u) = \begin{cases} u, & \text{if } c_u=c^* \\ c_u, &
+              \text{if } c_u \neq c^* \end{cases} $$
+            </p>
+
+            <p>
+              Each day <em>t</em> yields a directed weighted snapshot $G'_t =
+              (V', E'_t, W_t)$ by aggregating shipments with the same hybrid
+              endpoints: $$ W_t(a,b)=\sum_{r:\,\varphi(u)=a,\,\varphi(v)=b} w.
+              $$ Edges can be of four blocks: F→F (within focal), F→R (exports),
+              R→F (imports), and R→R (outside-only superflows).
+            </p>
+
+            <p class="mb-0">
+              This “resolution switch” is similar to multilayer
+              and multiscale network thinking: you keep multiple interaction
+              scales in one representation rather than picking a single
+              resolution everywhere.<sup><a href="#ref3">[3]</a></sup>
+            </p>
+
+            <h3 class="mt-5 mb-3">Why “higher-order” statistics?</h3>
+            <p>
+              Static summaries of the time-aggregated graph (degree, density,
+              communities) can hide crucial temporal structure: bursts,
+              periodicity, and edge turnover can change reachability and
+              outbreak risk even when the aggregate looks similar.<sup
+                ><a href="#ref1">[1]</a></sup
+              ><sup><a href="#ref2">[2]</a></sup> Higher-order statistics here
+              means: summaries that depend on <em>time ordering</em>,
+              <em>persistence</em>, or <em>directional circulation</em>, not
+              just the aggregated adjacency.
+            </p>
+
+            <div class="concept-card my-4">
+              <div class="toolbar">
+                <p class="title mb-0">
+                  Concept sketch: TEA (edge turnover) categories
+                </p>
+              </div>
+              <div class="viz" id="conceptVizTEA"></div>
+              <div class="p-3">
+                <div class="caption">
+                  TEA splits day-to-day edges into <b>persist</b>,
+                  <b>birth</b> (new or reactivated), and <b>churn</b>. This is
+                  closely related to separating formation vs persistence
+                  processes in dynamic network models.<sup
+                    ><a href="#ref6">[6]</a></sup
+                  >
+                </div>
+              </div>
+            </div>
+
+            <h3 class="mt-5 mb-3">
+              Statistic family A — TEA &amp; TNA (temporal turnover)
+            </h3>
+            <p>
+              Let $E_t$ be the set of directed edges present on day
+              <em>t</em> (after aggregation), and let $V_t$ be the set of active
+              nodes (nonzero in- or out-degree). TEA (Temporal Edge Appearance)
+              compares $E_t$ to $E_{t-1}$:
+            </p>
+            <ul>
+              <li><b>persist</b>: $E_t \cap E_{t-1}$</li>
+              <li><b>birth</b>: $E_t \setminus E_{t-1}$</li>
+              <li><b>churn</b>: $E_{t-1} \setminus E_t$</li>
+            </ul>
+            <p>
+              Births are further split using a global memory set $E_{\le t-1}$:
+              a birth is <b>new</b> if it has never appeared before, and
+              <b>reactivated</b> if it reappears after absence. TNA (Temporal
+              Node Appearance) repeats the same decomposition on active node
+              sets $V_t$.
+            </p>
+
+            <p>
+              <b>Interpretation (livestock trade / epidemiology).</b>
+              Persistent edges often reflect stable trading relationships or
+              logistics “channels”. High <em>new</em> edge rates can indicate
+              exploration of new partners or market-driven rewiring, which
+              increases the chance of connecting previously weakly linked parts
+              of the system—relevant for introduction and spread risk.<sup
+                ><a href="#ref4">[4]</a></sup
+              >
+              Reactivation suggests periodic trade (e.g., production cycles),
+              which can create predictable “windows” of connectivity.
+            </p>
+
+            <p class="mb-0">
+              <b>Generic interpretation.</b>
+              TEA/TNA are useful whenever repeated interactions matter:
+              email/contact networks, financial transfers, supply chains, or
+              transportation flows. The “formation vs persistence” viewpoint is
+              standard in statistical models for dynamic networks (e.g.,
+              STERGM).<sup><a href="#ref6">[6]</a></sup>
+            </p>
+
+            <h3 class="mt-5 mb-3">
+              Statistic family B — π-mass (random-walk mass on Farms vs
+              Regions)
+            </h3>
+            <p>
+              TEA/TNA focus on <em>turnover</em>. π-mass focuses on
+              <em>where flow concentrates</em>. Construct a (lazy) random walk
+              on the directed graph snapshot:
+            </p>
+            <p>
+              $$ P = (1-\alpha)D^{-1}A + \alpha I, $$ where $A$ is the adjacency
+              (unweighted or weighted), $D$ is the out-degree (or out-strength)
+              diagonal, and $\alpha \in (0,1)$ adds “laziness”. A
+              teleporting/lazy step is a standard trick to improve stability and
+              convergence of the stationary distribution on directed graphs.<sup
+                ><a href="#ref7">[7]</a></sup
+              ><sup><a href="#ref9">[9]</a></sup>
+            </p>
+
+            <p>
+              Because directed graphs may not be strongly connected, we compute
+              the stationary distribution on the largest strongly connected
+              component (LIC), then aggregate stationary mass by node type:
+              $$\pi_F(t)=\sum_{i\in LIC,\,type(i)=farm} \pi_i,\quad
+              \pi_R(t)=\sum_{i\in LIC,\,type(i)=region} \pi_i.$$
+            </p>
+
+            <p>
+              <b>Interpretation (hybrid network quality).</b>
+              If contraction is too aggressive, mass can collapse onto region
+              supernodes (π<sub>R</sub>≈1), washing out focal structure; if the
+              focal subgraph becomes too isolated, π<sub>F</sub>≈1 and the
+              outside context is effectively gone. A “reasonable” hybrid
+              representation tends to keep a meaningful split across time,
+              reflecting both local circulation and external pressure.
+            </p>
+
+            <p class="mb-0">
+              <b>Generic interpretation.</b>
+              Stationary mass is a flow-centrality concept (PageRank is the
+              canonical example).<sup><a href="#ref7">[7]</a></sup> It is useful
+              for prioritizing nodes for monitoring, intervention, caching, or
+              auditing when you believe the system behaves like repeated
+              movement on edges. For background on random walks and mixing, see
+              Lovász and Levin–Peres–Wilmer.<sup><a href="#ref8">[8]</a></sup
+              ><sup><a href="#ref9">[9]</a></sup>
+            </p>
+
+            
+            <div class="concept-card my-4" id="piMassConceptCard">
+              <div class="toolbar">
+                <p class="title mb-0">
+                  Concept sketch: π-mass as stationary flow split (Farms vs Regions)
+                </p>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                  <span class="small text-muted">outside dominance</span>
+                  <input
+                    type="range"
+                    id="piDom"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value="0.45"
+                  />
+                  <span class="small stat" id="piDomVal">0.45</span>
+
+                  <span class="small text-muted ms-2">laziness α</span>
+                  <input
+                    type="range"
+                    id="piAlpha"
+                    min="0"
+                    max="0.35"
+                    step="0.01"
+                    value="0.10"
+                  />
+                  <span class="small stat" id="piAlphaVal">0.10</span>
+
+                  <select
+                    id="piWeighted"
+                    class="form-select form-select-sm"
+                    style="width: auto"
+                  >
+                    <option value="unweighted" selected>unweighted A</option>
+                    <option value="weighted">weighted A</option>
+                  </select>
+
+                  <button class="btn btn-sm btn-secondary" id="piReseed">
+                    <i class="fa-solid fa-dice me-1"></i>Resample
+                  </button>
+                </div>
+              </div>
+              <div class="viz" id="conceptVizPiMass"></div>
+              <div class="p-3">
+                <div class="caption">
+                  A tiny hybrid graph with 3 farms (blue) and 3 regions (orange). Circle size is the
+                  stationary probability πᵢ of a lazy random walk. The bottom bar aggregates mass into
+                  π<sub>F</sub> and π<sub>R</sub>. Increase “outside dominance” to see how contraction can
+                  concentrate mass on regional supernodes.
+                  <sup><a href="#ref7">[7]</a></sup><sup><a href="#ref8">[8]</a></sup
+                  ><sup><a href="#ref9">[9]</a></sup>
+                </div>
+              </div>
+            </div>
+<h3 class="mt-5 mb-3">
+              Statistic family C — magnetic Laplacian spectra
+              (direction-sensitive fingerprints)
+            </h3>
+            <p>
+              Many spectral tools (e.g., the normalized Laplacian) are naturally
+              defined for undirected graphs. For <em>directed</em> networks, a
+              magnetic Laplacian encodes direction as a
+              <em>complex phase</em> while producing a Hermitian operator with
+              real eigenvalues. This allows spectral signatures that respond to
+              directed circulation and asymmetry.<sup
+                ><a href="#ref10">[10]</a></sup
+              ><sup><a href="#ref12">[12]</a></sup>
+            </p>
+
+            <p class="mb-2">
+              One common construction (used by the simulator) starts from a
+              directed adjacency $A$ and defines:
+            </p>
+            <ul>
+              <li>symmetric magnitude $A_s = \tfrac{1}{2}(A + A^\top)$</li>
+              <li>antisymmetry $\Delta = A - A^\top$</li>
+              <li>
+                phase $\Theta_{uv} = 2\pi q\,\mathrm{sign}(\Delta_{uv})$ (charge
+                parameter $q$)
+              </li>
+              <li>
+                magnetic adjacency $H_{uv} = (A_s)_{uv}\,e^{i\Theta_{uv}}$
+              </li>
+              <li>
+                magnetic normalized Laplacian $L_q = I - D_s^{-1/2} H
+                D_s^{-1/2}$, where $(D_s)_{uu}=\sum_v (A_s)_{uv}$
+              </li>
+            </ul>
+
+            <p>
+              For each day, we compute the first <em>K</em> eigenvalues of $L_q$
+              and show them as a heatmap across time. In directed graphs,
+              changes in this spectrum can reflect shifts in “circulation modes”
+              (cycles, one-way backbones, and directional community
+              structure).<sup><a href="#ref11">[11]</a></sup
+              ><sup><a href="#ref12">[12]</a></sup>
+            </p>
+
+            <p class="mb-0">
+              <b>Interpretation (livestock trade / epidemiology).</b>
+              Directionality matters because risk is not symmetric: imports into
+              a region carry different implications than exports. Magnetic
+              spectra are a compact “fingerprint” of directional structure and
+              its evolution, complementing turnover (TEA/TNA) and flow
+              concentration (π-mass).<sup><a href="#ref4">[4]</a></sup>
+            </p>
+
+            
+            <div class="concept-card my-4" id="magneticConceptCard">
+              <div class="toolbar">
+                <p class="title mb-0">
+                  Concept sketch: magnetic Laplacian (direction → phase → spectrum)
+                </p>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                  <span class="small text-muted">directionality</span>
+                  <input
+                    type="range"
+                    id="magGamma"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value="0.75"
+                  />
+                  <span class="small stat" id="magGammaVal">0.75</span>
+
+                  <span class="small text-muted ms-2">charge q</span>
+                  <input
+                    type="range"
+                    id="magQ"
+                    min="0"
+                    max="0.5"
+                    step="0.01"
+                    value="0.25"
+                  />
+                  <span class="small stat" id="magQVal">0.25</span>
+
+                  <button class="btn btn-sm btn-secondary" id="magReseed">
+                    <i class="fa-solid fa-dice me-1"></i>Reseed
+                  </button>
+                </div>
+              </div>
+              <div class="viz" id="conceptVizMagnetic"></div>
+              <div class="p-3">
+                <div class="caption">
+                  Left: a directed ring with two directions. Direction asymmetry is encoded as a phase
+                  θ = ±2πq on each undirected pair (phase wheel). Right: eigenvalues of the magnetic
+                  normalized Laplacian L<sub>q</sub>. Increasing directionality changes circulation modes and
+                  shifts the spectrum.
+                  <sup><a href="#ref10">[10]</a></sup><sup><a href="#ref12">[12]</a></sup>
+                </div>
+              </div>
+            </div>
+
+
+            <hr class="my-5" />
+
+            <h3 class="mt-5 mb-3">NetSpectra: the Hybrid Simulator project</h3>
+            <p class="mb-4">
+              The simulator you just used is packaged as a standalone,
+              embeddable web app (D3 + Web Workers) for teaching and exploratory
+              analysis. I maintain it alongside the broader HerdLink
+              ecosystem.<sup><a href="#ref4">[4]</a></sup>
+            </p>
+
+            <div class="single-col-max-width mx-auto my-4">
+              <div class="card project-card">
+                <div class="row">
+                  <div class="col-12 col-xl-5 card-img-holder">
+                    <img
+                      src="assets/images/project/project-netspectra.png"
+                      class="card-img"
+                      alt="NetSpectraThumbnail"
+                    />
+                  </div>
+                  <div class="col-12 col-xl-7">
+                    <div class="card-body">
+                      <h5 class="card-title">
+                        <a
+                          href="project-hybrid-simulator.html"
+                          class="theme-link"
+                          >NetSpectra</a
+                        >
+                      </h5>
+                      <p class="card-text">
+                        An interactive, embeddable teaching tool for hybrid
+                        temporal networks: COROP map + 10-day dynamic graph +
+                        TEA/TNA, π-mass, and magnetic spectra.
+                      </p>
+                      <p class="card-text">
+                        <i class="fa-brands fa-js me-2"></i>
+                        <i class="fa-solid fa-diagram-project me-2"></i>
+                        <i class="fa-solid fa-flask"></i>
+                      </p>
+                      <p class="card-text">
+                        <small class="text-muted">
+                          <i class="fab fa-github-alt fa-fw"></i>
+                          <a
+                            class="theme-link"
+                            href="https://github.com/EvoLandEco/hybrid-corop-farm-simulator"
+                            target="_blank"
+                            rel="noopener"
+                            >GitHub Open Source</a
+                          >
+                        </small>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="link-mask">
+                  <a
+                    class="link-mask-link"
+                    href="project-hybrid-simulator.html"
+                  ></a>
+                  <div class="link-mask-text">
+                    <a
+                      class="btn btn-secondary"
+                      href="project-hybrid-simulator.html"
+                    >
+                      <i class="fas fa-eye me-2"></i>View Project
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <hr class="my-5" />
+
+            <h3 class="mt-5 mb-3">References</h3>
+            <p class="mb-3">
+              Numbers in brackets link to the sources used for the conceptual
+              framing of this post.
+            </p>
+
+            <ol class="small">
+              <li id="ref1">
+                Holme P, Saramäki J. 2012. Temporal networks.
+                <em>Physics Reports</em>.
+                <a
+                  href="https://doi.org/10.1016/j.physrep.2012.03.001"
+                  target="_blank"
+                  rel="noopener"
+                  >doi:10.1016/j.physrep.2012.03.001</a
+                >
+              </li>
+              <li id="ref2">
+                Holme P. 2015. Modern temporal network theory: a colloquium.
+                <em>Eur Phys J B</em>.
+                <a
+                  href="https://doi.org/10.1140/epjb/e2015-60657-4"
+                  target="_blank"
+                  rel="noopener"
+                  >doi:10.1140/epjb/e2015-60657-4</a
+                >
+              </li>
+              <li id="ref3">
+                Kivelä M, Arenas A, Barthelemy M, Gleeson JP, Moreno Y, Porter
+                MA. 2014. Multilayer networks.
+                <em>Journal of Complex Networks</em>.
+                <a
+                  href="https://doi.org/10.1093/comnet/cnu016"
+                  target="_blank"
+                  rel="noopener"
+                  >doi:10.1093/comnet/cnu016</a
+                >
+              </li>
+              <li id="ref4">
+                Chaters GL, et al. 2019. Analysing livestock network data for
+                infectious disease control: an argument for routine data
+                collection in emerging economies.
+                <em>Phil Trans R Soc B</em>.
+                <a
+                  href="https://doi.org/10.1098/rstb.2018.0264"
+                  target="_blank"
+                  rel="noopener"
+                  >doi:10.1098/rstb.2018.0264</a
+                >
+              </li>
+              <li id="ref5">
+                Chen J, Saad Y, Zhang Z. 2022. Graph coarsening: from scientific
+                computing to machine learning. <em>SeMA Journal</em>.
+                <a
+                  href="https://doi.org/10.1007/s40324-021-00282-x"
+                  target="_blank"
+                  rel="noopener"
+                  >doi:10.1007/s40324-021-00282-x</a
+                >
+              </li>
+              <li id="ref6">
+                Krivitsky PN, Handcock MS. 2014. A Separable Model for Dynamic
+                Networks. <em>J R Stat Soc Series B</em>.
+                <a
+                  href="https://doi.org/10.1111/rssb.12014"
+                  target="_blank"
+                  rel="noopener"
+                  >doi:10.1111/rssb.12014</a
+                >
+              </li>
+              <li id="ref7">
+                Page L, Brin S, Motwani R, Winograd T. 1999. The PageRank
+                Citation Ranking: Bringing Order to the Web. Stanford InfoLab
+                Technical Report.
+                <a
+                  href="https://ilpubs.stanford.edu/422/1/1999-66.pdf"
+                  target="_blank"
+                  rel="noopener"
+                  >PDF</a
+                >
+              </li>
+              <li id="ref8">
+                Lovász L. 1993. Random walks on graphs: a survey. In:
+                <em>Combinatorics, Paul Erdős is Eighty</em> (Vol. 2).
+                <a
+                  href="https://www.cse.cuhk.edu.hk/~cslui/CMSC5734/LovaszRadnomWalks93.pdf"
+                  target="_blank"
+                  rel="noopener"
+                  >PDF</a
+                >
+              </li>
+              <li id="ref9">
+                Levin DA, Peres Y, Wilmer EL. 2009/2017.
+                <em>Markov Chains and Mixing Times</em> (2nd ed.). American
+                Mathematical Society.
+                <a
+                  href="https://www.cs.cmu.edu/~15859n/RelatedWork/MarkovChains-MixingTimes.pdf"
+                  target="_blank"
+                  rel="noopener"
+                  >PDF</a
+                >
+              </li>
+              <li id="ref10">
+                Fanuel M, Alaíz CM, Fernandez A, Suykens JAK. 2018. Magnetic
+                Eigenmaps for the visualization of directed networks.
+                <em>Appl Comput Harmon Anal</em>.
+                <a
+                  href="https://doi.org/10.1016/j.acha.2017.01.004"
+                  target="_blank"
+                  rel="noopener"
+                  >doi:10.1016/j.acha.2017.01.004</a
+                >
+              </li>
+              <li id="ref11">
+                Fanuel M, Alaíz CM, Suykens JAK. 2017. Magnetic eigenmaps for
+                community detection in directed networks. <em>Phys Rev E</em>.
+                <a
+                  href="https://doi.org/10.1103/PhysRevE.95.022302"
+                  target="_blank"
+                  rel="noopener"
+                  >doi:10.1103/PhysRevE.95.022302</a
+                >
+              </li>
+              <li id="ref12">
+                de Resende BMF, Costa LdF. 2020. Characterization and comparison
+                of large directed networks through the spectra of the magnetic
+                Laplacian. <em>Chaos</em>.
+                <a
+                  href="https://doi.org/10.1063/5.0006891"
+                  target="_blank"
+                  rel="noopener"
+                  >doi:10.1063/5.0006891</a
+                >
+              </li>
+              <li id="ref13">
+                Statistics Netherlands (CBS). COROP region (definition and
+                background).
+                <a
+                  href="https://www.cbs.nl/en-gb/our-services/methods/definitions/corop-region"
+                  target="_blank"
+                  rel="noopener"
+                  >cbs.nl definition</a
+                >
+              </li>
+            </ol>
+
+            <script>
+              (function () {
+                // ---------------------------
+                // Concept viz: hybrid coarsening
+                // ---------------------------
+                const host = document.getElementById("conceptVizHybrid");
+                if (!host || !window.d3) return;
+
+                const btn = document.getElementById("btnConceptToggle");
+                let contracted = true;
+
+                const margin = { top: 18, right: 16, bottom: 18, left: 16 };
+                const height = 360;
+
+                function draw() {
+                  host.innerHTML = "";
+                  const w = host.clientWidth || 800;
+                  const svg = d3
+                    .select(host)
+                    .append("svg")
+                    .attr("width", "100%")
+                    .attr("height", height)
+                    .attr("viewBox", `0 0 ${w} ${height}`)
+                    .style("display", "block");
+
+                  const g = svg
+                    .append("g")
+                    .attr(
+                      "transform",
+                      `translate(${margin.left},${margin.top})`,
+                    );
+                  const innerW = w - margin.left - margin.right;
+                  const innerH = height - margin.top - margin.bottom;
+
+                  const panelW = (innerW - 24) / 2;
+                  const panelH = innerH;
+
+                  const panels = [
+                    { x: 0, title: "Full (premise-level everywhere)" },
+                    {
+                      x: panelW + 24,
+                      title: "Hybrid (focal detailed, others coarsened)",
+                    },
+                  ];
+
+                  const bg = g
+                    .selectAll(".panel")
+                    .data(panels)
+                    .enter()
+                    .append("g")
+                    .attr("class", "panel")
+                    .attr("transform", (d) => `translate(${d.x},0)`);
+
+                  bg.append("rect")
+                    .attr("x", 0)
+                    .attr("y", 0)
+                    .attr("rx", 10)
+                    .attr("ry", 10)
+                    .attr("width", panelW)
+                    .attr("height", panelH)
+                    .attr("fill", "transparent")
+                    .attr("stroke", "currentColor")
+                    .attr("stroke-opacity", 0.12);
+
+                  bg.append("text")
+                    .attr("x", 12)
+                    .attr("y", 18)
+                    .attr("font-size", 12)
+                    .attr("fill", "currentColor")
+                    .attr("opacity", 0.75)
+                    .text((d) => d.title);
+
+                  function cluster(cx, cy, n, spread) {
+                    const pts = d3.range(n).map((i) => ({
+                      x: cx + (Math.random() - 0.5) * spread,
+                      y: cy + (Math.random() - 0.5) * spread,
+                    }));
+                    return pts;
+                  }
+
+                  const regions = [
+                    { name: "focal", cx: panelW * 0.35, cy: panelH * 0.58 },
+                    { name: "r2", cx: panelW * 0.7, cy: panelH * 0.35 },
+                    { name: "r3", cx: panelW * 0.74, cy: panelH * 0.76 },
+                  ];
+
+                  const fullNodes = [
+                    ...cluster(regions[0].cx, regions[0].cy, 18, 120).map(
+                      (d) => ({ ...d, group: "focal" }),
+                    ),
+                    ...cluster(regions[1].cx, regions[1].cy, 14, 110).map(
+                      (d) => ({ ...d, group: "r2" }),
+                    ),
+                    ...cluster(regions[2].cx, regions[2].cy, 14, 110).map(
+                      (d) => ({ ...d, group: "r3" }),
+                    ),
+                  ];
+
+                  const fullEdges = d3.range(55).map(() => {
+                    const a =
+                      fullNodes[Math.floor(Math.random() * fullNodes.length)];
+                    const b =
+                      fullNodes[Math.floor(Math.random() * fullNodes.length)];
+                    return { a, b };
+                  });
+
+                  function hybridNodesFrom(full) {
+                    const focal = full.filter((n) => n.group === "focal");
+                    const r2 = {
+                      x: regions[1].cx,
+                      y: regions[1].cy,
+                      group: "r2",
+                      super: true,
+                    };
+                    const r3 = {
+                      x: regions[2].cx,
+                      y: regions[2].cy,
+                      group: "r3",
+                      super: true,
+                    };
+                    return [...focal, r2, r3];
+                  }
+
+                  function hybridizeEdges(edges, nodesHybrid) {
+                    const r2 = nodesHybrid.find(
+                      (n) => n.group === "r2" && n.super,
+                    );
+                    const r3 = nodesHybrid.find(
+                      (n) => n.group === "r3" && n.super,
+                    );
+                    const mapNode = (n) => {
+                      if (n.group === "focal") return n;
+                      return n.group === "r2" ? r2 : r3;
+                    };
+                    return edges.map((e) => ({
+                      a: mapNode(e.a),
+                      b: mapNode(e.b),
+                    }));
+                  }
+
+                  // Left panel: full graph
+                  const left = bg
+                    .filter((d, i) => i === 0)
+                    .append("g")
+                    .attr("transform", "translate(0,0)");
+                  left
+                    .append("g")
+                    .selectAll("path")
+                    .data(fullEdges)
+                    .enter()
+                    .append("path")
+                    .attr("d", (e) => `M${e.a.x},${e.a.y} L${e.b.x},${e.b.y}`)
+                    .attr("stroke", "currentColor")
+                    .attr("stroke-opacity", 0.08)
+                    .attr("fill", "none");
+
+                  left
+                    .append("g")
+                    .selectAll("circle")
+                    .data(fullNodes)
+                    .enter()
+                    .append("circle")
+                    .attr("cx", (d) => d.x)
+                    .attr("cy", (d) => d.y)
+                    .attr("r", 3.0)
+                    .attr("fill", (d) =>
+                      d.group === "focal" ? "#2f80ed" : "#9aa5b1",
+                    )
+                    .attr("opacity", 0.95);
+
+                  // Right panel: hybrid vs expanded toggle
+                  const right = bg
+                    .filter((d, i) => i === 1)
+                    .append("g")
+                    .attr("transform", "translate(0,0)");
+                  const rightNodes = contracted
+                    ? hybridNodesFrom(fullNodes)
+                    : fullNodes;
+                  const rightEdges = contracted
+                    ? hybridizeEdges(fullEdges, rightNodes)
+                    : fullEdges;
+
+                  right
+                    .append("g")
+                    .selectAll("path")
+                    .data(rightEdges)
+                    .enter()
+                    .append("path")
+                    .attr("d", (e) => `M${e.a.x},${e.a.y} L${e.b.x},${e.b.y}`)
+                    .attr("stroke", "currentColor")
+                    .attr("stroke-opacity", contracted ? 0.12 : 0.08)
+                    .attr("fill", "none");
+
+                  right
+                    .append("g")
+                    .selectAll("circle")
+                    .data(rightNodes)
+                    .enter()
+                    .append("circle")
+                    .attr("cx", (d) => d.x)
+                    .attr("cy", (d) => d.y)
+                    .attr("r", (d) => (d.super ? 7.5 : 3.0))
+                    .attr("fill", (d) =>
+                      d.group === "focal"
+                        ? "#2f80ed"
+                        : d.super
+                          ? "#f2994a"
+                          : "#9aa5b1",
+                    )
+                    .attr("opacity", 0.95);
+
+                  right
+                    .append("text")
+                    .attr("x", 12)
+                    .attr("y", panelH - 12)
+                    .attr("font-size", 11)
+                    .attr("fill", "currentColor")
+                    .attr("opacity", 0.7)
+                    .text(
+                      contracted
+                        ? "Contracted view (outside = supernodes)"
+                        : "Expanded view (premise-level everywhere)",
+                    );
+                }
+
+                draw();
+                window.addEventListener("resize", () => draw(), {
+                  passive: true,
+                });
+                if (btn) {
+                  btn.addEventListener("click", () => {
+                    contracted = !contracted;
+                    draw();
+                  });
+                }
+
+                // ---------------------------
+                // Concept viz: TEA stack (toy)
+                // ---------------------------
+                const host2 = document.getElementById("conceptVizTEA");
+                if (!host2 || !window.d3) return;
+
+                function drawTEA() {
+                  host2.innerHTML = "";
+                  const w = host2.clientWidth || 800;
+                  const h = 360;
+                  const svg = d3
+                    .select(host2)
+                    .append("svg")
+                    .attr("width", "100%")
+                    .attr("height", h)
+                    .attr("viewBox", `0 0 ${w} ${h}`);
+
+                  const m = { top: 22, right: 18, bottom: 32, left: 44 };
+                  const iw = w - m.left - m.right;
+                  const ih = h - m.top - m.bottom;
+
+                  const g = svg
+                    .append("g")
+                    .attr("transform", `translate(${m.left},${m.top})`);
+
+                  // Toy 10-day series
+                  const T = 10;
+                  const days = d3.range(T).map((d) => `d${d + 1}`);
+
+                  const data = days.map((day, i) => {
+                    const persist = 40 + Math.round(25 * Math.random());
+                    const reactivated = 5 + Math.round(10 * Math.random());
+                    const fresh = 8 + Math.round(12 * Math.random());
+                    const churn = 10 + Math.round(15 * Math.random());
+                    return { day, persist, reactivated, fresh, churn };
+                  });
+
+                  const keys = ["persist", "reactivated", "fresh"];
+                  const stack = d3.stack().keys(keys);
+                  const stacked = stack(data);
+
+                  const maxPos = d3.max(
+                    data,
+                    (d) => d.persist + d.reactivated + d.fresh,
+                  );
+                  const maxNeg = d3.max(data, (d) => d.churn);
+
+                  const x = d3
+                    .scaleBand()
+                    .domain(days)
+                    .range([0, iw])
+                    .padding(0.18);
+                  const y = d3
+                    .scaleLinear()
+                    .domain([-maxNeg * 1.15, maxPos * 1.15])
+                    .range([ih, 0])
+                    .nice();
+
+                  g.append("g")
+                    .attr("transform", `translate(0,${y(0)})`)
+                    .call(d3.axisBottom(x).tickSizeOuter(0))
+                    .selectAll("text")
+                    .attr("font-size", 11)
+                    .attr("opacity", 0.8);
+
+                  g.append("g")
+                    .call(d3.axisLeft(y).ticks(5))
+                    .selectAll("text")
+                    .attr("font-size", 11)
+                    .attr("opacity", 0.8);
+
+                  g.append("line")
+                    .attr("x1", 0)
+                    .attr("x2", iw)
+                    .attr("y1", y(0))
+                    .attr("y2", y(0))
+                    .attr("stroke", "currentColor")
+                    .attr("stroke-opacity", 0.2);
+
+                  const color = d3
+                    .scaleOrdinal()
+                    .domain(keys)
+                    .range(["#2f80ed", "#56ccf2", "#27ae60"]);
+
+                  g.selectAll(".layer")
+                    .data(stacked)
+                    .enter()
+                    .append("g")
+                    .attr("fill", (d) => color(d.key))
+                    .selectAll("rect")
+                    .data((d) =>
+                      d.map((v) => ({
+                        key: d.key,
+                        day: v.data.day,
+                        y0: v[0],
+                        y1: v[1],
+                      })),
+                    )
+                    .enter()
+                    .append("rect")
+                    .attr("x", (d) => x(d.day))
+                    .attr("width", x.bandwidth())
+                    .attr("y", (d) => y(d.y1))
+                    .attr("height", (d) => Math.max(0, y(d.y0) - y(d.y1)))
+                    .attr("rx", 3)
+                    .attr("ry", 3)
+                    .attr("opacity", 0.92);
+
+                  // churn bars (negative)
+                  g.append("g")
+                    .selectAll("rect")
+                    .data(data)
+                    .enter()
+                    .append("rect")
+                    .attr("x", (d) => x(d.day))
+                    .attr("width", x.bandwidth())
+                    .attr("y", (d) => y(0))
+                    .attr("height", (d) => Math.max(0, y(-d.churn) - y(0)))
+                    .attr("fill", "#eb5757")
+                    .attr("opacity", 0.88)
+                    .attr("rx", 3)
+                    .attr("ry", 3);
+
+                  // legend
+                  const legend = svg
+                    .append("g")
+                    .attr("transform", `translate(${m.left + 6},${10})`);
+                  const items = [
+                    { k: "persist", label: "persist" },
+                    { k: "reactivated", label: "reactivated" },
+                    { k: "fresh", label: "new" },
+                    { k: "churn", label: "churn (lost since yesterday)" },
+                  ];
+                  const lg = legend
+                    .selectAll("g")
+                    .data(items)
+                    .enter()
+                    .append("g")
+                    .attr("transform", (d, i) => `translate(${i * 175},0)`);
+                  lg.append("rect")
+                    .attr("width", 10)
+                    .attr("height", 10)
+                    .attr("y", -8)
+                    .attr("fill", (d) =>
+                      d.k === "churn" ? "#eb5757" : color(d.k),
+                    )
+                    .attr("opacity", 0.95);
+                  lg.append("text")
+                    .attr("x", 14)
+                    .attr("y", 0)
+                    .attr("font-size", 12)
+                    .attr("fill", "currentColor")
+                    .attr("opacity", 0.8)
+                    .text((d) => d.label);
+                }
+
+                drawTEA();
+                window.addEventListener("resize", () => drawTEA(), {
+                  passive: true,
+                });
+              })();
+            </script>
+
+
+            <script>
+              (function () {
+                if (!window.d3 || !window.numeric) return;
+
+                // ---------------------------
+                // Concept viz: π-mass (toy hybrid graph)
+                // ---------------------------
+                const hostPi = document.getElementById("conceptVizPiMass");
+                if (hostPi) {
+                  const domEl = document.getElementById("piDom");
+                  const domValEl = document.getElementById("piDomVal");
+                  const alphaEl = document.getElementById("piAlpha");
+                  const alphaValEl = document.getElementById("piAlphaVal");
+                  const modeEl = document.getElementById("piWeighted");
+                  const reseedBtn = document.getElementById("piReseed");
+
+                  let seed = 1;
+
+                  function mulberry32(a) {
+                    return function () {
+                      a |= 0;
+                      a = (a + 0x6d2b79f5) | 0;
+                      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+                      t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+                      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+                    };
+                  }
+
+                  function buildEdges(rng) {
+                    // Nodes: 0..2 farms, 3..5 regions
+                    const edges = [];
+                    const add = (u, v, kind) => edges.push({ u, v, kind, m: 0.85 + 0.3 * rng() });
+
+                    // Farm cycle (strong local circulation)
+                    add(0, 1, "FF");
+                    add(1, 2, "FF");
+                    add(2, 0, "FF");
+                    add(0, 2, "FF");
+
+                    // Region cycle (outside circulation)
+                    add(3, 4, "RR");
+                    add(4, 5, "RR");
+                    add(5, 3, "RR");
+
+                    // Cross edges: each farm connects to two regions; each region connects to two farms
+                    for (let f = 0; f < 3; f++) {
+                      const r1 = 3 + Math.floor(rng() * 3);
+                      let r2 = 3 + Math.floor(rng() * 3);
+                      if (r2 === r1) r2 = 3 + ((r2 - 3 + 1) % 3);
+                      add(f, r1, "FR");
+                      add(f, r2, "FR");
+                    }
+                    for (let r = 3; r < 6; r++) {
+                      const f1 = Math.floor(rng() * 3);
+                      let f2 = Math.floor(rng() * 3);
+                      if (f2 === f1) f2 = (f2 + 1) % 3;
+                      add(r, f1, "RF");
+                      add(r, f2, "RF");
+                    }
+
+                    // A couple extra cross links to keep mixing obvious
+                    add(1, 4, "FR");
+                    add(4, 1, "RF");
+
+                    return edges;
+                  }
+
+                  function sccTarjan(n, adj) {
+                    let index = 0;
+                    const stack = [];
+                    const onStack = new Array(n).fill(false);
+                    const indices = new Array(n).fill(-1);
+                    const low = new Array(n).fill(0);
+                    const sccs = [];
+
+                    function strongconnect(v) {
+                      indices[v] = index;
+                      low[v] = index;
+                      index++;
+                      stack.push(v);
+                      onStack[v] = true;
+
+                      for (const w of adj[v]) {
+                        if (indices[w] === -1) {
+                          strongconnect(w);
+                          low[v] = Math.min(low[v], low[w]);
+                        } else if (onStack[w]) {
+                          low[v] = Math.min(low[v], indices[w]);
+                        }
+                      }
+
+                      if (low[v] === indices[v]) {
+                        const scc = [];
+                        while (true) {
+                          const w = stack.pop();
+                          onStack[w] = false;
+                          scc.push(w);
+                          if (w === v) break;
+                        }
+                        sccs.push(scc);
+                      }
+                    }
+
+                    for (let v = 0; v < n; v++) {
+                      if (indices[v] === -1) strongconnect(v);
+                    }
+                    return sccs;
+                  }
+
+                  function stationary(P, maxIter = 2500, tol = 1e-10) {
+                    const n = P.length;
+                    let x = new Array(n).fill(1 / n);
+                    for (let it = 0; it < maxIter; it++) {
+                      const nx = new Array(n).fill(0);
+                      for (let i = 0; i < n; i++) {
+                        const xi = x[i];
+                        if (xi === 0) continue;
+                        const row = P[i];
+                        for (let j = 0; j < n; j++) nx[j] += xi * row[j];
+                      }
+                      let diff = 0;
+                      for (let j = 0; j < n; j++) diff += Math.abs(nx[j] - x[j]);
+                      x = nx;
+                      if (diff < tol) break;
+                    }
+                    const s = x.reduce((a, b) => a + b, 0) || 1;
+                    return x.map((v) => v / s);
+                  }
+
+                  function computePi(edges, dom, alpha, mode) {
+                    const n = 6;
+                    const A = Array.from({ length: n }, () => new Array(n).fill(0));
+                    const wFF = 2.4 * (1 - dom) + 0.25;
+                    const wRR = 0.55 + 2.2 * dom;
+                    const wX = 0.65 + 1.9 * dom;
+
+                    function base(kind) {
+                      return kind === "FF" ? wFF : kind === "RR" ? wRR : wX;
+                    }
+
+                    edges.forEach((e) => {
+                      const w = base(e.kind) * e.m;
+                      const val = mode === "weighted" ? w : 1;
+                      A[e.u][e.v] += val;
+                    });
+
+                    // Build lazy row-stochastic P
+                    const P = Array.from({ length: n }, () => new Array(n).fill(0));
+                    for (let i = 0; i < n; i++) {
+                      let out = 0;
+                      for (let j = 0; j < n; j++) out += A[i][j];
+                      if (out === 0) {
+                        A[i][i] = 1;
+                        out = 1;
+                      }
+                      for (let j = 0; j < n; j++) {
+                        const baseP = A[i][j] / out;
+                        P[i][j] = (1 - alpha) * baseP + (i === j ? alpha : 0);
+                      }
+                    }
+
+                    // LIC (largest SCC) on the support of A
+                    const adj = Array.from({ length: n }, () => []);
+                    for (let i = 0; i < n; i++) {
+                      for (let j = 0; j < n; j++) {
+                        if (A[i][j] > 0) adj[i].push(j);
+                      }
+                    }
+                    const sccs = sccTarjan(n, adj);
+                    let lic = [];
+                    for (const scc of sccs) if (scc.length > lic.length) lic = scc;
+                    lic = lic.slice().sort((a, b) => a - b);
+
+                    const Psub = lic.map((i) => lic.map((j) => P[i][j]));
+                    const piSub = stationary(Psub);
+
+                    // Lift back to full node set (0 outside LIC)
+                    const pi = new Array(n).fill(0);
+                    lic.forEach((id, k) => (pi[id] = piSub[k]));
+
+                    const piF = pi[0] + pi[1] + pi[2];
+                    const piR = pi[3] + pi[4] + pi[5];
+
+                    return { A, pi, piF, piR, licSize: lic.length, weights: { wFF, wRR, wX } };
+                  }
+
+                  function drawPi() {
+                    hostPi.innerHTML = "";
+                    const W = hostPi.clientWidth || 800;
+                    const H = hostPi.clientHeight || 360;
+
+                    const dom = +domEl.value;
+                    const alpha = +alphaEl.value;
+                    const mode = modeEl.value;
+
+                    domValEl.textContent = dom.toFixed(2);
+                    alphaValEl.textContent = alpha.toFixed(2);
+
+                    const rng = mulberry32(seed);
+                    const edges = buildEdges(rng);
+
+                    const res = computePi(edges, dom, alpha, mode);
+
+                    const svg = d3
+                      .select(hostPi)
+                      .append("svg")
+                      .attr("width", "100%")
+                      .attr("height", "100%")
+                      .attr("viewBox", `0 0 ${W} ${H}`)
+                      .style("display", "block");
+
+                    const m = { top: 16, right: 14, bottom: 64, left: 14 };
+                    const g = svg.append("g").attr("transform", `translate(${m.left},${m.top})`);
+                    const iw = W - m.left - m.right;
+                    const ih = H - m.top - m.bottom;
+
+                    // Layout: farms left, regions right
+                    const nodes = [
+                      { id: "F1", type: "F", idx: 0 },
+                      { id: "F2", type: "F", idx: 1 },
+                      { id: "F3", type: "F", idx: 2 },
+                      { id: "R1", type: "R", idx: 3 },
+                      { id: "R2", type: "R", idx: 4 },
+                      { id: "R3", type: "R", idx: 5 },
+                    ];
+
+                    const yPos = (k, n) => (ih * (k + 1)) / (n + 1);
+                    nodes.forEach((d) => {
+                      const isFarm = d.type === "F";
+                      d.x = isFarm ? iw * 0.30 : iw * 0.70;
+                      d.y = isFarm ? yPos(d.idx, 4) : yPos(d.idx - 3, 4);
+                    });
+
+                    // Arrow marker
+                    const defs = svg.append("defs");
+                    defs
+                      .append("marker")
+                      .attr("id", "piArrow")
+                      .attr("viewBox", "0 -5 10 10")
+                      .attr("refX", 14)
+                      .attr("refY", 0)
+                      .attr("markerWidth", 6)
+                      .attr("markerHeight", 6)
+                      .attr("orient", "auto")
+                      .append("path")
+                      .attr("d", "M0,-5L10,0L0,5")
+                      .attr("fill", "currentColor")
+                      .attr("opacity", 0.55);
+
+                    function edgeType(u, v) {
+                      const tu = nodes[u].type,
+                        tv = nodes[v].type;
+                      if (tu === "F" && tv === "F") return "FF";
+                      if (tu === "F" && tv === "R") return "FR";
+                      if (tu === "R" && tv === "F") return "RF";
+                      return "RR";
+                    }
+
+                    const col = {
+                      FF: "#2f80ed",
+                      FR: "#56ccf2",
+                      RF: "#f2994a",
+                      RR: "#eb5757",
+                      F: "#2f80ed",
+                      R: "#f2994a",
+                    };
+
+                    const maxA = d3.max(res.A.flat()) || 1;
+
+                    const edgeData = [];
+                    for (let u = 0; u < 6; u++) {
+                      for (let v = 0; v < 6; v++) {
+                        if (u === v) continue;
+                        const a = res.A[u][v];
+                        if (a <= 0) continue;
+                        edgeData.push({
+                          u,
+                          v,
+                          a,
+                          t: edgeType(u, v),
+                        });
+                      }
+                    }
+
+                    function curve(u, v) {
+                      const a = nodes[u];
+                      const b = nodes[v];
+                      const mx = (a.x + b.x) / 2;
+                      const my = (a.y + b.y) / 2;
+                      const dx = b.x - a.x;
+                      const dy = b.y - a.y;
+                      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                      const ux = -dy / dist;
+                      const uy = dx / dist;
+                      const bend = Math.min(46, 0.18 * dist);
+                      const sgn = a.x < b.x ? 1 : -1;
+                      const cx = mx + ux * bend * sgn;
+                      const cy = my + uy * bend * sgn;
+                      return `M${a.x},${a.y} Q${cx},${cy} ${b.x},${b.y}`;
+                    }
+
+                    g.append("g")
+                      .selectAll("path")
+                      .data(edgeData)
+                      .enter()
+                      .append("path")
+                      .attr("d", (d) => curve(d.u, d.v))
+                      .attr("fill", "none")
+                      .attr("stroke", (d) => col[d.t])
+                      .attr("stroke-opacity", 0.35)
+                      .attr("stroke-width", (d) =>
+                        mode === "weighted" ? 0.8 + 2.6 * (d.a / maxA) : 1.15,
+                      )
+                      .attr("marker-end", "url(#piArrow)")
+                      .append("title")
+                      .text((d) => `${nodes[d.u].id} → ${nodes[d.v].id} (${d.t})`);
+
+                    const rScale = d3
+                      .scaleSqrt()
+                      .domain([0, d3.max(res.pi) || 1])
+                      .range([7, 26]);
+
+                    const nodeG = g.append("g");
+                    nodeG
+                      .selectAll("circle")
+                      .data(nodes)
+                      .enter()
+                      .append("circle")
+                      .attr("cx", (d) => d.x)
+                      .attr("cy", (d) => d.y)
+                      .attr("r", (d) => rScale(res.pi[d.idx]))
+                      .attr("fill", (d) => col[d.type])
+                      .attr("opacity", 0.92)
+                      .attr("stroke", "currentColor")
+                      .attr("stroke-opacity", 0.14)
+                      .append("title")
+                      .text((d) => `${d.id}: π=${res.pi[d.idx].toFixed(3)}`);
+
+                    nodeG
+                      .selectAll("text")
+                      .data(nodes)
+                      .enter()
+                      .append("text")
+                      .attr("x", (d) => d.x)
+                      .attr("y", (d) => d.y + 4)
+                      .attr("text-anchor", "middle")
+                      .attr("font-size", 12)
+                      .attr("fill", "#fff")
+                      .attr("opacity", 0.95)
+                      .style("pointer-events", "none")
+                      .text((d) => d.id);
+
+                    // Labels
+                    g.append("text")
+                      .attr("x", iw * 0.30)
+                      .attr("y", 12)
+                      .attr("text-anchor", "middle")
+                      .attr("font-size", 12)
+                      .attr("fill", "currentColor")
+                      .attr("opacity", 0.7)
+                      .text("Farms");
+
+                    g.append("text")
+                      .attr("x", iw * 0.70)
+                      .attr("y", 12)
+                      .attr("text-anchor", "middle")
+                      .attr("font-size", 12)
+                      .attr("fill", "currentColor")
+                      .attr("opacity", 0.7)
+                      .text("Regions");
+
+                    // π_F vs π_R bar
+                    const barY = ih + 20;
+                    const barW = Math.min(420, iw * 0.72);
+                    const barX = (iw - barW) / 2;
+                    const barH = 14;
+
+                    g.append("text")
+                      .attr("x", barX)
+                      .attr("y", barY - 6)
+                      .attr("font-size", 11)
+                      .attr("fill", "currentColor")
+                      .attr("opacity", 0.7)
+                      .text(`LIC size: ${res.licSize}/6`);
+
+                    g.append("rect")
+                      .attr("x", barX)
+                      .attr("y", barY)
+                      .attr("width", barW)
+                      .attr("height", barH)
+                      .attr("rx", 999)
+                      .attr("ry", 999)
+                      .attr("fill", "currentColor")
+                      .attr("opacity", 0.08);
+
+                    g.append("rect")
+                      .attr("x", barX)
+                      .attr("y", barY)
+                      .attr("width", barW * res.piF)
+                      .attr("height", barH)
+                      .attr("rx", 999)
+                      .attr("ry", 999)
+                      .attr("fill", col.F)
+                      .attr("opacity", 0.95);
+
+                    g.append("rect")
+                      .attr("x", barX + barW * res.piF)
+                      .attr("y", barY)
+                      .attr("width", barW * res.piR)
+                      .attr("height", barH)
+                      .attr("rx", 999)
+                      .attr("ry", 999)
+                      .attr("fill", col.R)
+                      .attr("opacity", 0.95);
+
+                    g.append("text")
+                      .attr("x", barX)
+                      .attr("y", barY + 32)
+                      .attr("font-size", 12)
+                      .attr("fill", "currentColor")
+                      .attr("opacity", 0.85)
+                      .text(`π_F = ${res.piF.toFixed(3)}`);
+
+                    g.append("text")
+                      .attr("x", barX + barW)
+                      .attr("y", barY + 32)
+                      .attr("text-anchor", "end")
+                      .attr("font-size", 12)
+                      .attr("fill", "currentColor")
+                      .attr("opacity", 0.85)
+                      .text(`π_R = ${res.piR.toFixed(3)}`);
+                  }
+
+                  function bind() {
+                    [domEl, alphaEl, modeEl].forEach((x) => {
+                      if (!x) return;
+                      x.addEventListener("input", drawPi);
+                      x.addEventListener("change", drawPi);
+                    });
+                    if (reseedBtn) {
+                      reseedBtn.addEventListener("click", () => {
+                        seed = (seed + 1) % 100000;
+                        drawPi();
+                      });
+                    }
+                    window.addEventListener("resize", drawPi, { passive: true });
+                    drawPi();
+                  }
+
+                  bind();
+                }
+
+                // ---------------------------
+                // Concept viz: magnetic Laplacian (toy directed ring)
+                // ---------------------------
+                const hostMag = document.getElementById("conceptVizMagnetic");
+                if (hostMag) {
+                  const gammaEl = document.getElementById("magGamma");
+                  const gammaValEl = document.getElementById("magGammaVal");
+                  const qEl = document.getElementById("magQ");
+                  const qValEl = document.getElementById("magQVal");
+                  const reseedBtn = document.getElementById("magReseed");
+
+                  let seed = 7;
+
+                  function mulberry32(a) {
+                    return function () {
+                      a |= 0;
+                      a = (a + 0x6d2b79f5) | 0;
+                      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+                      t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+                      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+                    };
+                  }
+
+                  function buildAdj(n, gamma, rng) {
+                    const A = Array.from({ length: n }, () => new Array(n).fill(0));
+
+                    for (let i = 0; i < n; i++) {
+                      const j1 = (i + 1) % n;
+                      const j2 = (i + 2) % n;
+
+                      const cw1 = (1 + gamma) * (0.9 + 0.25 * rng());
+                      const ccw1 = Math.max(0, (1 - gamma) * (0.9 + 0.25 * rng()));
+
+                      const cw2 = 0.42 * (1 + gamma) * (0.9 + 0.25 * rng());
+                      const ccw2 = Math.max(0, 0.42 * (1 - gamma) * (0.9 + 0.25 * rng()));
+
+                      A[i][j1] += cw1;
+                      A[j1][i] += ccw1;
+
+                      A[i][j2] += cw2;
+                      A[j2][i] += ccw2;
+                    }
+
+                    return A;
+                  }
+
+                  function magneticEigenvalues(A, q) {
+                    const n = A.length;
+
+                    const As = Array.from({ length: n }, () => new Array(n).fill(0));
+                    for (let i = 0; i < n; i++) {
+                      for (let j = i + 1; j < n; j++) {
+                        const mag = 0.5 * (A[i][j] + A[j][i]);
+                        As[i][j] = mag;
+                        As[j][i] = mag;
+                      }
+                    }
+
+                    const d = new Array(n).fill(0);
+                    for (let i = 0; i < n; i++) {
+                      let s = 0;
+                      for (let j = 0; j < n; j++) s += As[i][j];
+                      d[i] = s;
+                    }
+                    const dinv2 = d.map((x) => (x > 0 ? 1 / Math.sqrt(x) : 0));
+                    const twoPiQ = 2 * Math.PI * q;
+
+                    const Hre = Array.from({ length: n }, () => new Array(n).fill(0));
+                    const Him = Array.from({ length: n }, () => new Array(n).fill(0));
+
+                    for (let i = 0; i < n; i++) {
+                      for (let j = i + 1; j < n; j++) {
+                        const mag = As[i][j];
+                        if (mag === 0) continue;
+                        const sgn = Math.sign(A[i][j] - A[j][i]);
+                        const theta = twoPiQ * sgn;
+                        const c = Math.cos(theta);
+                        const s = Math.sin(theta);
+                        Hre[i][j] = mag * c;
+                        Him[i][j] = mag * s;
+                        Hre[j][i] = mag * c;
+                        Him[j][i] = -mag * s;
+                      }
+                    }
+
+                    const Lre = Array.from({ length: n }, () => new Array(n).fill(0));
+                    const Lim = Array.from({ length: n }, () => new Array(n).fill(0));
+
+                    for (let i = 0; i < n; i++) {
+                      for (let j = 0; j < n; j++) {
+                        const scale = dinv2[i] * dinv2[j];
+                        const mre = scale * Hre[i][j];
+                        const mim = scale * Him[i][j];
+                        Lre[i][j] = (i === j ? 1 : 0) - mre;
+                        Lim[i][j] = -mim;
+                      }
+                      if (d[i] === 0) {
+                        Lre[i][i] = 0;
+                        Lim[i][i] = 0;
+                      }
+                    }
+
+                    const N2 = 2 * n;
+                    const B = Array.from({ length: N2 }, () => new Array(N2).fill(0));
+                    for (let i = 0; i < n; i++) {
+                      for (let j = 0; j < n; j++) {
+                        const x = Lre[i][j];
+                        const y = Lim[i][j];
+                        B[i][j] = x;
+                        B[i][j + n] = -y;
+                        B[i + n][j] = y;
+                        B[i + n][j + n] = x;
+                      }
+                    }
+
+                    try {
+                      const eig = numeric.eig(B);
+                      const vals = eig.lambda.x.slice().map((v) => Number(v));
+                      vals.sort((a, b) => a - b);
+                      const uniq = [];
+                      const tol = 1e-6;
+                      for (const v of vals) {
+                        if (!isFinite(v)) continue;
+                        if (uniq.length === 0 || Math.abs(v - uniq[uniq.length - 1]) > tol) {
+                          uniq.push(v);
+                        }
+                        if (uniq.length >= n) break;
+                      }
+                      return uniq.length ? uniq : vals.slice(0, n);
+                    } catch (e) {
+                      return new Array(n).fill(NaN);
+                    }
+                  }
+
+                  function drawMag() {
+                    hostMag.innerHTML = "";
+                    const W = hostMag.clientWidth || 800;
+                    const H = hostMag.clientHeight || 360;
+
+                    const gamma = +gammaEl.value;
+                    const q = +qEl.value;
+
+                    gammaValEl.textContent = gamma.toFixed(2);
+                    qValEl.textContent = q.toFixed(2);
+
+                    const rng = mulberry32(seed);
+                    const n = 10;
+
+                    const A = buildAdj(n, gamma, rng);
+                    const eigs = magneticEigenvalues(A, q).map((v) => (isFinite(v) ? v : NaN));
+
+                    const svg = d3
+                      .select(hostMag)
+                      .append("svg")
+                      .attr("width", "100%")
+                      .attr("height", "100%")
+                      .attr("viewBox", `0 0 ${W} ${H}`)
+                      .style("display", "block");
+
+                    const m = { top: 16, right: 16, bottom: 22, left: 16 };
+                    const iw = W - m.left - m.right;
+                    const ih = H - m.top - m.bottom;
+
+                    const leftW = iw * 0.45;
+                    const rightW = iw - leftW - 18;
+
+                    const g = svg.append("g").attr("transform", `translate(${m.left},${m.top})`);
+
+                    // Arrow marker
+                    const defs = svg.append("defs");
+                    defs
+                      .append("marker")
+                      .attr("id", "magArrow")
+                      .attr("viewBox", "0 -5 10 10")
+                      .attr("refX", 14)
+                      .attr("refY", 0)
+                      .attr("markerWidth", 6)
+                      .attr("markerHeight", 6)
+                      .attr("orient", "auto")
+                      .append("path")
+                      .attr("d", "M0,-5L10,0L0,5")
+                      .attr("fill", "currentColor")
+                      .attr("opacity", 0.55);
+
+                    // Left: directed ring
+                    const cx = leftW * 0.52;
+                    const cy = ih * 0.56;
+                    const R = Math.min(leftW, ih) * 0.34;
+
+                    const nodes = d3.range(n).map((i) => {
+                      const ang = (2 * Math.PI * i) / n - Math.PI / 2;
+                      return { i, ang, x: cx + R * Math.cos(ang), y: cy + R * Math.sin(ang) };
+                    });
+
+                    function arcPath(aAng, bAng, r, sweep) {
+                      const x1 = cx + r * Math.cos(aAng);
+                      const y1 = cy + r * Math.sin(aAng);
+                      const x2 = cx + r * Math.cos(bAng);
+                      const y2 = cy + r * Math.sin(bAng);
+                      const large = 0;
+                      return `M${x1},${y1} A${r},${r} 0 ${large} ${sweep} ${x2},${y2}`;
+                    }
+
+                    const edges = [];
+                    for (let i = 0; i < n; i++) {
+                      for (let j = 0; j < n; j++) {
+                        if (i === j) continue;
+                        if (A[i][j] <= 1e-9) continue;
+                        // only show the ring-ish edges (step 1 and step 2) for clarity
+                        const d1 = (j - i + n) % n;
+                        const d2 = (i - j + n) % n;
+                        const isStep = d1 === 1 || d1 === 2 || d2 === 1 || d2 === 2;
+                        if (!isStep) continue;
+                        edges.push({ i, j, w: A[i][j], step: d1, back: d2 });
+                      }
+                    }
+
+                    const maxW = d3.max(edges, (d) => d.w) || 1;
+
+                    const ring = g.append("g").attr("transform", `translate(0,0)`);
+
+                    ring
+                      .append("text")
+                      .attr("x", 0)
+                      .attr("y", 12)
+                      .attr("font-size", 12)
+                      .attr("fill", "currentColor")
+                      .attr("opacity", 0.75)
+                      .text("Toy directed ring");
+
+                    ring
+                      .selectAll("path.edge")
+                      .data(edges)
+                      .enter()
+                      .append("path")
+                      .attr("class", "edge")
+                      .attr("d", (e) => {
+                        const a = nodes[e.i].ang;
+                        const b = nodes[e.j].ang;
+                        const sgn = Math.sign(A[e.i][e.j] - A[e.j][e.i]);
+                        const r = R + (sgn >= 0 ? 10 : -10);
+                        const sweep = sgn >= 0 ? 1 : 0;
+                        return arcPath(a, b, r, sweep);
+                      })
+                      .attr("fill", "none")
+                      .attr("stroke", (e) => {
+                        const sgn = Math.sign(A[e.i][e.j] - A[e.j][e.i]);
+                        return sgn >= 0 ? "#2f80ed" : "#eb5757";
+                      })
+                      .attr("stroke-width", (e) => 0.7 + 2.4 * (e.w / maxW))
+                      .attr("stroke-opacity", 0.55)
+                      .attr("marker-end", "url(#magArrow)")
+                      .append("title")
+                      .text((e) => `edge ${e.i} → ${e.j}, w=${e.w.toFixed(2)}`);
+
+                    ring
+                      .selectAll("circle.node")
+                      .data(nodes)
+                      .enter()
+                      .append("circle")
+                      .attr("class", "node")
+                      .attr("cx", (d) => d.x)
+                      .attr("cy", (d) => d.y)
+                      .attr("r", 4.6)
+                      .attr("fill", "currentColor")
+                      .attr("opacity", 0.78);
+
+                    // Right: spectrum
+                    const spec = g.append("g").attr("transform", `translate(${leftW + 18},0)`);
+
+                    spec
+                      .append("text")
+                      .attr("x", 0)
+                      .attr("y", 12)
+                      .attr("font-size", 12)
+                      .attr("fill", "currentColor")
+                      .attr("opacity", 0.75)
+                      .text("Magnetic spectrum (eigenvalues of Lq)");
+
+                    const sx = d3
+                      .scaleBand()
+                      .domain(d3.range(n).map((i) => i + 1))
+                      .range([0, rightW])
+                      .padding(0.15);
+
+                    const finite = eigs.filter((v) => isFinite(v));
+                    const ymax = finite.length ? Math.max(2.0, d3.max(finite) * 1.06) : 2.0;
+
+                    const sy = d3.scaleLinear().domain([0, ymax]).range([ih - 4, 28]).nice();
+
+                    spec
+                      .append("g")
+                      .attr("transform", `translate(0,${ih - 4})`)
+                      .call(d3.axisBottom(sx).tickSizeOuter(0))
+                      .selectAll("text")
+                      .attr("font-size", 11)
+                      .attr("opacity", 0.7);
+
+                    spec
+                      .append("g")
+                      .attr("transform", `translate(0,0)`)
+                      .call(d3.axisLeft(sy).ticks(5))
+                      .selectAll("text")
+                      .attr("font-size", 11)
+                      .attr("opacity", 0.7);
+
+                    // lollipops
+                    const pts = eigs.map((v, i) => ({ i: i + 1, v }));
+
+                    spec
+                      .append("g")
+                      .selectAll("line")
+                      .data(pts)
+                      .enter()
+                      .append("line")
+                      .attr("x1", (d) => sx(d.i) + sx.bandwidth() / 2)
+                      .attr("x2", (d) => sx(d.i) + sx.bandwidth() / 2)
+                      .attr("y1", sy(0))
+                      .attr("y2", (d) => sy(isFinite(d.v) ? d.v : 0))
+                      .attr("stroke", "currentColor")
+                      .attr("stroke-opacity", 0.18);
+
+                    spec
+                      .append("g")
+                      .selectAll("circle")
+                      .data(pts)
+                      .enter()
+                      .append("circle")
+                      .attr("cx", (d) => sx(d.i) + sx.bandwidth() / 2)
+                      .attr("cy", (d) => sy(isFinite(d.v) ? d.v : 0))
+                      .attr("r", 4.0)
+                      .attr("fill", "#56ccf2")
+                      .attr("opacity", (d) => (isFinite(d.v) ? 0.92 : 0.18))
+                      .append("title")
+                      .text((d) => (isFinite(d.v) ? `λ${d.i} = ${d.v.toFixed(4)}` : `λ${d.i}: NA`));
+
+                    // Phase wheel (θ = ±2πq)
+                    const wheel = spec.append("g").attr("transform", `translate(${rightW - 54},${34})`);
+                    const r0 = 22;
+                    const theta = 2 * Math.PI * q;
+
+                    wheel
+                      .append("circle")
+                      .attr("cx", 0)
+                      .attr("cy", 0)
+                      .attr("r", r0)
+                      .attr("fill", "none")
+                      .attr("stroke", "currentColor")
+                      .attr("stroke-opacity", 0.22);
+
+                    function arrow(ang, color) {
+                      wheel
+                        .append("line")
+                        .attr("x1", 0)
+                        .attr("y1", 0)
+                        .attr("x2", r0 * 0.9 * Math.cos(ang))
+                        .attr("y2", r0 * 0.9 * Math.sin(ang))
+                        .attr("stroke", color)
+                        .attr("stroke-width", 2.2)
+                        .attr("stroke-linecap", "round")
+                        .attr("opacity", 0.9);
+                    }
+
+                    // Note: y-axis points down in SVG, so sin is consistent with our ring angles.
+                    arrow(-Math.PI / 2 + theta, "#2f80ed");
+                    arrow(-Math.PI / 2 - theta, "#eb5757");
+
+                    wheel
+                      .append("text")
+                      .attr("x", 0)
+                      .attr("y", r0 + 14)
+                      .attr("text-anchor", "middle")
+                      .attr("font-size", 10)
+                      .attr("fill", "currentColor")
+                      .attr("opacity", 0.65)
+                      .text("θ=±2πq");
+
+                    // tiny badge
+                    spec
+                      .append("text")
+                      .attr("x", rightW)
+                      .attr("y", 12)
+                      .attr("text-anchor", "end")
+                      .attr("font-size", 11)
+                      .attr("fill", "currentColor")
+                      .attr("opacity", 0.65)
+                      .text(`q=${q.toFixed(2)} · γ=${gamma.toFixed(2)}`);
+                  }
+
+                  function bind() {
+                    [gammaEl, qEl].forEach((x) => {
+                      if (!x) return;
+                      x.addEventListener("input", drawMag);
+                      x.addEventListener("change", drawMag);
+                    });
+                    if (reseedBtn) {
+                      reseedBtn.addEventListener("click", () => {
+                        seed = (seed + 1) % 100000;
+                        drawMag();
+                      });
+                    }
+                    window.addEventListener("resize", drawMag, { passive: true });
+                    drawMag();
+                  }
+
+                  bind();
+                }
+              })();
+            </script>
+
+          </div>
+          <nav class="blog-nav nav nav-justified my-5">
+            <a
+              class="nav-link-prev nav-item nav-link rounded-left"
+              href="blog-herdlink.html"
+              >Previous<i class="arrow-prev fas fa-long-arrow-alt-left"></i
+            ></a>
+            <a
+              class="nav-link-next nav-item nav-link rounded-right"
+              href="#"
+              >Next<i class="arrow-next fas fa-long-arrow-alt-right"></i
+            ></a>
+          </nav>
+          <div class="blog-comments-section">
+            <div id="disqus_thread"></div>
+            <script>
+              /**
+               *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT
+               *  THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR
+               *  PLATFORM OR CMS.
+               *
+               *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT:
+               *  https://disqus.com/admin/universalcode/#configuration-variables
+               */
+
+              var disqus_config = function () {
+                // Replace PAGE_URL with your page's canonical URL variable
+                this.page.url = "https://qtj.me/blog-Hybrid-COROP-Farm.html";
+
+                // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+                this.page.identifier = "BLOG_POST_HYBRID_COROP_FARM";
+              };
+
+              (function () {
+                // REQUIRED CONFIGURATION VARIABLE: EDIT THE SHORTNAME BELOW
+                var d = document,
+                  s = d.createElement("script");
+
+                // IMPORTANT: use website shortname
+                s.src = "https://qtj-me.disqus.com/embed.js";
+
+                s.setAttribute("data-timestamp", +new Date());
+                (d.head || d.body).appendChild(s);
+              })();
+            </script>
+            <noscript>
+              Please enable JavaScript to view the
+              <a href="https://disqus.com/?ref_noscript" rel="nofollow">
+                comments powered by Disqus.
+              </a>
+            </noscript>
+          </div>
+          <!--//blog-comments-section-->
+        </div>
+        <!--//container-->
+      </article>
+      <footer class="footer text-center py-4">
+        <small class="copyright">Copyright © Tianjian Qin</small>
+      </footer>
+    </div>
+    <!--//main-wrapper-->
+    <!-- *****CONFIGURE STYLE (REMOVE ON YOUR PRODUCTION SITE)****** -->
+    <div
+      class="config-panel config-panel-hide d-none d-lg-block"
+      id="config-panel"
+    >
+      <div class="panel-inner">
+        <a class="config-trigger text-center" href="#" id="config-trigger"
+          ><i class="fas fa-cog mx-auto" data-fa-transform="down-6"></i
+        ></a>
+        <h5 class="panel-title">Choose Colour</h5>
+        <ul class="list-inline mb-0" id="color-options">
+          <li class="theme-1 active list-inline-item">
+            <a data-style="assets/css/theme-1.css" href="#"></a>
+          </li>
+          <li class="theme-2 list-inline-item">
+            <a data-style="assets/css/theme-2.css" href="#"></a>
+          </li>
+          <li class="theme-3 list-inline-item">
+            <a data-style="assets/css/theme-3.css" href="#"></a>
+          </li>
+          <li class="theme-4 list-inline-item">
+            <a data-style="assets/css/theme-4.css" href="#"></a>
+          </li>
+          <li class="theme-5 list-inline-item">
+            <a data-style="assets/css/theme-5.css" href="#"></a>
+          </li>
+          <li class="theme-6 list-inline-item">
+            <a data-style="assets/css/theme-6.css" href="#"></a>
+          </li>
+          <li class="theme-7 list-inline-item">
+            <a data-style="assets/css/theme-7.css" href="#"></a>
+          </li>
+          <li class="theme-8 list-inline-item">
+            <a data-style="assets/css/theme-8.css" href="#"></a>
+          </li>
+          <li class="theme-9 list-inline-item">
+            <a data-style="assets/css/theme-9.css" href="#"></a>
+          </li>
+          <li class="theme-10 list-inline-item">
+            <a data-style="assets/css/theme-10.css" href="#"></a>
+          </li>
+        </ul>
+        <a class="close" href="#" id="config-close"
+          ><i class="fa fa-times-circle"></i
+        ></a>
+      </div>
+      <!--//panel-inner-->
+    </div>
+    <!--//configure-panel-->
+
+    <!-- iframe-resizer (auto-height for embedded simulator) -->
+    <script src="https://cdn.jsdelivr.net/npm/@iframe-resizer/parent@5.5.9"></script>
+    <script>
+      (function () {
+        const iframe = document.getElementById("hybridSimIframe");
+        if (!iframe) return;
+
+        const CHILD_SRC =
+          "https://cdn.jsdelivr.net/npm/@iframe-resizer/child@5.5.7";
+        const OPTIONS = {
+          license: "GPLv3",
+          log: false,
+          checkOrigin: false,
+        };
+
+        function bind() {
+          if (typeof iframeResize !== "function") return;
+          iframeResize(OPTIONS, "#hybridSimIframe");
+        }
+
+        function tryInjectChild() {
+          try {
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            if (!doc || !doc.head) return bind();
+
+            if (doc.querySelector("script[data-irs-child]")) return bind();
+
+            const s = doc.createElement("script");
+            s.async = true;
+            s.src = CHILD_SRC;
+            s.setAttribute("data-irs-child", "1");
+            s.onload = bind;
+            doc.head.appendChild(s);
+
+            // Fallback: still bind after a short delay in case onload is blocked.
+            setTimeout(bind, 200);
+          } catch (e) {
+            // Cross-origin: cannot inject; bind anyway (requires child to include its script).
+            bind();
+          }
+        }
+
+        // Run after iframe loads so we can inject on same-origin setups.
+        iframe.addEventListener("load", tryInjectChild, { passive: true });
+
+        // If the iframe is already loaded (fast cache), attempt immediately.
+        if (
+          iframe.contentDocument &&
+          iframe.contentDocument.readyState === "complete"
+        ) {
+          tryInjectChild();
+        }
+      })();
+    </script>
+
+    <!-- Javascript -->
+    <script src="assets/plugins/popper.min.js"></script>
+    <script src="assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+    <!-- Page Specific JS -->
+    <link
+      href="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+    <script>
+      hljs.highlightAll();
+    </script>
+    <script>
+      hljs.addPlugin(new CopyButtonPlugin());
+    </script>
+    <!-- Custom JS -->
+    <script src="assets/js/blog.js"></script>
+    <!-- Dark Mode -->
+    <script src="assets/plugins/js-cookie.min.js"></script>
+    <script src="assets/js/dark-mode.js"></script>
+    <!-- Style Switcher (REMOVE ON YOUR PRODUCTION SITE) -->
+    <script src="assets/js/demo/style-switcher.js"></script>
+    <!-- Disqus Counter -->
+    <script
+      async=""
+      id="dsq-count-scr"
+      src="//qtj-me.disqus.com/count.js"
+    ></script>
+  </body>
+</html>

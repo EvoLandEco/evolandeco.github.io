@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>HerdLink - Project - Tianjian Qin</title>
+  <title>NetSpectra - Project - Tianjian Qin</title>
 
   <!-- Meta -->
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Project: HerdLink NL Livestock Trade Network Analyzer">
+  <meta name="description" content="Project: NetSpectra — Higher-Order Network Statistics for Hybrid Movement Networks">
   <meta name="author" content="Tianjian Qin">
   <link rel="shortcut icon" href="favicon.ico">
 
@@ -80,9 +80,9 @@
 
   <section class="cta-section theme-bg-light py-5">
     <div class="container single-col-max-width">
-      <h2 class="heading text-center">HerdLink</h2>
+      <h2 class="heading text-center">NetSpectra</h2>
       <p class="text-center mb-0">
-        NL Livestock Trade Network Analyzer — Explore Structure and Geography Side-by-Side.
+        Higher‑order network statistics for hybrid (farm + region) dynamic movement networks.
       </p>
     </div>
   </section>
@@ -93,39 +93,46 @@
       <div class="project-meta theme-bg-light p-4">
         <div class="row g-4 g-lg-5">
           <div class="col-md-5 col-lg-4 col-xxl-3 d-none d-md-block">
-            <img class="project-thumb img-fluid rounded" src="assets/images/project/project-herdlink.png" alt="HerdLink thumbnail">
+            <img class="project-thumb img-fluid rounded" src="assets/images/project/project-netspectra.png" alt="NetSpectra thumbnail">
           </div>
 
           <div class="col-12 col-md-7 col-lg-8 col-xxl-9">
             <div class="client-info">
-              <h3 class="client-name font-weight-bold mb-4">HerdLink</h3>
+              <h3 class="client-name font-weight-bold mb-4">NetSpectra</h3>
 
+              
               <ul class="client-meta list-unstyled">
                 <li class="mb-2">
                   <i class="fa-solid fa-code me-2"></i><strong>Stack:</strong>
-                  <i class="fa-brands fa-js me-1"></i>JavaScript, D3.js
+                  <i class="fa-brands fa-js me-1"></i>JavaScript,
+                  <span class="ms-1">D3.js</span>,
+                  <span class="ms-1">Web Workers</span>
                 </li>
                 <li class="mb-2">
                   <i class="fa-solid fa-code-commit me-2"></i><strong>Version:</strong>
-                  0.5.0-alpha <i class="fa-solid fa-flask"></i>
+                  0.10-alpha <i class="fa-solid fa-flask"></i>
                 </li>
                 <li class="mb-2">
                   <i class="fas fa-link fa-fw me-2"></i><strong>Website:</strong>
-                  <a class="theme-link" href="https://qtj.me/herdlink-web">https://qtj.me/herdlink-web</a>
+                  <a class="theme-link" href="https://github.com/EvoLandEco/netspectra">https://github.com/EvoLandEco/NetSpectra</a>
                 </li>
               </ul>
 
+
+              
               <div class="client-bio mb-4">
-                HerdLink is a lightweight web app for exploring livestock trade/movement as a network.
-                It’s built for fast, visual exploration: jump between graph and map views, focus a node,
-                replay time, and export snapshots for reports.
+                NetSpectra is a lightweight toolkit + interactive simulator for exploring
+                <strong>hybrid movement networks</strong>: keep farm-level detail in a focal region while
+                contracting the rest into regional supernodes, then evaluate dynamics with
+                <strong>higher-order statistics</strong> (temporal appearance, random-walk mass, and directed spectra).
               </div>
 
+
               <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-primary" href="https://herdlink.nl">
+                <a class="btn btn-primary" href="hybrid_simulator.html">
                   <i class="fa-solid fa-arrow-up-right-from-square me-2"></i>Open App
                 </a>
-                <a class="btn btn-outline-primary" href="blog-herdlink.html">
+                <a class="btn btn-outline-primary" href="blog-Hybrid-COROP-Farm.html">
                   <i class="fa-solid fa-book me-2"></i>Read Blog Post
                 </a>
               </div>
@@ -135,88 +142,103 @@
         </div>
       </div>
 
+      
       <div class="project-sections py-5">
 
         <div class="project-section mb-5">
           <h3 class="project-section-title mb-3">What it does</h3>
           <p>
-            HerdLink is meant for the “first pass” on a dataset: spotting structure, checking whether patterns are geographic,
-            and quickly drilling into a region/node when something looks interesting.
+            NetSpectra proposes a <strong>hybrid dynamic graph</strong> for movement/trade networks:
+            preserve <em>farm-level</em> resolution inside a chosen focal region, while contracting everything
+            outside into <em>regional supernodes</em> and <em>superflows</em>. This keeps local detail where it matters,
+            without losing a coherent national context.
           </p>
           <ul>
-            <li><strong>Graph view</strong> for network structure (connections, hubs, clusters).</li>
-            <li><strong>Map view</strong> for geography and spatial intuition.</li>
-            <li><strong>Focus mode</strong> to isolate one node/region and its neighborhood.</li>
-            <li><strong>Time replay</strong> to compare dynamics rather than static snapshots.</li>
-            <li><strong>Export</strong> screenshots for slides, notes, and reports.</li>
+            <li><strong>TEA / TNA</strong> — temporal appearance of edges/nodes (new/reactivated/persistent/churn).</li>
+            <li><strong>π‑mass</strong> — where a random walk “spends time” (Farm vs Region mass on the LIC).</li>
+            <li><strong>Magnetic Laplacian spectra</strong> — directed spectral signatures that keep flow directionality.</li>
           </ul>
+          <p class="mb-0">
+            For formal definitions and interpretation guidelines, see 
+            <a class="theme-link" href="blog-hybrid-corop-farm.html">the blog post</a>.
+          </p>
+        </div>
+
+        <div class="project-section mb-5" id="quickstart">
+          <h3 class="project-section-title mb-3">Quickstart</h3>
+          <p>
+            The simulator is a static HTML app (D3 + Web Worker). Run it from a local server so browser fetch calls work.
+          </p>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr><th>Step</th><th>Command / Action</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><kbd>1</kbd></td>
+                  <td><code>git clone https://github.com/EvoLandEco/netspectra.git</code></td>
+                </tr>
+                <tr>
+                  <td><kbd>2</kbd></td>
+                  <td><code>cd netspectra &amp;&amp; python -m http.server 8000</code></td>
+                </tr>
+                <tr>
+                  <td><kbd>3</kbd></td>
+                  <td>Open <code>http://localhost:8000/simulator/hybrid_simulator_V10.html</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="mb-0">
+            Ensure the GeoJSON files are available at the expected paths (or edit the fetch paths in the simulator):
+            <code>nl_corop.geojson</code> and <code>nl_corop_labelpoint.geojson</code>.
+          </p>
         </div>
 
         <div class="project-section mb-5">
           <h3 class="project-section-title mb-3">How to use</h3>
           <ol>
-            <li>Choose a dataset and time resolution in the top-left switches (data is fetched from the server).</li>
-            <li>Use <kbd>M</kbd> to switch Map ↔ Graph and get both perspectives quickly.</li>
-            <li>Click a node to enter focus mode; press <kbd>Q</kbd> to exit.</li>
-            <li>If time controls are available, replay or step through time to compare changes.</li>
-            <li>Export a screenshot with <kbd>S</kbd>.</li>
+            <li>Select a <strong>focal region</strong> and choose the number of farms to simulate (≤ 100).</li>
+            <li>Tune dynamics: <strong>p_keep</strong> for persistence and birth probabilities for new edges.</li>
+            <li>Use the <strong>Day</strong> slider to step through the 10-day discrete-time network.</li>
+            <li>Toggle <strong>Unweighted / Weighted</strong> to decide whether π‑mass and spectra use edge weights.</li>
+            <li>Use <strong>Spectrum quality</strong> (Fast / Balanced / Full) to trade speed for fidelity.</li>
           </ol>
-        </div>
-
-        <div class="project-section mb-5">
-          <h3 class="project-section-title mb-3">Keyboard shortcuts</h3>
-
-          <div class="table-responsive">
-            <table class="table">
-              <thead>
-              <tr>
-                <th>Key</th>
-                <th>Action</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr><td><kbd>M</kbd></td><td>Toggle Map / Graph</td></tr>
-              <tr><td><kbd>Q</kbd></td><td>Exit focus mode</td></tr>
-              <tr><td><kbd>↑</kbd> / <kbd>↓</kbd></td><td>Switch focal node</td></tr>
-              <tr><td><kbd>←</kbd> / <kbd>→</kbd></td><td>Step time (when available)</td></tr>
-              <tr><td><kbd>Space</kbd></td><td>Play / pause time replay</td></tr>
-              <tr><td><kbd>F</kbd></td><td>Jump back to the start</td></tr>
-              <tr><td><kbd>R</kbd></td><td>Restore links</td></tr>
-              <tr><td><kbd>S</kbd></td><td>Export screenshot</td></tr>
-              <tr><td><kbd>H</kbd></td><td>Toggle help overlay</td></tr>
-              <tr><td><kbd>Esc</kbd></td><td>Close help overlay</td></tr>
-              </tbody>
-            </table>
-          </div>
-
           <p class="text-muted mb-0">
-            (Buttons/mouse/touchscreen always work too — the shortcuts are just there to speed up exploration.)
+            The bottom-left status badge in the map panel shows build progress; hover it to reveal a cancel action.
           </p>
         </div>
 
         <div class="project-section mb-5">
-          <h3 class="project-section-title mb-3">Data &amp; privacy</h3>
+          <h3 class="project-section-title mb-3">Embedding</h3>
           <p>
-            The goal is to keep analysis interactive without turning it into a heavyweight pipeline.
-            HerdLink fetches the dataset from the server, then the browser takes over for exploration and rendering.
+            NetSpectra is designed to embed cleanly in articles and documentation. It supports:
           </p>
+          <ul>
+            <li>Automatic iframe height resizing via <strong>iframe-resizer</strong>.</li>
+            <li>Dark-mode synchronization with a site-level <code>#darkmode</code> checkbox (if present).</li>
+          </ul>
           <p class="mb-0">
-            Data presented are anonymized and aggregated NL livestock trade records.
+            See the example usage in:
+            <a class="theme-link" href="blog-hybrid-corop-farm.html">the blog post</a>.
           </p>
         </div>
 
         <div class="project-section mb-5">
           <h3 class="project-section-title mb-3">Roadmap</h3>
           <ul>
-            <li>More summary statistics.</li>
-            <li>More map layers.</li>
-            <li>More export options (for different statistics/timeseries).</li>
-            <li>More datasets (other animals, synthetic data).</li>
-            <li>Performance tuning for large networks.</li>
+            <li>Faster directed spectral solvers (top‑k eigensolvers / WASM backends).</li>
+            <li>Additional higher‑order temporal statistics and diagnostics.</li>
+            <li>Drop-in support for other regional maps and projections.</li>
+            <li>Weighted TEA/TNA variants for high-frequency movement systems.</li>
           </ul>
         </div>
 
       </div>
+
     </div>
   </section>
 
