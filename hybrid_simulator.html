@@ -1,0 +1,3238 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <title>Hybrid COROP–Farm Dynamic Network Simulator</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      :root {
+        /* Day mode (default) */
+        --bg: #f5f7fb;
+        --bgGrad1: rgba(2, 132, 199, 0.14);
+        --bgGrad2: rgba(16, 185, 129, 0.1);
+
+        --panel: rgba(255, 255, 255, 0.82);
+        --panel2: rgba(248, 250, 252, 0.92);
+
+        --text: #0f172a;
+        --muted: #475569;
+
+        --stroke: rgba(15, 23, 42, 0.12);
+        --stroke2: rgba(15, 23, 42, 0.18);
+
+        --accent: #0284c7;
+        --good: #10b981;
+        --warn: #f59e0b;
+        --bad: #e11d48;
+
+        --shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+        --shadow2: 0 18px 60px rgba(15, 23, 42, 0.16);
+
+        --headerBg: rgba(255, 255, 255, 0.78);
+        --headerBorder: rgba(15, 23, 42, 0.1);
+
+        --pillBg: rgba(15, 23, 42, 0.04);
+        --pillBorder: rgba(15, 23, 42, 0.16);
+
+        --ctrlBg: rgba(15, 23, 42, 0.03);
+
+        --inputBg: rgba(255, 255, 255, 0.8);
+        --inputBorder: rgba(15, 23, 42, 0.18);
+
+        --btnGradTop: rgba(2, 132, 199, 0.16);
+        --btnGradBottom: rgba(2, 132, 199, 0.06);
+        --ghostBg: rgba(15, 23, 42, 0.04);
+        --ghostBorder: rgba(15, 23, 42, 0.12);
+
+        --legendBg: rgba(255, 255, 255, 0.88);
+        --legendStroke: rgba(15, 23, 42, 0.12);
+
+        --statusBg: rgba(255, 255, 255, 0.86);
+        --statusBorder: rgba(15, 23, 42, 0.14);
+
+        --tooltipBg: rgba(255, 255, 255, 0.92);
+        --tooltipStroke: rgba(15, 23, 42, 0.16);
+
+        --barOuterBg: rgba(15, 23, 42, 0.06);
+        --barOuterBorder: rgba(15, 23, 42, 0.12);
+
+        /* Map + stats palette */
+        --mapLand: #eef2f7;
+        --coropFill: rgba(15, 23, 42, 0.03);
+        --coropStroke: rgba(15, 23, 42, 0.14);
+        --focalFill: rgba(2, 132, 199, 0.12);
+        --focalStroke: rgba(2, 132, 199, 0.55);
+
+        --edgeFF: #0f766e;
+        --edgeFR: #0284c7;
+        --edgeRF: #b45309;
+        --edgeRR: #be123c;
+
+        --nodeFarm: #0f172a;
+        --nodeRegion: #334155;
+
+        --churn: #e11d48;
+        --persist: #2563eb;
+        --react: #f59e0b;
+        --novel: #10b981;
+
+        --avgLine: rgba(15, 23, 42, 0.85);
+        --avgLine2: rgba(15, 23, 42, 0.75);
+
+        --axisZero: rgba(15, 23, 42, 0.22);
+        --dashLine: rgba(15, 23, 42, 0.3);
+
+        --panelOverlay: rgba(15, 23, 42, 0.03);
+        --panelOverlayStroke: rgba(15, 23, 42, 0.08);
+        --naCell: rgba(15, 23, 42, 0.07);
+
+        --marker: rgba(15, 23, 42, 0.55);
+        --dotStroke: rgba(0, 0, 0, 0.35);
+      }
+
+      body[data-theme="dark"] {
+        /* Dark mode (previous default) */
+        --bg: #0b0d10;
+        --bgGrad1: rgba(110, 231, 255, 0.1);
+        --bgGrad2: rgba(94, 234, 212, 0.08);
+
+        --panel: rgba(18, 21, 26, 0.65);
+        --panel2: rgba(15, 18, 22, 0.75);
+
+        --text: #e7e7e7;
+        --muted: #a9b0bb;
+
+        --stroke: rgba(255, 255, 255, 0.1);
+        --stroke2: rgba(255, 255, 255, 0.14);
+
+        --accent: #6ee7ff;
+        --good: #5eead4;
+        --warn: #fbbf24;
+        --bad: #fb7185;
+
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        --shadow2: 0 18px 60px rgba(0, 0, 0, 0.55);
+
+        --headerBg: rgba(10, 12, 15, 0.75);
+        --headerBorder: rgba(255, 255, 255, 0.1);
+
+        --pillBg: rgba(255, 255, 255, 0.06);
+        --pillBorder: rgba(255, 255, 255, 0.12);
+
+        --ctrlBg: rgba(12, 14, 18, 0.35);
+
+        --inputBg: rgba(0, 0, 0, 0.25);
+        --inputBorder: rgba(255, 255, 255, 0.12);
+
+        --btnGradTop: rgba(110, 231, 255, 0.16);
+        --btnGradBottom: rgba(110, 231, 255, 0.06);
+        --ghostBg: rgba(255, 255, 255, 0.05);
+        --ghostBorder: rgba(255, 255, 255, 0.14);
+
+        --legendBg: rgba(12, 14, 18, 0.75);
+        --legendStroke: rgba(255, 255, 255, 0.1);
+
+        --statusBg: rgba(12, 14, 18, 0.75);
+        --statusBorder: rgba(255, 255, 255, 0.12);
+
+        --tooltipBg: rgba(10, 12, 15, 0.9);
+        --tooltipStroke: rgba(255, 255, 255, 0.15);
+
+        --barOuterBg: rgba(255, 255, 255, 0.07);
+        --barOuterBorder: rgba(255, 255, 255, 0.1);
+
+        --mapLand: #0f1216;
+        --coropFill: rgba(255, 255, 255, 0.03);
+        --coropStroke: rgba(255, 255, 255, 0.1);
+        --focalFill: rgba(110, 231, 255, 0.12);
+        --focalStroke: rgba(110, 231, 255, 0.45);
+
+        --edgeFF: #5eead4;
+        --edgeFR: #6ee7ff;
+        --edgeRF: #fbbf24;
+        --edgeRR: #fb7185;
+
+        --nodeFarm: #e7e7e7;
+        --nodeRegion: #a9b0bb;
+
+        --churn: #fb7185;
+        --persist: #60a5fa;
+        --react: #fbbf24;
+        --novel: #34d399;
+
+        --avgLine: rgba(255, 255, 255, 0.85);
+        --avgLine2: rgba(255, 255, 255, 0.75);
+
+        --axisZero: rgba(255, 255, 255, 0.2);
+        --dashLine: rgba(255, 255, 255, 0.35);
+
+        --panelOverlay: rgba(255, 255, 255, 0.02);
+        --panelOverlayStroke: rgba(255, 255, 255, 0.06);
+        --naCell: rgba(255, 255, 255, 0.08);
+
+        --marker: rgba(255, 255, 255, 0.55);
+        --dotStroke: rgba(0, 0, 0, 0.55);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Helvetica,
+          Arial,
+          "Apple Color Emoji",
+          "Segoe UI Emoji";
+        background:
+          radial-gradient(
+            900px 500px at 15% 5%,
+            var(--bgGrad1),
+            transparent 60%
+          ),
+          radial-gradient(
+            900px 500px at 70% 10%,
+            var(--bgGrad2),
+            transparent 60%
+          ),
+          var(--bg);
+        color: var(--text);
+      }
+
+      header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--headerBorder);
+        background: var(--headerBg);
+        backdrop-filter: blur(10px);
+        position: sticky;
+        top: 0;
+        z-index: 60;
+      }
+      .title {
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+        flex-wrap: wrap;
+      }
+      .title h1 {
+        font-size: 16px;
+        margin: 0;
+        letter-spacing: 0.3px;
+        font-weight: 650;
+      }
+      .title .sub {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .headerRight {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      #simThemeWrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--pillBorder);
+        background: var(--pillBg);
+        color: var(--muted);
+        user-select: none;
+        line-height: 1;
+      }
+      #simThemeWrap .themeLabel {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 650;
+        letter-spacing: 0.2px;
+      }
+
+      .switch {
+        position: relative;
+        width: 42px;
+        height: 22px;
+        flex: 0 0 auto;
+      }
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        inset: 0;
+        border-radius: 999px;
+        background: var(--panelOverlay);
+        border: 1px solid var(--stroke2);
+        cursor: pointer;
+        transition:
+          background 0.15s ease,
+          border-color 0.15s ease;
+      }
+      .slider:before {
+        content: "";
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        left: 3px;
+        top: 2.5px;
+        border-radius: 50%;
+        background: var(--text);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+        transition:
+          transform 0.15s ease,
+          background 0.15s ease;
+      }
+      .switch input:checked + .slider {
+        background: linear-gradient(90deg, var(--accent), var(--good));
+        border-color: var(--accent);
+      }
+      .switch input:checked + .slider:before {
+        transform: translateX(20px);
+        background: #ffffff;
+      }
+      #simThemeWrap.hidden {
+        display: none;
+      }
+
+      /* Layout:
+        - Wide: 3 columns: controls | map | (TEA+TNA stack)
+          Row1: controls + map + TEA/TNA stack
+          Row2: π-mass + magnetic spectra (equal width) spanning controls+map; TEA/TNA continues
+        - Medium: 2 columns: controls | map
+          Row2: π-mass + magnetic spectra (equal width)
+          Row3: TEA + TNA side-by-side (equal width)
+        - Narrow: stack; controls collapse; π-mass above magnetic spectra
+      */
+      .layout {
+        display: grid;
+        grid-template-columns: 320px 1fr 380px;
+        grid-template-areas:
+          "controls map tea"
+          "stats    stats tea";
+        gap: 12px;
+        padding: 12px;
+        max-width: 1720px;
+        margin: 0 auto;
+      }
+
+      /* Cards */
+      .card {
+        border: 1px solid var(--stroke);
+        border-radius: 14px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+        min-height: 220px;
+      }
+      .card h2 {
+        margin: 0;
+        padding: 10px 12px;
+        font-size: 13px;
+        font-weight: 650;
+        letter-spacing: 0.25px;
+        background: var(--panel2);
+        border-bottom: 1px solid var(--stroke);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .card h2 .hint {
+        font-size: 11px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      #controls-card {
+        grid-area: controls;
+        min-height: 420px;
+      }
+      #map-panel {
+        grid-area: map;
+        min-height: 720px;
+      }
+
+      #piMagRow {
+        grid-area: stats;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        align-items: stretch;
+      }
+      #pi-card {
+        min-height: 320px;
+      }
+      #mag-card {
+        min-height: 360px;
+      }
+
+      #teaWrap {
+        grid-area: tea;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 720px;
+      }
+      #tea-card,
+      #tna-card {
+        min-height: 330px;
+      }
+
+      svg {
+        display: block;
+        width: 100%;
+        height: calc(100% - 38px);
+      }
+
+      .pill {
+        display: inline-block;
+        padding: 2px 7px;
+        border-radius: 999px;
+        border: 1px solid var(--pillBorder);
+        background: var(--pillBg);
+        color: var(--muted);
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      .mono {
+        font-variant-numeric: tabular-nums;
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+      }
+
+      /* Controls stack */
+      .ctrl-stack {
+        padding: 10px 10px 12px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .ctrl {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px 10px;
+        margin-bottom: 4px;
+        border: 1px solid var(--stroke);
+        border-radius: 12px;
+        background: var(--ctrlBg);
+      }
+      .ctrl label {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.2px;
+      }
+      .ctrl .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .ctrl select,
+      .ctrl input[type="number"] {
+        width: 100%;
+        padding: 7px 8px;
+        border-radius: 10px;
+        border: 1px solid var(--inputBorder);
+        background: var(--inputBg);
+        color: var(--text);
+        outline: none;
+      }
+      .ctrl input[type="range"] {
+        width: 100%;
+        accent-color: var(--accent);
+      }
+      .ctrl .value {
+        font-size: 12px;
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        opacity: 0.95;
+        flex: 0 0 auto;
+        width: 56px;
+        text-align: right;
+      }
+
+      .btn {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--stroke2);
+        background: linear-gradient(
+          180deg,
+          var(--btnGradTop),
+          var(--btnGradBottom)
+        );
+        color: var(--text);
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: var(--shadow);
+        transition:
+          transform 0.08s ease,
+          opacity 0.1s ease;
+        user-select: none;
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .btn[disabled] {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .btn.ghost {
+        background: var(--ghostBg);
+        border: 1px solid var(--ghostBorder);
+        box-shadow: none;
+        font-weight: 650;
+        width: auto;
+        padding: 8px 10px;
+      }
+
+      .note {
+        padding: 10px 10px 0 10px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+      .note b {
+        color: var(--text);
+        font-weight: 650;
+      }
+
+      /* Map overlays */
+      .legend {
+        position: absolute;
+        right: 12px;
+        bottom: 12px;
+        padding: 8px 10px;
+        border: 1px solid var(--stroke);
+        border-radius: 12px;
+        background: var(--legendBg);
+        backdrop-filter: blur(10px);
+        font-size: 11px;
+        color: var(--muted);
+        box-shadow: var(--shadow);
+      }
+      .legend .item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 5px 0;
+      }
+      .swatch {
+        width: 14px;
+        height: 8px;
+        border-radius: 999px;
+        border: 1px solid var(--pillBorder);
+      }
+
+      .status {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        padding: 8px 10px;
+        border-radius: 12px;
+        border: 1px solid var(--statusBorder);
+        background: var(--statusBg);
+        backdrop-filter: blur(10px);
+        font-size: 12px;
+        color: var(--muted);
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 10;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 4px rgba(110, 231, 255, 0.15);
+        flex: 0 0 auto;
+      }
+
+      .status {
+        user-select: none;
+      }
+
+      .statusCol {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 172px;
+        line-height: 1.15;
+      }
+      .statusBarOuter {
+        width: 172px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--barOuterBg);
+        border: 1px solid var(--stroke);
+        overflow: hidden;
+        display: none;
+      }
+      .statusBarInner {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(
+          90deg,
+          rgba(110, 231, 255, 0.9),
+          rgba(94, 234, 212, 0.9)
+        );
+        transition: width 0.08s linear;
+      }
+      .statusPct {
+        display: none;
+        min-width: 44px;
+        text-align: right;
+        color: var(--muted);
+        opacity: 0.95;
+      }
+
+      .status.busy {
+        cursor: pointer;
+      }
+      .status.busy .statusBarOuter {
+        display: block;
+      }
+      .status.busy .statusPct {
+        display: block;
+      }
+
+      .status.busy:hover {
+        border-color: rgba(251, 113, 133, 0.5);
+        background: rgba(251, 113, 133, 0.1);
+        color: var(--text);
+      }
+      .status.busy:hover .dot {
+        background: var(--bad);
+        box-shadow: 0 0 0 4px rgba(251, 113, 133, 0.18);
+      }
+
+      .tooltip {
+        position: fixed;
+        pointer-events: none;
+        z-index: 120;
+        opacity: 0;
+        transform: translate(12px, 12px);
+        background: var(--tooltipBg);
+        border: 1px solid var(--tooltipStroke);
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 12px;
+        color: var(--text);
+        box-shadow: var(--shadow);
+        max-width: 340px;
+      }
+      .tooltip .muted {
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      /* Narrow layout: move TEA/TNA below stats in a single row (equal width) */
+      @media (max-width: 1280px) {
+        .layout {
+          grid-template-columns: 320px 1fr;
+          grid-template-areas:
+            "controls map"
+            "stats    stats"
+            "tea      tea";
+        }
+        #teaWrap {
+          flex-direction: row;
+          min-height: auto;
+        }
+        #tea-card,
+        #tna-card {
+          flex: 1 1 0;
+          min-width: 0;
+        }
+        #map-panel {
+          min-height: 620px;
+        }
+      }
+
+      /* Very narrow: stack panels, and stack π-mass above magnetic spectra */
+      @media (max-width: 860px) {
+        .layout {
+          grid-template-columns: 1fr;
+          grid-template-areas:
+            "controls"
+            "map"
+            "stats"
+            "tea";
+        }
+        #piMagRow {
+          grid-template-columns: 1fr;
+        }
+        #teaWrap {
+          flex-direction: column;
+        }
+        #controls-card {
+          min-height: 380px;
+        }
+        #map-panel {
+          min-height: 420px;
+        }
+        #pi-card {
+          min-height: 300px;
+        }
+        #mag-card {
+          min-height: 340px;
+        }
+      }
+
+      /* Collapsible controls for very narrow view (map stacked below controls) */
+      #ctrlToggleBtn {
+        display: none;
+      }
+      #ctrlSummary {
+        display: none;
+        padding: 10px 10px 0 10px;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      #ctrlSummary .pill {
+        background: var(--ghostBg);
+      }
+
+      @media (max-width: 860px) {
+        #ctrlToggleBtn {
+          display: inline-flex;
+        }
+        #ctrlSummary {
+          display: flex;
+        }
+        body.controls-collapsed #ctrlAdvanced {
+          display: none;
+        }
+        body.controls-collapsed #controls-card .note {
+          display: none;
+        }
+        body.controls-collapsed #controls-card {
+          min-height: unset;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="title">
+        <h1>Hybrid COROP–Farm Dynamic Network Simulator</h1>
+      </div>
+      <div class="headerRight">
+        <div id="simThemeWrap" title="Toggle day/dark mode">
+          <span class="themeLabel" id="simThemeText">Day</span>
+          <label class="switch" aria-label="Theme toggle">
+            <input id="simDarkToggle" type="checkbox" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="pill mono" id="topBadge">ready</div>
+      </div>
+    </header>
+    <div class="layout">
+      <div class="card" id="controls-card">
+        <h2>
+          <span>Controls</span>
+          <button
+            class="btn ghost"
+            id="ctrlToggleBtn"
+            title="Show/hide controls"
+          >
+            Menu
+          </button>
+          <span class="pill" id="runBadge">—</span>
+        </h2>
+        <div class="ctrl-stack">
+          <div aria-live="polite" id="ctrlSummary"></div>
+          <div id="ctrlAdvanced">
+            <div class="ctrl">
+              <label>Focal COROP (farm-level)</label>
+              <div class="row">
+                <select id="coropSelect"></select>
+              </div>
+            </div>
+            <div class="ctrl">
+              <label>Farms in focal (≤ 100)</label>
+              <div class="row">
+                <input
+                  id="farmCount"
+                  max="100"
+                  min="5"
+                  step="1"
+                  type="range"
+                  value="30"
+                />
+                <div class="value mono" id="farmCountVal">30</div>
+              </div>
+            </div>
+            <div class="ctrl">
+              <label>Edge persistence p<sub>keep</sub></label>
+              <div class="row">
+                <input
+                  id="pKeep"
+                  max="0.98"
+                  min="0"
+                  step="0.01"
+                  type="range"
+                  value="0.65"
+                />
+                <div class="value mono" id="pKeepVal">0.65</div>
+              </div>
+            </div>
+            <div class="ctrl">
+              <label>Birth prob inside FF</label>
+              <div class="row">
+                <input
+                  id="pBirthFF"
+                  max="0.25"
+                  min="0"
+                  step="0.005"
+                  type="range"
+                  value="0.04"
+                />
+                <div class="value mono" id="pBirthFFVal">0.040</div>
+              </div>
+            </div>
+            <div class="ctrl">
+              <label>Birth prob (FR/RF/RR)</label>
+              <div class="row">
+                <input
+                  id="pBirthX"
+                  max="0.12"
+                  min="0"
+                  step="0.002"
+                  type="range"
+                  value="0.015"
+                />
+                <div class="value mono" id="pBirthXVal">0.015</div>
+              </div>
+            </div>
+            <div class="ctrl">
+              <label>Magnetic charge q</label>
+              <div class="row">
+                <input
+                  id="qCharge"
+                  max="0.5"
+                  min="0"
+                  step="0.01"
+                  type="range"
+                  value="0.25"
+                />
+                <div class="value mono" id="qChargeVal">0.25</div>
+              </div>
+            </div>
+            <div class="ctrl">
+              <label>Spectrum quality</label>
+              <div class="row">
+                <select
+                  id="qualitySelect"
+                  title="Fast: magnetic spectra every other day + interpolation. Balanced: daily. Full: daily with more eigenvalues."
+                >
+                  <option value="fast">Fast</option>
+                  <option selected="" value="balanced">Balanced</option>
+                  <option value="full">Full</option>
+                </select>
+              </div>
+            </div>
+            <div class="ctrl">
+              <label>Random seed</label>
+              <div class="row">
+                <input id="seed" min="0" step="1" type="number" value="42" />
+              </div>
+            </div>
+            <button class="btn" id="regenBtn">Regenerate</button>
+          </div>
+          <div id="ctrlDayAlways">
+            <div class="ctrl">
+              <label>Day</label>
+              <div class="row">
+                <input
+                  id="daySlider"
+                  max="9"
+                  min="0"
+                  step="1"
+                  type="range"
+                  value="0"
+                />
+                <div class="value mono" id="dayVal">1 / 10</div>
+              </div>
+            </div>
+
+            <div class="ctrl">
+              <label>Stats weighting (π-mass + spectrum)</label>
+              <div class="row">
+                <select id="weightMode">
+                  <option selected value="unweighted">Unweighted</option>
+                  <option value="weighted">Weighted</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="map-panel">
+        <h2>
+          <span
+            >Network on NL COROP map
+            </span
+          >
+          <span class="pill" id="mapBadge">loading…</span>
+        </h2>
+        <svg id="mapSvg"></svg>
+        <div class="legend" id="mapLegend"></div>
+        <div
+          class="status"
+          id="statusBox"
+          role="button"
+          tabindex="0"
+          aria-label="Build status"
+        >
+          <span class="dot" id="statusDot"></span>
+          <div class="statusCol">
+            <div id="statusText">Loading geojson…</div>
+            <div class="statusBarOuter" id="statusBarOuter" aria-hidden="true">
+              <div class="statusBarInner" id="statusBarInner"></div>
+            </div>
+          </div>
+          <div class="statusPct mono" id="statusPct"></div>
+        </div>
+      </div>
+      <div id="piMagRow">
+        <div class="card" id="pi-card">
+          <h2>
+            <span
+              >π-mass
+              </span
+            >
+            <span class="pill" id="piBadge">—</span>
+          </h2>
+          <svg id="piSvg"></svg>
+        </div>
+        <div class="card" id="mag-card">
+          <h2>
+            <span
+              >Magnetic Laplacian spectrum
+              </span
+            >
+            <span class="pill" id="magBadge">—</span>
+          </h2>
+          <svg id="magSvg"></svg>
+        </div>
+      </div>
+      <div id="teaWrap">
+        <div class="card" id="tea-card">
+          <h2>
+            <span
+              >TEA
+              </span
+            >
+            <span class="pill" id="teaBadge">—</span>
+          </h2>
+          <svg id="teaSvg"></svg>
+        </div>
+        <div class="card" id="tna-card">
+          <h2>
+            <span
+              >TNA
+              </span
+            >
+            <span class="pill" id="tnaBadge">—</span>
+          </h2>
+          <svg id="tnaSvg"></svg>
+        </div>
+      </div>
+    </div>
+    <div class="tooltip" id="tip"></div>
+
+    <script>
+      (function () {
+        const T = 10;
+
+        const QUALITY_PRESETS = {
+          fast: { kEig: 10, magStep: 2 },
+          balanced: { kEig: 18, magStep: 1 },
+          full: { kEig: 30, magStep: 1 },
+        };
+
+        const COLORS = {
+          land: "var(--mapLand)",
+          borderSoft: "var(--coropStroke)",
+          focalFill: "var(--focalFill)",
+          focalStroke: "var(--focalStroke)",
+          edgeFF: "var(--edgeFF)",
+          edgeFR: "var(--edgeFR)",
+          edgeRF: "var(--edgeRF)",
+          edgeRR: "var(--edgeRR)",
+          farm: "var(--nodeFarm)",
+          region: "var(--nodeRegion)",
+          churn: "var(--churn)",
+          persist: "var(--persist)",
+          react: "var(--react)",
+          novel: "var(--novel)",
+          avgLine: "var(--avgLine)",
+          avgLine2: "var(--avgLine2)",
+        };
+
+        const tip = d3.select("#tip");
+        function showTip(html, evt) {
+          tip
+            .html(html)
+            .style("opacity", 1)
+            .style("left", evt.clientX + 12 + "px")
+            .style("top", evt.clientY + 12 + "px");
+        }
+        function hideTip() {
+          tip.style("opacity", 0);
+        }
+
+        function setStatus(text) {
+          d3.select("#statusText").text(text);
+        }
+        function setBadge(sel, text) {
+          d3.select(sel).text(text);
+        }
+
+        function fmt3(x) {
+          return (Math.round(x * 1000) / 1000).toFixed(3);
+        }
+
+        const el = {
+          coropSelect: document.getElementById("coropSelect"),
+          farmCount: document.getElementById("farmCount"),
+          farmCountVal: document.getElementById("farmCountVal"),
+          pKeep: document.getElementById("pKeep"),
+          pKeepVal: document.getElementById("pKeepVal"),
+          pBirthFF: document.getElementById("pBirthFF"),
+          pBirthFFVal: document.getElementById("pBirthFFVal"),
+          pBirthX: document.getElementById("pBirthX"),
+          pBirthXVal: document.getElementById("pBirthXVal"),
+          qCharge: document.getElementById("qCharge"),
+          qChargeVal: document.getElementById("qChargeVal"),
+          qualitySelect: document.getElementById("qualitySelect"),
+          seed: document.getElementById("seed"),
+          regenBtn: document.getElementById("regenBtn"),
+          ctrlToggleBtn: document.getElementById("ctrlToggleBtn"),
+          ctrlSummary: document.getElementById("ctrlSummary"),
+          daySlider: document.getElementById("daySlider"),
+          dayVal: document.getElementById("dayVal"),
+          weightMode: document.getElementById("weightMode"),
+
+          statusBox: document.getElementById("statusBox"),
+          statusDot: document.getElementById("statusDot"),
+          statusText: document.getElementById("statusText"),
+          statusBarOuter: document.getElementById("statusBarOuter"),
+          statusBarInner: document.getElementById("statusBarInner"),
+          statusPct: document.getElementById("statusPct"),
+
+          simThemeWrap: document.getElementById("simThemeWrap"),
+          simThemeText: document.getElementById("simThemeText"),
+          simDarkToggle: document.getElementById("simDarkToggle"),
+        };
+
+        function wireValueMirrors() {
+          function sync() {
+            el.farmCountVal.textContent = el.farmCount.value;
+            el.pKeepVal.textContent = fmt3(+el.pKeep.value);
+            el.pBirthFFVal.textContent = (+el.pBirthFF.value).toFixed(3);
+            el.pBirthXVal.textContent = (+el.pBirthX.value).toFixed(3);
+            el.qChargeVal.textContent = fmt3(+el.qCharge.value);
+            el.dayVal.textContent = Number(el.daySlider.value) + 1 + " / 10";
+            updateCtrlSummary();
+          }
+          ["input", "change"].forEach((ev) => {
+            el.farmCount.addEventListener(ev, sync);
+            el.pKeep.addEventListener(ev, sync);
+            el.pBirthFF.addEventListener(ev, sync);
+            el.pBirthX.addEventListener(ev, sync);
+            el.qCharge.addEventListener(ev, sync);
+            el.daySlider.addEventListener(ev, sync);
+            if (el.weightMode) el.weightMode.addEventListener(ev, sync);
+          });
+          sync();
+        }
+
+        function updateCtrlSummary() {
+          if (!el.ctrlSummary) return;
+          const items = [
+            { t: "focal", v: el.coropSelect.value || "—" },
+            { t: "farms", v: el.farmCount.value },
+            { t: "p_keep", v: fmt3(+el.pKeep.value) },
+            { t: "p_FF", v: (+el.pBirthFF.value).toFixed(3) },
+            { t: "p_X", v: (+el.pBirthX.value).toFixed(3) },
+            { t: "q", v: fmt3(+el.qCharge.value) },
+            {
+              t: "stats",
+              v: el.weightMode ? el.weightMode.value : "unweighted",
+            },
+            { t: "quality", v: el.qualitySelect.value },
+            { t: "seed", v: el.seed.value },
+          ];
+          el.ctrlSummary.innerHTML = items
+            .map((d) => `<span class="pill mono">${d.t}: ${d.v}</span>`)
+            .join("");
+        }
+
+        function applyControlsCollapse() {
+          document.body.classList.toggle(
+            "controls-collapsed",
+            state.isNarrow && state.controlsCollapsed,
+          );
+          if (el.ctrlToggleBtn) {
+            el.ctrlToggleBtn.textContent = state.controlsCollapsed
+              ? "Show controls"
+              : "Hide controls";
+          }
+          updateCtrlSummary();
+          scheduleFullRerender();
+        }
+
+        function installControlsCollapseHandling() {
+          const mq = window.matchMedia("(max-width: 860px)");
+          function sync() {
+            const wasNarrow = state.isNarrow;
+            state.isNarrow = !!mq.matches;
+
+            if (state.isNarrow && !wasNarrow) {
+              // Entering narrow mode: collapse by default (per requirement)
+              state.controlsCollapsed = true;
+            }
+            if (!state.isNarrow) {
+              // Leaving narrow mode: always show full controls
+              state.controlsCollapsed = false;
+              document.body.classList.remove("controls-collapsed");
+            }
+            applyControlsCollapse();
+          }
+
+          if (mq.addEventListener) mq.addEventListener("change", sync);
+          else mq.addListener(sync);
+
+          if (el.ctrlToggleBtn) {
+            el.ctrlToggleBtn.addEventListener("click", () => {
+              if (!state.isNarrow) return;
+              state.controlsCollapsed = !state.controlsCollapsed;
+              applyControlsCollapse();
+            });
+          }
+          sync();
+        }
+
+        const state = {
+          corop: null,
+          labels: null,
+          coropList: [],
+          coropNameByCode: new Map(),
+          labelXYByCode: new Map(),
+          focalCode: null,
+
+          nodes: [],
+          edgesByDay: [],
+          tea: { rows: [], novelty: 0, persistence: 0 },
+          tna: { rows: [], novelty: 0, persistence: 0 },
+          pi: [],
+          magEigs: [],
+
+          day: 0,
+          worker: null,
+          workerURL: null,
+          busy: false,
+          kEig: QUALITY_PRESETS.balanced.kEig,
+          magStep: QUALITY_PRESETS.balanced.magStep,
+
+          resizeInstalled: false,
+          controlsCollapsed: false,
+          isNarrow: false,
+          rerenderPending: false,
+
+          progressStage: "",
+          progressPct: 0,
+          hoverCancel: false,
+          phase1Ready: false,
+        };
+
+        const themeSync = {
+          ext: null,
+          extWhere: null,
+          lock: false,
+        };
+
+        function findExternalDarkmodeToggle() {
+          const local = document.getElementById("darkmode");
+          if (local && local.type === "checkbox")
+            return { el: local, where: "document" };
+
+          try {
+            if (
+              window.parent &&
+              window.parent !== window &&
+              window.parent.document
+            ) {
+              const p = window.parent.document.getElementById("darkmode");
+              if (p && p.type === "checkbox") return { el: p, where: "parent" };
+            }
+          } catch (e) {}
+          return null;
+        }
+
+        function applyTheme(isDark) {
+          const dark = !!isDark;
+          if (dark) document.body.setAttribute("data-theme", "dark");
+          else document.body.removeAttribute("data-theme");
+
+          if (el.simThemeText)
+            el.simThemeText.textContent = dark ? "Dark" : "Day";
+          if (el.simDarkToggle) el.simDarkToggle.checked = dark;
+
+          if (!themeSync.ext) {
+            try {
+              localStorage.setItem(
+                "hybrid_simulator_theme",
+                dark ? "dark" : "light",
+              );
+            } catch (e) {}
+          }
+          scheduleFullRerender();
+        }
+
+        function attachExternalToggle(ext) {
+          themeSync.ext = ext.el;
+          themeSync.extWhere = ext.where;
+
+          if (ext.where === "document" && el.simThemeWrap) {
+            el.simThemeWrap.classList.add("hidden");
+          }
+
+          ext.el.addEventListener("change", () => {
+            if (themeSync.lock) return;
+            themeSync.lock = true;
+            applyTheme(!!ext.el.checked);
+            themeSync.lock = false;
+          });
+
+          applyTheme(!!ext.el.checked);
+        }
+
+        function initThemeSync() {
+          const ext = findExternalDarkmodeToggle();
+
+          if (ext) {
+            attachExternalToggle(ext);
+          } else {
+            let initialDark = false;
+            try {
+              const saved = localStorage.getItem("hybrid_simulator_theme");
+              if (saved === "dark") initialDark = true;
+            } catch (e) {}
+            applyTheme(initialDark);
+
+            let tries = 0;
+            const maxTries = 30; // ~7.5s @ 250ms
+            const retry = () => {
+              if (themeSync.ext) return;
+              const ext2 = findExternalDarkmodeToggle();
+              if (ext2) return attachExternalToggle(ext2);
+              tries++;
+              if (tries < maxTries) setTimeout(retry, 250);
+            };
+            setTimeout(retry, 250);
+          }
+
+          if (el.simDarkToggle) {
+            el.simDarkToggle.addEventListener("change", () => {
+              if (themeSync.lock) return;
+
+              const dark = !!el.simDarkToggle.checked;
+              applyTheme(dark);
+
+              if (themeSync.ext) {
+                try {
+                  themeSync.lock = true;
+                  themeSync.ext.checked = dark;
+                  const Ev =
+                    (themeSync.ext.ownerDocument &&
+                      themeSync.ext.ownerDocument.defaultView &&
+                      themeSync.ext.ownerDocument.defaultView.Event) ||
+                    Event;
+                  themeSync.ext.dispatchEvent(
+                    new Ev("change", { bubbles: true }),
+                  );
+                } catch (e) {}
+                themeSync.lock = false;
+              }
+            });
+          }
+        }
+
+        function setProgress(stage, pct) {
+          const p = Math.max(0, Math.min(1, pct ?? 0));
+          state.progressStage = stage || "Working…";
+          state.progressPct = p;
+          if (!state.hoverCancel) {
+            d3.select("#statusText").text(state.progressStage);
+          }
+          if (el.statusBarInner)
+            el.statusBarInner.style.width = (100 * p).toFixed(1) + "%";
+          if (el.statusPct)
+            el.statusPct.textContent = Math.round(100 * p) + "%";
+        }
+
+        function clearProgress() {
+          state.progressStage = "";
+          state.progressPct = 0;
+          state.hoverCancel = false;
+          if (el.statusBarInner) el.statusBarInner.style.width = "0%";
+          if (el.statusPct) el.statusPct.textContent = "";
+        }
+
+        function setBusy(on) {
+          state.busy = on;
+          el.regenBtn.disabled = on;
+          d3.select("#topBadge").text(on ? "busy" : "ready");
+          if (el.statusBox) el.statusBox.classList.toggle("busy", !!on);
+          if (!on) clearProgress();
+        }
+
+        function populateCoropSelect() {
+          el.coropSelect.innerHTML = "";
+          state.coropList.forEach((d) => {
+            const opt = document.createElement("option");
+            opt.value = d.code;
+            opt.textContent = d.code + " — " + d.name;
+            el.coropSelect.appendChild(opt);
+          });
+          if (state.coropList.length) {
+            state.focalCode = state.coropList[0].code;
+            el.coropSelect.value = state.focalCode;
+          }
+        }
+
+        function edgeKey(u, v) {
+          return u + "→" + v;
+        }
+        function edgeType(uIdx, vIdx) {
+          const ku = state.nodes[uIdx].kind;
+          const kv = state.nodes[vIdx].kind;
+          if (ku === "farm" && kv === "farm") return "FF";
+          if (ku === "farm" && kv === "region") return "FR";
+          if (ku === "region" && kv === "farm") return "RF";
+          return "RR";
+        }
+        function edgeColor(type) {
+          return type === "FF"
+            ? COLORS.edgeFF
+            : type === "FR"
+              ? COLORS.edgeFR
+              : type === "RF"
+                ? COLORS.edgeRF
+                : COLORS.edgeRR;
+        }
+
+        function renderLegend() {
+          const items = [
+            { k: "FF", label: "Farm→Farm", c: COLORS.edgeFF },
+            { k: "FR", label: "Farm→Region", c: COLORS.edgeFR },
+            { k: "RF", label: "Region→Farm", c: COLORS.edgeRF },
+            { k: "RR", label: "Region→Region", c: COLORS.edgeRR },
+          ];
+          const box = d3.select("#mapLegend");
+          box.html("");
+          box
+            .append("div")
+            .style("font-weight", 650)
+            .style("color", "var(--text)")
+            .style("margin-bottom", "6px")
+            .text("Edge blocks");
+          items.forEach((d) => {
+            const row = box.append("div").attr("class", "item");
+            row.append("span").attr("class", "swatch").style("background", d.c);
+            row.append("span").text(d.label);
+          });
+          box
+            .append("div")
+            .style("margin-top", "8px")
+            .style("color", "var(--muted)")
+            .text("Farms: ●   Regions: ▲");
+        }
+
+        function renderMap() {
+          const svg = d3.select("#mapSvg");
+          const node = svg.node();
+          const w = node.clientWidth || 0;
+          const h = node.clientHeight || 0;
+          if (w < 30 || h < 30 || !state.corop) return;
+
+          svg.selectAll("*").remove();
+
+          const projection = d3
+            .geoIdentity()
+            .reflectY(true)
+            .fitSize([w, h], state.corop);
+          const path = d3.geoPath(projection);
+
+          const g = svg.append("g").attr("class", "root");
+
+          const defs = svg.append("defs");
+          defs
+            .append("marker")
+            .attr("id", "arrow")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 12)
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "var(--marker)");
+
+          g.append("rect")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", w)
+            .attr("height", h)
+            .attr("fill", COLORS.land);
+
+          const coropG = g.append("g").attr("class", "corop");
+          coropG
+            .selectAll("path")
+            .data(state.corop.features)
+            .join("path")
+            .attr("d", path)
+            .attr("fill", (d) =>
+              String(d.properties.statcode) === String(state.focalCode)
+                ? COLORS.focalFill
+                : "var(--coropFill)",
+            )
+            .attr("stroke", (d) =>
+              String(d.properties.statcode) === String(state.focalCode)
+                ? COLORS.focalStroke
+                : COLORS.borderSoft,
+            )
+            .attr("stroke-width", (d) =>
+              String(d.properties.statcode) === String(state.focalCode)
+                ? 1.2
+                : 0.7,
+            );
+
+          const edgeG = g.append("g").attr("class", "edges");
+          const nodeG = g.append("g").attr("class", "nodes");
+
+          function nodeXY(i) {
+            const n = state.nodes[i];
+            const p = projection([n.x, n.y]);
+            return { x: p[0], y: p[1] };
+          }
+
+          function curvePath(u, v) {
+            const a = nodeXY(u);
+            const b = nodeXY(v);
+            const mx = (a.x + b.x) / 2;
+            const my = (a.y + b.y) / 2;
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            const ux = -dy / dist;
+            const uy = dx / dist;
+            const bend = Math.min(40, 0.18 * dist);
+            const cx = mx + ux * bend;
+            const cy = my + uy * bend;
+            return `M${a.x},${a.y} Q${cx},${cy} ${b.x},${b.y}`;
+          }
+
+          function update() {
+            const day = state.day;
+            const edges = state.edgesByDay[day] || [];
+
+            const badgeText = `${state.focalCode} · day ${day + 1}/${T} · |E|=${edges.length} · |V|=${state.nodes.length}`;
+            setBadge("#mapBadge", badgeText);
+
+            const eSel = edgeG
+              .selectAll("path")
+              .data(edges, (d) => edgeKey(d.u, d.v));
+
+            eSel.exit().remove();
+
+            const eEnter = eSel
+              .enter()
+              .append("path")
+              .attr("fill", "none")
+              .attr(
+                "stroke-width",
+                (d) => 0.4 + (1.2 * Math.log1p(d.w)) / Math.log(121),
+              )
+              .attr("stroke-linecap", "round")
+              .attr("stroke-opacity", 0.65)
+              .attr("marker-end", "url(#arrow)")
+              .on("mousemove", (evt, d) => {
+                const ty = edgeType(d.u, d.v);
+                showTip(
+                  `<div><b>Edge</b> <span class="pill">${ty}</span></div>
+             <div class="muted mono">${state.nodes[d.u].id} → ${state.nodes[d.v].id}</div>
+             <div class="muted">weight≈<span class="mono">${d.w.toFixed(1)}</span></div>`,
+                  evt,
+                );
+              })
+              .on("mouseleave", hideTip);
+
+            eEnter
+              .merge(eSel)
+              .attr("stroke", (d) => edgeColor(edgeType(d.u, d.v)))
+              .attr("d", (d) => curvePath(d.u, d.v));
+
+            const nodes = state.nodes.map((d, i) => ({ ...d, idx: i }));
+            const nSel = nodeG.selectAll("path.node").data(nodes, (d) => d.id);
+
+            nSel.exit().remove();
+
+            const nEnter = nSel
+              .enter()
+              .append("path")
+              .attr("class", "node")
+              .attr("stroke", "rgba(0,0,0,0.6)")
+              .attr("stroke-width", 0.6)
+              .attr("opacity", 0.95)
+              .on("mousemove", (evt, d) => {
+                const role = d.kind === "farm" ? "farm" : "region";
+                showTip(
+                  `<div><b>Node</b> <span class="pill">${role}</span></div>
+             <div class="muted mono">${d.id}</div>
+             <div class="muted">${d.kind === "region" ? d.name || d.corop : "focal " + d.corop}</div>`,
+                  evt,
+                );
+              })
+              .on("mouseleave", hideTip);
+
+            nEnter
+              .merge(nSel)
+              .attr("fill", (d) =>
+                d.kind === "farm" ? COLORS.farm : COLORS.region,
+              )
+              .attr("transform", (d) => {
+                const p = projection([d.x, d.y]);
+                return `translate(${p[0]},${p[1]})`;
+              })
+              .attr("d", (d) =>
+                d.kind === "farm"
+                  ? d3.symbol().type(d3.symbolCircle).size(18)()
+                  : d3.symbol().type(d3.symbolTriangle).size(70)(),
+              );
+          }
+
+          renderLegend();
+          update();
+          state._updateMap = update;
+        }
+
+        function renderStackedBars(svgSel, rows, opts) {
+          const svg = d3.select(svgSel);
+          const node = svg.node();
+          const W = node.clientWidth || 0;
+          const H = node.clientHeight || 0;
+          if (W < 30 || H < 30) return;
+
+          svg.selectAll("*").remove();
+
+          const margin = { top: 18, right: 12, bottom: 26, left: 34 };
+          const w = W - margin.left - margin.right;
+          const h = H - margin.top - margin.bottom;
+
+          const g = svg
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+          const x = d3
+            .scaleBand()
+            .domain(rows.map((d) => d.t))
+            .range([0, w])
+            .padding(0.12);
+
+          const maxPos =
+            d3.max(
+              rows,
+              (d) => d.persist_count + d.reactivated_count + d.new_count,
+            ) || 1;
+          const maxNeg = d3.max(rows, (d) => d.ceased_prev_count) || 0;
+          const y = d3
+            .scaleLinear()
+            .domain([-maxNeg * 1.15, maxPos * 1.15])
+            .range([h, 0])
+            .nice();
+
+          g.append("g")
+            .attr("transform", `translate(0,${h})`)
+            .call(d3.axisBottom(x).tickFormat((d) => "D" + (d + 1)));
+          g.append("g").call(d3.axisLeft(y).ticks(5));
+
+          g.append("line")
+            .attr("x1", 0)
+            .attr("x2", w)
+            .attr("y1", y(0))
+            .attr("y2", y(0))
+            .attr("stroke", "var(--axisZero)")
+            .attr("stroke-width", 1);
+
+          const posKeys = ["persist_count", "reactivated_count", "new_count"];
+          const colors = {
+            persist_count: COLORS.persist,
+            reactivated_count: COLORS.react,
+            new_count: COLORS.novel,
+          };
+
+          const stack = d3.stack().keys(posKeys);
+          const series = stack(rows);
+
+          const grp = g.append("g");
+          grp
+            .selectAll("g")
+            .data(series)
+            .join("g")
+            .attr("fill", (d) => colors[d.key])
+            .selectAll("rect")
+            .data((d) =>
+              d.map((v) => ({
+                key: d.key,
+                t: v.data.t,
+                y0: v[0],
+                y1: v[1],
+                data: v.data,
+              })),
+            )
+            .join("rect")
+            .attr("x", (d) => x(d.t))
+            .attr("width", x.bandwidth())
+            .attr("y", (d) => y(d.y1))
+            .attr("height", (d) => Math.max(0.5, y(d.y0) - y(d.y1)))
+            .attr("rx", 3)
+            .attr("ry", 3)
+            .attr("opacity", 0.95)
+            .on("mousemove", (evt, d) => {
+              showTip(
+                `<div><b>${opts.title}</b> <span class="pill">D${d.t + 1}</span></div>
+             <div class="muted">persist=<span class="mono">${d.data.persist_count}</span> · reactivated=<span class="mono">${d.data.reactivated_count}</span> · new=<span class="mono">${d.data.new_count}</span></div>
+             <div class="muted">churn=<span class="mono">${d.data.ceased_prev_count}</span> · active=<span class="mono">${opts.kind === "node" ? d.data.node_count : d.data.edge_count}</span></div>`,
+                evt,
+              );
+            })
+            .on("mouseleave", hideTip);
+
+          g.append("g")
+            .selectAll("rect")
+            .data(rows)
+            .join("rect")
+            .attr("x", (d) => x(d.t))
+            .attr("width", x.bandwidth())
+            .attr("y", y(0))
+            .attr("height", (d) =>
+              Math.max(0.5, y(-d.ceased_prev_count) - y(0)),
+            )
+            .attr("fill", COLORS.churn)
+            .attr("opacity", 0.8)
+            .attr("rx", 3)
+            .attr("ry", 3);
+
+          const day = state.day;
+          g.append("line")
+            .attr("x1", x(day) + x.bandwidth() / 2)
+            .attr("x2", x(day) + x.bandwidth() / 2)
+            .attr("y1", 0)
+            .attr("y2", h)
+            .attr("stroke", "var(--dashLine)")
+            .attr("stroke-dasharray", "3,3");
+
+          // Legend (persist/react/new + churn)
+          const legW = 150,
+            legH = 72;
+          const legX = Math.max(6, w - legW - 6);
+          const legY = 6;
+
+          const leg = g
+            .append("g")
+            .attr("transform", `translate(${legX},${legY})`);
+          leg
+            .append("rect")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", legW)
+            .attr("height", legH)
+            .attr("rx", 10)
+            .attr("ry", 10)
+            .attr("fill", "var(--legendBg)")
+            .attr("stroke", "var(--legendStroke)");
+
+          const items = [
+            { name: "persist", c: COLORS.persist, y: 16 },
+            { name: "reactivated", c: COLORS.react, y: 32 },
+            { name: "new", c: COLORS.novel, y: 48 },
+            { name: "churn", c: COLORS.churn, y: 64 },
+          ];
+
+          leg
+            .selectAll("circle.l")
+            .data(items)
+            .join("circle")
+            .attr("cx", 12)
+            .attr("cy", (d) => d.y)
+            .attr("r", 4)
+            .attr("fill", (d) => d.c);
+
+          leg
+            .selectAll("text.l")
+            .data(items)
+            .join("text")
+            .attr("x", 22)
+            .attr("y", (d) => d.y + 3)
+            .attr("fill", "var(--text)")
+            .attr("font-size", 11)
+            .attr("opacity", 0.92)
+            .text((d) => d.name);
+        }
+
+        function renderPi(svgSel, rows) {
+          const svg = d3.select(svgSel);
+          const node = svg.node();
+          const W = node.clientWidth || 0;
+          const H = node.clientHeight || 0;
+          if (W < 30 || H < 30) return;
+
+          svg.selectAll("*").remove();
+
+          const margin = { top: 16, right: 10, bottom: 26, left: 38 };
+          const w = W - margin.left - margin.right;
+          const h = H - margin.top - margin.bottom;
+
+          const g = svg
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+          const x = d3
+            .scaleLinear()
+            .domain([0, T - 1])
+            .range([0, w]);
+          const y = d3.scaleLinear().domain([-0.05, 1.05]).range([h, 0]);
+
+          g.append("g")
+            .attr("transform", `translate(0,${h})`)
+            .call(
+              d3
+                .axisBottom(x)
+                .ticks(T)
+                .tickFormat((d) => "D" + (d + 1)),
+            );
+          g.append("g").call(d3.axisLeft(y).ticks(5));
+
+          g.append("line")
+            .attr("x1", 0)
+            .attr("x2", w)
+            .attr("y1", y(0))
+            .attr("y2", y(0))
+            .attr("stroke", "var(--axisZero)");
+
+          const line = d3
+            .line()
+            .defined((d) => isFinite(d.v))
+            .x((d) => x(d.t))
+            .y((d) => y(d.v))
+            .curve(d3.curveCatmullRom.alpha(0.8));
+
+          const F = rows.map((r) => ({ t: r.t, v: r.piF, licSize: r.licSize }));
+          const R = rows.map((r) => ({ t: r.t, v: r.piR, licSize: r.licSize }));
+
+          g.append("path")
+            .datum(F)
+            .attr("d", line)
+            .attr("fill", "none")
+            .attr("stroke", COLORS.edgeFF)
+            .attr("stroke-width", 2.0)
+            .attr("opacity", 0.95);
+
+          g.append("path")
+            .datum(R)
+            .attr("d", line)
+            .attr("fill", "none")
+            .attr("stroke", COLORS.edgeRR)
+            .attr("stroke-width", 2.0)
+            .attr("opacity", 0.9);
+
+          function drawDots(arr, color, label) {
+            g.selectAll("circle." + label)
+              .data(arr)
+              .join("circle")
+              .attr("class", label)
+              .attr("r", 3.2)
+              .attr("cx", (d) => x(d.t))
+              .attr("cy", (d) => y(isFinite(d.v) ? d.v : 0.5))
+              .attr("fill", (d) => (isFinite(d.v) ? color : "var(--naCell)"))
+              .attr("stroke", "var(--dotStroke)")
+              .attr("stroke-width", 0.7)
+              .attr("opacity", (d) => (isFinite(d.v) ? 0.95 : 0.35))
+              .on("mousemove", (evt, d) => {
+                showTip(
+                  `<div><b>π-mass</b> <span class="pill">D${d.t + 1}</span></div>
+               <div class="muted">${label === "F" ? "Farms" : "Regions"}: <span class="mono">${isFinite(d.v) ? d.v.toFixed(3) : "NA"}</span></div>
+               <div class="muted">LIC size: <span class="mono">${d.licSize}</span></div>`,
+                  evt,
+                );
+              })
+              .on("mouseleave", hideTip);
+          }
+          drawDots(F, COLORS.edgeFF, "F");
+          drawDots(R, COLORS.edgeRR, "R");
+
+          const day = state.day;
+          g.append("line")
+            .attr("x1", x(day))
+            .attr("x2", x(day))
+            .attr("y1", 0)
+            .attr("y2", h)
+            .attr("stroke", "var(--dashLine)")
+            .attr("stroke-dasharray", "3,3");
+
+          // Legend (F vs R)
+          const legW = 116,
+            legH = 44;
+          const legX = Math.max(6, w - legW - 6);
+          const legY = 6;
+
+          const leg = g
+            .append("g")
+            .attr("transform", `translate(${legX},${legY})`);
+          leg
+            .append("rect")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", legW)
+            .attr("height", legH)
+            .attr("rx", 10)
+            .attr("ry", 10)
+            .attr("fill", "var(--legendBg)")
+            .attr("stroke", "var(--legendStroke)");
+
+          const items = [
+            { name: "F (farms)", c: COLORS.edgeFF, y: 16 },
+            { name: "R (regions)", c: COLORS.edgeRR, y: 32 },
+          ];
+
+          leg
+            .selectAll("circle.l")
+            .data(items)
+            .join("circle")
+            .attr("cx", 12)
+            .attr("cy", (d) => d.y)
+            .attr("r", 4)
+            .attr("fill", (d) => d.c);
+
+          leg
+            .selectAll("text.l")
+            .data(items)
+            .join("text")
+            .attr("x", 22)
+            .attr("y", (d) => d.y + 3)
+            .attr("fill", "var(--text)")
+            .attr("font-size", 11)
+            .attr("opacity", 0.92)
+            .text((d) => d.name);
+        }
+
+        function padDomain([a, b], frac) {
+          if (!isFinite(a) || !isFinite(b)) return [0, 1];
+          if (a === b) {
+            const eps = (Math.abs(a) + 1) * 0.1;
+            return [a - eps, b + eps];
+          }
+          const pad = (b - a) * (frac ?? 0.05);
+          return [a - pad, b + pad];
+        }
+
+        function renderMagHeatmap(svgSel, magSeries) {
+          const svg = d3.select(svgSel);
+          const node = svg.node();
+          const W = node.clientWidth || 0;
+          const H = node.clientHeight || 0;
+          if (W < 30 || H < 30) return;
+
+          svg.selectAll("*").remove();
+
+          const K = state.kEig;
+
+          const topH = 54;
+          const rightW = 72;
+          const margin = { top: 18, right: 12, bottom: 32, left: 52 };
+
+          const wMain = Math.max(10, W - margin.left - margin.right - rightW);
+          const hMain = Math.max(10, H - margin.top - margin.bottom - topH);
+
+          const gRoot = svg
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+          const tVals = d3.range(0, T);
+          const kVals = d3.range(0, K);
+
+          const xBand = d3
+            .scaleBand()
+            .domain(tVals)
+            .range([0, wMain])
+            .padding(0.02);
+          const yBand = d3
+            .scaleBand()
+            .domain(kVals)
+            .range([0, hMain])
+            .padding(0.02);
+
+          const seriesByT = new Map(
+            (magSeries || []).map((r) => [r.t, r.vals || []]),
+          );
+
+          const cells = [];
+          for (let t = 0; t < T; t++) {
+            const vals = seriesByT.get(t) || [];
+            for (let k = 0; k < K; k++) {
+              const v = k < vals.length ? vals[k] : NaN;
+              cells.push({ t, k, v });
+            }
+          }
+
+          const finiteVals = cells.map((d) => d.v).filter((v) => isFinite(v));
+          const vMin = finiteVals.length ? d3.min(finiteVals) : 0;
+          const vMax = finiteVals.length ? d3.max(finiteVals) : 1;
+
+          const color = d3
+            .scaleSequential(d3.interpolateTurbo)
+            .domain([vMin, vMax]);
+
+          const colMeans = tVals.map((t) => {
+            const vals = seriesByT.get(t) || [];
+            const xs = vals.slice(0, K).filter((v) => isFinite(v));
+            const m = xs.length ? d3.mean(xs) : NaN;
+            return { t, m };
+          });
+
+          const colFinite = colMeans.map((d) => d.m).filter((v) => isFinite(v));
+          const colMin = colFinite.length ? d3.min(colFinite) : vMin;
+          const colMax = colFinite.length ? d3.max(colFinite) : vMax;
+          const yTop = d3
+            .scaleLinear()
+            .domain(padDomain([colMin, colMax], 0.08))
+            .range([topH - 14, 2]);
+
+          const gTop = gRoot.append("g").attr("transform", `translate(0,0)`);
+          gTop
+            .append("rect")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", wMain)
+            .attr("height", topH - 4)
+            .attr("fill", "var(--panelOverlay)")
+            .attr("stroke", "var(--panelOverlayStroke)");
+
+          const xCenter = (t) => xBand(t) + xBand.bandwidth() / 2;
+
+          const topLine = d3
+            .line()
+            .defined((d) => isFinite(d.m))
+            .x((d) => xCenter(d.t))
+            .y((d) => yTop(d.m))
+            .curve(d3.curveCatmullRom.alpha(0.75));
+
+          gTop
+            .append("path")
+            .datum(colMeans)
+            .attr("d", topLine)
+            .attr("fill", "none")
+            .attr("stroke", COLORS.avgLine)
+            .attr("stroke-width", 1.6)
+            .attr("opacity", 0.92);
+
+          gTop
+            .append("text")
+            .attr("x", 8)
+            .attr("y", 12)
+            .attr("fill", "var(--muted)")
+            .attr("font-size", 10)
+            .attr("font-weight", 650)
+            .text("mean over λ (per day)");
+
+          const gHeat = gRoot
+            .append("g")
+            .attr("transform", `translate(0,${topH})`);
+
+          gHeat
+            .append("g")
+            .attr("transform", `translate(0,${hMain})`)
+            .call(d3.axisBottom(xBand).tickFormat((d) => "D" + (d + 1)));
+
+          gHeat
+            .append("g")
+            .call(d3.axisLeft(yBand).tickFormat((d) => "λ" + (d + 1)));
+
+          gHeat
+            .selectAll("rect.cell")
+            .data(cells)
+            .join("rect")
+            .attr("class", "cell")
+            .attr("x", (d) => xBand(d.t))
+            .attr("y", (d) => yBand(d.k))
+            .attr("width", xBand.bandwidth())
+            .attr("height", yBand.bandwidth())
+            .attr("rx", 3)
+            .attr("ry", 3)
+            .attr("fill", (d) => (isFinite(d.v) ? color(d.v) : "var(--naCell)"))
+            .attr("opacity", 0.95)
+            .on("mousemove", (evt, d) => {
+              showTip(
+                `<div><b>Magnetic spectrum</b> <span class="pill">D${d.t + 1}</span> <span class="pill">λ${d.k + 1}</span></div>
+             <div class="muted">value: <span class="mono">${isFinite(d.v) ? d.v.toFixed(6) : "pending"}</span></div>`,
+                evt,
+              );
+            })
+            .on("mouseleave", hideTip);
+
+          const day = state.day;
+          const xDay = xCenter(day);
+
+          gTop
+            .append("line")
+            .attr("x1", xDay)
+            .attr("x2", xDay)
+            .attr("y1", 0)
+            .attr("y2", topH - 4)
+            .attr("stroke", "var(--dashLine)")
+            .attr("stroke-dasharray", "3,3");
+
+          gHeat
+            .append("line")
+            .attr("x1", xDay)
+            .attr("x2", xDay)
+            .attr("y1", 0)
+            .attr("y2", hMain)
+            .attr("stroke", "var(--dashLine)")
+            .attr("stroke-dasharray", "3,3");
+
+          const rowMeans = kVals.map((k) => {
+            const xs = [];
+            for (let t = 0; t < T; t++) {
+              const vals = seriesByT.get(t) || [];
+              const v = k < vals.length ? vals[k] : NaN;
+              if (isFinite(v)) xs.push(v);
+            }
+            const m = xs.length ? d3.mean(xs) : NaN;
+            return { k, m };
+          });
+
+          const rowFinite = rowMeans.map((d) => d.m).filter((v) => isFinite(v));
+          const rowMin = rowFinite.length ? d3.min(rowFinite) : vMin;
+          const rowMax = rowFinite.length ? d3.max(rowFinite) : vMax;
+          const xRight = d3
+            .scaleLinear()
+            .domain(padDomain([rowMin, rowMax], 0.08))
+            .range([4, rightW - 6]);
+
+          const yCenter = (k) => yBand(k) + yBand.bandwidth() / 2;
+
+          const gRight = gRoot
+            .append("g")
+            .attr("transform", `translate(${wMain},${topH})`);
+          gRight
+            .append("rect")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", rightW)
+            .attr("height", hMain)
+            .attr("fill", "var(--panelOverlay)")
+            .attr("stroke", "var(--panelOverlayStroke)");
+
+          const rightLine = d3
+            .line()
+            .defined((d) => isFinite(d.m))
+            .x((d) => xRight(d.m))
+            .y((d) => yCenter(d.k))
+            .curve(d3.curveCatmullRom.alpha(0.75));
+
+          gRight
+            .append("path")
+            .datum(rowMeans)
+            .attr("d", rightLine)
+            .attr("fill", "none")
+            .attr("stroke", COLORS.avgLine2)
+            .attr("stroke-width", 1.6)
+            .attr("opacity", 0.92);
+
+          gRight
+            .append("text")
+            .attr("x", 8)
+            .attr("y", 12)
+            .attr("fill", "var(--muted)")
+            .attr("font-size", 10)
+            .attr("font-weight", 650)
+            .text("m. o. days");
+
+          const barW = Math.min(180, wMain * 0.34);
+          const barH = 10;
+          const gradId = "grad_" + Math.random().toString(16).slice(2);
+          const defs = svg.append("defs");
+          const grad = defs
+            .append("linearGradient")
+            .attr("id", gradId)
+            .attr("x1", "0%")
+            .attr("x2", "100%")
+            .attr("y1", "0%")
+            .attr("y2", "0%");
+          const N = 30;
+          for (let i = 0; i <= N; i++) {
+            const p = i / N;
+            grad
+              .append("stop")
+              .attr("offset", 100 * p + "%")
+              .attr("stop-color", d3.interpolateTurbo(p));
+          }
+          const gBar = gRoot
+            .append("g")
+            .attr("transform", `translate(${wMain - barW},${topH - 16})`);
+          gBar
+            .append("rect")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", barW)
+            .attr("height", barH)
+            .attr("rx", 999)
+            .attr("ry", 999)
+            .attr("fill", `url(#${gradId})`)
+            .attr("stroke", "var(--legendStroke)")
+            .attr("opacity", 0.95);
+
+          gBar
+            .append("text")
+            .attr("x", 0)
+            .attr("y", -2)
+            .text(vMin.toFixed(3))
+            .attr("fill", "var(--muted)")
+            .attr("font-size", 10)
+            .attr("dominant-baseline", "ideographic");
+          gBar
+            .append("text")
+            .attr("x", barW)
+            .attr("y", -2)
+            .text(vMax.toFixed(3))
+            .attr("fill", "var(--muted)")
+            .attr("font-size", 10)
+            .attr("text-anchor", "end")
+            .attr("dominant-baseline", "ideographic");
+        }
+
+        function updateAllViews() {
+          if (state._updateMap) state._updateMap();
+          renderStackedBars("#teaSvg", state.tea.rows, {
+            title: "TEA",
+            kind: "edge",
+          });
+          renderStackedBars("#tnaSvg", state.tna.rows, {
+            title: "TNA",
+            kind: "node",
+          });
+          renderPi("#piSvg", state.pi);
+          renderMagHeatmap("#magSvg", state.magEigs);
+
+          setBadge(
+            "#teaBadge",
+            `nov=${(state.tea.novelty ?? 0).toFixed(2)} · per=${(state.tea.persistence ?? 0).toFixed(2)}`,
+          );
+          setBadge(
+            "#tnaBadge",
+            `nov=${(state.tna.novelty ?? 0).toFixed(2)} · per=${(state.tna.persistence ?? 0).toFixed(2)}`,
+          );
+
+          const okPi = (state.pi || []).filter(
+            (d) => isFinite(d.piF) && isFinite(d.piR),
+          ).length;
+          const wm =
+            el.weightMode && el.weightMode.value === "weighted"
+              ? "weighted"
+              : "unweighted";
+          setBadge(
+            "#piBadge",
+            okPi
+              ? `LIC ok on ${okPi}/${T} days · ${wm}`
+              : `LIC missing · ${wm}`,
+          );
+
+          const q = fmt3(+el.qCharge.value);
+          setBadge(
+            "#magBadge",
+            `K=${state.kEig} · q=${q} · ${wm}`,
+          );
+          setBadge("#runBadge", `${state.focalCode || "—"} · K=${state.kEig}`);
+        }
+
+        function scheduleFullRerender() {
+          if (state.rerenderPending) return;
+          state.rerenderPending = true;
+          requestAnimationFrame(() => {
+            state.rerenderPending = false;
+            if (!state.corop) return;
+            // While spectra are still building we keep the UI responsive on resize.
+            // Skip only during the very early phase before any new graph is available.
+            if (state.busy && !state.phase1Ready) return;
+            renderMap();
+            updateAllViews();
+          });
+        }
+
+        function installResizeHandling() {
+          if (state.resizeInstalled) return;
+          state.resizeInstalled = true;
+
+          const obs = new ResizeObserver(() => scheduleFullRerender());
+          ["mapSvg", "piSvg", "teaSvg", "tnaSvg", "magSvg"].forEach((id) => {
+            const n = document.getElementById(id);
+            if (n) obs.observe(n);
+          });
+          window.addEventListener("resize", () => scheduleFullRerender(), {
+            passive: true,
+          });
+        }
+
+        function workerCode() {
+          return `
+            'use strict';
+            importScripts('https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js');
+            importScripts('https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js');
+
+            const T = ${T};
+
+            function mulberry32(seed){
+              let t = seed >>> 0;
+              return function(){
+                t += 0x6D2B79F5;
+                let x = Math.imul(t ^ (t >>> 15), 1 | t);
+                x ^= x + Math.imul(x ^ (x >>> 7), 61 | x);
+                return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+              };
+            }
+
+            function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+
+            function progress(stage, pct, extra){
+              postMessage({type:'progress', stage, pct, extra: extra || null});
+            }
+
+            function randomPointInPolygon(feature, rng){
+              const bb = turf.bbox(feature);
+              const minX=bb[0], minY=bb[1], maxX=bb[2], maxY=bb[3];
+              for(let k=0;k<25000;k++){
+                const x = minX + rng() * (maxX-minX);
+                const y = minY + rng() * (maxY-minY);
+                const pt = turf.point([x,y]);
+                if(turf.booleanPointInPolygon(pt, feature)){
+                  return [x,y];
+                }
+              }
+              return [(minX+maxX)/2, (minY+maxY)/2];
+            }
+
+            function buildNodes(payload, rng){
+              const {focalCode, nFarms, focalFeature, regionNodes} = payload;
+
+              const nodes = [];
+              for(let i=0;i<nFarms;i++){
+                const [x,y] = randomPointInPolygon(focalFeature, rng);
+                nodes.push({ id: "F"+i, kind:"farm", corop:focalCode, x, y });
+                if(i % 12 === 0){
+                  progress('Sampling farm coordinates…', 0.05 + 0.07*(i/Math.max(1,nFarms)));
+                }
+              }
+              regionNodes.forEach(r=>{
+                nodes.push({ ...r, kind:"region" });
+              });
+              return nodes;
+            }
+
+            function buildEligiblePairs(nodes){
+              const F = [];
+              const R = [];
+              nodes.forEach((n,i)=>{
+                if(n.kind === "farm") F.push(i);
+                else R.push(i);
+              });
+
+              const pairsFF = [];
+              for(const u of F){
+                for(const v of F){
+                  if(u===v) continue;
+                  pairsFF.push([u,v]);
+                }
+              }
+
+              const pairsFR = [];
+              const pairsRF = [];
+              for(const u of F){
+                for(const v of R) pairsFR.push([u,v]);
+              }
+              for(const u of R){
+                for(const v of F) pairsRF.push([u,v]);
+              }
+
+              const pairsRR = [];
+              for(const u of R){
+                for(const v of R){
+                  if(u===v) continue;
+                  pairsRR.push([u,v]);
+                }
+              }
+
+              return { F, R, pairsFF, pairsFR, pairsRF, pairsRR };
+            }
+
+            function edgeKey(u,v){ return u + "→" + v; }
+
+            function sampleWeight(rng){
+              const x = 1 + Math.floor(Math.pow(rng(), 2) * 120);
+              return x;
+            }
+
+            function simulateEdges(elig, rng, pKeep, pBirthFF, pBirthX){
+              const edgesByDay = [];
+              let prev = new Map();
+
+              for(let t=0;t<T;t++){
+                const cur = new Map();
+
+                for(const [k,e] of prev.entries()){
+                  if(rng() < pKeep){
+                    const w = clamp01(0.85 + 0.3*rng()) * e.w;
+                    cur.set(k, {u:e.u, v:e.v, w});
+                  }
+                }
+
+                const allPairs = [
+                  {pairs:elig.pairsFF, p:pBirthFF},
+                  {pairs:elig.pairsFR, p:pBirthX},
+                  {pairs:elig.pairsRF, p:pBirthX},
+                  {pairs:elig.pairsRR, p:pBirthX},
+                ];
+
+                for(const blk of allPairs){
+                  const pBirth = blk.p;
+                  for(const [u,v] of blk.pairs){
+                    const k = edgeKey(u,v);
+                    if(cur.has(k)) continue;
+                    if(rng() < pBirth){
+                      cur.set(k, {u,v,w: sampleWeight(rng)});
+                    }
+                  }
+                }
+
+                edgesByDay.push(Array.from(cur.values()));
+                prev = cur;
+                progress('Simulating daily edges…', 0.12 + 0.12*((t+1)/T), {day:t+1});
+              }
+              return edgesByDay;
+            }
+
+            function intersectionSize(a, b){
+              let s = 0;
+              for(const x of a) if(b.has(x)) s++;
+              return s;
+            }
+            function difference(a, b){
+              const d = new Set();
+              for(const x of a) if(!b.has(x)) d.add(x);
+              return d;
+            }
+            function countInSet(subset, setB){
+              let c = 0;
+              for(const x of subset) if(setB.has(x)) c++;
+              return c;
+            }
+
+            function computeTEA(edgesByDay){
+              const seen = new Set();
+              let prev = new Set();
+              const out = [];
+
+              for(let t=0;t<edgesByDay.length;t++){
+                const curr = new Set(edgesByDay[t].map(e => edgeKey(e.u, e.v)));
+
+                const persist = intersectionSize(curr, prev);
+                const births = difference(curr, prev);
+                const reactivated = countInSet(births, seen);
+                const novel = births.size - reactivated;
+                const churn = difference(prev, curr).size;
+
+                out.push({
+                  t,
+                  edge_count: curr.size,
+                  persist_count: persist,
+                  reactivated_count: reactivated,
+                  new_count: novel,
+                  ceased_prev_count: churn,
+                  new_ratio: curr.size ? novel / curr.size : 0,
+                  persist_ratio: curr.size ? persist / curr.size : 0
+                });
+
+                for(const k of births) seen.add(k);
+                prev = curr;
+              }
+
+              const novelty = out.reduce((a,b)=>a+b.new_ratio,0) / Math.max(1,out.length);
+              const persistence = out.reduce((a,b)=>a+b.persist_ratio,0) / Math.max(1,out.length);
+              return { rows: out, novelty, persistence };
+            }
+
+            function computeTNA(edgesByDay){
+              const seen = new Set();
+              let prev = new Set();
+              const out = [];
+
+              for(let t=0;t<edgesByDay.length;t++){
+                const curr = new Set();
+                edgesByDay[t].forEach(e=>{ curr.add(e.u); curr.add(e.v); });
+
+                const persist = intersectionSize(curr, prev);
+                const births = difference(curr, prev);
+                const reactivated = countInSet(births, seen);
+                const novel = births.size - reactivated;
+                const churn = difference(prev, curr).size;
+
+                out.push({
+                  t,
+                  node_count: curr.size,
+                  persist_count: persist,
+                  reactivated_count: reactivated,
+                  new_count: novel,
+                  ceased_prev_count: churn,
+                  new_ratio: curr.size ? novel / curr.size : 0,
+                  persist_ratio: curr.size ? persist / curr.size : 0
+                });
+
+                for(const k of births) seen.add(k);
+                prev = curr;
+              }
+
+              const novelty = out.reduce((a,b)=>a+b.new_ratio,0) / Math.max(1,out.length);
+              const persistence = out.reduce((a,b)=>a+b.persist_ratio,0) / Math.max(1,out.length);
+              return { rows: out, novelty, persistence };
+            }
+
+            function adjacencyMatrixFromEdges(edges, n, useWeights){
+              const A = Array.from({length:n}, ()=>Array(n).fill(0));
+              edges.forEach(e=>{
+                const w = useWeights ? ((Number(e.w) > 0 && isFinite(Number(e.w))) ? Number(e.w) : 1) : 1;
+                A[e.u][e.v] += w;
+              });
+              return A;
+            }
+
+            function inducedSubgraph(edges, n){
+              const active = new Set();
+              edges.forEach(e=>{ active.add(e.u); active.add(e.v); });
+
+              const nodes = Array.from(active.values()).sort((a,b)=>a-b);
+              const map = new Map(nodes.map((id, idx)=>[id, idx]));
+              const m = nodes.length;
+
+              const edgesNew = edges.map(e=>({u: map.get(e.u), v: map.get(e.v), w: e.w}))
+                                    .filter(e=>e.u !== undefined && e.v !== undefined && e.u !== e.v);
+
+              return { edgesNew, m };
+            }
+
+            function rowStochasticLazy(A, alpha){
+              const n = A.length;
+              const P = Array.from({length:n}, ()=>Array(n).fill(0));
+              for(let i=0;i<n;i++){
+                let out = 0;
+                for(let j=0;j<n;j++) out += A[i][j];
+                if(out === 0){
+                  A[i][i] = 1;
+                  out = 1;
+                }
+                for(let j=0;j<n;j++){
+                  const base = A[i][j] / out;
+                  P[i][j] = (1-alpha) * base + (i===j ? alpha : 0);
+                }
+              }
+              return P;
+            }
+
+            function tarjanSCC(n, adj){
+              let index = 0;
+              const stack = [];
+              const onStack = Array(n).fill(false);
+              const indices = Array(n).fill(-1);
+              const lowlink = Array(n).fill(0);
+              const sccs = [];
+
+              function strongconnect(v){
+                indices[v] = index;
+                lowlink[v] = index;
+                index++;
+                stack.push(v);
+                onStack[v] = true;
+
+                for(const w of adj[v]){
+                  if(indices[w] === -1){
+                    strongconnect(w);
+                    lowlink[v] = Math.min(lowlink[v], lowlink[w]);
+                  } else if(onStack[w]){
+                    lowlink[v] = Math.min(lowlink[v], indices[w]);
+                  }
+                }
+
+                if(lowlink[v] === indices[v]){
+                  const scc = [];
+                  while(true){
+                    const w = stack.pop();
+                    onStack[w] = false;
+                    scc.push(w);
+                    if(w === v) break;
+                  }
+                  sccs.push(scc);
+                }
+              }
+
+              for(let v=0;v<n;v++){
+                if(indices[v] === -1) strongconnect(v);
+              }
+              return sccs;
+            }
+
+            function stationaryDistribution(P, tol=1e-10, maxIter=2500){
+              const n = P.length;
+              let x = Array(n).fill(1/n);
+              for(let it=0; it<maxIter; it++){
+                const nx = Array(n).fill(0);
+                for(let i=0;i<n;i++){
+                  const xi = x[i];
+                  if(xi === 0) continue;
+                  const row = P[i];
+                  for(let j=0;j<n;j++){
+                    nx[j] += xi * row[j];
+                  }
+                }
+                let diff = 0;
+                for(let j=0;j<n;j++) diff += Math.abs(nx[j] - x[j]);
+                x = nx;
+                if(diff < tol) break;
+              }
+              const s = x.reduce((a,b)=>a+b,0) || 1;
+              return x.map(v=>v/s);
+            }
+
+            function computePiMass(edgesByDay, nodes, alpha, useWeights){
+              const n = nodes.length;
+              const out = [];
+              const type01 = nodes.map(d => d.kind === "farm" ? 0 : 1);
+
+              for(let t=0;t<edgesByDay.length;t++){
+                const A = adjacencyMatrixFromEdges(edgesByDay[t], n, useWeights);
+                const Pfull = rowStochasticLazy(A, alpha);
+
+                const adj = Array.from({length:n}, ()=>[]);
+                edgesByDay[t].forEach(e=>{ adj[e.u].push(e.v); });
+                const sccs = tarjanSCC(n, adj);
+                let lic = [];
+                for(const scc of sccs){
+                  if(scc.length > lic.length) lic = scc;
+                }
+
+                if(lic.length < 2){
+                  out.push({t, piF: NaN, piR: NaN, licSize: lic.length});
+                  continue;
+                }
+
+                const idx = lic.slice().sort((a,b)=>a-b);
+                const Psub = idx.map(i => idx.map(j => Pfull[i][j]));
+                const pi = stationaryDistribution(Psub);
+
+                let massF = 0, massR = 0;
+                for(let k=0;k<idx.length;k++){
+                  if(type01[idx[k]] === 0) massF += pi[k];
+                  else massR += pi[k];
+                }
+                out.push({t, piF: massF, piR: massR, licSize: idx.length});
+                progress('Computing π-mass (LIC)…', 0.30 + 0.14*((t+1)/T), {day:t+1});
+              }
+              return out;
+            }
+
+            function magneticLaplacianEigenvalues(A, q, k){
+              const n = A.length;
+
+              const As = Array.from({length:n}, ()=>Array(n).fill(0));
+              for(let i=0;i<n;i++){
+                for(let j=i+1;j<n;j++){
+                  const mag = 0.5 * (A[i][j] + A[j][i]);
+                  As[i][j] = mag;
+                  As[j][i] = mag;
+                }
+              }
+
+              const d = Array(n).fill(0);
+              for(let i=0;i<n;i++){
+                let s = 0;
+                for(let j=0;j<n;j++) s += As[i][j];
+                d[i] = s;
+              }
+              const dinv2 = d.map(x => x > 0 ? 1/Math.sqrt(x) : 0);
+
+              const Hre = Array.from({length:n}, ()=>Array(n).fill(0));
+              const Him = Array.from({length:n}, ()=>Array(n).fill(0));
+              const twoPiQ = 2*Math.PI*q;
+
+              for(let i=0;i<n;i++){
+                for(let j=i+1;j<n;j++){
+                  const mag = As[i][j];
+                  if(mag === 0) continue;
+                  const sgn = Math.sign(A[i][j] - A[j][i]);
+                  const theta = twoPiQ * sgn;
+                  const c = Math.cos(theta);
+                  const s = Math.sin(theta);
+                  Hre[i][j] = mag * c;
+                  Him[i][j] = mag * s;
+                  Hre[j][i] = mag * c;
+                  Him[j][i] = -mag * s;
+                }
+              }
+
+              const Lre = Array.from({length:n}, ()=>Array(n).fill(0));
+              const Lim = Array.from({length:n}, ()=>Array(n).fill(0));
+
+              for(let i=0;i<n;i++){
+                for(let j=0;j<n;j++){
+                  const scale = dinv2[i] * dinv2[j];
+                  const mre = scale * Hre[i][j];
+                  const mim = scale * Him[i][j];
+                  Lre[i][j] = (i===j ? 1 : 0) - mre;
+                  Lim[i][j] = -mim;
+                }
+                if(d[i] === 0){
+                  Lre[i][i] = 0;
+                  Lim[i][i] = 0;
+                }
+              }
+
+              const N2 = 2*n;
+              const B = Array.from({length:N2}, ()=>Array(N2).fill(0));
+              for(let i=0;i<n;i++){
+                for(let j=0;j<n;j++){
+                  const x = Lre[i][j];
+                  const y = Lim[i][j];
+                  B[i][j] = x;
+                  B[i][j+n] = -y;
+                  B[i+n][j] = y;
+                  B[i+n][j+n] = x;
+                }
+              }
+
+              let eig;
+              try{
+                eig = numeric.eig(B);
+              }catch(err){
+                return Array(k).fill(NaN);
+              }
+
+              const vals = eig.lambda.x.slice().map(v => Number(v));
+              vals.sort((a,b)=>a-b);
+
+              const uniq = [];
+              const tol = 1e-6;
+              for(const v of vals){
+                if(!isFinite(v)) continue;
+                if(uniq.length === 0 || Math.abs(v - uniq[uniq.length-1]) > tol){
+                  uniq.push(v);
+                }
+                if(uniq.length >= n) break;
+              }
+
+              const out = uniq.length ? uniq : vals;
+              const kEff = Math.min(k, out.length);
+              const res = out.slice(0, kEff);
+              while(res.length < k) res.push(NaN);
+              return res;
+            }
+
+            function computeMagSpectrum(edgesByDay, nodes, q, k, quality, magStep, useWeights){
+              const n = nodes.length;
+              const out = Array.from({length: T}, (_,t)=>({t, vals: Array(k).fill(NaN)}));
+
+              const step = Math.max(1, magStep || 1);
+              const useInduced = (quality !== 'full');
+
+              const computedTs = [];
+              for(let t=0;t<edgesByDay.length;t+=step){
+                const edges = edgesByDay[t];
+
+                let A;
+                if(useInduced){
+                  const ind = inducedSubgraph(edges, n);
+                  const m = ind.m;
+                  if(m < 2){
+                    out[t].vals = Array(k).fill(NaN);
+                    postMessage({type:'mag_partial', t, vals: out[t].vals});
+                    computedTs.push(t);
+                    continue;
+                  }
+                  A = adjacencyMatrixFromEdges(ind.edgesNew, m, useWeights);
+                }else{
+                  A = adjacencyMatrixFromEdges(edges, n, useWeights);
+                }
+
+                const vals = magneticLaplacianEigenvalues(A, q, k);
+                out[t].vals = vals;
+                postMessage({type:'mag_partial', t, vals});
+                computedTs.push(t);
+
+                const p = 0.44 + 0.52*((computedTs.length)/Math.max(1, Math.ceil(T/step)));
+                progress('Computing magnetic spectra…', p, {day:t+1});
+              }
+
+              if(step > 1){
+                progress('Interpolating skipped days…', 0.98);
+
+                for(let t=0;t<T;t++){
+                  if(computedTs.includes(t)) continue;
+
+                  let prev = -1, next = -1;
+                  for(let i=computedTs.length-1;i>=0;i--){
+                    if(computedTs[i] < t){ prev = computedTs[i]; break; }
+                  }
+                  for(let i=0;i<computedTs.length;i++){
+                    if(computedTs[i] > t){ next = computedTs[i]; break; }
+                  }
+
+                  if(prev >= 0 && next >= 0){
+                    const a = out[prev].vals;
+                    const b = out[next].vals;
+                    const w = (t - prev) / (next - prev);
+                    const vals = Array(k).fill(NaN);
+                    for(let j=0;j<k;j++){
+                      const va = a[j], vb = b[j];
+                      if(isFinite(va) && isFinite(vb)) vals[j] = (1-w)*va + w*vb;
+                      else if(isFinite(va)) vals[j] = va;
+                      else if(isFinite(vb)) vals[j] = vb;
+                    }
+                    out[t].vals = vals;
+                  }else if(prev >= 0){
+                    out[t].vals = out[prev].vals.slice();
+                  }else if(next >= 0){
+                    out[t].vals = out[next].vals.slice();
+                  }
+                  postMessage({type:'mag_partial', t, vals: out[t].vals});
+                }
+              }
+
+              return out;
+            }
+
+            onmessage = (e)=>{
+              const msg = e.data || {};
+              const payload = msg.payload || {};
+
+              if(msg.type === 'run'){
+                try{
+                  progress('Initializing worker…', 0.01);
+
+                  const rng = mulberry32(payload.seed || 1);
+
+                  progress('Building hybrid nodes…', 0.04);
+                  const nodes = buildNodes(payload, rng);
+
+                  progress('Preparing eligible pairs…', 0.12);
+                  const elig = buildEligiblePairs(nodes);
+
+                  const edgesByDay = simulateEdges(elig, rng, payload.pKeep, payload.pBirthFF, payload.pBirthX);
+
+                  progress('Computing TEA/TNA…', 0.24);
+                  const tea = computeTEA(edgesByDay);
+                  const tna = computeTNA(edgesByDay);
+
+                  progress('Computing π-mass (LIC)…', 0.30);
+                  const useWeights = !!payload.useWeights;
+
+                  const pi = computePiMass(edgesByDay, nodes, payload.alphaLazy ?? 0.10, useWeights);
+
+                  progress('Publishing network + TEA/TNA + π-mass…', 0.43);
+                  postMessage({type:'phase1', nodes, edgesByDay, tea, tna, pi});
+
+                  setTimeout(()=>{
+                    try{
+                      progress('Computing magnetic spectra…', 0.44);
+                      const mag = computeMagSpectrum(edgesByDay, nodes, payload.qCharge, payload.kEig, payload.quality, payload.magStep, useWeights);
+
+                      progress('Finalizing…', 0.995);
+                      postMessage({type:'done', mag});
+                      progress('Done.', 1.0);
+                    }catch(err2){
+                      postMessage({type:'error', message: String(err2 && err2.message ? err2.message : err2)});
+                    }
+                  }, 0);
+                }catch(err){
+                  postMessage({type:'error', message: String(err && err.message ? err.message : err)});
+                }
+                return;
+              }
+
+              if(msg.type === 'stats'){
+                try{
+                  progress('Initializing worker…', 0.01);
+
+                  const nodes = payload.nodes || [];
+                  const edgesByDay = payload.edgesByDay || [];
+                  const useWeights = !!payload.useWeights;
+
+                  progress('Computing π-mass (LIC)…', 0.06);
+                  const pi = computePiMass(edgesByDay, nodes, payload.alphaLazy ?? 0.10, useWeights);
+                  postMessage({type:'pi', pi});
+
+                  setTimeout(()=>{
+                    try{
+                      progress('Computing magnetic spectra…', 0.44);
+                      const mag = computeMagSpectrum(edgesByDay, nodes, payload.qCharge, payload.kEig, payload.quality, payload.magStep, useWeights);
+
+                      progress('Finalizing…', 0.995);
+                      postMessage({type:'done', mag});
+                      progress('Done.', 1.0);
+                    }catch(err2){
+                      postMessage({type:'error', message: String(err2 && err2.message ? err2.message : err2)});
+                    }
+                  }, 0);
+                }catch(err){
+                  postMessage({type:'error', message: String(err && err.message ? err.message : err)});
+                }
+                return;
+              }
+            };
+          `;
+        }
+
+        function ensureWorker() {
+          if (state.workerURL) return;
+          const blob = new Blob([workerCode()], {
+            type: "application/javascript",
+          });
+          state.workerURL = URL.createObjectURL(blob);
+        }
+
+        function terminateWorker() {
+          if (state.worker) {
+            state.worker.terminate();
+            state.worker = null;
+          }
+        }
+
+        function collectRegionNodes(focalCode) {
+          const regionNodes = [];
+          for (const [code, xy] of state.labelXYByCode.entries()) {
+            if (String(code) === String(focalCode)) continue;
+            const name = state.coropNameByCode.get(code) || code;
+            regionNodes.push({
+              id: "R_" + code,
+              kind: "region",
+              corop: String(code),
+              name: String(name),
+              x: xy[0],
+              y: xy[1],
+            });
+          }
+          regionNodes.sort((a, b) => a.corop.localeCompare(b.corop));
+          return regionNodes;
+        }
+
+        function applyQuality() {
+          const q = el.qualitySelect.value;
+          const preset = QUALITY_PRESETS[q] || QUALITY_PRESETS.balanced;
+          state.kEig = preset.kEig;
+          state.magStep = preset.magStep;
+        }
+
+        function regenerate() {
+          if (!state.corop || !state.labels) return;
+
+          applyQuality();
+
+          const focal = el.coropSelect.value;
+          const nFarms = Math.min(100, Math.max(1, +el.farmCount.value));
+          const pKeep = +el.pKeep.value;
+          const pBirthFF = +el.pBirthFF.value;
+          const pBirthX = +el.pBirthX.value;
+          const qCharge = +el.qCharge.value;
+          const seed = +el.seed.value;
+          const quality = el.qualitySelect.value;
+
+          state.focalCode = focal;
+          state.day = +el.daySlider.value;
+
+          const focalFeat = state.corop.features.find(
+            (f) => String(f.properties.statcode) === String(focal),
+          );
+          if (!focalFeat) {
+            setStatus("Focal COROP not found in geojson.");
+            return;
+          }
+
+          const regionNodes = collectRegionNodes(focal);
+
+          ensureWorker();
+          terminateWorker();
+
+          state.phase1Ready = false;
+
+          setBusy(true);
+          state.hoverCancel = false;
+          setProgress(`Starting worker… (${quality})`, 0.02);
+          setBadge("#mapBadge", "computing…");
+
+          state.magEigs = d3
+            .range(0, T)
+            .map((t) => ({ t, vals: Array(state.kEig).fill(NaN) }));
+          renderMagHeatmap("#magSvg", state.magEigs);
+          setBadge(
+            "#magBadge",
+            `K=${state.kEig} · q=${fmt3(qCharge)} · ${quality}`,
+          );
+
+          state.worker = new Worker(state.workerURL);
+          state.worker.onmessage = (evt) => {
+            const msg = evt.data || {};
+            if (msg.type === "progress") {
+              const stage = msg.stage || "Working…";
+              const pct = msg.pct ?? 0;
+              const extra = msg.extra || null;
+              const detail = extra && extra.day ? ` (${extra.day}/${T})` : "";
+              setProgress(stage + detail, pct);
+              return;
+            }
+            if (msg.type === "mag_partial") {
+              const t = msg.t;
+              if (state.magEigs && state.magEigs[t]) {
+                const vals = msg.vals || [];
+                const v = vals.slice(0, state.kEig);
+                while (v.length < state.kEig) v.push(NaN);
+                state.magEigs[t].vals = v;
+                renderMagHeatmap("#magSvg", state.magEigs);
+              }
+              return;
+            }
+            if (msg.type === "phase1") {
+              state.nodes = msg.nodes || [];
+              state.edgesByDay = msg.edgesByDay || [];
+              state.tea = msg.tea || { rows: [], novelty: 0, persistence: 0 };
+              state.tna = msg.tna || { rows: [], novelty: 0, persistence: 0 };
+              state.pi = msg.pi || [];
+              state.phase1Ready = true;
+
+              renderMap();
+              updateAllViews();
+              return;
+            }
+            if (msg.type === "done") {
+              if (Array.isArray(msg.mag)) {
+                state.magEigs = msg.mag.map((r) => {
+                  const vals = (r.vals || []).slice(0, state.kEig);
+                  while (vals.length < state.kEig) vals.push(NaN);
+                  return { t: r.t, vals };
+                });
+              }
+              updateAllViews();
+
+              setBusy(false);
+              setStatus("Done.");
+              setBadge("#mapBadge", "ready");
+
+              scheduleFullRerender(); // ensure final fit after any layout changes mid-run
+              terminateWorker();
+              return;
+            }
+            if (msg.type === "error") {
+              console.error(msg.message);
+              setBusy(false);
+              setStatus("Worker error: " + msg.message);
+              setBadge("#mapBadge", "error");
+              terminateWorker();
+              return;
+            }
+          };
+          state.worker.onerror = (err) => {
+            console.error(err);
+            setBusy(false);
+            setStatus("Worker crashed. See console.");
+            setBadge("#mapBadge", "error");
+            terminateWorker();
+          };
+
+          state.worker.postMessage({
+            type: "run",
+            payload: {
+              focalCode: focal,
+              nFarms,
+              focalFeature: focalFeat,
+              regionNodes,
+              seed,
+              pKeep,
+              pBirthFF,
+              pBirthX,
+              qCharge,
+              alphaLazy: 0.1,
+              useWeights: el.weightMode && el.weightMode.value === "weighted",
+              kEig: state.kEig,
+              quality,
+              magStep: state.magStep,
+            },
+          });
+        }
+
+        function recomputePiMag() {
+          if (
+            !state.nodes ||
+            !state.nodes.length ||
+            !state.edgesByDay ||
+            !state.edgesByDay.length
+          ) {
+            regenerate();
+            return;
+          }
+
+          applyQuality();
+
+          const qCharge = +el.qCharge.value;
+          const quality = el.qualitySelect.value;
+          const wm =
+            el.weightMode && el.weightMode.value === "weighted"
+              ? "weighted"
+              : "unweighted";
+
+          ensureWorker();
+          terminateWorker();
+
+          setBusy(true);
+          state.hoverCancel = false;
+          setProgress(`Recomputing π-mass + spectra… (${wm})`, 0.02);
+
+          state.pi = d3
+            .range(0, T)
+            .map((t) => ({ t, piF: NaN, piR: NaN, licSize: 0 }));
+          state.magEigs = d3
+            .range(0, T)
+            .map((t) => ({ t, vals: Array(state.kEig).fill(NaN) }));
+
+          renderPi("#piSvg", state.pi);
+          renderMagHeatmap("#magSvg", state.magEigs);
+
+          setBadge("#piBadge", `computing… · ${wm}`);
+          setBadge(
+            "#magBadge",
+            `K=${state.kEig} · q=${fmt3(qCharge)} · ${quality} · ${wm}`,
+          );
+
+          state.worker = new Worker(state.workerURL);
+          state.worker.onmessage = (evt) => {
+            const msg = evt.data || {};
+            if (msg.type === "progress") {
+              const stage = msg.stage || "Working…";
+              const pct = msg.pct ?? 0;
+              const extra = msg.extra || null;
+              const detail = extra && extra.day ? ` (${extra.day}/${T})` : "";
+              setProgress(stage + detail, pct);
+              return;
+            }
+            if (msg.type === "pi") {
+              state.pi = msg.pi || [];
+              renderPi("#piSvg", state.pi);
+              updateAllViews();
+              return;
+            }
+            if (msg.type === "mag_partial") {
+              const t = msg.t;
+              if (state.magEigs && state.magEigs[t]) {
+                const vals = msg.vals || [];
+                const v = vals.slice(0, state.kEig);
+                while (v.length < state.kEig) v.push(NaN);
+                state.magEigs[t].vals = v;
+                renderMagHeatmap("#magSvg", state.magEigs);
+              }
+              return;
+            }
+            if (msg.type === "done") {
+              if (Array.isArray(msg.mag)) {
+                state.magEigs = msg.mag.map((r) => {
+                  const vals = (r.vals || []).slice(0, state.kEig);
+                  while (vals.length < state.kEig) vals.push(NaN);
+                  return { t: r.t, vals };
+                });
+              }
+              updateAllViews();
+
+              setBusy(false);
+              setStatus("Done.");
+
+              scheduleFullRerender();
+              terminateWorker();
+              return;
+            }
+            if (msg.type === "error") {
+              console.error(msg.message);
+              setBusy(false);
+              setStatus("Worker error: " + msg.message);
+              terminateWorker();
+              return;
+            }
+          };
+          state.worker.onerror = (err) => {
+            console.error(err);
+            setBusy(false);
+            setStatus("Worker crashed. See console.");
+            terminateWorker();
+          };
+
+          state.worker.postMessage({
+            type: "stats",
+            payload: {
+              nodes: state.nodes,
+              edgesByDay: state.edgesByDay,
+              alphaLazy: 0.1,
+              qCharge,
+              useWeights: wm === "weighted",
+              kEig: state.kEig,
+              quality,
+              magStep: state.magStep,
+            },
+          });
+        }
+        function wireEvents() {
+          el.coropSelect.addEventListener("change", () => regenerate());
+          el.regenBtn.addEventListener("click", () => regenerate());
+
+          el.daySlider.addEventListener("input", () => {
+            state.day = +el.daySlider.value;
+            updateAllViews();
+          });
+
+          if (el.weightMode)
+            el.weightMode.addEventListener("change", () => recomputePiMag());
+
+          function regenOnChange(elm) {
+            elm.addEventListener("change", () => regenerate());
+          }
+          [
+            el.farmCount,
+            el.pKeep,
+            el.pBirthFF,
+            el.pBirthX,
+            el.qCharge,
+            el.seed,
+            el.qualitySelect,
+          ].forEach(regenOnChange);
+
+          if (el.statusBox) {
+            el.statusBox.addEventListener("mouseenter", () => {
+              if (!state.busy) return;
+              state.hoverCancel = true;
+              d3.select("#statusText").text("Cancel build");
+            });
+            el.statusBox.addEventListener("mouseleave", () => {
+              if (!state.busy) return;
+              state.hoverCancel = false;
+              d3.select("#statusText").text(state.progressStage || "Working…");
+            });
+            el.statusBox.addEventListener("click", () => {
+              if (!state.busy) return;
+              terminateWorker();
+              setBusy(false);
+              setStatus("Canceled.");
+              setBadge("#mapBadge", "ready");
+              scheduleFullRerender();
+            });
+            el.statusBox.addEventListener("keydown", (evt) => {
+              if (!state.busy) return;
+              if (evt.key === "Enter" || evt.key === " ") {
+                evt.preventDefault();
+                terminateWorker();
+                setBusy(false);
+                setStatus("Canceled.");
+                setBadge("#mapBadge", "ready");
+                scheduleFullRerender();
+              }
+            });
+          }
+        }
+
+        async function loadGeo() {
+          setStatus("Loading nl_corop.geojson…");
+          const corop = await fetch("./assets/files/nl_corop.geojson").then((r) => r.json());
+          setStatus("Loading nl_corop_labelpoint.geojson…");
+          const labels = await fetch("./assets/files/nl_corop_labelpoint.geojson").then(
+            (r) => r.json(),
+          );
+
+          state.corop = corop;
+          state.labels = labels;
+
+          state.coropList = corop.features
+            .map((f) => ({
+              code: String(f.properties.statcode),
+              name: String(f.properties.statnaam || ""),
+            }))
+            .sort((a, b) => a.code.localeCompare(b.code));
+
+          state.coropNameByCode = new Map(
+            state.coropList.map((d) => [d.code, d.name || d.code]),
+          );
+
+          state.labelXYByCode = new Map();
+          labels.features.forEach((f) => {
+            const code = String(f.properties.statcode);
+            const [x, y] = f.geometry.coordinates;
+            if (isFinite(x) && isFinite(y)) {
+              state.labelXYByCode.set(code, [x, y]);
+            }
+          });
+
+          populateCoropSelect();
+          setStatus("Ready.");
+          setBadge("#mapBadge", "ready");
+          setBadge("#topBadge", "ready");
+
+          installResizeHandling();
+        }
+
+        wireValueMirrors();
+        wireEvents();
+        installControlsCollapseHandling();
+        initThemeSync();
+
+        loadGeo()
+          .then(() => regenerate())
+          .catch((err) => {
+            console.error(err);
+            setStatus(
+              "Failed to load geojson. Put the files next to this HTML and serve over http.",
+            );
+            setBadge("#mapBadge", "error");
+          });
+      })();
+    </script>
+  </body>
+</html>
