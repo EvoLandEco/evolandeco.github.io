@@ -54,7 +54,9 @@
     eventDrawerButton: $('eventDrawerButton'),
     eventDrawerCloseButton: $('eventDrawerCloseButton'),
     eventDrawerBackdrop: $('eventDrawerBackdrop'),
-    eventDrawer: $('eventDrawer')
+    eventDrawer: $('eventDrawer'),
+    darkModeToggle: $('darkmode'),
+    themeStyle: $('theme-style')
   };
 
   const presets = {
@@ -134,7 +136,17 @@
     light: '#f7f9fc',
     border: '#d9dfea',
     yellow: '#f7d724',
-    green: '#3aa675'
+    green: '#3aa675',
+    axis: '#c8d0dd',
+    axisGrid: '#d6dbe6',
+    axisGridStrong: '#d8deea',
+    axisGuide: '#c2c9d8',
+    connector: '#b7c0d0',
+    treeGuide: '#c7cddd',
+    treeLink: '#2f3441',
+    treeNode: '#5c6577',
+    nodeRing: '#ffffff',
+    totalLineages: '#c06a2b'
   };
 
   const state = {
@@ -162,7 +174,8 @@
     settings: null,
     eventDrawerOpen: false,
     drawerTimer: null,
-    lastRenderedBranchLengthMode: null
+    lastRenderedBranchLengthMode: null,
+    themeDark: null
   };
 
   function mulberry32(seed) {
@@ -236,6 +249,128 @@
     } else {
       window.prompt('Copy this text:', text);
     }
+  }
+
+  function readThemeValue(name, fallback) {
+    const value = getComputedStyle(root).getPropertyValue(name).trim();
+    return value || fallback;
+  }
+
+  function refreshPalette() {
+    palette.blue = readThemeValue('--sim-blue', palette.blue);
+    palette.red = readThemeValue('--sim-red', palette.red);
+    palette.grey = readThemeValue('--sim-grey', palette.grey);
+    palette.text = readThemeValue('--sim-text', palette.text);
+    palette.softText = readThemeValue('--sim-soft', palette.softText);
+    palette.accent = readThemeValue('--sim-accent', palette.accent);
+    palette.light = readThemeValue('--sim-bg', palette.light);
+    palette.border = readThemeValue('--sim-border', palette.border);
+    palette.yellow = readThemeValue('--sim-yellow', palette.yellow);
+    palette.green = readThemeValue('--sim-green', palette.green);
+    palette.axis = readThemeValue('--sim-axis', palette.axis);
+    palette.axisGrid = readThemeValue('--sim-axis-grid', palette.axisGrid);
+    palette.axisGridStrong = readThemeValue('--sim-axis-grid-strong', palette.axisGridStrong);
+    palette.axisGuide = readThemeValue('--sim-axis-guide', palette.axisGuide);
+    palette.connector = readThemeValue('--sim-connector', palette.connector);
+    palette.treeGuide = readThemeValue('--sim-tree-guide', palette.treeGuide);
+    palette.treeLink = readThemeValue('--sim-tree-link', palette.treeLink);
+    palette.treeNode = readThemeValue('--sim-tree-node', palette.treeNode);
+    palette.nodeRing = readThemeValue('--sim-node-ring', palette.nodeRing);
+    palette.totalLineages = readThemeValue('--sim-total-lineages', palette.totalLineages);
+  }
+
+  function readStoredDarkPreference() {
+    try {
+      const keys = ['dark-mode', 'theme', 'theme-mode', 'color-theme'];
+      for (const key of keys) {
+        const value = localStorage.getItem(key);
+        if (value === null || value === undefined) continue;
+        const normalized = String(value).trim().toLowerCase();
+        if (['true', 'dark', '1'].includes(normalized)) return true;
+        if (['false', 'light', '0'].includes(normalized)) return false;
+      }
+    } catch (error) {
+      // ignore storage access errors
+    }
+    return null;
+  }
+
+  function inferDarkModeFromDocument() {
+    const body = document.body;
+    const html = document.documentElement;
+    const themeHref = dom.themeStyle?.getAttribute('href') || '';
+    const attrDark = [body, html].some((node) => {
+      if (!node) return false;
+      const dataTheme = (node.getAttribute('data-theme') || '').toLowerCase();
+      const dataBsTheme = (node.getAttribute('data-bs-theme') || '').toLowerCase();
+      return dataTheme === 'dark' || dataBsTheme === 'dark';
+    });
+    const classDark = [body, html].some((node) => {
+      if (!node) return false;
+      return ['dark', 'dark-mode', 'theme-dark'].some((cls) => node.classList.contains(cls));
+    });
+    if (attrDark || classDark || /dark/i.test(themeHref)) return true;
+    if (dom.darkModeToggle) return dom.darkModeToggle.checked;
+    const storedPreference = readStoredDarkPreference();
+    if (storedPreference !== null) return storedPreference;
+    if (window.matchMedia) return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return false;
+  }
+
+  function syncThemeWithPage(force = false) {
+    const dark = inferDarkModeFromDocument();
+    if (!force && state.themeDark === dark) return;
+    state.themeDark = dark;
+    if (document.body) {
+      document.body.classList.toggle('sim-article-dark', dark);
+    }
+    root.classList.toggle('sim-theme-dark', dark);
+    root.dataset.simTheme = dark ? 'dark' : 'light';
+    refreshPalette();
+    if (state.settings) renderAll();
+    document.dispatchEvent(new CustomEvent('evonet:themechange', { detail: { dark } }));
+  }
+
+  function bindThemeSync() {
+    const syncSoon = debounce(() => syncThemeWithPage(), 24);
+
+    if (dom.darkModeToggle) {
+      ['change', 'input', 'click'].forEach((eventName) => {
+        dom.darkModeToggle.addEventListener(eventName, () => syncSoon());
+      });
+    }
+
+    if (dom.themeStyle) {
+      new MutationObserver(() => syncSoon()).observe(dom.themeStyle, {
+        attributes: true,
+        attributeFilter: ['href']
+      });
+    }
+
+    if (document.body) {
+      new MutationObserver(() => syncSoon()).observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'data-theme', 'data-bs-theme']
+      });
+    }
+
+    new MutationObserver(() => syncSoon()).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme', 'data-bs-theme']
+    });
+
+    if (window.matchMedia) {
+      const media = window.matchMedia('(prefers-color-scheme: dark)');
+      if (media.addEventListener) {
+        media.addEventListener('change', () => syncSoon());
+      } else if (media.addListener) {
+        media.addListener(() => syncSoon());
+      }
+    }
+
+    window.addEventListener('load', () => syncThemeWithPage(true));
+    requestAnimationFrame(() => syncThemeWithPage(true));
+    setTimeout(() => syncThemeWithPage(true), 120);
   }
 
   function syncValueSpans() {
@@ -1010,7 +1145,7 @@
         return id && this.dataset.recordId === id ? 6 : (+this.dataset.baseR || 4.2);
       })
       .attr('stroke', function () {
-        return id && this.dataset.recordId === id ? palette.yellow : '#ffffff';
+        return id && this.dataset.recordId === id ? palette.yellow : palette.nodeRing;
       })
       .attr('stroke-width', function () {
         return id && this.dataset.recordId === id ? 2 : 1.2;
@@ -1040,7 +1175,7 @@
         return id && this.dataset.recordId === id ? 5.5 : 4.2;
       })
       .attr('stroke', function () {
-        return id && this.dataset.recordId === id ? palette.yellow : '#ffffff';
+        return id && this.dataset.recordId === id ? palette.yellow : palette.nodeRing;
       })
       .attr('stroke-width', function () {
         return id && this.dataset.recordId === id ? 1.8 : 0.8;
@@ -1072,7 +1207,7 @@
         return id && this.dataset.recordId === id ? 6.2 : 4.8;
       })
       .attr('stroke', function () {
-        return id && this.dataset.recordId === id ? palette.yellow : '#ffffff';
+        return id && this.dataset.recordId === id ? palette.yellow : palette.nodeRing;
       })
       .attr('stroke-width', function () {
         return id && this.dataset.recordId === id ? 2 : 1.1;
@@ -1191,15 +1326,15 @@
       .call(d3.axisBottom(x).ticks(Math.min(6, Math.max(2, Math.floor(width / 100))))
         .tickSizeOuter(0))
       .call((g) => g.selectAll('text').attr('class', 'evonet-axis-label'))
-      .call((g) => g.selectAll('line').attr('stroke', '#d6dbe6'))
-      .call((g) => g.select('.domain').attr('stroke', '#c8d0dd'));
+      .call((g) => g.selectAll('line').attr('stroke', palette.axisGrid))
+      .call((g) => g.select('.domain').attr('stroke', palette.axis));
 
     svg.append('line')
       .attr('x1', x(state.time))
       .attr('x2', x(state.time))
       .attr('y1', margin.top / 2)
       .attr('y2', height - margin.bottom)
-      .attr('stroke', '#c2c9d8')
+      .attr('stroke', palette.axisGuide)
       .attr('stroke-dasharray', '4,4');
 
     svg.append('text')
@@ -1218,7 +1353,7 @@
         .attr('x2', x(item.birthTime))
         .attr('y1', y(String(item.parentId)))
         .attr('y2', y(String(item.id)))
-        .attr('stroke', '#b7c0d0')
+        .attr('stroke', palette.connector)
         .attr('stroke-width', 1.5)
         .attr('opacity', 0.9)
         .attr('class', 'evonet-connector')
@@ -1274,7 +1409,7 @@
         .attr('cy', y(String(item.id)))
         .attr('r', baseR)
         .attr('fill', colorForItem(item))
-        .attr('stroke', '#ffffff')
+        .attr('stroke', palette.nodeRing)
         .attr('stroke-width', 1.2)
         .attr('opacity', 1)
         .attr('class', 'evonet-birth-dot')
@@ -1429,7 +1564,7 @@
         (enter) => enter.append('path')
           .attr('class', 'evonet-tree-guide-link')
           .attr('fill', 'none')
-          .attr('stroke', '#c7cddd')
+          .attr('stroke', palette.treeGuide)
           .attr('stroke-dasharray', '3,3')
           .attr('stroke-width', 1)
           .attr('opacity', 0.7)
@@ -1449,7 +1584,7 @@
         (enter) => enter.append('path')
           .attr('class', 'evonet-tree-internal-link')
           .attr('fill', 'none')
-          .attr('stroke', '#2f3441')
+          .attr('stroke', palette.treeLink)
           .attr('stroke-width', 1.3)
           .attr('opacity', 0.88)
           .attr('d', (d) => linkPath(d)),
@@ -1468,7 +1603,7 @@
         (enter) => enter.append('path')
           .attr('class', 'evonet-tree-leaf-link')
           .attr('fill', 'none')
-          .attr('stroke', '#2f3441')
+          .attr('stroke', palette.treeLink)
           .attr('stroke-width', 1.3)
           .attr('opacity', 0.88)
           .attr('d', (d) => linkPath(d)),
@@ -1488,8 +1623,8 @@
         (enter) => enter.append('circle')
           .attr('class', 'evonet-tree-internal-node')
           .attr('r', (d) => (d === layout.rootNode ? 5.5 : 2.8))
-          .attr('fill', (d) => (d === layout.rootNode ? palette.yellow : '#5c6577'))
-          .attr('stroke', '#ffffff')
+          .attr('fill', (d) => (d === layout.rootNode ? palette.yellow : palette.treeNode))
+          .attr('stroke', palette.nodeRing)
           .attr('stroke-width', 0.8)
           .attr('transform', (d) => nodeTransform(d)),
         (update) => update,
@@ -1507,7 +1642,7 @@
         (enter) => enter.append('circle')
           .attr('class', 'evonet-tree-leaf-node evonet-interactive')
           .attr('r', 4.2)
-          .attr('stroke', '#ffffff')
+          .attr('stroke', palette.nodeRing)
           .attr('stroke-width', 0.8)
           .attr('transform', (d) => nodeTransform(d)),
         (update) => update,
@@ -1624,7 +1759,7 @@
     const series = [
       { name: 'extant lineages', color: palette.blue, values: data.map((d) => ({ time: d.time, value: d.extantLineages })) },
       { name: 'observed species', color: palette.accent, values: data.map((d) => ({ time: d.time, value: d.observedSpecies })) },
-      { name: 'total lineages', color: '#c06a2b', values: data.map((d) => ({ time: d.time, value: d.totalLineages })) }
+      { name: 'total lineages', color: palette.totalLineages, values: data.map((d) => ({ time: d.time, value: d.totalLineages })) }
     ];
 
     svg.append('g')
@@ -1632,14 +1767,14 @@
       .call(d3.axisBottom(x).ticks(Math.min(6, Math.max(2, Math.floor(width / 100))))
         .tickSizeOuter(0))
       .call((g) => g.selectAll('text').attr('class', 'evonet-axis-label'))
-      .call((g) => g.select('.domain').attr('stroke', '#c8d0dd'));
+      .call((g) => g.select('.domain').attr('stroke', palette.axis));
 
     svg.append('g')
       .attr('transform', `translate(${margin.left},0)`)
       .call(d3.axisLeft(y).ticks(5))
       .call((g) => g.selectAll('text').attr('class', 'evonet-axis-label'))
-      .call((g) => g.select('.domain').attr('stroke', '#c8d0dd'))
-      .call((g) => g.selectAll('line').attr('stroke', '#d8deea'));
+      .call((g) => g.select('.domain').attr('stroke', palette.axis))
+      .call((g) => g.selectAll('line').attr('stroke', palette.axisGridStrong));
 
     series.forEach((s) => {
       svg.append('path')
@@ -1687,22 +1822,22 @@
       .attr('transform', `translate(0,${height - margin.bottom})`)
       .call(d3.axisBottom(x).ticks(5))
       .call((g) => g.selectAll('text').attr('class', 'evonet-axis-label'))
-      .call((g) => g.select('.domain').attr('stroke', '#c8d0dd'));
+      .call((g) => g.select('.domain').attr('stroke', palette.axis));
 
     svg.append('g')
       .attr('transform', `translate(${margin.left},0)`)
       .call(d3.axisLeft(y).ticks(5))
       .call((g) => g.selectAll('text').attr('class', 'evonet-axis-label'))
-      .call((g) => g.select('.domain').attr('stroke', '#c8d0dd'));
+      .call((g) => g.select('.domain').attr('stroke', palette.axis));
 
     svg.append('line')
       .attr('x1', x(0)).attr('x2', x(0))
       .attr('y1', margin.top).attr('y2', height - margin.bottom)
-      .attr('stroke', '#d6dbe6').attr('stroke-dasharray', '3,3');
+      .attr('stroke', palette.axisGrid).attr('stroke-dasharray', '3,3');
     svg.append('line')
       .attr('x1', margin.left).attr('x2', width - margin.right)
       .attr('y1', y(0)).attr('y2', y(0))
-      .attr('stroke', '#d6dbe6').attr('stroke-dasharray', '3,3');
+      .attr('stroke', palette.axisGrid).attr('stroke-dasharray', '3,3');
 
     svg.append('text').attr('x', width - margin.right).attr('y', height - 8).attr('text-anchor', 'end').attr('class', 'evonet-axis-caption')
       .text(state.settings.traitDimensions > 2 ? 'PC1' : 'Trait 1');
@@ -1714,7 +1849,7 @@
       .attr('cy', (d) => y(d.y))
       .attr('r', 4.8)
       .attr('fill', (d) => d.record.displayColor)
-      .attr('stroke', '#ffffff')
+      .attr('stroke', palette.nodeRing)
       .attr('stroke-width', 1.1)
       .attr('opacity', 0.95)
       .attr('class', 'evonet-trait-point evonet-interactive')
@@ -1771,6 +1906,7 @@
   }
 
   function renderAll() {
+    refreshPalette();
     renderStatusCards();
     renderEventFeed();
     const recordByNode = state.derived.coarsened.recordByNode;
@@ -1894,9 +2030,11 @@
     }, 120));
   }
 
+  bindThemeSync();
   bindControls();
   syncValueSpans();
   setEventDrawerOpen(false);
   applyPreset('balanced');
   resetSimulation();
+  syncThemeWithPage(true);
 })();

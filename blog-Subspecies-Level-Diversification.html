@@ -18,19 +18,301 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
 
-    <style>
+        <style>
         :root {
             --sim-bg: #fbfcff;
             --sim-card: #ffffff;
             --sim-border: #dde3ef;
             --sim-text: #293241;
             --sim-soft: #5a6474;
+            --sim-muted-text: #394355;
+            --sim-heading: #47536a;
+            --sim-panel-header-text: #4a576f;
+            --sim-chip-text: #4d5a73;
             --sim-accent: #757ca3;
             --sim-blue: #4264a6;
             --sim-red: #d94f4f;
             --sim-grey: #9aa3b2;
             --sim-yellow: #f7d724;
+            --sim-green: #3aa675;
+            --sim-axis: #c8d0dd;
+            --sim-axis-grid: #d6dbe6;
+            --sim-axis-grid-strong: #d8deea;
+            --sim-axis-guide: #c2c9d8;
+            --sim-connector: #b7c0d0;
+            --sim-tree-guide: #c7cddd;
+            --sim-tree-link: #2f3441;
+            --sim-tree-node: #5c6577;
+            --sim-node-ring: #ffffff;
+            --sim-total-lineages: #c06a2b;
+            --sim-widget-line: #bbc5d6;
+            --sim-widget-annotation: #c9cfdb;
+            --sim-history-muted: #cfd5df;
+            --sim-history-vertical: #7c87a0;
+            --sim-history-horizontal: #47536a;
+            --sim-record-inactive: #c8cedc;
+            --sim-chip-bg: #eef2fb;
+            --sim-chip-border: #c9d4ea;
+            --sim-status-bg: #f5f7fb;
+            --sim-status-text: #4f5b70;
+            --sim-card-gradient-start: #ffffff;
+            --sim-card-gradient-end: #f8fafe;
+            --sim-panel-header-bg: #f7f9fc;
+            --sim-tooltip-bg: rgba(28, 35, 47, 0.94);
+            --sim-tooltip-text: #ffffff;
+            --sim-feed-border: #d8deea;
+            --sim-feed-line: #46516a;
+            --sim-inline-callout-bg: #f5f8ff;
+            --sim-backdrop: rgba(33, 46, 79, 0.12);
+            --sim-shadow: 0 10px 30px rgba(33, 46, 79, 0.08);
+            --sim-drawer-shadow: 0 22px 55px rgba(25, 37, 63, 0.18);
+            --sim-toggle-track: #cdd5e4;
         }
+
+        body.sim-article-dark {
+            color-scheme: dark;
+            --sim-bg: #131824;
+            --sim-card: #0f1522;
+            --sim-border: #283145;
+            --sim-text: #e7ecf7;
+            --sim-soft: #aab4cb;
+            --sim-muted-text: #c2cadb;
+            --sim-heading: #d8e0f2;
+            --sim-panel-header-text: #dce4f6;
+            --sim-chip-text: #c8d1e6;
+            --sim-accent: #9caeff;
+            --sim-blue: #7ea2ff;
+            --sim-red: #ff8b8b;
+            --sim-grey: #6e7890;
+            --sim-yellow: #ffd85c;
+            --sim-green: #5fd39b;
+            --sim-axis: #55617a;
+            --sim-axis-grid: #40506c;
+            --sim-axis-grid-strong: #40506c;
+            --sim-axis-guide: #65718d;
+            --sim-connector: #7081a1;
+            --sim-tree-guide: #55617f;
+            --sim-tree-link: #dbe3f7;
+            --sim-tree-node: #9aa9c8;
+            --sim-node-ring: #0f1522;
+            --sim-total-lineages: #ffb066;
+            --sim-widget-line: #66728f;
+            --sim-widget-annotation: #55617a;
+            --sim-history-muted: #55617f;
+            --sim-history-vertical: #8ea3cf;
+            --sim-history-horizontal: #dce4f6;
+            --sim-record-inactive: #5c6782;
+            --sim-chip-bg: #182035;
+            --sim-chip-border: #35415f;
+            --sim-status-bg: #151d30;
+            --sim-status-text: #c2cbdf;
+            --sim-card-gradient-start: #111827;
+            --sim-card-gradient-end: #151d2e;
+            --sim-panel-header-bg: #151d30;
+            --sim-tooltip-bg: rgba(10, 13, 20, 0.94);
+            --sim-tooltip-text: #f7f9fe;
+            --sim-feed-border: #35415b;
+            --sim-feed-line: #d0d7e8;
+            --sim-inline-callout-bg: #151d30;
+            --sim-backdrop: rgba(4, 7, 14, 0.56);
+            --sim-shadow: 0 16px 38px rgba(0, 0, 0, 0.32);
+            --sim-drawer-shadow: 0 26px 64px rgba(0, 0, 0, 0.48);
+            --sim-toggle-track: #3b4660;
+        }
+
+        body.sim-article-dark .blog-post-body .lede {
+            color: var(--sim-muted-text);
+        }
+
+        body.sim-article-dark .sim-shell,
+        body.sim-article-dark .widget-shell,
+        body.sim-article-dark .widget-plot,
+        body.sim-article-dark .sim-panel,
+        body.sim-article-dark .sim-control-card,
+        body.sim-article-dark .sim-settings-details,
+        body.sim-article-dark .sim-run-toolbar,
+        body.sim-article-dark .sim-preset-box,
+        body.sim-article-dark .sim-events-drawer,
+        body.sim-article-dark .legend-chip,
+        body.sim-article-dark .metric-card,
+        body.sim-article-dark .sim-statusline,
+        body.sim-article-dark .inline-callout,
+        body.sim-article-dark .readout-badge {
+            color: var(--sim-text);
+        }
+
+        body.sim-article-dark .sim-shell,
+        body.sim-article-dark .widget-shell {
+            background: var(--sim-card);
+            border-color: var(--sim-border);
+            box-shadow: var(--sim-shadow);
+        }
+
+        body.sim-article-dark .sim-run-toolbar,
+        body.sim-article-dark .sim-settings-details,
+        body.sim-article-dark .sim-preset-box,
+        body.sim-article-dark .legend-chip,
+        body.sim-article-dark .sim-statusline,
+        body.sim-article-dark .widget-shell {
+            background: var(--sim-bg);
+            border-color: var(--sim-border);
+        }
+
+        body.sim-article-dark .sim-panel,
+        body.sim-article-dark .sim-control-card,
+        body.sim-article-dark .widget-plot,
+        body.sim-article-dark .sim-events-drawer {
+            background: var(--sim-card);
+            border-color: var(--sim-border);
+        }
+
+        body.sim-article-dark .metric-card {
+            background: linear-gradient(180deg, var(--sim-card-gradient-start) 0%, var(--sim-card-gradient-end) 100%);
+            border-color: var(--sim-border);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        body.sim-article-dark .sim-panel-header,
+        body.sim-article-dark .sim-events-drawer-header {
+            background: var(--sim-panel-header-bg);
+            color: var(--sim-panel-header-text);
+            border-color: var(--sim-border);
+        }
+
+        body.sim-article-dark .sim-control-card h5,
+        body.sim-article-dark .widget-title,
+        body.sim-article-dark .widget-panel h6,
+        body.sim-article-dark .sim-settings-summary,
+        body.sim-article-dark .sim-settings-summary-title,
+        body.sim-article-dark .sim-topbar h4,
+        body.sim-article-dark .sim-events-drawer-title,
+        body.sim-article-dark .evonet-empty-title {
+            color: var(--sim-heading);
+        }
+
+        body.sim-article-dark .sim-kicker,
+        body.sim-article-dark .readout-badge,
+        body.sim-article-dark .sim-utility-button.is-active {
+            background: var(--sim-chip-bg);
+            border-color: var(--sim-chip-border);
+            color: var(--sim-accent);
+        }
+
+        body.sim-article-dark .sim-summary-chip {
+            background: var(--sim-card);
+            border-color: var(--sim-border);
+            color: var(--sim-chip-text);
+        }
+
+        body.sim-article-dark .evonet-tooltip {
+            background: var(--sim-tooltip-bg);
+            color: var(--sim-tooltip-text);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+        }
+
+        body.sim-article-dark .evonet-axis-label,
+        body.sim-article-dark .evonet-axis-caption,
+        body.sim-article-dark .evonet-small-label,
+        body.sim-article-dark .evonet-tree-label,
+        body.sim-article-dark .tip-label {
+            fill: var(--sim-soft);
+        }
+
+        body.sim-article-dark .evonet-feed-line {
+            border-bottom-color: var(--sim-feed-border);
+            color: var(--sim-feed-line);
+        }
+
+        body.sim-article-dark .inline-callout {
+            background: var(--sim-inline-callout-bg);
+            border-left-color: var(--sim-accent);
+        }
+
+        body.sim-article-dark .sim-drawer-backdrop {
+            background: var(--sim-backdrop);
+        }
+
+        body.sim-article-dark .sim-events-drawer {
+            box-shadow: var(--sim-drawer-shadow);
+        }
+
+        body.sim-article-dark .toggle-switch-slider {
+            background-color: var(--sim-toggle-track);
+        }
+
+        body.sim-article-dark .toggle-switch-slider:before {
+            background-color: var(--sim-node-ring);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+        }
+
+        body.sim-article-dark .sim-shell .form-select,
+        body.sim-article-dark .sim-shell .form-select-sm,
+        body.sim-article-dark .sim-shell .form-control,
+        body.sim-article-dark .sim-shell .form-control-sm,
+        body.sim-article-dark .widget-shell .form-select,
+        body.sim-article-dark .widget-shell .form-control {
+            background-color: var(--sim-card);
+            color: var(--sim-text);
+            border-color: var(--sim-border);
+        }
+
+        body.sim-article-dark .sim-shell .form-select option,
+        body.sim-article-dark .widget-shell .form-select option {
+            background-color: var(--sim-card);
+            color: var(--sim-text);
+        }
+
+        body.sim-article-dark .sim-shell .form-select:focus,
+        body.sim-article-dark .sim-shell .form-control:focus,
+        body.sim-article-dark .sim-shell .form-control-sm:focus,
+        body.sim-article-dark .widget-shell .form-select:focus,
+        body.sim-article-dark .widget-shell .form-control:focus {
+            background-color: var(--sim-card);
+            color: var(--sim-text);
+            border-color: var(--sim-blue);
+            box-shadow: 0 0 0 0.2rem rgba(126, 162, 255, 0.2);
+        }
+
+        body.sim-article-dark .sim-shell .form-control::placeholder,
+        body.sim-article-dark .widget-shell .form-control::placeholder {
+            color: var(--sim-soft);
+        }
+
+        body.sim-article-dark .sim-shell .btn-outline-secondary,
+        body.sim-article-dark .widget-shell .btn-outline-secondary {
+            color: var(--sim-text);
+            border-color: var(--sim-border);
+        }
+
+        body.sim-article-dark .sim-shell .btn-outline-secondary:hover,
+        body.sim-article-dark .sim-shell .btn-outline-secondary:focus,
+        body.sim-article-dark .widget-shell .btn-outline-secondary:hover,
+        body.sim-article-dark .widget-shell .btn-outline-secondary:focus {
+            background: var(--sim-chip-bg);
+            color: var(--sim-text);
+            border-color: var(--sim-chip-border);
+        }
+
+        body.sim-article-dark .sim-shell .btn-outline-primary,
+        body.sim-article-dark .widget-shell .btn-outline-primary {
+            color: var(--sim-blue);
+            border-color: var(--sim-blue);
+        }
+
+        body.sim-article-dark .sim-shell .btn-outline-primary:hover,
+        body.sim-article-dark .sim-shell .btn-outline-primary:focus,
+        body.sim-article-dark .widget-shell .btn-outline-primary:hover,
+        body.sim-article-dark .widget-shell .btn-outline-primary:focus {
+            background: var(--sim-blue);
+            color: #081120;
+            border-color: var(--sim-blue);
+        }
+
+        body.sim-article-dark .sim-shell .btn-primary,
+        body.sim-article-dark .widget-shell .btn-primary {
+            box-shadow: 0 10px 24px rgba(24, 38, 72, 0.25);
+        }
+
 
         .blog-post-body p,
         .blog-post-body li {
@@ -352,12 +634,9 @@
             align-items: center;
         }
 
-        .sim-run-card .btn {
-            min-width: 90px;
-        }
-
+        .sim-run-card .btn,
         .sim-run-toolbar .btn {
-            min-width: 84px;
+            min-width: 0;
         }
 
         .legend-row {
@@ -765,7 +1044,8 @@
             padding-bottom: .24rem;
         }
 
-        .sim-shell input[type="range"] {
+        .sim-shell input[type="range"],
+        .widget-shell input[type="range"] {
             accent-color: var(--sim-blue);
         }
 
@@ -775,6 +1055,12 @@
             padding: .4rem .65rem;
             border-radius: 12px;
             white-space: nowrap;
+        }
+
+        .sim-run-toolbar-advanced .sim-utility-button {
+            min-height: 32px;
+            padding: .28rem .5rem;
+            border-radius: 10px;
         }
 
         .sim-utility-button.is-active {
@@ -818,37 +1104,44 @@
         }
 
         .sim-run-toolbar {
+            display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            gap: .55rem .8rem;
-            padding: .55rem .65rem;
+            gap: .35rem .5rem;
+            padding: .45rem .55rem;
         }
 
         .sim-run-toolbar-main {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: .4rem .65rem;
-            flex: 1 1 320px;
+            gap: .3rem .45rem;
+            flex: 0 1 auto;
+            min-width: 0;
         }
 
         .sim-run-toolbar-main h5 {
-            margin: 0;
-            font-size: .72rem;
+            margin: 0 .25rem 0 0;
+            font-size: .7rem;
             letter-spacing: .08em;
             text-transform: uppercase;
             color: var(--sim-soft);
+            white-space: nowrap;
         }
 
         .sim-button-row {
-            gap: .4rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: .3rem;
         }
 
         .sim-run-toolbar .btn,
         .sim-run-card .btn {
             min-width: 0;
-            padding: .38rem .65rem;
-            font-size: .84rem;
-            border-radius: 10px;
+            padding: .3rem .55rem;
+            font-size: .8rem;
+            line-height: 1.2;
+            border-radius: 9px;
         }
 
         .sim-run-toolbar-advanced {
@@ -856,22 +1149,37 @@
             flex-wrap: wrap;
             justify-content: flex-end;
             align-items: center;
-            gap: .4rem .55rem;
+            gap: .3rem .4rem;
+            flex: 1 1 auto;
             min-width: 0;
+            margin-left: auto;
         }
 
         .sim-run-toolbar-advanced .widget-controls,
         .sim-export-row {
-            gap: .35rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .25rem;
+            margin: 0;
+        }
+
+        .sim-run-toolbar-advanced .widget-controls label {
+            margin: 0 .15rem 0 0;
+            font-size: .78rem;
+            line-height: 1;
         }
 
         .sim-run-toolbar-advanced .form-control {
-            max-width: 116px !important;
+            width: 92px;
+            max-width: 92px !important;
+            padding: .25rem .45rem;
+            font-size: .8rem;
         }
 
         .sim-run-toolbar-advanced .btn {
-            padding: .28rem .5rem;
-            font-size: .78rem;
+            padding: .26rem .45rem;
+            font-size: .76rem;
         }
 
         .sim-settings-summary {
@@ -1082,8 +1390,8 @@
             }
 
             .sim-topbar-side {
-                grid-template-columns: minmax(0, 1fr) auto;
-                align-items: end;
+                grid-template-columns: 1fr;
+                align-items: start;
             }
 
             .sim-run-toolbar-advanced {
@@ -1119,7 +1427,7 @@
             }
 
             .sim-topbar-side {
-                grid-template-columns: 1fr auto;
+                grid-template-columns: 1fr;
                 gap: .4rem;
             }
 
@@ -1291,9 +1599,6 @@
                                 </select>
                                 <div id="presetDescription" class="small mt-1"></div>
                             </div>
-                            <button class="btn btn-outline-secondary btn-sm sim-utility-button" id="eventDrawerButton" type="button" aria-expanded="false" aria-controls="eventDrawer">
-                                <i class="fa-solid fa-clock-rotate-left me-1"></i> Recent events
-                            </button>
                         </div>
                     </div>
 
@@ -1321,10 +1626,13 @@
                             <div class="sim-run-toolbar-advanced">
                                 <div class="widget-controls">
                                     <label for="seedInput">Seed</label>
-                                    <input id="seedInput" type="number" class="form-control form-control-sm" value="182734" style="max-width: 132px;">
+                                    <input id="seedInput" type="number" class="form-control form-control-sm" value="182734">
                                     <button class="btn btn-outline-primary btn-sm" id="randomSeedButton" type="button">Randomize</button>
                                 </div>
                                 <div class="sim-export-row">
+                                    <button class="btn btn-outline-secondary btn-sm sim-utility-button" id="eventDrawerButton" type="button" aria-expanded="false" aria-controls="eventDrawer">
+                                        <i class="fa-solid fa-clock-rotate-left me-1"></i> Recent events
+                                    </button>
                                     <button class="btn btn-outline-primary btn-sm" id="exportJsonButton" type="button">Export JSON</button>
                                     <button class="btn btn-outline-primary btn-sm" id="copyHistoryNewickButton" type="button">Copy history Newick</button>
                                     <button class="btn btn-outline-primary btn-sm" id="copyTraitNewickButton" type="button">Copy trait Newick</button>
@@ -1468,7 +1776,7 @@
                     </aside>
                 </div>
 
-                <script src="./assets/js/evonet.js"></script>
+                <script src="./assets/js/evolab.js"></script>
 
                 <h3 class="mt-5 mb-3">How to read the simulator</h3>
                 <p>
