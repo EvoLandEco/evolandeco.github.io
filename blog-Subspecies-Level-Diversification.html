@@ -3,7 +3,6 @@
 <head>
     <title>Sub-Species Level Diversification and Phylogeny Reconstruction - Blog - Tianjian Qin</title>
 
-    <!-- Meta -->
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,88 +10,301 @@
     <meta name="author" content="Tianjian Qin">
     <link rel="shortcut icon" href="favicon.ico">
 
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
-
-    <!-- FontAwesome JS -->
     <script defer src="assets/fontawesome/js/all.js"></script>
-
-    <!-- Plugin CSS -->
     <link rel="stylesheet" href="assets/plugins/highlight/styles/monokai-sublime.min.css">
-
-    <!-- Theme CSS -->
     <link id="theme-style" rel="stylesheet" href="assets/css/theme-1.css">
 
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
 
-    <style type="text/css">
-        /* Container styles */
-        #graph-container,
-        #coarsened-graph-container,
-        #plot-container,
-        #trait-container {
-            aspect-ratio: 1 / 1;
-            border: 1px solid #ddd;
-            background-color: #fffdf9;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            position: relative;
-            z-index: 1;
-            overflow: hidden;
-            transition: box-shadow 0.3s ease;
+    <style>
+        :root {
+            --sim-bg: #fbfcff;
+            --sim-card: #ffffff;
+            --sim-border: #dde3ef;
+            --sim-text: #293241;
+            --sim-soft: #5a6474;
+            --sim-accent: #757ca3;
+            --sim-blue: #4264a6;
+            --sim-red: #d94f4f;
+            --sim-grey: #9aa3b2;
+            --sim-yellow: #f7d724;
+        }
 
-            /* Flexbox for centering content */
+        .blog-post-body p,
+        .blog-post-body li {
+            line-height: 1.75;
+        }
+
+        .blog-post-body h3,
+        .blog-post-body h4 {
+            scroll-margin-top: 90px;
+        }
+
+        .blog-post-body .lede {
+            font-size: 1.08rem;
+            color: #394355;
+        }
+
+        .sim-shell {
+            margin: 1.5rem 0 1.8rem;
+            padding: 1rem;
+            border: 1px solid var(--sim-border);
+            border-radius: 18px;
+            background: var(--sim-card);
+            box-shadow: 0 10px 30px rgba(33, 46, 79, 0.08);
+        }
+
+        .sim-topbar {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .sim-kicker {
+            display: inline-flex;
             align-items: center;
+            gap: .45rem;
+            padding: .3rem .65rem;
+            border-radius: 999px;
+            font-size: .8rem;
+            font-weight: 700;
+            color: var(--sim-accent);
+            background: #eef2fb;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            margin-bottom: .75rem;
         }
 
-        /* Text styling for containers */
-        #graph-container p,
-        #coarsened-graph-container p,
-        #plot-container p,
-        #trait-container p {
+        .sim-topbar h4 {
+            margin-bottom: .35rem;
+        }
+
+        .sim-subheading,
+        .sim-note,
+        .widget-note,
+        .sim-inline-explainer {
+            color: var(--sim-soft);
+        }
+
+        .sim-preset-box {
+            width: min(300px, 100%);
+            padding: .65rem .8rem;
+            background: var(--sim-bg);
+            border: 1px solid var(--sim-border);
+            border-radius: 14px;
+        }
+
+        .sim-topbar-main {
+            min-width: min(360px, 100%);
+        }
+
+        .sim-preset-box label,
+        .sim-control-card label,
+        .widget-controls label {
+            font-weight: 700;
+            font-size: .92rem;
+            color: var(--sim-text);
+            margin-bottom: .2rem;
+        }
+
+        .sim-control-card h5,
+        .widget-title {
+            margin-bottom: .8rem;
+            color: #47536a;
+            font-weight: 700;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: .55rem;
+            margin: .75rem 0 .65rem;
+        }
+
+        .metric-card {
+            border: 1px solid var(--sim-border);
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafe 100%);
+            border-radius: 12px;
+            padding: .55rem .7rem;
+            min-width: 0;
+        }
+
+        .metric-label {
+            font-size: .68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            color: var(--sim-soft);
+            margin-bottom: .1rem;
+        }
+
+        .metric-value {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--sim-text);
+            line-height: 1.1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sim-statusline {
+            padding: .55rem .75rem;
+            border-radius: 12px;
+            background: #f5f7fb;
+            border: 1px solid var(--sim-border);
+            color: #4f5b70;
+            margin-bottom: .75rem;
+            font-size: .88rem;
+        }
+
+        .sim-controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: .75rem;
+            margin-bottom: 0;
+        }
+
+        .sim-toolbar-stack {
+            display: grid;
+            gap: .75rem;
+            margin-bottom: .8rem;
+        }
+
+        .sim-run-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: .75rem;
+            flex-wrap: wrap;
+            padding: .7rem .8rem;
+            border: 1px solid var(--sim-border);
+            border-radius: 14px;
+            background: var(--sim-bg);
+        }
+
+        .sim-run-toolbar-main {
+            display: grid;
+            gap: .5rem;
+            flex: 1 1 340px;
+        }
+
+        .sim-run-toolbar-main h5,
+        .sim-settings-summary-title {
             margin: 0;
-            padding: 0;
-            font-size: 1.5em;
-            font-family: 'Arial', sans-serif;
-            text-align: center;
-            line-height: 1.5;
-            font-weight: 500;
+            color: #47536a;
+            font-weight: 700;
         }
 
-        /* Hover effect to add a subtle shadow */
-        #graph-container:hover,
-        #coarsened-graph-container:hover,
-        #plot-container:hover,
-        #trait-container:hover {
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        .sim-run-toolbar-advanced {
+            display: grid;
+            gap: .55rem;
+            justify-items: end;
+            flex: 0 1 auto;
         }
 
-        .panel-title {
-            color: #757ca3;
-            font-size: 1.5em;
-            font-weight: bold;
-            margin: 0;
-            padding: 10px;
-            border-radius: 8px 8px 0 0;
-            text-align: center;
+        .sim-settings-details {
+            border: 1px solid var(--sim-border);
+            border-radius: 14px;
+            background: var(--sim-bg);
+            overflow: hidden;
         }
 
-        /* Style for error or informational text */
-        .error-text {
-            color: #c67351; /* Color for error */
+        .sim-settings-summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: .8rem;
+            padding: .7rem .85rem;
+            color: #47536a;
         }
 
-        /* Namespace for the toggle switch */
+        .sim-settings-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .sim-settings-summary-copy {
+            display: grid;
+            gap: .08rem;
+        }
+
+        .sim-settings-summary-sub {
+            color: var(--sim-soft);
+            font-size: .86rem;
+            font-weight: 400;
+        }
+
+        .sim-settings-summary-icon {
+            color: var(--sim-soft);
+            transition: transform .2s ease;
+            flex: 0 0 auto;
+        }
+
+        .sim-settings-details[open] .sim-settings-summary {
+            border-bottom: 1px solid var(--sim-border);
+        }
+
+        .sim-settings-details[open] .sim-settings-summary-icon {
+            transform: rotate(180deg);
+        }
+
+        .sim-settings-content {
+            padding: .8rem;
+        }
+
+        .sim-control-card {
+            background: #fff;
+            border: 1px solid var(--sim-border);
+            border-radius: 14px;
+            padding: .8rem .85rem;
+        }
+
+        .slider-group {
+            margin-bottom: .7rem;
+        }
+
+        .slider-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .slider-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: .75rem;
+            margin-bottom: .12rem;
+        }
+
+        .slider-value {
+            font-weight: 700;
+            color: var(--sim-accent);
+            min-width: 3ch;
+            text-align: right;
+        }
+
+        .sim-control-card input[type="range"] {
+            width: 100%;
+        }
+
+        .sim-toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: .75rem;
+            margin-top: .65rem;
+        }
+
         .toggle-switch {
             position: relative;
-            width: 60px;
-            height: 34px;
+            width: 54px;
+            height: 30px;
+            flex: 0 0 auto;
         }
 
         .toggle-switch-input {
@@ -104,112 +316,928 @@
         .toggle-switch-slider {
             position: absolute;
             cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
+            inset: 0;
+            background-color: #cdd5e4;
+            transition: .25s;
+            border-radius: 999px;
         }
 
         .toggle-switch-slider:before {
             position: absolute;
             content: "";
-            height: 26px;
-            width: 26px;
+            height: 22px;
+            width: 22px;
             left: 4px;
             bottom: 4px;
             background-color: white;
-            transition: .4s;
-        }
-
-        .toggle-switch-input:checked + .toggle-switch-slider {
-            background-color: #2196F3;
-        }
-
-        .toggle-switch-input:checked + .toggle-switch-slider:before {
-            transform: translateX(26px);
-        }
-
-        /* Rounded sliders */
-        .toggle-switch-round {
-            border-radius: 34px;
-        }
-
-        .toggle-switch-round:before {
+            transition: .25s;
             border-radius: 50%;
         }
 
+        .toggle-switch-input:checked + .toggle-switch-slider {
+            background-color: var(--sim-blue);
+        }
+
+        .toggle-switch-input:checked + .toggle-switch-slider:before {
+            transform: translateX(24px);
+        }
+
+        .sim-button-row,
+        .sim-export-row,
+        .legend-row,
+        .widget-controls {
+            display: flex;
+            gap: .65rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .sim-run-card .btn {
+            min-width: 90px;
+        }
+
+        .sim-run-toolbar .btn {
+            min-width: 84px;
+        }
+
+        .legend-row {
+            margin: .7rem 0 .8rem;
+        }
+
+        .legend-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .35rem .7rem;
+            border-radius: 999px;
+            background: #f5f7fb;
+            border: 1px solid var(--sim-border);
+            color: #4d5a73;
+            font-size: .9rem;
+        }
+
+        .legend-swatch {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .legend-blue { background: var(--sim-blue); }
+        .legend-red { background: var(--sim-red); }
+        .legend-grey { background: var(--sim-grey); }
+        .legend-yellow { background: var(--sim-yellow); }
+
+        .sim-panel-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .sim-panel-grid-secondary {
+            margin-top: 1rem;
+        }
+
+        .sim-panel {
+            border: 1px solid var(--sim-border);
+            border-radius: 18px;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .sim-panel-header {
+            padding: .85rem 1rem;
+            font-weight: 700;
+            color: #4a576f;
+            background: #f7f9fc;
+            border-bottom: 1px solid var(--sim-border);
+        }
+
+        .evonet-panel {
+            position: relative;
+            height: 360px;
+            min-height: 360px;
+        }
+
+        .evonet-panel-compact {
+            position: relative;
+            height: 310px;
+            min-height: 310px;
+        }
+
+        .evonet-svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .evonet-empty-state {
+            min-height: inherit;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: var(--sim-soft);
+            padding: 1.5rem;
+        }
+
+        .evonet-empty-title {
+            font-weight: 700;
+            color: #49556d;
+            margin-bottom: .3rem;
+        }
+
+        .evonet-empty-subtitle {
+            font-size: .95rem;
+        }
+
+        .evonet-tooltip {
+            position: absolute;
+            z-index: 10;
+            pointer-events: none;
+            max-width: 220px;
+            padding: .55rem .7rem;
+            border-radius: 10px;
+            background: rgba(28, 35, 47, 0.94);
+            color: #fff;
+            font-size: .82rem;
+            line-height: 1.45;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, .18);
+            opacity: 0;
+            transition: opacity .12s ease;
+        }
+
+        .evonet-axis-label,
+        .evonet-axis-caption,
+        .evonet-small-label,
+        .evonet-tree-label {
+            fill: #5a6474;
+            font-size: 11px;
+            font-family: Roboto, sans-serif;
+        }
+
+        .evonet-tree-label {
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .evonet-interactive {
+            cursor: pointer;
+        }
+
+        .event-feed {
+            padding: .8rem 1rem 1rem;
+        }
+
+        .evonet-feed-empty {
+            color: var(--sim-soft);
+        }
+
+        .evonet-feed-line {
+            padding: .5rem 0;
+            border-bottom: 1px dashed #d8deea;
+            color: #46516a;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: .88rem;
+        }
+
+        .evonet-feed-line:last-child {
+            border-bottom: 0;
+        }
+
+        .widget-shell {
+            margin: 1.25rem 0 1.75rem;
+            padding: 1rem;
+            border: 1px solid var(--sim-border);
+            border-radius: 18px;
+            background: var(--sim-bg);
+        }
+
+        .widget-shell .widget-title {
+            margin-bottom: .25rem;
+        }
+
+        .widget-note {
+            margin-bottom: .85rem;
+            font-size: .95rem;
+        }
+
+        .widget-plot {
+            background: #fff;
+            border: 1px solid var(--sim-border);
+            border-radius: 14px;
+            position: relative;
+            min-height: 220px;
+            height: 220px;
+        }
+
+        .widget-plot-tall {
+            min-height: 260px;
+            height: 260px;
+        }
+
+        .widget-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .widget-panel h6 {
+            margin-bottom: .5rem;
+            color: #4d5a73;
+        }
+
+        .inline-callout {
+            margin: 1rem 0;
+            padding: .9rem 1rem;
+            background: #f5f8ff;
+            border-left: 4px solid var(--sim-accent);
+            border-radius: 10px;
+        }
+
+        .sim-note {
+            margin: .75rem 0 0;
+        }
+
+        .readout-badge {
+            display: inline-block;
+            padding: .2rem .55rem;
+            border-radius: 999px;
+            background: #eef2fb;
+            color: var(--sim-accent);
+            font-size: .84rem;
+            font-weight: 700;
+        }
+
+        @media (max-width: 991px) {
+            .sim-panel-grid,
+            .widget-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .evonet-panel,
+            .evonet-panel-compact {
+                height: 320px;
+                min-height: 320px;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .sim-shell {
+                padding: .85rem;
+                border-radius: 16px;
+            }
+
+            .sim-topbar {
+                gap: .6rem;
+            }
+
+            .sim-topbar h4 {
+                font-size: 1.1rem;
+                margin-bottom: .15rem;
+            }
+
+            .sim-subheading {
+                font-size: .9rem;
+            }
+
+            .sim-preset-box {
+                width: 100%;
+                padding: .55rem .65rem;
+            }
+
+            .metric-grid {
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+                gap: .35rem;
+            }
+
+            .metric-card {
+                padding: .35rem .4rem;
+                border-radius: 10px;
+            }
+
+            .metric-label {
+                font-size: .54rem;
+                letter-spacing: .01em;
+                line-height: 1.15;
+            }
+
+            .metric-value {
+                font-size: .82rem;
+            }
+
+            .sim-statusline {
+                font-size: .78rem;
+                padding: .45rem .55rem;
+            }
+
+            .sim-run-toolbar {
+                padding: .55rem .6rem;
+            }
+
+            .sim-run-toolbar-main h5 {
+                display: none;
+            }
+
+            .sim-run-toolbar-advanced {
+                display: none;
+            }
+
+            .sim-button-row {
+                width: 100%;
+                justify-content: space-between;
+                gap: .35rem;
+            }
+
+            .sim-run-toolbar .btn,
+            .sim-run-card .btn {
+                min-width: 0;
+                padding: .42rem .5rem;
+                font-size: .82rem;
+                flex: 1 1 0;
+            }
+
+            .sim-settings-summary {
+                padding: .58rem .7rem;
+            }
+
+            .sim-settings-summary-sub {
+                display: none;
+            }
+
+            .sim-settings-content {
+                padding: .7rem;
+            }
+
+            .sim-controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .legend-row {
+                gap: .35rem;
+            }
+
+            .legend-chip {
+                padding: .28rem .52rem;
+                font-size: .76rem;
+            }
+
+            .evonet-panel,
+            .evonet-panel-compact,
+            .widget-plot,
+            .widget-plot-tall {
+                height: 280px;
+                min-height: 280px;
+            }
+        }
+    
+
+        /* Compact simulator chrome refresh */
+        .sim-shell {
+            position: relative;
+            overflow: visible;
+            padding: .85rem;
+        }
+
+        .sim-topbar {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+            gap: .65rem .75rem;
+            align-items: start;
+            margin-bottom: .15rem;
+        }
+
+        .sim-topbar-main {
+            min-width: 0;
+        }
+
+        .sim-topbar-side {
+            display: grid;
+            gap: .5rem;
+            align-content: start;
+            min-width: 0;
+        }
+
+        .sim-kicker {
+            margin-bottom: .45rem;
+            padding: .22rem .55rem;
+            font-size: .72rem;
+        }
+
+        .sim-topbar h4 {
+            margin-bottom: .18rem;
+            font-size: 1.12rem;
+        }
+
+        .sim-subheading {
+            font-size: .92rem;
+            line-height: 1.45;
+        }
+
+        .sim-preset-box {
+            width: 100%;
+            padding: .5rem .6rem;
+            border-radius: 12px;
+            display: grid;
+            gap: .22rem;
+        }
+
+        .sim-preset-box .small {
+            font-size: .74rem;
+            line-height: 1.35;
+        }
+
+        .sim-preset-box label,
+        .sim-control-card label,
+        .widget-controls label {
+            font-size: .78rem;
+            letter-spacing: .02em;
+            margin-bottom: 0;
+        }
+
+        .sim-shell .form-select-sm,
+        .sim-shell .form-control,
+        .sim-shell .form-control-sm {
+            min-height: 32px;
+            font-size: .82rem;
+            padding-top: .24rem;
+            padding-bottom: .24rem;
+        }
+
+        .sim-shell input[type="range"] {
+            accent-color: var(--sim-blue);
+        }
+
+        .sim-utility-button {
+            justify-self: end;
+            min-height: 36px;
+            padding: .4rem .65rem;
+            border-radius: 12px;
+            white-space: nowrap;
+        }
+
+        .sim-utility-button.is-active {
+            background: #eef2fb;
+            border-color: #c9d4ea;
+            color: var(--sim-blue);
+        }
+
+        .metric-grid {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: .4rem;
+            margin: .55rem 0 .45rem;
+        }
+
+        .metric-card {
+            padding: .4rem .55rem;
+            border-radius: 10px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+        }
+
+        .metric-label {
+            font-size: .57rem;
+            margin-bottom: .05rem;
+            letter-spacing: .04em;
+        }
+
+        .metric-value {
+            font-size: .94rem;
+        }
+
+        .sim-statusline {
+            margin-bottom: .5rem;
+            padding: .42rem .6rem;
+            border-radius: 10px;
+            font-size: .8rem;
+        }
+
+        .sim-toolbar-stack {
+            gap: .55rem;
+            margin-bottom: .55rem;
+        }
+
+        .sim-run-toolbar {
+            align-items: center;
+            gap: .55rem .8rem;
+            padding: .55rem .65rem;
+        }
+
+        .sim-run-toolbar-main {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .4rem .65rem;
+            flex: 1 1 320px;
+        }
+
+        .sim-run-toolbar-main h5 {
+            margin: 0;
+            font-size: .72rem;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--sim-soft);
+        }
+
+        .sim-button-row {
+            gap: .4rem;
+        }
+
+        .sim-run-toolbar .btn,
+        .sim-run-card .btn {
+            min-width: 0;
+            padding: .38rem .65rem;
+            font-size: .84rem;
+            border-radius: 10px;
+        }
+
+        .sim-run-toolbar-advanced {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            align-items: center;
+            gap: .4rem .55rem;
+            min-width: 0;
+        }
+
+        .sim-run-toolbar-advanced .widget-controls,
+        .sim-export-row {
+            gap: .35rem;
+        }
+
+        .sim-run-toolbar-advanced .form-control {
+            max-width: 116px !important;
+        }
+
+        .sim-run-toolbar-advanced .btn {
+            padding: .28rem .5rem;
+            font-size: .78rem;
+        }
+
+        .sim-settings-summary {
+            padding: .55rem .7rem;
+            gap: .55rem;
+        }
+
+        .sim-settings-summary-body {
+            display: grid;
+            gap: .25rem;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .sim-settings-summary-copy {
+            gap: 0;
+        }
+
+        .sim-settings-summary-title {
+            font-size: .9rem;
+        }
+
+        .sim-settings-summary-sub {
+            font-size: .78rem;
+        }
+
+        .sim-settings-summary-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .35rem;
+            min-width: 0;
+        }
+
+        .sim-summary-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            padding: .18rem .5rem;
+            border-radius: 999px;
+            border: 1px solid var(--sim-border);
+            background: #fff;
+            color: #526078;
+            font-size: .72rem;
+            line-height: 1.25;
+            white-space: nowrap;
+        }
+
+        .sim-settings-content {
+            padding: .65rem;
+        }
+
+        .sim-controls-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: .55rem;
+        }
+
+        .sim-control-card {
+            padding: .65rem .7rem;
+            border-radius: 12px;
+        }
+
+        .sim-control-card h5 {
+            margin-bottom: .55rem;
+            font-size: .86rem;
+        }
+
+        .slider-group {
+            margin-bottom: .5rem;
+        }
+
+        .slider-head {
+            gap: .4rem;
+            margin-bottom: .08rem;
+        }
+
+        .slider-head label {
+            line-height: 1.25;
+        }
+
+        .slider-value {
+            font-size: .82rem;
+        }
+
+        .sim-toggle-row {
+            margin-top: .45rem;
+            font-size: .85rem;
+        }
+
+        .toggle-switch {
+            width: 48px;
+            height: 26px;
+        }
+
+        .toggle-switch-slider:before {
+            width: 18px;
+            height: 18px;
+            left: 4px;
+            bottom: 4px;
+        }
+
+        .toggle-switch-input:checked + .toggle-switch-slider:before {
+            transform: translateX(22px);
+        }
+
+        .legend-row {
+            margin: .5rem 0 .65rem;
+            gap: .45rem;
+        }
+
+        .legend-chip {
+            padding: .28rem .55rem;
+            font-size: .78rem;
+        }
+
+        .sim-note {
+            margin: .55rem 0 0;
+            font-size: .9rem;
+        }
+
+        .sim-drawer-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(33, 46, 79, 0.12);
+            backdrop-filter: blur(2px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .22s ease;
+            z-index: 1040;
+        }
+
+        .sim-drawer-backdrop.is-open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .sim-events-drawer {
+            position: fixed;
+            top: 84px;
+            right: 18px;
+            width: min(360px, calc(100vw - 24px));
+            max-height: min(72vh, 560px);
+            display: grid;
+            grid-template-rows: auto 1fr;
+            border: 1px solid var(--sim-border);
+            border-radius: 18px;
+            background: #fff;
+            box-shadow: 0 22px 55px rgba(25, 37, 63, 0.18);
+            transform: translateX(calc(100% + 24px));
+            opacity: 0;
+            pointer-events: none;
+            transition: transform .24s ease, opacity .24s ease;
+            overflow: hidden;
+            z-index: 1045;
+        }
+
+        .sim-events-drawer.is-open {
+            transform: translateX(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .sim-events-drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: .75rem;
+            padding: .75rem .85rem;
+            border-bottom: 1px solid var(--sim-border);
+            background: #f8fafe;
+        }
+
+        .sim-events-drawer-title {
+            font-weight: 700;
+            color: #47536a;
+            margin-bottom: .1rem;
+        }
+
+        .sim-events-drawer-subtitle {
+            color: var(--sim-soft);
+            font-size: .82rem;
+            line-height: 1.4;
+        }
+
+        .event-feed {
+            padding: .4rem .85rem .85rem;
+            overflow: auto;
+            max-height: min(72vh, 560px);
+        }
+
+        .evonet-feed-line {
+            padding: .45rem 0;
+            font-size: .82rem;
+        }
+
+        @media (max-width: 1199px) {
+            .sim-topbar {
+                grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+            }
+
+            .sim-controls-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .sim-topbar {
+                grid-template-columns: 1fr;
+            }
+
+            .sim-topbar-side {
+                grid-template-columns: minmax(0, 1fr) auto;
+                align-items: end;
+            }
+
+            .sim-run-toolbar-advanced {
+                display: none;
+            }
+
+            .sim-settings-summary-sub {
+                display: none;
+            }
+        }
+
+        @media (max-width: 880px) {
+            .sim-controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sim-settings-summary-meta {
+                display: none;
+            }
+
+            .metric-value {
+                font-size: .82rem;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .sim-shell {
+                padding: .75rem;
+            }
+
+            .sim-topbar {
+                gap: .5rem;
+            }
+
+            .sim-topbar-side {
+                grid-template-columns: 1fr auto;
+                gap: .4rem;
+            }
+
+            .sim-utility-button {
+                justify-self: stretch;
+            }
+
+            .sim-preset-box {
+                padding: .45rem .55rem;
+            }
+
+            .sim-button-row {
+                width: 100%;
+                gap: .3rem;
+            }
+
+            .sim-run-toolbar .btn,
+            .sim-run-card .btn {
+                padding: .38rem .45rem;
+                font-size: .78rem;
+                flex: 1 1 0;
+            }
+
+            .legend-chip {
+                font-size: .72rem;
+            }
+
+            .sim-events-drawer {
+                top: auto;
+                right: 8px;
+                left: 8px;
+                bottom: 8px;
+                width: auto;
+                max-height: 76vh;
+                transform: translateY(calc(100% + 12px));
+            }
+
+            .sim-events-drawer.is-open {
+                transform: translateY(0);
+            }
+
+            .event-feed {
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .sim-topbar-side {
+                grid-template-columns: 1fr;
+            }
+
+            .sim-utility-button {
+                justify-self: start;
+            }
+
+            .sim-settings-summary {
+                padding: .5rem .6rem;
+            }
+        }
+
     </style>
-
 </head>
-
 <body>
 
 <header class="header text-center">
     <div class="force-overflow">
         <h1 class="blog-name pt-lg-4 mb-0"><a class="no-text-decoration" href="index.html">Tianjian Qin</a></h1>
 
-        <nav class="navbar navbar-expand-lg navbar-dark" >
-
+        <nav class="navbar navbar-expand-lg navbar-dark">
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navigation" aria-controls="navigation" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-            <div id="navigation" class="collapse navbar-collapse flex-column" >
+            <div id="navigation" class="collapse navbar-collapse flex-column">
                 <div class="profile-section pt-3 pt-lg-0">
-                    <img class="profile-image mb-3 rounded-circle mx-auto" src="assets/images/profile.png" alt="image" >
-
-                    <div class="bio mb-3">Hi, my name is Tianjian. I'm a computational biologist &amp; data scientist.</div><!--//bio-->
+                    <img class="profile-image mb-3 rounded-circle mx-auto" src="assets/images/profile.png" alt="image">
+                    <div class="bio mb-3">Hi, my name is Tianjian. I'm a computational biologist &amp; data scientist.</div>
                     <ul class="social-list list-inline py-2 mx-auto">
                         <li class="list-inline-item"><a href="https://www.linkedin.com/in/tjqin/"><i class="fab fa-linkedin-in fa-fw"></i></a></li>
                         <li class="list-inline-item"><a href="https://github.com/EvoLandEco"><i class="fab fa-github-alt fa-fw"></i></a></li>
                         <li class="list-inline-item"><a href="https://www.researchgate.net/profile/Tianjian-Qin"><i class="fa-brands fa-researchgate"></i></a></li>
                         <li class="list-inline-item"><a href="https://qtj.me/gallery"><i class="fa-regular fa-lightbulb fa-beat"></i></a></li>
-                    </ul><!--//social-list-->
+                    </ul>
                     <hr>
-                </div><!--//profile-section-->
+                </div>
 
                 <ul class="navbar-nav flex-column text-start">
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.html"><i class="fas fa-user fa-fw me-2"></i>About Me</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="portfolio.html"><i class="fas fa-laptop-code fa-fw me-2"></i>Portfolio</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="resume.html"><i class="fas fa-file-alt fa-fw me-2"></i>Resume</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="blog-home.html"><i class="fas fa-blog fa-fw me-2"></i>Blog</a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="index.html"><i class="fas fa-user fa-fw me-2"></i>About Me</a></li>
+                    <li class="nav-item"><a class="nav-link" href="portfolio.html"><i class="fas fa-laptop-code fa-fw me-2"></i>Portfolio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="resume.html"><i class="fas fa-file-alt fa-fw me-2"></i>Resume</a></li>
+                    <li class="nav-item"><a class="nav-link" href="blog-home.html"><i class="fas fa-blog fa-fw me-2"></i>Blog</a></li>
                 </ul>
 
                 <div class="my-2">
                     <a class="btn btn-primary" href="mailto:tianjianqin@outlook.com" target="_blank"><i class="fas fa-paper-plane me-2"></i>Contact Me</a>
                 </div>
 
-
                 <div class="dark-mode-toggle text-center w-100">
                     <hr class="mb-4">
-                    <h4 class="toggle-name mb-3 "><i class="fas fa-adjust me-1"></i>Dark Mode</h4>
-
+                    <h4 class="toggle-name mb-3"><i class="fas fa-adjust me-1"></i>Dark Mode</h4>
                     <input class="toggle" id="darkmode" type="checkbox">
                     <label class="toggle-btn mx-auto mb-0" for="darkmode"></label>
-
-                </div><!--//dark-mode-toggle-->
+                </div>
             </div>
         </nav>
-    </div><!--//force-overflow-->
+    </div>
 </header>
 
 <div class="main-wrapper">
-
     <article class="blog-post px-3 py-5 p-md-5">
         <div class="container single-col-max-width">
             <header class="blog-post-header">
                 <h2 class="title mb-2">Sub-Species Level Diversification and Phylogeny Reconstruction</h2>
-                <div class="meta mb-3"><span class="date"><i class="fa-solid fa-calendar-days me-2"></i>Published on 20 Aug 2024</span><span class="time"><i class="fa-solid fa-clock me-2"></i>15 min read</span><span class="comment"><i class="fa-solid fa-comment me-2"></i><a href="https://qtj.me/blog-Subspecies-Level-Diversification.html#disqus_thread" data-disqus-identifier="BLOG_POST_SUBSPECIES">Link</a></span></div>
+                <div class="meta mb-3">
+                    <span class="date"><i class="fa-solid fa-calendar-days me-2"></i>Published on 20 Aug 2024</span>
+                    <span class="time"><i class="fa-solid fa-clock me-2"></i>18 min read</span>
+                    <span class="comment"><i class="fa-solid fa-comment me-2"></i><a href="#disqus_thread" data-disqus-identifier="BLOG_POST_SUBSPECIES">Link</a></span>
+                </div>
             </header>
 
             <div class="blog-post-body">
@@ -220,457 +1248,370 @@
                     </figcaption>
                 </figure>
 
+                <p class="lede mt-4">
+                    Diversification is easiest to misunderstand when we jump straight to the final tree. By that stage, a lot of the process has already been compressed away:
+                    event order, lingering progenitor lineages, extinct side branches, and the mismatch between what happened and what our summaries can still recover.
+                    That is the motivation for the simulator below. It keeps time in the foreground and lets the same run be viewed as lineage history, coarse-grained taxa, and trait-based reconstruction.
+                </p>
+
+                <p>
+                    Under the hood, each extant lineage can bud a clonal daughter, bud a mutating daughter, or die, with event times sampled in continuous time using a Gillespie-style
+                    stochastic simulation algorithm.<sup><a href="#ref1">[1]</a></sup> The simulator then coarse-grain those lineage-level events into “species” by requiring a user-defined
+                    number of mutational steps before promoting a daughter lineage to a new named taxon. It is essentially a 
+                    protracted speciation, and it is closer to a budding picture than to a perfectly symmetric split because the progenitor lineage can survive while
+                    throwing off daughters.<sup><a href="#ref4">[4]</a></sup><sup><a href="#ref5">[5]</a></sup><sup><a href="#ref15">[15]</a></sup>
+                </p>
+
                 <h3 class="mt-5 mb-3">TL;DR</h3>
                 <ul>
-                    <li>
-                        Diversification is an event-by-event process. A bifurcating tree is usually a useful summary,
-                        but it is not the only (or always the best) way to represent what happened.
-                    </li>
-                    <li>
-                        If you keep track of “incipient lineages” (sub-species-level entities) and then
-                        coarse-grain them into “species,” the result can naturally look like a <em>network</em>
-                        rather than a clean tree—especially when information is lost through extinction or coarse-graining.
-                    </li>
-                    <li>
-                        A tree reconstructed from <em>traits</em> can agree—or strongly disagree—with a tree reconstructed from
-                        the <em>historical event chain</em>. Increasing trait dimensionality can help under certain models,
-                        but it is not a magic fix.
-                    </li>
+                    <li>Diversification is an event-by-event process first, and only later a tree summary.</li>
+                    <li>Coarse-graining and extinction can make different fine-scale histories collapse into the same observed species-level pattern.</li>
+                    <li>A tree reconstructed from traits can disagree with a tree reconstructed from the event history for very ordinary reasons.</li>
+                    <li>The simulator makes those bottlenecks visible with time-resolved chronograms, a lineages-through-time panel, and a trait-space panel.</li>
                 </ul>
 
-                <div class="alert alert-warning mt-4" role="alert">
-                    <strong>Toy-model disclaimer.</strong>
-                    This simulator is built to make <em>information bottlenecks</em> visible: what you can and cannot infer when
-                    (i) speciation is gradual, (ii) extinction erases history, and (iii) you only observe imperfect proxies
-                    (traits) rather than the full event log. It is <strong>not</strong> intended as a realistic generator of
-                    DNA sequences, genomes, or species boundaries in any particular clade.
-                </div>
-
-                <h3 class="mt-5 mb-3">Interactive simulator</h3>
-                <p>
-                    Press <strong>Grow</strong> to run one diversification trajectory. If the run becomes uninformative
-                    (e.g., everything goes extinct), press <strong>Reset</strong> and try a new parameter setting.
-                    You can <strong>Pause</strong> any time.
-                </p>
-
-                <ul>
-                    <li><strong>Drag</strong> nodes in the graph panels to declutter the layout.</li>
-                    <li><strong>Hover</strong> a node/tip in any panel to highlight its counterpart(s) across all panels.</li>
-                    <li>If you see “strange” trees, treat that as the point: reconstruction can be ambiguous or misleading when information is insufficient.</li>
-                </ul>
-
-                <p class="mb-4">
-                    <strong>Legend.</strong>
-                    Blue nodes = non-mutating (clonal) lineages; red nodes = mutating lineages; grey nodes = extinct lineages.
-                </p>
-
-                <div class="row col-12">
-                    <div class="col-4">
-                        <div class="row mt-3 mb-3 mx-lg-1 my-3">
-                            <label for="birthRate">Birth Rate:</label>
-                            <input type="range" id="birthRate" min="0.00" max="1.00" step="0.05" value="0.4">
-                            <span id="birthRateValue">0.40</span>
+                <div id="evonet-simulator" class="sim-shell">
+                    <div class="sim-topbar">
+                        <div class="sim-topbar-main">
+                            <div class="sim-kicker"><i class="fa-solid fa-microscope"></i> EvoLab</div>
+                            <h4>Interactive diversification lab</h4>
+                            <p class="sim-subheading mb-0">
+                                Continuous-time budding process + coarse-grained species labels + linked reconstructions.
+                            </p>
                         </div>
-                        <div class="row mt-3 mb-3 mx-lg-1 my-3">
-                            <label for="mutateRate">Mutation Rate:</label>
-                            <input type="range" id="mutateRate" min="0.00" max="1.00" step="0.05" value="0.4">
-                            <span id="mutateRateValue">0.40</span>
-                        </div>
-                        <div class="row mt-3 mb-3 mx-lg-1 my-3">
-                            <label for="deathRate">Death Rate:</label>
-                            <input type="range" id="deathRate" min="0.00" max="1.00" step="0.05" value="0.1">
-                            <span id="deathRateValue">0.10</span>
-                        </div>
-                    </div>
 
-                    <div class="col-4">
-                        <div class="row mt-3 mb-3 mx-lg-1 my-3">
-                            <label for="maxSteps">Simulation Steps:</label>
-                            <input type="range" id="maxSteps" value="25" min="1" max="50" step="1"
-                                oninput="document.getElementById('maxStepsValue').innerText = this.value;">
-                            <span id="maxStepsValue">25</span>
-                        </div>
-                        <div class="row mt-3 mb-3 mx-lg-1 my-3">
-                            <label for="mstep">Coarsen Level:</label>
-                            <input type="range" id="mstep" value="1" min="0" max="6" step="1"
-                                oninput="document.getElementById('mstepValue').innerText = this.value;">
-                            <span id="mstepValue">1</span>
-                        </div>
-                        <div class="row mt-3 mb-3 mx-lg-1 my-3">
-                            <label for="traitDimensions">Trait Dimensions:</label>
-                            <input type="range" id="traitDimensions" value="5" min="1" max="10" step="1"
-                                oninput="document.getElementById('traitDimensionsValue').innerText = this.value;">
-                            <span id="traitDimensionsValue">5</span>
-                        </div>
-                    </div>
-
-                    <div class="col-4">
-                        <div class="row mt-3 mb-3 my-lg-3 ">
-                            <div>
-                                <label for="traitModel">Mutation Model:</label>
-                                <select id="traitModel">
-                                    <option value="brownian" selected>Brownian Motion</option>
+                        <div class="sim-topbar-side">
+                            <div class="sim-preset-box">
+                                <label for="presetSelect">Preset scenario</label>
+                                <select id="presetSelect" class="form-select form-select-sm mt-1">
+                                    <option value="balanced">Balanced exploration</option>
+                                    <option value="turnover">High turnover</option>
+                                    <option value="radiation">Rapid radiation</option>
+                                    <option value="constrained">Trait constraint (OU-like)</option>
                                 </select>
+                                <div id="presetDescription" class="small mt-1"></div>
                             </div>
+                            <button class="btn btn-outline-secondary btn-sm sim-utility-button" id="eventDrawerButton" type="button" aria-expanded="false" aria-controls="eventDrawer">
+                                <i class="fa-solid fa-clock-rotate-left me-1"></i> Recent events
+                            </button>
                         </div>
+                    </div>
 
-                        <div class="row mt-3 mb-3 m-lg-2 my-lg-4">
-                            <div class="row">Show Branch Lengths</div>
-                            <div class="row toggle-switch">
-                                <div>
-                                    <label for="showBranchLengths" class="toggle-switch-label">
-                                        <input type="checkbox" id="showBranchLengths" class="toggle-switch-input">
-                                        <span class="toggle-switch-slider toggle-switch-round"></span>
-                                    </label>
+                    <div class="metric-grid">
+                        <div class="metric-card"><div class="metric-label">Extant</div><div class="metric-value" id="extantCount">1</div></div>
+                        <div class="metric-card"><div class="metric-label">Extinct</div><div class="metric-value" id="extinctCount">0</div></div>
+                        <div class="metric-card"><div class="metric-label">Observed</div><div class="metric-value" id="observedCount">1</div></div>
+                        <div class="metric-card"><div class="metric-label">Time</div><div class="metric-value" id="timeCount">0.00</div></div>
+                        <div class="metric-card"><div class="metric-label">Leaf-pair r</div><div class="metric-value" id="agreementCount">n/a</div></div>
+                    </div>
+
+                    <div class="sim-statusline" id="statusNote"></div>
+
+                    <div class="sim-toolbar-stack">
+                        <div class="sim-run-toolbar sim-run-card">
+                            <div class="sim-run-toolbar-main">
+                                <h5>Run controls</h5>
+                                <div class="sim-button-row">
+                                    <button class="btn btn-primary" id="startButton" type="button">Grow</button>
+                                    <button class="btn btn-primary" id="pauseButton" type="button" disabled>Pause</button>
+                                    <button class="btn btn-outline-primary" id="stepButton" type="button">Step</button>
+                                    <button class="btn btn-outline-secondary" id="resetButton" type="button">Reset</button>
+                                </div>
+                            </div>
+                            <div class="sim-run-toolbar-advanced">
+                                <div class="widget-controls">
+                                    <label for="seedInput">Seed</label>
+                                    <input id="seedInput" type="number" class="form-control form-control-sm" value="182734" style="max-width: 132px;">
+                                    <button class="btn btn-outline-primary btn-sm" id="randomSeedButton" type="button">Randomize</button>
+                                </div>
+                                <div class="sim-export-row">
+                                    <button class="btn btn-outline-primary btn-sm" id="exportJsonButton" type="button">Export JSON</button>
+                                    <button class="btn btn-outline-primary btn-sm" id="copyHistoryNewickButton" type="button">Copy history Newick</button>
+                                    <button class="btn btn-outline-primary btn-sm" id="copyTraitNewickButton" type="button">Copy trait Newick</button>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="row mt-3 mb-3 m-lg-2 my-lg-4">
-                            <div class="row">Prune Extinct Lineages</div>
-                            <div class="row toggle-switch">
-                                <div>
-                                    <label for="pruneExtinct" class="toggle-switch-label">
-                                        <input type="checkbox" id="pruneExtinct" class="toggle-switch-input">
-                                        <span class="toggle-switch-slider toggle-switch-round"></span>
-                                    </label>
+                        <details id="simSettingsDetails" class="sim-settings-details" open>
+                            <summary class="sim-settings-summary">
+                                <div class="sim-settings-summary-body">
+                                    <div class="sim-settings-summary-copy">
+                                        <span class="sim-settings-summary-title">Parameters and display settings</span>
+                                        <span class="sim-settings-summary-sub">Rates, coarsening, pruning, and the trait process.</span>
+                                    </div>
+                                    <div class="sim-settings-summary-meta">
+                                        <span class="sim-summary-chip" id="summaryRatesChip">Rates 0.40 / 0.35 / 0.10</span>
+                                        <span class="sim-summary-chip" id="summaryCoarsenChip">Coarsen 2</span>
+                                        <span class="sim-summary-chip" id="summaryTraitChip">Brownian · 4D</span>
+                                    </div>
+                                </div>
+                                <span class="sim-settings-summary-icon"><i class="fa-solid fa-chevron-down"></i></span>
+                            </summary>
+                            <div class="sim-settings-content">
+                                <div class="sim-controls-grid">
+                                    <div class="sim-control-card">
+                                        <h5>Lineage process</h5>
+                                        <div class="slider-group">
+                                            <div class="slider-head"><label for="birthRate">Clonal birth rate</label><span class="slider-value" id="birthRateValue">0.40</span></div>
+                                            <input type="range" id="birthRate" min="0" max="1" step="0.05" value="0.40">
+                                        </div>
+                                        <div class="slider-group">
+                                            <div class="slider-head"><label for="mutateRate">Mutating birth rate</label><span class="slider-value" id="mutateRateValue">0.35</span></div>
+                                            <input type="range" id="mutateRate" min="0" max="1" step="0.05" value="0.35">
+                                        </div>
+                                        <div class="slider-group">
+                                            <div class="slider-head"><label for="deathRate">Death rate</label><span class="slider-value" id="deathRateValue">0.10</span></div>
+                                            <input type="range" id="deathRate" min="0" max="1" step="0.05" value="0.10">
+                                        </div>
+                                    </div>
+
+                                    <div class="sim-control-card">
+                                        <h5>Observation layer</h5>
+                                        <div class="slider-group">
+                                            <div class="slider-head"><label for="maxSteps">Simulation steps</label><span class="slider-value" id="maxStepsValue">40</span></div>
+                                            <input type="range" id="maxSteps" min="1" max="60" step="1" value="40">
+                                        </div>
+                                        <div class="slider-group">
+                                            <div class="slider-head"><label for="mstep">Coarsen level</label><span class="slider-value" id="mstepValue">2</span></div>
+                                            <input type="range" id="mstep" min="0" max="6" step="1" value="2">
+                                        </div>
+                                        <div class="sim-toggle-row">
+                                            <span>Prune extinct taxa</span>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="pruneExtinct" class="toggle-switch-input">
+                                                <span class="toggle-switch-slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="sim-toggle-row">
+                                            <span>Show branch lengths</span>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="showBranchLengths" class="toggle-switch-input">
+                                                <span class="toggle-switch-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="sim-control-card">
+                                        <h5>Trait model</h5>
+                                        <div class="slider-group">
+                                            <div class="slider-head"><label for="traitModel">Trait process</label></div>
+                                            <select id="traitModel" class="form-select form-select-sm">
+                                                <option value="brownian" selected>Brownian steps</option>
+                                                <option value="ou">OU-like pull</option>
+                                            </select>
+                                        </div>
+                                        <div class="slider-group" id="ouAlphaWrapper">
+                                            <div class="slider-head"><label for="ouAlpha">Pull to optimum</label><span class="slider-value" id="ouAlphaValue">0.25</span></div>
+                                            <input type="range" id="ouAlpha" min="0" max="0.8" step="0.05" value="0.25">
+                                        </div>
+                                        <div class="slider-group">
+                                            <div class="slider-head"><label for="traitDimensions">Trait dimensions</label><span class="slider-value" id="traitDimensionsValue">4</span></div>
+                                            <input type="range" id="traitDimensions" min="1" max="10" step="1" value="4">
+                                        </div>
+                                        <div class="slider-group">
+                                            <div class="slider-head"><label for="traitSigma">Trait step size</label><span class="slider-value" id="traitSigmaValue">0.50</span></div>
+                                            <input type="range" id="traitSigma" min="0.10" max="1.50" step="0.05" value="0.50">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                        </details>
+                    </div>
+
+                    <div class="legend-row">
+                        <span class="legend-chip"><span class="legend-swatch legend-blue"></span> Clonal lineage</span>
+                        <span class="legend-chip"><span class="legend-swatch legend-red"></span> Mutating lineage</span>
+                        <span class="legend-chip"><span class="legend-swatch legend-grey"></span> Extinct lineage</span>
+                        <span class="legend-chip"><span class="legend-swatch legend-yellow"></span> Highlighted taxon</span>
+                    </div>
+
+                    <div class="sim-panel-grid">
+                        <div class="sim-panel">
+                            <div class="sim-panel-header">1. Full lineage chronogram</div>
+                            <div id="graph-container" class="evonet-panel"></div>
+                        </div>
+                        <div class="sim-panel">
+                            <div class="sim-panel-header">2. Coarsened species chronogram</div>
+                            <div id="coarsened-graph-container" class="evonet-panel"></div>
+                        </div>
+                        <div class="sim-panel">
+                            <div class="sim-panel-header">3. History tree from the coarsened record</div>
+                            <div id="plot-container" class="evonet-panel"></div>
+                        </div>
+                        <div class="sim-panel">
+                            <div class="sim-panel-header">4. Distance tree from observed traits</div>
+                            <div id="trait-container" class="evonet-panel"></div>
                         </div>
                     </div>
+
+                    <div class="sim-panel-grid sim-panel-grid-secondary">
+                        <div class="sim-panel">
+                            <div class="sim-panel-header">5. Lineages through time</div>
+                            <div id="ltt-container" class="evonet-panel-compact"></div>
+                        </div>
+                        <div class="sim-panel">
+                            <div class="sim-panel-header">6. Trait space (first two axes or PCA)</div>
+                            <div id="trait-space-container" class="evonet-panel-compact"></div>
+                        </div>
+                    </div>
+
+                    <div id="eventDrawerBackdrop" class="sim-drawer-backdrop" hidden></div>
+                    <aside id="eventDrawer" class="sim-events-drawer" aria-hidden="true">
+                        <div class="sim-events-drawer-header">
+                            <div>
+                                <div class="sim-events-drawer-title">Recent events</div>
+                                <div class="sim-events-drawer-subtitle">Latest births, mutations, and extinctions in the current run.</div>
+                            </div>
+                            <button class="btn btn-outline-secondary btn-sm" id="eventDrawerCloseButton" type="button">Close</button>
+                        </div>
+                        <div id="eventFeed" class="event-feed"></div>
+                    </aside>
                 </div>
 
-                <div class="row mb-4">
-                    <div class="col-3 col-md-2">
-                        <button class="btn btn-primary" id="startButton">Grow</button>
-                    </div>
-                    <div class="col-3 col-md-2">
-                        <button class="btn btn-primary" id="pauseButton" disabled>Pause</button>
-                    </div>
-                    <div class="col-3 col-md-2">
-                        <button class="btn btn-outline-primary" id="resetButton">Reset</button>
-                    </div>
-                </div>
+                <script src="./assets/js/evonet.js"></script>
 
-                <div class="row col-12">
-                    <div class="col-6 mb-4">
-                        <div id="graph-container"></div>
-                    </div>
-                    <div class="col-6 mb-4">
-                        <div id="coarsened-graph-container"></div>
-                    </div>
-                    <div class="col-6 mb-4">
-                        <div id="plot-container"></div>
-                    </div>
-                    <div class="col-6 mb-4">
-                        <div id="trait-container"></div>
-                    </div>
-                </div>
+                <h3 class="mt-5 mb-3">How to read the simulator</h3>
+                <p>
+                    The six panels are arranged to move from process to summary. The first two show what is happening through time at the lineage and coarse-grained taxon levels;
+                    the next two show two different tree summaries of the same run; the last two summarize tempo and geometry.
+                </p>
+                <ul>
+                    <li>The chronograms keep event order explicit, so budding, persistence, and extinction are visible instead of being absorbed into a generic node-link picture.</li>
+                    <li>Scenario presets and seeded runs make comparisons cleaner, because they separate parameter changes from a completely new random draw.</li>
+                    <li>The Brownian and OU-like options give two contrasting ways to think about continuous traits: wandering versus constrained spread.</li>
+                    <li>JSON and Newick export allows to pull a run into another workflow once an example becomes useful beyond the page itself.</li>
+                </ul>
 
-                <script src="/assets/js/evonet.js"></script>
+                <p class="inline-callout">
+                    Note: the <span class="readout-badge">Leaf-pair r</span> card is just a rough agreement score based on pairwise tip distances in the two trees.
+                    It is not a formal topology test.
+                </p>
 
-                <h3 class="mt-5 mb-3">What each panel shows</h3>
+                <h3 class="mt-5 mb-3">What each panel is trying to tell you</h3>
                 <ol>
-                    <li>
-                        <strong>Full lineage graph (Panel 1).</strong>
-                        The “event log in picture form”: who descended from whom, including intermediate (incipient) lineages
-                        and extinct lineages.
-                    </li>
-                    <li>
-                        <strong>Coarsened graph (Panel 2).</strong>
-                        A coarse-grained view where multiple consecutive mutational steps are required before you
-                        label the outcome as a “new species” (controlled by <em>Coarsen Level</em>).
-                    </li>
-                    <li>
-                        <strong>Tree reconstructed from the coarsened graph (Panel 3).</strong>
-                        A forced tree summary of Panel 2. When Panel 2 is not tree-like, the reconstruction can become ambiguous
-                        (multiple trees explain the same coarse-grained information).
-                    </li>
-                    <li>
-                        <strong>Tree reconstructed from trait values (Panel 4).</strong>
-                        A tree inferred only from the trait table of the “species” you ended up with.
-                        This mimics real life: we usually observe characters (traits, sequences), not the true event chain.
-                    </li>
+                    <li><strong>Full lineage chronogram.</strong> The fine-grained event history, including extinct and still-incidental lineages.</li>
+                    <li><strong>Coarsened species chronogram.</strong> The same history after you decide how many mutational steps count as “enough” to name a new species.</li>
+                    <li><strong>History tree.</strong> A forced tree summary of the coarsened record. Useful, but already one step removed from the process.</li>
+                    <li><strong>Trait tree.</strong> A simple reconstruction from observed trait distances only. This is the panel most like real life, because we often observe character data, not the true event log.</li>
+                    <li><strong>Lineages through time.</strong> A quick sanity check on richness, extinction, and what survives into the observed layer.</li>
+                    <li><strong>Trait space.</strong> The geometry behind the trait tree. When panel 4 looks odd, this panel usually explains why.</li>
                 </ol>
 
-                <h3 class="mt-5 mb-3">Why start from a network instead of a tree</h3>
+                <h3 class="mt-5 mb-3">Coarsening is the real knob here</h3>
                 <p>
-                    A rooted tree is the natural mathematical object when descent is strictly bifurcating and there is a single
-                    lineage history shared by everything you measure. That assumption is often a useful approximation, and an
-                    entire literature models diversification as stochastic branching processes (birth–death models) and then asks:
-                    “Given the extant tips, what can we infer about the underlying rates?”<sup><a href="#ref2">[2]</a></sup><sup><a href="#ref3">[3]</a></sup>
+                    The <strong>Coarsen Level</strong> slider is not a decorative extra. It is the heart of the whole toy model. If it is set to 0, every new lineage is promoted immediately.
+                    If it is larger, several mutational steps must accumulate before we call the result a new species. In spirit that rhymes with protracted-speciation ideas,
+                    where there is a difference between an incipient lineage and a completed species.<sup><a href="#ref4">[4]</a></sup><sup><a href="#ref5">[5]</a></sup>
                 </p>
 
-                <p>
-                    But there are two big reasons a tree is not the whole story:
-                </p>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <h4 class="mt-3 mb-2">Reason 1: Biology can be genuinely reticulate</h4>
-                        <p>
-                            Hybridization, introgression, horizontal gene transfer, and other non-tree processes create
-                            evolutionary histories that are better represented by phylogenetic <em>networks</em> rather than
-                            a single bifurcating tree.<sup><a href="#ref7">[7]</a></sup><sup><a href="#ref8">[8]</a></sup><sup><a href="#ref9">[9]</a></sup><sup><a href="#ref10">[10]</a></sup>
-                        </p>
+                <div class="widget-shell">
+                    <div class="widget-title">What coarsening actually does</div>
+                    <div class="widget-note">This is a one-branch illustration. Red events are mutational steps, blue events are clonal births. Move the slider and watch which events get promoted to named species.</div>
+                    <div class="widget-controls mb-3">
+                        <label for="coarsenExplainerSlider">Record every</label>
+                        <input type="range" id="coarsenExplainerSlider" min="1" max="5" step="1" value="2">
+                        <span><strong><span id="coarsenExplainerValue">2</span></strong> mutational step(s)</span>
                     </div>
-                    <div class="col-md-6">
-                        <h4 class="mt-3 mb-2">Reason 2: Even with a species tree, different loci can disagree</h4>
-                        <p>
-                            Gene trees can differ from the species tree through incomplete lineage sorting (ILS) and other
-                            processes; this is why modern phylogenomics often distinguishes “gene tree” vs “species tree”
-                            inference explicitly.<sup><a href="#ref11">[11]</a></sup><sup><a href="#ref12">[12]</a></sup>
-                        </p>
+                    <div id="coarsen-explainer" class="widget-plot"></div>
+                    <div id="coarsenExplainerCaption" class="widget-note mt-2"></div>
+                </div>
+
+                <p>
+                    Once you see it that way, the disagreement between “lineage history” and “species history” becomes less surprising. You are not merely reducing visual complexity. You are changing the object
+                    you are willing to observe.
+                </p>
+
+                <h3 class="mt-5 mb-3">Extinction is a memory problem</h3>
+                <p>
+                    I think this is the easiest part to underestimate. Even if the generating process were strictly tree-like, the phylogeny you reconstruct from surviving taxa is a pruned object.
+                    It does not contain the extinct lineages that once helped define branching order, lineage durations, and the amount of hidden experimentation in the clade.<sup><a href="#ref2">[2]</a></sup><sup><a href="#ref3">[3]</a></sup>
+                    That is one of the reason that extant-only trees can be consistent with more than one diversification history.<sup><a href="#ref14">[14]</a></sup>
+                </p>
+
+                <div class="widget-shell">
+                    <div class="widget-title">Same extant pattern, different hidden baggage</div>
+                    <div class="widget-note">The pruned tree on the right stays fixed. The complete history on the left changes because extinct side branches are different in each scenario.</div>
+                    <div class="widget-controls mb-3">
+                        <label for="historyExplainerSlider">Hidden history</label>
+                        <input type="range" id="historyExplainerSlider" min="0" max="2" step="1" value="0">
+                        <span id="historyExplainerLabel"><strong>A</strong></span>
+                    </div>
+                    <div class="widget-grid">
+                        <div class="widget-panel">
+                            <h6>Complete history</h6>
+                            <div id="hidden-history-full" class="widget-plot widget-plot-tall"></div>
+                        </div>
+                        <div class="widget-panel">
+                            <h6>Extant-only view</h6>
+                            <div id="hidden-history-pruned" class="widget-plot widget-plot-tall"></div>
+                        </div>
                     </div>
                 </div>
 
-                <p class="mt-3">
-                    In this demo, the “network” is also serving a third purpose: it keeps the fine-grained history visible.
-                    Even if your underlying generative model is tree-like, coarse-graining and extinction can erase information
-                    so aggressively that the most honest representation of what you still know can be graph-like.
-                </p>
-
-                <h3 class="mt-5 mb-3">The model behind this demo</h3>
                 <p>
-                    Internally, each run is a continuous-time stochastic process simulated with a
-                    Gillespie-style event sampler (stochastic simulation algorithm).<sup><a href="#ref1">[1]</a></sup>
-                    At any moment, each extant lineage can experience:
+                    That is also why I left the <strong>Prune extinct taxa</strong> toggle in the simulator. Switching it on and off is a nice way to watch how much of the argument is really about biology,
+                    and how much is about observation.
                 </p>
-                <ul>
-                    <li>
-                        <strong>Birth:</strong> lineage splits, producing a new lineage that is (in this toy model) “non-mutating” in the sense of not advancing the speciation counter.
-                    </li>
-                    <li>
-                        <strong>Mutation:</strong> lineage splits, producing a new lineage that advances the mutation counter and updates traits.
-                    </li>
-                    <li>
-                        <strong>Death:</strong> the lineage goes extinct (greyed out).
-                    </li>
-                </ul>
 
-                <h4 class="mt-4 mb-3">Coarsen level as a cartoon of gradual speciation</h4>
+                <h3 class="mt-5 mb-3">Traits are proxies, not the event log</h3>
                 <p>
-                    The <strong>Coarsen Level</strong> is intentionally not a literal “number of mutations in a genome.”
-                    It is a <em>coarse unit of evolutionary differentiation</em>: how many consecutive meaningful steps you require
-                    before you declare “this is a distinct species now.” Conceptually, this rhymes with
-                    <em>protracted speciation</em> models where speciation is a process with an initiation stage (incipient lineages)
-                    and a completion stage (a “good species”).<sup><a href="#ref4">[4]</a></sup><sup><a href="#ref5">[5]</a></sup>
+                    The trait tree is the panel that most closely resembles the real inferential situation: you do not get handed the event history, you get handed characters. For continuous traits,
+                    Brownian motion is the standard reference model, and OU-type models are a common way to represent pull toward an optimum or constrained evolution.<sup><a href="#ref11">[11]</a></sup><sup><a href="#ref12">[12]</a></sup><sup><a href="#ref13">[13]</a></sup>
+                    I included both, not because one of them is “the truth,” but because the difference is really useful.
                 </p>
 
-                <h3 class="mt-5 mb-3">Branch lengths without confusion</h3>
-                <p>
-                    “Branch length” is overloaded in evolutionary biology. In different contexts it can mean:
-                </p>
-                <ul>
-                    <li>
-                        <strong>Elapsed time</strong> (e.g., time-calibrated trees, diversification simulations).
-                        In birth–death thinking, internal waiting times are central objects.<sup><a href="#ref2">[2]</a></sup><sup><a href="#ref3">[3]</a></sup>
-                    </li>
-                    <li>
-                        <strong>Expected substitutions per site</strong> (many molecular phylogenies inferred under sequence evolution models).
-                        Branch lengths then measure genetic change, not absolute time.
-                    </li>
-                    <li>
-                        <strong>Expected trait variance</strong> under Brownian motion: the variance of trait change grows linearly with time,
-                        and that time scaling is what makes branch lengths matter in comparative methods.<sup><a href="#ref13">[13]</a></sup><sup><a href="#ref14">[14]</a></sup>
-                    </li>
-                </ul>
-
-                <p>
-                    The toggle <strong>Show Branch Lengths</strong> is there because (i) lengths are informative, but (ii) they can tempt you
-                    into overinterpreting a tree: a “nice-looking” tree with lengths does not guarantee that the underlying history is
-                    identifiable from the information you supplied.
-                </p>
-
-                <h3 class="mt-5 mb-3">Two reconstructions and why they disagree</h3>
-                <p>
-                    The point of this simulator is not to worship a particular reconstruction. It’s to watch
-                    <em>where information is thrown away</em>.
-                </p>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <h4 class="mt-3 mb-2">Tree from the coarsened graph</h4>
-                        <ul>
-                            <li>
-                                You take a lineage-level history and compress it into “species-level” units.
-                                Compression can merge distinct micro-histories into the same macro-state.
-                            </li>
-                            <li>
-                                If the coarsened object is not strictly tree-like, any tree reconstruction is a choice among multiple
-                                plausible summaries.
-                            </li>
-                            <li>
-                                Extinction can delete the very lineages that would have anchored the root or clarified the branching order,
-                                increasing ambiguity.<sup><a href="#ref2">[2]</a></sup>
-                            </li>
-                        </ul>
+                <div class="widget-shell">
+                    <div class="widget-title">Brownian spread versus OU-like pull</div>
+                    <div class="widget-note">These are just little 2D toy trajectories from a common starting point. Brownian paths wander; OU-like paths keep getting pulled back toward the center.</div>
+                    <div class="widget-controls mb-3">
+                        <label for="traitModelExplainer">Trait model</label>
+                        <select id="traitModelExplainer" class="form-select form-select-sm" style="max-width: 180px;">
+                            <option value="brownian">Brownian</option>
+                            <option value="ou">OU-like</option>
+                        </select>
+                        <label for="traitAlphaExplainer">Pull</label>
+                        <input type="range" id="traitAlphaExplainer" min="0.05" max="0.60" step="0.05" value="0.25">
+                        <span><strong><span id="traitAlphaExplainerValue">0.25</span></strong></span>
                     </div>
-
-                    <div class="col-md-6">
-                        <h4 class="mt-3 mb-2">Tree from traits</h4>
-                        <ul>
-                            <li>
-                                You infer relationships from observed character data, here simulated under Brownian motion.<sup><a href="#ref13">[13]</a></sup><sup><a href="#ref14">[14]</a></sup>
-                            </li>
-                            <li>
-                                With <em>few</em> traits, noise dominates: multiple trees can explain the same trait table.
-                            </li>
-                            <li>
-                                With <em>more</em> (independent) traits, you average over randomness and can recover signal more reliably—up to the limits imposed by the model.
-                            </li>
-                            <li>
-                                Model mismatch matters: even with lots of characters, inference can be systematically misleading if the assumptions are wrong
-                                (classic examples exist even in simpler discrete-character settings).<sup><a href="#ref15">[15]</a></sup>
-                            </li>
-                        </ul>
-                    </div>
+                    <div id="trait-model-explainer" class="widget-plot widget-plot-tall"></div>
                 </div>
 
-                <h3 class="mt-5 mb-3">Experiments to try in the simulator</h3>
+                <p>
+                    More generally, disagreement among trees is not just a failure mode of bad statistics. Gene trees need not equal species trees,<sup><a href="#ref9">[9]</a></sup><sup><a href="#ref10">[10]</a></sup>
+                    and sometimes the underlying history is reticulate enough that a network is the more honest presentation.<sup><a href="#ref6">[6]</a></sup><sup><a href="#ref7">[7]</a></sup><sup><a href="#ref8">[8]</a></sup>
+                    I am not simulating hybridization here, but I do want the post to keep that broader lesson in view: a clean bifurcating tree is a very useful summary, not a guarantee that the world was actually that clean.
+                </p>
+
+                <h3 class="mt-5 mb-3">A few things worth trying in the simulator</h3>
                 <ol>
-                    <li>
-                        <strong>Turn extinction up and watch identifiability collapse.</strong>
-                        Increase <em>Death Rate</em> until many lineages die out.
-                        Compare Panel 3 vs Panel 4 and toggle <em>Prune Extinct Lineages</em>.
-                        Ask: “How much of the early history survives into the inferred objects?”
-                    </li>
-                    <li>
-                        <strong>Dial speciation gradualness.</strong>
-                        Sweep <em>Coarsen Level</em> from 0 to 6 while keeping the run going.
-                        Does the coarsened object become more/less tree-like?
-                    </li>
-                    <li>
-                        <strong>Trait dimensionality as “number of characters.”</strong>
-                        Fix the diversification regime, then rerun with Trait Dimensions = 1, 3, 5, 10.
-                        Do you see Panel 4 stabilize? Under Brownian motion, this is the intuition behind “more characters helps,”
-                        but it is not guaranteed in the presence of strong extinction or rapid bursts.
-                    </li>
-                    <li>
-                        <strong>Fast radiation vs slow radiation.</strong>
-                        Try high Birth+Mutation with low Death (many splits quickly), then compare to slower regimes.
-                        Rapid branching compresses internal times and can make different reconstructions disagree more strongly.
-                    </li>
+                    <li><strong>High turnover.</strong> Switch to the turnover preset and compare the history tree to the trait tree. The extant summary gets much thinner while the hidden history stays messy.</li>
+                    <li><strong>Radiation.</strong> Use rapid radiation with coarsen level 1, then 3. Watch how the same event stream starts to look much more or much less tree-like depending on what you are willing to call a species.</li>
+                    <li><strong>Trait constraint.</strong> Keep the diversification settings fixed, flip from Brownian to OU-like, and look at the trait cloud. The geometry in panel 6 usually explains the stability or instability of panel 4.</li>
+                    <li><strong>Step mode.</strong> Press <strong>Step</strong> a dozen times instead of letting the animation run. The logic of the chronograms is easier to grasp when you watch events accumulate one by one.</li>
                 </ol>
 
                 <h3 class="mt-5 mb-3">References</h3>
                 <p class="mb-3">
-                    Numbers in brackets link to the sources used for the conceptual framing of this post.
+                                  Numbers in brackets link to the sources used for the conceptual framing of this post.
                 </p>
 
                 <ol class="small">
-                    <li id="ref1">
-                        Gillespie DT. 1977. Exact stochastic simulation of coupled chemical reactions.
-                        <em>J Phys Chem</em>. <a href="https://doi.org/10.1021/j100540a008" target="_blank" rel="noopener">doi:10.1021/j100540a008</a>
-                    </li>
-
-                    <li id="ref2">
-                        Nee S, May RM, Harvey PH. 1994. The reconstructed evolutionary process.
-                        <em>Phil Trans R Soc B</em>.
-                        <a href="https://doi.org/10.1098/rstb.1994.0068" target="_blank" rel="noopener">doi:10.1098/rstb.1994.0068</a>
-                    </li>
-
-                    <li id="ref3">
-                        Lambert A, Stadler T. 2013. Birth–death models and coalescent point processes: The shape and probability of reconstructed phylogenies.
-                        <em>Theor Popul Biol</em>.
-                        <a href="https://doi.org/10.1016/j.tpb.2013.10.002" target="_blank" rel="noopener">doi:10.1016/j.tpb.2013.10.002</a>
-                    </li>
-
-                    <li id="ref4">
-                        Rosindell J, Cornell SJ, Hubbell SP, Etienne RS. 2010. Protracted speciation revitalizes the neutral theory of biodiversity.
-                        <em>Ecol Lett</em>.
-                        <a href="https://doi.org/10.1111/j.1461-0248.2010.01463.x" target="_blank" rel="noopener">doi:10.1111/j.1461-0248.2010.01463.x</a>
-                    </li>
-
-                    <li id="ref5">
-                        Etienne RS, Rosindell J. 2012. Prolonging the past counteracts the pull of the present: Protracted speciation can explain observed slowdowns in diversification.
-                        <em>Syst Biol</em>.
-                        <a href="https://doi.org/10.1093/sysbio/syr091" target="_blank" rel="noopener">doi:10.1093/sysbio/syr091</a>
-                    </li>
-
-                    <li id="ref7">
-                        Huson DH, Bryant D. 2006. Application of phylogenetic networks in evolutionary studies.
-                        <em>Mol Biol Evol</em>.
-                        <a href="https://doi.org/10.1093/molbev/msj030" target="_blank" rel="noopener">doi:10.1093/molbev/msj030</a>
-                    </li>
-
-                    <li id="ref8">
-                        Kong S, et al. 2025. Phylogenetic networks empower biodiversity research.
-                        <em>PNAS</em>.
-                        <a href="https://doi.org/10.1073/pnas.2410934122" target="_blank" rel="noopener">doi:10.1073/pnas.2410934122</a>
-                    </li>
-
-                    <li id="ref9">
-                        Yu Y, Dong J, Liu KJ, Nakhleh L. 2014. Maximum likelihood inference of reticulate evolutionary histories.
-                        <em>PNAS</em>.
-                        <a href="https://doi.org/10.1073/pnas.1407950111" target="_blank" rel="noopener">doi:10.1073/pnas.1407950111</a>
-                    </li>
-
-                    <li id="ref10">
-                        Wen D, Yu Y, Nakhleh L. 2016. Bayesian inference of reticulate phylogenies under the multispecies network coalescent.
-                        <em>PLOS Genetics</em>.
-                        <a href="https://doi.org/10.1371/journal.pgen.1006006" target="_blank" rel="noopener">doi:10.1371/journal.pgen.1006006</a>
-                    </li>
-
-                    <li id="ref11">
-                        Maddison WP. 1997. Gene trees in species trees.
-                        <em>Syst Biol</em>.
-                        <a href="https://doi.org/10.1093/sysbio/46.3.523" target="_blank" rel="noopener">doi:10.1093/sysbio/46.3.523</a>
-                    </li>
-
-                    <li id="ref12">
-                        Degnan JH, Rosenberg NA. 2009. Gene tree discordance, phylogenetic inference and the multispecies coalescent.
-                        <em>Trends Ecol Evol</em>.
-                        <a href="https://doi.org/10.1016/j.tree.2009.01.009" target="_blank" rel="noopener">doi:10.1016/j.tree.2009.01.009</a>
-                    </li>
-
-                    <li id="ref13">
-                        Felsenstein J. 1973. Maximum-likelihood estimation of evolutionary trees from continuous characters.
-                        <em>Am J Hum Genet</em>.
-                        <a href="https://pubmed.ncbi.nlm.nih.gov/4741844/" target="_blank" rel="noopener">PubMed: 4741844</a>
-                    </li>
-
-                    <li id="ref14">
-                        Felsenstein J. 1985. Phylogenies and the comparative method.
-                        <em>Am Nat</em>.
-                        <a href="https://doi.org/10.1086/284325" target="_blank" rel="noopener">doi:10.1086/284325</a>
-                    </li>
-
-                    <li id="ref15">
-                        Felsenstein J. 1978. Cases in which parsimony or compatibility methods will be positively misleading.
-                        <em>Syst Zool</em>.
-                        <a href="https://doi.org/10.2307/2412923" target="_blank" rel="noopener">doi:10.2307/2412923</a>
-                    </li>
-
-                    <li id="ref16">
-                        Katoh K, Standley DM. 2013. MAFFT multiple sequence alignment software version 7: improvements in performance and usability.
-                        <em>Mol Biol Evol</em>.
-                        <a href="https://doi.org/10.1093/molbev/mst010" target="_blank" rel="noopener">doi:10.1093/molbev/mst010</a>
-                    </li>
-
-                    <li id="ref17">
-                        Stamatakis A. 2014. RAxML version 8: a tool for phylogenetic analysis and post-analysis of large phylogenies.
-                        <em>Bioinformatics</em>.
-                        <a href="https://doi.org/10.1093/bioinformatics/btu033" target="_blank" rel="noopener">doi:10.1093/bioinformatics/btu033</a>
-                    </li>
-
-                    <li id="ref18">
-                        Kalyaanamoorthy S, Minh BQ, Wong TKF, von Haeseler A, Jermiin LS. 2017. ModelFinder: fast model selection for accurate phylogenetic estimates.
-                        <em>Nat Methods</em>.
-                        <a href="https://doi.org/10.1038/nmeth.4285" target="_blank" rel="noopener">doi:10.1038/nmeth.4285</a>
-                    </li>
-
-                    <li id="ref19">
-                        Minh BQ, Schmidt HA, Chernomor O, et al. 2020. IQ-TREE 2: New models and efficient methods for phylogenetic inference in the genomic era.
-                        <em>Mol Biol Evol</em>.
-                        <a href="https://doi.org/10.1093/molbev/msaa015" target="_blank" rel="noopener">doi:10.1093/molbev/msaa015</a>
-                    </li>
-
-                    <li id="ref20">
-                        Drummond AJ, Rambaut A. 2007. BEAST: Bayesian evolutionary analysis by sampling trees.
-                        <em>BMC Evol Biol</em>.
-                        <a href="https://doi.org/10.1186/1471-2148-7-214" target="_blank" rel="noopener">doi:10.1186/1471-2148-7-214</a>
-                    </li>
+                    <li id="ref1">Gillespie DT. 1977. Exact stochastic simulation of coupled chemical reactions. <em>J Phys Chem</em>. 81(25):2340–2361. <a href="https://doi.org/10.1021/j100540a008" target="_blank" rel="noopener">doi:10.1021/j100540a008</a></li>
+                    <li id="ref2">Nee S, May RM, Harvey PH. 1994. The reconstructed evolutionary process. <em>Philos Trans R Soc Lond B Biol Sci</em>. 344(1309):305–311. <a href="https://doi.org/10.1098/rstb.1994.0068" target="_blank" rel="noopener">doi:10.1098/rstb.1994.0068</a></li>
+                    <li id="ref3">Lambert A, Stadler T. 2013. Birth-death models and coalescent point processes: the shape and probability of reconstructed phylogenies. <em>Theor Popul Biol</em>. 90:113–128. <a href="https://doi.org/10.1016/j.tpb.2013.10.002" target="_blank" rel="noopener">doi:10.1016/j.tpb.2013.10.002</a></li>
+                    <li id="ref4">Rosindell J, Cornell SJ, Hubbell SP, Etienne RS. 2010. Protracted speciation revitalizes the neutral theory of biodiversity. <em>Ecol Lett</em>. 13(6):716–727. <a href="https://doi.org/10.1111/j.1461-0248.2010.01463.x" target="_blank" rel="noopener">doi:10.1111/j.1461-0248.2010.01463.x</a></li>
+                    <li id="ref5">Etienne RS, Rosindell J. 2012. Prolonging the past counteracts the pull of the present: protracted speciation can explain observed slowdowns in diversification. <em>Syst Biol</em>. 61(2):204–213. <a href="https://doi.org/10.1093/sysbio/syr091" target="_blank" rel="noopener">doi:10.1093/sysbio/syr091</a></li>
+                    <li id="ref6">Huson DH, Bryant D. 2006. Application of phylogenetic networks in evolutionary studies. <em>Mol Biol Evol</em>. 23(2):254–267. <a href="https://doi.org/10.1093/molbev/msj030" target="_blank" rel="noopener">doi:10.1093/molbev/msj030</a></li>
+                    <li id="ref7">Yu Y, Dong J, Liu KJ, Nakhleh L. 2014. Maximum likelihood inference of reticulate evolutionary histories. <em>Proc Natl Acad Sci USA</em>. 111(46):16448–16453. <a href="https://doi.org/10.1073/pnas.1407950111" target="_blank" rel="noopener">doi:10.1073/pnas.1407950111</a></li>
+                    <li id="ref8">Wen D, Yu Y, Nakhleh L. 2016. Bayesian inference of reticulate phylogenies under the multispecies network coalescent. <em>PLoS Genet</em>. 12(5):e1006006. <a href="https://doi.org/10.1371/journal.pgen.1006006" target="_blank" rel="noopener">doi:10.1371/journal.pgen.1006006</a></li>
+                    <li id="ref9">Maddison WP. 1997. Gene trees in species trees. <em>Syst Biol</em>. 46(3):523–536. <a href="https://doi.org/10.1093/sysbio/46.3.523" target="_blank" rel="noopener">doi:10.1093/sysbio/46.3.523</a></li>
+                    <li id="ref10">Degnan JH, Rosenberg NA. 2009. Gene tree discordance, phylogenetic inference and the multispecies coalescent. <em>Trends Ecol Evol</em>. 24(6):332–340. <a href="https://doi.org/10.1016/j.tree.2009.01.009" target="_blank" rel="noopener">doi:10.1016/j.tree.2009.01.009</a></li>
+                    <li id="ref11">Felsenstein J. 1973. Maximum-likelihood estimation of evolutionary trees from continuous characters. <em>Am J Hum Genet</em>. 25(5):471–492. <a href="https://pubmed.ncbi.nlm.nih.gov/4741844/" target="_blank" rel="noopener">PubMed: 4741844</a></li>
+                    <li id="ref12">Felsenstein J. 1985. Phylogenies and the comparative method. <em>Am Nat</em>. 125(1):1–15. <a href="https://doi.org/10.1086/284325" target="_blank" rel="noopener">doi:10.1086/284325</a></li>
+                    <li id="ref13">Butler MA, King AA. 2004. Phylogenetic comparative analysis: a modeling approach for adaptive evolution. <em>Am Nat</em>. 164(6):683–695. <a href="https://doi.org/10.1086/426002" target="_blank" rel="noopener">doi:10.1086/426002</a></li>
+                    <li id="ref14">Louca S, Pennell MW. 2020. Extant timetrees are consistent with a myriad of diversification histories. <em>Nature</em>. 580(7804):502–505. <a href="https://doi.org/10.1038/s41586-020-2176-1" target="_blank" rel="noopener">doi:10.1038/s41586-020-2176-1</a></li>
+                    <li id="ref15">Caetano DS, Quental TB. 2023. How important is budding speciation for comparative studies? <em>Syst Biol</em>. 72(6):1443–1453. <a href="https://doi.org/10.1093/sysbio/syad050" target="_blank" rel="noopener">doi:10.1093/sysbio/syad050</a></li>
+                    <li id="ref16">Felsenstein J. 1978. Cases in which parsimony or compatibility methods will be positively misleading. <em>Syst Zool</em>. 27(4):401–410. <a href="https://doi.org/10.1093/sysbio/27.4.401" target="_blank" rel="noopener">doi:10.1093/sysbio/27.4.401</a></li>
                 </ol>
             </div>
 
@@ -682,100 +1623,438 @@
             <div class="blog-comments-section">
                 <div id="disqus_thread"></div>
                 <script>
-                    /**
-                     *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT
-                     *  THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR
-                     *  PLATFORM OR CMS.
-                     *
-                     *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT:
-                     *  https://disqus.com/admin/universalcode/#configuration-variables
-                     */
-
                     var disqus_config = function () {
-                        // Replace PAGE_URL with your page's canonical URL variable
                         this.page.url = "https://qtj.me/blog-Subspecies-Level-Diversification.html";
-
-                        // Replace PAGE_IDENTIFIER with your page's unique identifier variable
                         this.page.identifier = "BLOG_POST_SUBSPECIES";
                     };
-
-
-                    (function() {  // REQUIRED CONFIGURATION VARIABLE: EDIT THE SHORTNAME BELOW
+                    (function() {
                         var d = document, s = d.createElement('script');
-
-                        // IMPORTANT: use website shortname
                         s.src = 'https://qtj-me.disqus.com/embed.js';
-
                         s.setAttribute('data-timestamp', +new Date());
                         (d.head || d.body).appendChild(s);
                     })();
                 </script>
                 <noscript>
                     Please enable JavaScript to view the
-                    <a href="https://disqus.com/?ref_noscript" rel="nofollow">
-                        comments powered by Disqus.
-                    </a>
+                    <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a>
                 </noscript>
-            </div><!--//blog-comments-section-->
-
-        </div><!--//container-->
+            </div>
+        </div>
     </article>
 
     <footer class="footer text-center py-4">
         <small class="copyright">Copyright &copy; Tianjian Qin</small>
     </footer>
+</div>
 
-</div><!--//main-wrapper-->
-
-
-<!-- *****CONFIGURE STYLE (REMOVE ON YOUR PRODUCTION SITE)****** -->
 <div id="config-panel" class="config-panel config-panel-hide d-none d-lg-block">
     <div class="panel-inner">
-        <a id="config-trigger" class="config-trigger text-center" href="#"><i class="fas fa-cog mx-auto" data-fa-transform="down-6" ></i></a>
+        <a id="config-trigger" class="config-trigger text-center" href="#"><i class="fas fa-cog mx-auto" data-fa-transform="down-6"></i></a>
         <h5 class="panel-title">Choose Colour</h5>
         <ul id="color-options" class="list-inline mb-0">
             <li class="theme-1 active list-inline-item"><a data-style="assets/css/theme-1.css" href="#"></a></li>
-            <li class="theme-2  list-inline-item"><a data-style="assets/css/theme-2.css" href="#"></a></li>
-            <li class="theme-3  list-inline-item"><a data-style="assets/css/theme-3.css" href="#"></a></li>
-            <li class="theme-4  list-inline-item"><a data-style="assets/css/theme-4.css" href="#"></a></li>
-            <li class="theme-5  list-inline-item"><a data-style="assets/css/theme-5.css" href="#"></a></li>
-            <li class="theme-6  list-inline-item"><a data-style="assets/css/theme-6.css" href="#"></a></li>
-            <li class="theme-7  list-inline-item"><a data-style="assets/css/theme-7.css" href="#"></a></li>
-            <li class="theme-8  list-inline-item"><a data-style="assets/css/theme-8.css" href="#"></a></li>
-            <li class="theme-9  list-inline-item"><a data-style="assets/css/theme-9.css" href="#"></a></li>
-            <li class="theme-10  list-inline-item"><a data-style="assets/css/theme-10.css" href="#"></a></li>
+            <li class="theme-2 list-inline-item"><a data-style="assets/css/theme-2.css" href="#"></a></li>
+            <li class="theme-3 list-inline-item"><a data-style="assets/css/theme-3.css" href="#"></a></li>
+            <li class="theme-4 list-inline-item"><a data-style="assets/css/theme-4.css" href="#"></a></li>
+            <li class="theme-5 list-inline-item"><a data-style="assets/css/theme-5.css" href="#"></a></li>
+            <li class="theme-6 list-inline-item"><a data-style="assets/css/theme-6.css" href="#"></a></li>
+            <li class="theme-7 list-inline-item"><a data-style="assets/css/theme-7.css" href="#"></a></li>
+            <li class="theme-8 list-inline-item"><a data-style="assets/css/theme-8.css" href="#"></a></li>
+            <li class="theme-9 list-inline-item"><a data-style="assets/css/theme-9.css" href="#"></a></li>
+            <li class="theme-10 list-inline-item"><a data-style="assets/css/theme-10.css" href="#"></a></li>
         </ul>
         <a id="config-close" class="close" href="#"><i class="fa fa-times-circle"></i></a>
-    </div><!--//panel-inner-->
-</div><!--//configure-panel-->
+    </div>
+</div>
 
-
-<!-- Javascript -->
 <script src="assets/plugins/popper.min.js"></script>
 <script src="assets/plugins/bootstrap/js/bootstrap.min.js"></script>
-
-<!-- Page Specific JS -->
-<link
-        rel="stylesheet"
-        href="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.css"
-/>
-<script src="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
-<script>hljs.highlightAll();</script>
-<script>hljs.addPlugin(new CopyButtonPlugin());</script>
-
-<!-- Custom JS -->
-<script src="assets/js/blog.js"></script>
-
-<!-- Dark Mode -->
 <script src="assets/plugins/js-cookie.min.js"></script>
+<script src="assets/js/blog.js"></script>
 <script src="assets/js/dark-mode.js"></script>
-
-<!-- Style Switcher (REMOVE ON YOUR PRODUCTION SITE) -->
 <script src="assets/js/demo/style-switcher.js"></script>
-
-<!-- Disqus Counter -->
 <script id="dsq-count-scr" src="//qtj-me.disqus.com/count.js" async></script>
 
+<script>
+(function () {
+    function mulberry32(seed) {
+        let t = seed >>> 0;
+        return function () {
+            t += 0x6D2B79F5;
+            let r = Math.imul(t ^ (t >>> 15), 1 | t);
+            r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+            return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+
+    function randn(rng) {
+        let u = 0, v = 0;
+        while (u === 0) u = rng();
+        while (v === 0) v = rng();
+        return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    }
+
+    function drawSVG(containerId, minHeight = 220) {
+        const el = document.getElementById(containerId);
+        const rect = el.getBoundingClientRect();
+        const width = Math.max(320, rect.width || 320);
+        const height = Math.max(minHeight, rect.height || minHeight);
+        d3.select(el).selectAll('*').remove();
+        return d3.select(el).append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .attr('viewBox', `0 0 ${width} ${height}`);
+    }
+
+    function renderCoarsenExplainer() {
+        const slider = document.getElementById('coarsenExplainerSlider');
+        const level = parseInt(slider.value, 10);
+        document.getElementById('coarsenExplainerValue').textContent = level;
+
+        const events = [
+            { t: 0, type: 'root' },
+            { t: 1, type: 'mutation' },
+            { t: 2, type: 'clonal' },
+            { t: 3, type: 'mutation' },
+            { t: 4, type: 'mutation' },
+            { t: 5, type: 'clonal' },
+            { t: 6, type: 'mutation' },
+            { t: 7, type: 'mutation' },
+            { t: 8, type: 'clonal' },
+            { t: 9, type: 'mutation' },
+            { t: 10, type: 'mutation' }
+        ];
+
+        let counter = 0;
+        const recorded = [0];
+        events.forEach((event, idx) => {
+            if (idx === 0) return;
+            if (event.type === 'mutation') counter += 1;
+            if (counter >= level) {
+                recorded.push(idx);
+                counter = 0;
+            }
+        });
+
+        document.getElementById('coarsenExplainerCaption').textContent = `Recorded species events: ${recorded.join(', ')}.`;
+
+        const svg = drawSVG('coarsen-explainer', 220);
+        const width = +svg.attr('width');
+        const height = +svg.attr('height');
+        const margin = { top: 40, right: 20, bottom: 38, left: 30 };
+        const x = d3.scaleLinear().domain([0, events.length - 1]).range([margin.left, width - margin.right]);
+        const y = height / 2;
+
+        svg.append('line')
+            .attr('x1', x(0)).attr('x2', x(events.length - 1))
+            .attr('y1', y).attr('y2', y)
+            .attr('stroke', '#bbc5d6').attr('stroke-width', 4).attr('stroke-linecap', 'round');
+
+        const palette = { root: '#757ca3', mutation: '#d94f4f', clonal: '#4264a6' };
+
+        events.forEach((event, idx) => {
+            const recordedHere = recorded.includes(idx);
+            svg.append('circle')
+                .attr('cx', x(idx)).attr('cy', y)
+                .attr('r', recordedHere ? 11 : 8)
+                .attr('fill', palette[event.type])
+                .attr('stroke', recordedHere ? '#f7d724' : '#ffffff')
+                .attr('stroke-width', recordedHere ? 3 : 1.5);
+
+            svg.append('text')
+                .attr('x', x(idx))
+                .attr('y', y + 28)
+                .attr('text-anchor', 'middle')
+                .attr('fill', '#5a6474')
+                .style('font-size', '11px')
+                .text(idx);
+
+            if (recordedHere) {
+                svg.append('line')
+                    .attr('x1', x(idx)).attr('x2', x(idx))
+                    .attr('y1', y - 14).attr('y2', 46)
+                    .attr('stroke', '#c9cfdb')
+                    .attr('stroke-dasharray', '4,4');
+
+                svg.append('text')
+                    .attr('x', x(idx))
+                    .attr('y', 26)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', '#4d5a73')
+                    .style('font-size', '12px')
+                    .style('font-weight', 700)
+                    .text(`S${recorded.indexOf(idx) + 1}`);
+            }
+        });
+
+        svg.append('text')
+            .attr('x', margin.left)
+            .attr('y', height - 10)
+            .attr('fill', '#5a6474')
+            .style('font-size', '12px')
+            .text('Event order along one lineage');
+    }
+
+    let hiddenHistoryLayout = 'chronogram';
+
+    const historyScenarios = [
+        {
+            label: 'A',
+            nodes: [
+                { id: 'r', parent: null, t: 0.10, y: 0.50, active: true },
+                { id: 'stem0', parent: 'r', t: 0.24, y: 0.50, active: true },
+                { id: 'split', parent: 'stem0', t: 0.38, y: 0.50, active: true },
+                { id: 'lower', parent: 'split', t: 0.60, y: 0.22, active: true },
+                { id: 'A', parent: 'lower', t: 0.92, y: 0.22, active: true, label: 'A' },
+                { id: 'upper', parent: 'split', t: 0.64, y: 0.78, active: true },
+                { id: 'B', parent: 'upper', t: 0.92, y: 0.78, active: true, label: 'B' },
+                { id: 'e1', parent: 'stem0', t: 0.56, y: 0.10, active: false },
+                { id: 'e2', parent: 'upper', t: 0.82, y: 0.92, active: false }
+            ]
+        },
+        {
+            label: 'B',
+            nodes: [
+                { id: 'r', parent: null, t: 0.10, y: 0.50, active: true },
+                { id: 'stem0', parent: 'r', t: 0.18, y: 0.50, active: true },
+                { id: 'stem1', parent: 'stem0', t: 0.38, y: 0.50, active: true },
+                { id: 'lower', parent: 'stem1', t: 0.58, y: 0.22, active: true },
+                { id: 'A', parent: 'lower', t: 0.92, y: 0.22, active: true, label: 'A' },
+                { id: 'upper', parent: 'stem1', t: 0.92, y: 0.78, active: true, label: 'B' },
+                { id: 'e1', parent: 'stem0', t: 0.52, y: 0.86, active: false },
+                { id: 'e2', parent: 'lower', t: 0.78, y: 0.34, active: false }
+            ]
+        },
+        {
+            label: 'C',
+            nodes: [
+                { id: 'r', parent: null, t: 0.10, y: 0.50, active: true },
+                { id: 'stem0', parent: 'r', t: 0.18, y: 0.50, active: true },
+                { id: 'stem1', parent: 'stem0', t: 0.28, y: 0.50, active: true },
+                { id: 'split', parent: 'stem1', t: 0.38, y: 0.50, active: true },
+                { id: 'A', parent: 'split', t: 0.92, y: 0.22, active: true, label: 'A' },
+                { id: 'upper', parent: 'split', t: 0.62, y: 0.78, active: true },
+                { id: 'B', parent: 'upper', t: 0.92, y: 0.78, active: true, label: 'B' },
+                { id: 'e1', parent: 'stem0', t: 0.50, y: 0.08, active: false },
+                { id: 'e2', parent: 'stem1', t: 0.56, y: 0.66, active: false },
+                { id: 'e3', parent: 'upper', t: 0.80, y: 0.92, active: false }
+            ]
+        }
+    ];
+
+    const prunedHistoryNodes = [
+        { id: 'r', parent: null, t: 0.10, y: 0.50, active: true },
+        { id: 'split', parent: 'r', t: 0.38, y: 0.50, active: true },
+        { id: 'A', parent: 'split', t: 0.92, y: 0.22, active: true, label: 'A' },
+        { id: 'B', parent: 'split', t: 0.92, y: 0.78, active: true, label: 'B' }
+    ];
+
+    function historyEdges(nodes) {
+        const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+        return nodes
+            .filter((node) => node.parent)
+            .map((node) => ({ source: nodeMap.get(node.parent), target: node }))
+            .filter((edge) => edge.source && edge.target);
+    }
+
+    function drawHistoryChronogramPanel(containerId, nodes) {
+        const svg = drawSVG(containerId, 260);
+        const width = +svg.attr('width');
+        const height = +svg.attr('height');
+        const margin = { top: 20, right: 20, bottom: 28, left: 30 };
+        const x = d3.scaleLinear().domain([0, 1]).range([margin.left, width - margin.right]);
+        const y = d3.scaleLinear().domain([0, 1]).range([margin.top, height - margin.bottom]);
+        const edges = historyEdges(nodes);
+
+        svg.append('text')
+            .attr('x', width - margin.right)
+            .attr('y', 14)
+            .attr('text-anchor', 'end')
+            .attr('fill', '#5a6474')
+            .style('font-size', '11px')
+            .text('time');
+
+        edges.forEach((edge) => {
+            const muted = !edge.target.active;
+            svg.append('line')
+                .attr('x1', x(edge.source.t)).attr('y1', y(edge.source.y))
+                .attr('x2', x(edge.source.t)).attr('y2', y(edge.target.y))
+                .attr('stroke', muted ? '#cfd5df' : '#7c87a0')
+                .attr('stroke-width', muted ? 1.8 : 2.2)
+                .attr('stroke-dasharray', muted ? '4,4' : null);
+
+            svg.append('line')
+                .attr('x1', x(edge.source.t)).attr('y1', y(edge.target.y))
+                .attr('x2', x(edge.target.t)).attr('y2', y(edge.target.y))
+                .attr('stroke', muted ? '#cfd5df' : '#47536a')
+                .attr('stroke-width', muted ? 1.8 : 2.4)
+                .attr('stroke-linecap', 'round')
+                .attr('stroke-dasharray', muted ? '4,4' : null);
+        });
+
+        svg.append('g')
+            .selectAll('circle')
+            .data(nodes)
+            .join('circle')
+            .attr('cx', (d) => x(d.t))
+            .attr('cy', (d) => y(d.y))
+            .attr('r', (d) => d.label ? 4.6 : 3.6)
+            .attr('fill', (d) => d.active ? '#4264a6' : '#c8cedc')
+            .attr('stroke', '#ffffff')
+            .attr('stroke-width', 1.1);
+
+        svg.append('g')
+            .selectAll('text.tip-label')
+            .data(nodes.filter((d) => d.label))
+            .join('text')
+            .attr('class', 'tip-label')
+            .attr('x', width - 20)
+            .attr('y', (d) => y(d.y) + 4)
+            .attr('text-anchor', 'end')
+            .attr('fill', '#4d5a73')
+            .style('font-size', '12px')
+            .style('font-weight', 700)
+            .text((d) => d.label);
+
+        svg.append('g')
+            .selectAll('g.extinct-marker')
+            .data(nodes.filter((d) => !d.active))
+            .join('g')
+            .attr('class', 'extinct-marker')
+            .each(function (d) {
+                const g = d3.select(this);
+                const cx = x(d.t);
+                const cy = y(d.y);
+                g.append('line')
+                    .attr('x1', cx - 3.2).attr('x2', cx + 3.2)
+                    .attr('y1', cy - 3.2).attr('y2', cy + 3.2)
+                    .attr('stroke', '#9aa3b2')
+                    .attr('stroke-width', 1.2);
+                g.append('line')
+                    .attr('x1', cx - 3.2).attr('x2', cx + 3.2)
+                    .attr('y1', cy + 3.2).attr('y2', cy - 3.2)
+                    .attr('stroke', '#9aa3b2')
+                    .attr('stroke-width', 1.2);
+            });
+    }
+
+    function renderHiddenHistoryExplainer() {
+        const idx = parseInt(document.getElementById('historyExplainerSlider').value, 10);
+        const scenario = historyScenarios[idx];
+        document.getElementById('historyExplainerLabel').innerHTML = `<strong>${scenario.label}</strong>`;
+        drawHistoryChronogramPanel('hidden-history-full', scenario.nodes);
+        drawHistoryChronogramPanel('hidden-history-pruned', prunedHistoryNodes);
+    }
+
+    function renderTraitModelExplainer() {
+
+        const model = document.getElementById('traitModelExplainer').value;
+        const alpha = parseFloat(document.getElementById('traitAlphaExplainer').value);
+        document.getElementById('traitAlphaExplainerValue').textContent = alpha.toFixed(2);
+
+        const svg = drawSVG('trait-model-explainer', 260);
+        const width = +svg.attr('width');
+        const height = +svg.attr('height');
+        const margin = { top: 16, right: 16, bottom: 34, left: 36 };
+        const rng = mulberry32(12345);
+        const paths = [];
+        const tips = [];
+
+        for (let i = 0; i < 18; i += 1) {
+            let x = 0;
+            let y = 0;
+            const series = [[x, y]];
+            for (let step = 0; step < 36; step += 1) {
+                if (model === 'ou') {
+                    x += alpha * (0 - x) + randn(rng) * 0.15;
+                    y += alpha * (0 - y) + randn(rng) * 0.15;
+                } else {
+                    x += randn(rng) * 0.15;
+                    y += randn(rng) * 0.15;
+                }
+                series.push([x, y]);
+            }
+            paths.push(series);
+            tips.push(series[series.length - 1]);
+        }
+
+        const all = paths.flat();
+        const xExtent = d3.extent(all, d => d[0]);
+        const yExtent = d3.extent(all, d => d[1]);
+        const xPad = (xExtent[1] - xExtent[0] || 1) * 0.2;
+        const yPad = (yExtent[1] - yExtent[0] || 1) * 0.2;
+        const xScale = d3.scaleLinear().domain([xExtent[0] - xPad, xExtent[1] + xPad]).range([margin.left, width - margin.right]);
+        const yScale = d3.scaleLinear().domain([yExtent[0] - yPad, yExtent[1] + yPad]).range([height - margin.bottom, margin.top]);
+
+        svg.append('g')
+            .attr('transform', `translate(0,${height - margin.bottom})`)
+            .call(d3.axisBottom(xScale).ticks(5))
+            .call(g => g.selectAll('text').attr('fill', '#5a6474').style('font-size', '11px'))
+            .call(g => g.select('.domain').attr('stroke', '#c8d0dd'));
+        svg.append('g')
+            .attr('transform', `translate(${margin.left},0)`)
+            .call(d3.axisLeft(yScale).ticks(5))
+            .call(g => g.selectAll('text').attr('fill', '#5a6474').style('font-size', '11px'))
+            .call(g => g.select('.domain').attr('stroke', '#c8d0dd'));
+
+        svg.append('line')
+            .attr('x1', xScale(0)).attr('x2', xScale(0))
+            .attr('y1', margin.top).attr('y2', height - margin.bottom)
+            .attr('stroke', '#d8deea').attr('stroke-dasharray', '3,3');
+        svg.append('line')
+            .attr('x1', margin.left).attr('x2', width - margin.right)
+            .attr('y1', yScale(0)).attr('y2', yScale(0))
+            .attr('stroke', '#d8deea').attr('stroke-dasharray', '3,3');
+
+        const line = d3.line().x(d => xScale(d[0])).y(d => yScale(d[1]));
+        paths.forEach(series => {
+            svg.append('path')
+                .attr('d', line(series))
+                .attr('fill', 'none')
+                .attr('stroke', '#7a8ab4')
+                .attr('stroke-width', 1.4)
+                .attr('opacity', 0.5);
+        });
+
+        svg.append('g').selectAll('circle').data(tips).join('circle')
+            .attr('cx', d => xScale(d[0]))
+            .attr('cy', d => yScale(d[1]))
+            .attr('r', 3.2)
+            .attr('fill', model === 'ou' ? '#3aa675' : '#d94f4f')
+            .attr('opacity', 0.9);
+    }
+
+    function syncSimulatorChrome() {
+        const details = document.getElementById('simSettingsDetails');
+        if (!details) return;
+        if (window.innerWidth <= 1100) {
+            details.removeAttribute('open');
+        } else {
+            details.setAttribute('open', 'open');
+        }
+    }
+
+    function rerenderWidgets() {
+        renderCoarsenExplainer();
+        renderHiddenHistoryExplainer();
+        renderTraitModelExplainer();
+    }
+
+    document.getElementById('coarsenExplainerSlider').addEventListener('input', renderCoarsenExplainer);
+    document.getElementById('historyExplainerSlider').addEventListener('input', renderHiddenHistoryExplainer);
+    document.getElementById('traitModelExplainer').addEventListener('change', renderTraitModelExplainer);
+    document.getElementById('traitAlphaExplainer').addEventListener('input', renderTraitModelExplainer);
+    window.addEventListener('resize', () => {
+        clearTimeout(window.__blogWidgetResize);
+        window.__blogWidgetResize = setTimeout(() => {
+            syncSimulatorChrome();
+            rerenderWidgets();
+        }, 120);
+    });
+
+    syncSimulatorChrome();
+    rerenderWidgets();
+})();
+</script>
 </body>
 </html>

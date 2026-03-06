@@ -1,1810 +1,1902 @@
-// Get the size of the container dynamically
-function getGraphContainerSize() {
-    const container = document.getElementById('graph-container');
-    return {
-        width: container.clientWidth,
-        height: container.clientHeight
+(function () {
+  const root = document.getElementById('evonet-simulator');
+  if (!root || typeof d3 === 'undefined') return;
+
+  const $ = (id) => document.getElementById(id);
+  const dom = {
+    birthRate: $('birthRate'),
+    birthRateValue: $('birthRateValue'),
+    mutateRate: $('mutateRate'),
+    mutateRateValue: $('mutateRateValue'),
+    deathRate: $('deathRate'),
+    deathRateValue: $('deathRateValue'),
+    maxSteps: $('maxSteps'),
+    maxStepsValue: $('maxStepsValue'),
+    mstep: $('mstep'),
+    mstepValue: $('mstepValue'),
+    traitDimensions: $('traitDimensions'),
+    traitDimensionsValue: $('traitDimensionsValue'),
+    traitSigma: $('traitSigma'),
+    traitSigmaValue: $('traitSigmaValue'),
+    traitModel: $('traitModel'),
+    ouAlpha: $('ouAlpha'),
+    ouAlphaValue: $('ouAlphaValue'),
+    ouAlphaWrapper: $('ouAlphaWrapper'),
+    pruneExtinct: $('pruneExtinct'),
+    showBranchLengths: $('showBranchLengths'),
+    seedInput: $('seedInput'),
+    randomSeedButton: $('randomSeedButton'),
+    presetSelect: $('presetSelect'),
+    presetDescription: $('presetDescription'),
+    startButton: $('startButton'),
+    pauseButton: $('pauseButton'),
+    stepButton: $('stepButton'),
+    resetButton: $('resetButton'),
+    exportJsonButton: $('exportJsonButton'),
+    copyHistoryNewickButton: $('copyHistoryNewickButton'),
+    copyTraitNewickButton: $('copyTraitNewickButton'),
+    graphContainer: $('graph-container'),
+    coarsenedContainer: $('coarsened-graph-container'),
+    historyTreeContainer: $('plot-container'),
+    traitTreeContainer: $('trait-container'),
+    lttContainer: $('ltt-container'),
+    traitSpaceContainer: $('trait-space-container'),
+    extantCount: $('extantCount'),
+    extinctCount: $('extinctCount'),
+    observedCount: $('observedCount'),
+    timeCount: $('timeCount'),
+    agreementCount: $('agreementCount'),
+    statusNote: $('statusNote'),
+    eventFeed: $('eventFeed'),
+    summaryRatesChip: $('summaryRatesChip'),
+    summaryCoarsenChip: $('summaryCoarsenChip'),
+    summaryTraitChip: $('summaryTraitChip'),
+    eventDrawerButton: $('eventDrawerButton'),
+    eventDrawerCloseButton: $('eventDrawerCloseButton'),
+    eventDrawerBackdrop: $('eventDrawerBackdrop'),
+    eventDrawer: $('eventDrawer')
+  };
+
+  const presets = {
+    balanced: {
+      label: 'Balanced exploration',
+      description: 'A middle-of-the-road setting. Useful for seeing the whole pipeline without everything exploding or dying immediately.',
+      values: {
+        birthRate: 0.40,
+        mutateRate: 0.35,
+        deathRate: 0.10,
+        maxSteps: 40,
+        mstep: 2,
+        traitDimensions: 4,
+        traitSigma: 0.50,
+        traitModel: 'brownian',
+        ouAlpha: 0.25,
+        seed: 182734
+      }
+    },
+    turnover: {
+      label: 'High turnover',
+      description: 'More extinction, more ambiguity. Good for watching reconstructed history lose information.',
+      values: {
+        birthRate: 0.28,
+        mutateRate: 0.34,
+        deathRate: 0.34,
+        maxSteps: 45,
+        mstep: 2,
+        traitDimensions: 5,
+        traitSigma: 0.45,
+        traitModel: 'brownian',
+        ouAlpha: 0.25,
+        seed: 927441
+      }
+    },
+    radiation: {
+      label: 'Rapid radiation',
+      description: 'Many daughters in a short time. The trait tree can look clean even when the event history is awkward.',
+      values: {
+        birthRate: 0.62,
+        mutateRate: 0.50,
+        deathRate: 0.08,
+        maxSteps: 50,
+        mstep: 1,
+        traitDimensions: 6,
+        traitSigma: 0.65,
+        traitModel: 'brownian',
+        ouAlpha: 0.25,
+        seed: 49031
+      }
+    },
+    constrained: {
+      label: 'Trait constraint (OU-like)',
+      description: 'Diversification keeps going, but trait evolution is pulled back toward an optimum, so the trait cloud stays tighter.',
+      values: {
+        birthRate: 0.42,
+        mutateRate: 0.35,
+        deathRate: 0.12,
+        maxSteps: 45,
+        mstep: 2,
+        traitDimensions: 4,
+        traitSigma: 0.35,
+        traitModel: 'ou',
+        ouAlpha: 0.30,
+        seed: 550217
+      }
+    }
+  };
+
+  const palette = {
+    blue: '#4264a6',
+    red: '#d94f4f',
+    grey: '#9aa3b2',
+    text: '#2b2f38',
+    softText: '#586172',
+    accent: '#757ca3',
+    light: '#f7f9fc',
+    border: '#d9dfea',
+    yellow: '#f7d724',
+    green: '#3aa675'
+  };
+
+  const state = {
+    nodes: [],
+    nodeById: new Map(),
+    activeIds: new Set(),
+    step: 0,
+    time: 0,
+    nextId: 1,
+    running: false,
+    timer: null,
+    rng: Math.random,
+    playbackMs: 340,
+    eventLog: [],
+    timeSeries: [],
+    derived: {
+      coarsened: null,
+      historyNewick: null,
+      traitNewick: null,
+      observedRecords: [],
+      agreement: null,
+      traitProjection: []
+    },
+    highlightRecordId: null,
+    settings: null,
+    eventDrawerOpen: false,
+    drawerTimer: null,
+    lastRenderedBranchLengthMode: null
+  };
+
+  function mulberry32(seed) {
+    let t = seed >>> 0;
+    return function () {
+      t += 0x6D2B79F5;
+      let r = Math.imul(t ^ (t >>> 15), 1 | t);
+      r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+      return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
     };
-}
+  }
 
-let { width, height } = getGraphContainerSize();
+  function randn(rng) {
+    let u = 0;
+    let v = 0;
+    while (u === 0) u = rng();
+    while (v === 0) v = rng();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
 
-// Initialize node ID counter and data arrays.
-let nodeId = 1;
-let nodes = [{ id: nodeId, active: true, mutated: false, birthTime: 0, extinctTime: -1 }];
-let links = [];
-let activeNodes = [nodes[0]]; // Start with the root node as the only active node.
-let simulationStep = 0;
-let simulationTime = 0;
-let maxSteps = parseInt(document.getElementById('maxSteps').value);
-let simulationInterval = null; // To store the interval ID
-let isRunning = false;
+  function sampleExponential(rate, rng) {
+    if (!Number.isFinite(rate) || rate <= 0) return 0;
+    const u = Math.max(rng(), 1e-12);
+    return -Math.log(1 - u) / rate;
+  }
 
-// Add global variables to store data
-let lastLTable = null;
-let lastNodeAccumulatedMutations = null;
-let lastNewickChart = null;
-let lastTraitChart = null;
-let lastNodeTraits = null;
-let lastTraitModel = null;
-let lastTraitDimension = null;
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
 
-// Declare global data variables for coarsened graph
-let lastCoarsenedNodes = null;
-let lastCoarsenedLinks = null;
+  function formatNum(value, digits = 2) {
+    if (value === null || value === undefined || Number.isNaN(value)) return '–';
+    return Number(value).toFixed(digits);
+  }
 
-// Event listener for the sliders controlling rates
-const birthRateSlider = document.getElementById('birthRate');
-const mutateRateSlider = document.getElementById('mutateRate');
-const deathRateSlider = document.getElementById('deathRate');
+  function debounce(fn, delay) {
+    let t = null;
+    return function (...args) {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), delay);
+    };
+  }
 
-const birthRateValue = document.getElementById('birthRateValue');
-const mutateRateValue = document.getElementById('mutateRateValue');
-const deathRateValue = document.getElementById('deathRateValue');
+  function maybeTransition(selection, transition) {
+    return transition ? selection.transition(transition) : selection;
+  }
 
-let birthRate = parseFloat(birthRateSlider.value);
-let mutateRate = parseFloat(mutateRateSlider.value);
-let deathRate = parseFloat(deathRateSlider.value);
+  function meanVector(vectors, dims) {
+    if (!vectors.length) return Array(dims).fill(0);
+    const out = Array(dims).fill(0);
+    vectors.forEach((vec) => {
+      for (let i = 0; i < dims; i += 1) out[i] += vec[i] || 0;
+    });
+    return out.map((v) => v / vectors.length);
+  }
 
-let resizeTimeout;
+  function safeContainerSize(el, minHeight = 320) {
+    const box = el.getBoundingClientRect();
+    return {
+      width: Math.max(320, box.width || 320),
+      height: Math.max(minHeight, box.height || minHeight)
+    };
+  }
 
-// Select the graph container and append the SVG to it.
-const svg = d3.select("#graph-container").append("svg")
-    .attr("width", width)
-    .attr("height", height)
-    .attr("viewBox", [-width / 2, -height / 2, width, height])
-    .attr("style", "max-width: 100%; height: auto;");
-
-// Initialize the force simulation.
-const simulation = d3.forceSimulation(nodes)
-    .force("link", d3.forceLink(links).id(d => d.id).distance(100).strength(1))
-    .force("charge", d3.forceManyBody().strength(-300))
-    .force("collision", d3.forceCollide().radius(15))
-    .force("center", d3.forceCenter())
-    .force("x", d3.forceX())
-    .force("y", d3.forceY());
-
-// Initialize link and node elements.
-let link = svg.append("g")
-    .attr("stroke", "#999")
-    .attr("stroke-opacity", 0.6)
-    .selectAll("line");
-
-// Group circle and text together
-let node = svg.append("g")
-    .attr("stroke-width", 1.5)
-    .selectAll("g");
-
-// Function to update the graph based on the current data.
-function updateGraph() {
-    // Update links.
-    link = link.data(links, d => `${d.source.id}-${d.target.id}`);
-    link.exit().remove();
-    link = link.enter().append("line").merge(link);
-
-    // Update nodes.
-    node = node.data(nodes, d => d.id);
-    node.exit().remove();
-
-    // Enter new nodes as 'g' elements
-    const nodeEnter = node.enter().append("g")
-        .call(drag(simulation));
-
-    nodeEnter.append("circle")
-        .attr("r", 10);
-
-    nodeEnter.append("text")
-        .attr("dy", ".35em")
-        .attr("text-anchor", "middle")
-        .text(d => d.id)
-        .style("fill", "white")
-        .style("font-size", "12px")
-        // Bind hover events to the text element
-        .on('mouseover', function (event, d) {
-            // Trigger the same hover effect on the circle
-            d3.select(this.parentNode).select('circle')
-                .dispatch('mouseover');
-        })
-        .on('mouseout', function (event, d) {
-            // Trigger the same unhover effect on the circle
-            d3.select(this.parentNode).select('circle')
-                .dispatch('mouseout');
-        });
-
-    // Append titles to the 'g' elements
-    nodeEnter.append("title")
-        .text(d => `Node ${d.id}${d.mutated ? " (mutated)" : ""}`);
-
-    node = nodeEnter.merge(node);
-
-    // Update the fill color based on the node's active and mutated status.
-    node.select("circle")
-        .attr("fill", d => d.active ? (d.mutated ? "red" : "#4264a6") : "gray")
-        .attr("stroke", d => d.mutated ? "red" : "white")
-        .on('mouseover', fullGraphMouseovered(true))
-        .on('mouseout', fullGraphMouseovered(false));
-
-    // Update and restart the simulation.
-    simulation.nodes(nodes);
-    simulation.force("link").links(links);
-    simulation.alpha(1).restart();
-}
-
-// Simulation tick function to update positions.
-simulation.on("tick", () => {
-    link
-        .attr("x1", d => d.source.x)
-        .attr("y1", d => d.source.y)
-        .attr("x2", d => d.target.x)
-        .attr("y2", d => d.target.y);
-
-    // Update the position of the node groups
-    node.attr("transform", d => `translate(${d.x},${d.y})`);
-});
-
-function fullGraphMouseovered(active) {
-    return function (event, d) {
-        highlightNewickTreeNode(d, active); // Highlight or unhighlight the corresponding Newick tree node
-        highlightTraitTreeNode(d, active); // Highlight or unhighlight the corresponding trait-based phylogeny node
-        highlightCoarsenedGraphNode(d.id, active); // Highlight or unhighlight the corresponding full graph node
-        d3.select(this)
-            .attr('stroke', active ? '#ff0' : d => d.mutated ? 'red' : 'white') // Highlight or reset stroke
-            .attr('stroke-width', active ? 4 : 1.5) // Increase or reset stroke width
-            .attr('r', active ? 12 : 10); // Increase or reset node size
+  function copyText(text) {
+    if (!text) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {
+        window.prompt('Copy this text:', text);
+      });
+    } else {
+      window.prompt('Copy this text:', text);
     }
-}
+  }
 
+  function syncValueSpans() {
+    dom.birthRateValue.textContent = formatNum(dom.birthRate.value, 2);
+    dom.mutateRateValue.textContent = formatNum(dom.mutateRate.value, 2);
+    dom.deathRateValue.textContent = formatNum(dom.deathRate.value, 2);
+    dom.maxStepsValue.textContent = dom.maxSteps.value;
+    dom.mstepValue.textContent = dom.mstep.value;
+    dom.traitDimensionsValue.textContent = dom.traitDimensions.value;
+    dom.traitSigmaValue.textContent = formatNum(dom.traitSigma.value, 2);
+    dom.ouAlphaValue.textContent = formatNum(dom.ouAlpha.value, 2);
+    dom.ouAlphaWrapper.hidden = dom.traitModel.value !== 'ou';
+    const preset = presets[dom.presetSelect.value];
+    if (preset && dom.presetDescription) dom.presetDescription.textContent = preset.description;
 
-// Gillespie time-sampling simulation function.
-function simulateStep() {
-    if (activeNodes.length === 0) {
-        console.log("No active nodes left. Stopping simulation.");
-        pauseSimulation();
-        return;
+    if (dom.summaryRatesChip) {
+      dom.summaryRatesChip.textContent = `Rates ${formatNum(dom.birthRate.value, 2)} / ${formatNum(dom.mutateRate.value, 2)} / ${formatNum(dom.deathRate.value, 2)}`;
     }
-
-    // Calculate total rate as sum of rates times the number of active nodes.
-    const totalRate = (birthRate + mutateRate + deathRate) * activeNodes.length;
-
-    // Sample time interval from exponential distribution.
-    const timeInterval = sampleExponential(totalRate);
-    console.log(`Time interval: ${timeInterval}`);
-
-    // Update the simulation time by the sampled time interval.
-    simulationTime += timeInterval;
-    simulationStep += 1;
-    console.log(`Simulation step: ${simulationStep}`);
-    console.log(`Simulation time: ${simulationTime}`);
-
-    const events = ['birth', 'birth+mutation', 'extinction'];
-    const eventProbabilities = [birthRate, mutateRate, deathRate]; // Probabilities for each event
-    const event = randomChoice(events, eventProbabilities);
-
-    if (event === 'birth' || event === 'birth+mutation') {
-        // Randomly sample an active node.
-        const parent = randomChoice(activeNodes);
-        nodeId += 1;
-        const newNode = {
-            id: nodeId,
-            active: true,
-            mutated: event === 'birth+mutation',
-            birthTime: simulationTime,
-            extinctTime: -1
-        };
-        nodes.push(newNode);
-        activeNodes.push(newNode);
-        links.push({ source: parent.id, target: newNode.id });
-    } else if (event === 'extinction') {
-        // Randomly sample an active node to become extinct.
-        const nodeToExtinct = randomActiveNode();
-
-        if (nodeToExtinct) {
-            nodeToExtinct.active = false;
-            nodeToExtinct.extinctTime = simulationTime;
-            activeNodes = activeNodes.filter(n => n.id !== nodeToExtinct.id);
-        }
+    if (dom.summaryCoarsenChip) {
+      const pruneText = dom.pruneExtinct.checked ? ' · prune' : '';
+      const branchText = dom.showBranchLengths.checked ? ' · lengths' : '';
+      dom.summaryCoarsenChip.textContent = `Coarsen ${dom.mstep.value}${pruneText}${branchText}`;
     }
-
-    // Update the graph with new data.
-    updateGraph();
-
-    // Build L table and get accumulated mutations
-    mstep = parseInt(document.getElementById('mstep').value) || 0;
-    let { lTable, nodeAccumulatedMutations, coarsenedNodes, coarsenedLinks } = buildLTable(mstep);
-    lastLTable = lTable; // Store for later use
-    lastNodeAccumulatedMutations = nodeAccumulatedMutations; // Store for later use
-    lastCoarsenedNodes = coarsenedNodes;
-    lastCoarsenedLinks = coarsenedLinks;
-    lastNodeTraits = buildTraitTable(lastNodeAccumulatedMutations, lastTraitModel);
-
-    console.log("L Table:");
-    console.table(lastLTable);
-    console.log("Node Accumulated Mutations:");
-    console.table(lastNodeAccumulatedMutations);
-    console.log("Node Traits:");
-    console.table(lastNodeTraits);
-
-    // Plot the trait data
-    // plotTraits(lastNodeTraits, lastTraitDimension);
-
-    // Plot current data as newick tree
-    plotCurrentData();
-
-    // Plot the trait-based phylogeny
-    plotCurrentTraitData();
-
-    // Plot the coarsened graph
-    plotCoarsenedGraph();
-}
-
-// Function to sample time from an exponential distribution with rate λ.
-function sampleExponential(rate) {
-    return -Math.log(1 - Math.random()) / rate;
-}
-
-// Randomly selects an active node (to ensure extinction can happen on active nodes only).
-function randomActiveNode() {
-    if (activeNodes.length === 0) return null;
-    return randomChoice(activeNodes);
-}
-
-// Utility function to select a random item with optional probabilities.
-function randomChoice(items, probabilities) {
-    if (!probabilities) {
-        return items[Math.floor(Math.random() * items.length)];
+    if (dom.summaryTraitChip) {
+      const traitModelText = dom.traitModel.value === 'ou'
+        ? `OU α ${formatNum(dom.ouAlpha.value, 2)}`
+        : 'Brownian';
+      dom.summaryTraitChip.textContent = `${traitModelText} · ${dom.traitDimensions.value}D`;
     }
-    const cumulative = [];
-    let sum = 0;
-    for (let p of probabilities) {
-        sum += p;
-        cumulative.push(sum);
+  }
+
+  function cacheSettings() {
+    return {
+      birthRate: parseFloat(dom.birthRate.value),
+      mutateRate: parseFloat(dom.mutateRate.value),
+      deathRate: parseFloat(dom.deathRate.value),
+      maxSteps: parseInt(dom.maxSteps.value, 10),
+      coarsenLevel: parseInt(dom.mstep.value, 10),
+      traitDimensions: parseInt(dom.traitDimensions.value, 10),
+      traitSigma: parseFloat(dom.traitSigma.value),
+      traitModel: dom.traitModel.value,
+      ouAlpha: parseFloat(dom.ouAlpha.value),
+      pruneExtinct: dom.pruneExtinct.checked,
+      showBranchLengths: dom.showBranchLengths.checked,
+      seed: parseInt(dom.seedInput.value, 10) || 1
+    };
+  }
+
+  function updateButtonState() {
+    dom.startButton.disabled = state.running;
+    dom.pauseButton.disabled = !state.running;
+    dom.stepButton.disabled = state.running;
+  }
+
+  function updateControlLocks() {
+    const lockHistorical = state.step > 0 || state.running;
+    dom.maxSteps.disabled = lockHistorical;
+    dom.traitDimensions.disabled = lockHistorical;
+    dom.traitSigma.disabled = lockHistorical;
+    dom.traitModel.disabled = lockHistorical;
+    dom.ouAlpha.disabled = lockHistorical;
+    dom.seedInput.disabled = lockHistorical;
+    dom.randomSeedButton.disabled = lockHistorical;
+    dom.presetSelect.disabled = lockHistorical;
+  }
+
+  function applyPreset(name) {
+    const preset = presets[name];
+    if (!preset) return;
+    const v = preset.values;
+    dom.birthRate.value = v.birthRate;
+    dom.mutateRate.value = v.mutateRate;
+    dom.deathRate.value = v.deathRate;
+    dom.maxSteps.value = v.maxSteps;
+    dom.mstep.value = v.mstep;
+    dom.traitDimensions.value = v.traitDimensions;
+    dom.traitSigma.value = v.traitSigma;
+    dom.traitModel.value = v.traitModel;
+    dom.ouAlpha.value = v.ouAlpha;
+    dom.seedInput.value = v.seed;
+    syncValueSpans();
+    if (state.step === 0 && !state.running) resetSimulation();
+  }
+
+  function randomizeSeed() {
+    dom.seedInput.value = Math.floor(Math.random() * 1000000000);
+    if (state.step === 0 && !state.running) resetSimulation();
+  }
+
+  function rebuildNodeMap() {
+    state.nodeById = new Map(state.nodes.map((n) => [n.id, n]));
+  }
+
+  function getNodeEndTime(node) {
+    return node.active ? state.time : node.extinctTime;
+  }
+
+  function createNode({ id, parentId, birthTime, mutated, trait, eventType }) {
+    return {
+      id,
+      parentId,
+      birthTime,
+      extinctTime: null,
+      active: true,
+      mutated,
+      eventType,
+      trait,
+      children: []
+    };
+  }
+
+  function mutateTraits(parentTrait) {
+    const dims = state.settings.traitDimensions;
+    const sigma = state.settings.traitSigma;
+    const model = state.settings.traitModel;
+    const alpha = clamp(state.settings.ouAlpha, 0, 1);
+    if (model === 'ou') {
+      return parentTrait.map((v) => v + alpha * (0 - v) + randn(state.rng) * sigma);
     }
-    const r = Math.random() * sum;
-    for (let i = 0; i < cumulative.length; i++) {
-        if (r < cumulative[i]) {
-            return items[i];
-        }
-    }
-}
+    return parentTrait.map((v) => v + randn(state.rng) * sigma);
+  }
 
-// Drag behavior functions.
-function drag(simulation) {
-    function dragstarted(event, d) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-    }
-
-    function dragged(event, d) {
-        d.fx = event.x;
-        d.fy = event.y;
-    }
-
-    function dragended(event, d) {
-        if (!event.active) simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
-    }
-
-    return d3.drag()
-        .on("start", dragstarted)
-        .on("drag", dragged)
-        .on("end", dragended);
-}
-
-// Start or resume the simulation.
-function startResumeSimulation() {
-    if (isRunning) return;
-
-    maxSteps = parseInt(document.getElementById('maxSteps').value);
-    lastTraitModel = document.getElementById('traitModel').value;
-    lastTraitDimension = parseInt(document.getElementById('traitDimensions').value) || 2;
-
-    // Dynamically compute the interval based on the sum of rates
-    let sumRates = birthRate + mutateRate + deathRate;
-    dynamicInterval = 1000 / sumRates;
-
-    simulationInterval = d3.interval(() => {
-        if (simulationStep >= maxSteps) {
-            pauseSimulation();
-            return;
-        }
-        simulateStep();
-    }, dynamicInterval); // Interval for observable steps, not related to actual sampling time
-
-    isRunning = true;
-    toggleButtons();
-    lockMaxStepsInput(true);
-    lockTraitControls(true);
-}
-
-// Lock the max steps input field during simulation.
-function lockMaxStepsInput(locked) {
-    document.getElementById('maxSteps').disabled = locked;
-}
-
-function lockTraitControls(locked) {
-    document.getElementById('traitModel').disabled = locked;
-    document.getElementById('traitDimensions').disabled = locked;
-}
-
-function updateRates() {
-    let sumRates = birthRate + mutateRate + deathRate;
-    dynamicInterval = 1000 / sumRates; // Update dynamic interval
-    restartSimulationInterval();
-}
-
-function restartSimulationInterval() {
-    if (isRunning && simulationInterval) {
-        // Stop the current interval
-        simulationInterval.stop();
-
-        // Start a new interval with the updated dynamicInterval
-        simulationInterval = d3.interval(() => {
-            if (simulationStep >= maxSteps) {
-                pauseSimulation();
-                return;
-            }
-            simulateStep();
-        }, dynamicInterval);
-    }
-}
-
-// Stop the simulation (pause).
-function pauseSimulation() {
-    if (simulationInterval) {
-        simulationInterval.stop();
-        isRunning = false;
-        toggleButtons();
-    }
-}
-
-// Reset the simulation to its initial state.
-function resetSimulation() {
+  function resetSimulation() {
     pauseSimulation();
-    // Initialize node ID counter and data arrays.
-    nodeId = 1;
-    nodes = [{ id: nodeId, active: true, mutated: false, birthTime: 0, extinctTime: -1 }];
-    links = [];
-    activeNodes = [nodes[0]]; // Start with the root node as the only active node.
-    simulationTime = 0;
-    simulationStep = 0;
-    maxSteps = parseInt(document.getElementById('maxSteps').value);
-    simulationInterval = null; // To store the interval ID
-    isRunning = false;
+    syncValueSpans();
+    state.settings = cacheSettings();
+    state.rng = mulberry32(state.settings.seed);
+    state.step = 0;
+    state.time = 0;
+    state.nextId = 1;
+    state.activeIds = new Set();
+    state.eventLog = [];
+    state.timeSeries = [];
+    state.highlightRecordId = null;
 
-    // Add global variables to store data
-    lastLTable = null;
-    lastNodeAccumulatedMutations = null;
-    lastNewickChart = null;
-    lastTraitChart = null;
-    lastNodeTraits = null;
-    lastTraitModel = null;
-    lastTraitDimension = null;
-
-    // Declare global data variables for coarsened graph
-    lastCoarsenedNodes = null;
-    lastCoarsenedLinks = null;
-
-    birthRate = parseFloat(birthRateSlider.value);
-    mutateRate = parseFloat(mutateRateSlider.value);
-    deathRate = parseFloat(deathRateSlider.value);
-
-    // Initialize data before step 1
-    // Initialize data before step 1
-    mstep = parseInt(document.getElementById('mstep').value) || 0;
-    let { lTable, nodeAccumulatedMutations, coarsenedNodes, coarsenedLinks } = buildLTable(mstep);
-    lastLTable = lTable; // Store for later use
-    lastNodeAccumulatedMutations = nodeAccumulatedMutations; // Store for later use
-    lastCoarsenedNodes = coarsenedNodes;
-    lastCoarsenedLinks = coarsenedLinks;
-
-    // Clear historical trait data
-    previousNodeTraits = {};
-
-    updateGraph();
-    plotCurrentData();
-    plotCurrentTraitData();
-    plotCoarsenedGraph(lastCoarsenedNodes, lastCoarsenedLinks);
-    toggleButtons(true);
-
-    // Resurrect the trait controls
-    lockTraitControls(false);
-    lockMaxStepsInput(false);
-}
-
-// Toggle button states based on the simulation status.
-function toggleButtons(isInitial = false) {
-    document.getElementById('startButton').disabled = isRunning;
-    document.getElementById('pauseButton').disabled = !isRunning;
-}
-
-// Initialize the graph.
-updateGraph();
-
-// Event listeners for the buttons.
-document.getElementById('startButton').addEventListener('click', startResumeSimulation);
-document.getElementById('pauseButton').addEventListener('click', pauseSimulation);
-document.getElementById('resetButton').addEventListener('click', resetSimulation);
-
-// Initialize the state to be ready for the first start.
-toggleButtons(true);
-
-function buildLTable(mstep) {
-    // Initialize L table and coarsened graph data
-    let lTable = [];
-    let lTableIds = {}; // mapping from simulation node ids to L table ids
-    let nodeAccumulatedMutations = {}; // mapping from node ids to accumulated mutations
-    let coarsenedNodes = []; // Nodes in the coarsened graph
-    let coarsenedLinks = []; // Links in the coarsened graph
-
-    // Build child map for traversal
-    let childMap = {};
-    links.forEach(link => {
-        let sourceId = link.source.id || link.source;
-        let targetId = link.target.id || link.target;
-        if (!childMap[sourceId]) {
-            childMap[sourceId] = [];
-        }
-        childMap[sourceId].push(targetId);
+    const rootNode = createNode({
+      id: 1,
+      parentId: null,
+      birthTime: 0,
+      mutated: false,
+      trait: Array(state.settings.traitDimensions).fill(0),
+      eventType: 'root'
     });
+    state.nodes = [rootNode];
+    state.activeIds.add(1);
+    rebuildNodeMap();
+    pushTimeSeriesSnapshot('Initialized');
+    recomputeDerived();
+    renderAll();
+    updateButtonState();
+    updateControlLocks();
+  }
 
-    // Assign initial L table id for node 1
-    lTableIds[1] = 1; // initial node has L table id 1
+  function startSimulation() {
+    if (state.running) return;
+    state.settings = cacheSettings();
+    state.running = true;
+    updateButtonState();
+    updateControlLocks();
+    tickLoop();
+  }
 
-    // First row of L table
-    let initialNode = nodes.find(n => n.id === 1);
-    lTable.push({
-        eventTime: initialNode.birthTime,
-        parentId: 0,
-        childId: lTableIds[1],
-        extinctTime: initialNode.extinctTime
+  function tickLoop() {
+    if (!state.running) return;
+    state.timer = setTimeout(() => {
+      simulateStep();
+      if (state.running) tickLoop();
+    }, state.playbackMs);
+  }
+
+  function pauseSimulation() {
+    state.running = false;
+    if (state.timer) clearTimeout(state.timer);
+    state.timer = null;
+    updateButtonState();
+    updateControlLocks();
+  }
+
+  function pickRandomActiveId() {
+    const active = Array.from(state.activeIds);
+    if (!active.length) return null;
+    return active[Math.floor(state.rng() * active.length)];
+  }
+
+  function pushEvent(message) {
+    state.eventLog.unshift(message);
+    state.eventLog = state.eventLog.slice(0, 20);
+  }
+
+  function pushTimeSeriesSnapshot(label) {
+    const coarsened = buildCoarsenedData();
+    const observed = getObservedRecords(coarsened, state.settings.pruneExtinct);
+    state.timeSeries.push({
+      time: state.time,
+      step: state.step,
+      extantLineages: state.activeIds.size,
+      totalLineages: state.nodes.length,
+      extinctLineages: state.nodes.length - state.activeIds.size,
+      observedSpecies: observed.length,
+      label
     });
+  }
 
-    // Add initial node to coarsened graph
-    coarsenedNodes.push({ id: 1, active: initialNode.active, mutated: initialNode.mutated });
-
-    // Initialize nodeAccumulatedMutations for the initial node
-    nodeAccumulatedMutations[1] = 0;
-
-    // Start traversal from node 1
-    traverse(1, lTableIds[1], 0, lTableIds[1], 1, 0, 1);
-
-    // Function to traverse the tree
-    function traverse(nodeId, parentLTableId, mutationsEncountered, lastRecordedLTableId, accumulatedMutations, accumulatedMutationsInPath, parentInCoarsenedGraph) {
-        let node = nodes.find(n => n.id === nodeId);
-
-        // Always record accumulated mutations, regardless of mstep
-        nodeAccumulatedMutations[nodeId] = accumulatedMutations;
-
-        if (mstep === 0) {
-            // Assign L table id
-            lTableIds[nodeId] = nodeId;
-
-            // Record entry in L table
-            if (nodeId !== 1) { // Skip initial node since it's already added
-                lTable.push({
-                    eventTime: node.birthTime,
-                    parentId: parentLTableId,
-                    childId: lTableIds[nodeId],
-                    extinctTime: node.extinctTime
-                });
-            }
-
-            // Add this node to coarsened graph
-            if (nodeId !== 1) {
-                coarsenedNodes.push({ id: nodeId, active: node.active, mutated: node.mutated });
-                coarsenedLinks.push({ source: parentInCoarsenedGraph, target: nodeId });
-                parentInCoarsenedGraph = nodeId; // Update for children
-            }
-
-            // Traverse the children
-            if (childMap[nodeId]) {
-                childMap[nodeId].forEach(childId => {
-                    traverse(childId, lTableIds[nodeId], mutationsEncountered, lTableIds[nodeId], accumulatedMutations + 1, accumulatedMutationsInPath, parentInCoarsenedGraph);
-                });
-            }
-        } else {
-            // mstep > 0
-            let newMutationsEncountered = mutationsEncountered;
-            if (node.mutated) {
-                newMutationsEncountered += 1;
-            }
-
-            let shouldRecord = false;
-
-            if (node.mutated && newMutationsEncountered === mstep) {
-                shouldRecord = true;
-                newMutationsEncountered = 0; // Reset counter after recording
-            }
-
-            if (shouldRecord) {
-                // Assign L table id
-                lTableIds[nodeId] = nodeId;
-
-                // Record entry in L table
-                lTable.push({
-                    eventTime: node.birthTime,
-                    parentId: lastRecordedLTableId,
-                    childId: lTableIds[nodeId],
-                    extinctTime: node.extinctTime
-                });
-
-                // Add this node to coarsened graph
-                coarsenedNodes.push({ id: nodeId, active: node.active, mutated: node.mutated });
-                coarsenedLinks.push({ source: parentInCoarsenedGraph, target: nodeId });
-                parentInCoarsenedGraph = nodeId;
-
-                lastRecordedLTableId = lTableIds[nodeId];
-                accumulatedMutationsInPath = 0; // Reset after recording
-            } else {
-                accumulatedMutationsInPath += node.mutated ? 1 : 0;
-            }
-
-            // Traverse the children
-            if (childMap[nodeId]) {
-                childMap[nodeId].forEach(childId => {
-                    traverse(childId, parentLTableId, newMutationsEncountered, lastRecordedLTableId, accumulatedMutations + 1, accumulatedMutationsInPath, parentInCoarsenedGraph);
-                });
-            }
-        }
+  function simulateStep() {
+    state.settings = cacheSettings();
+    if (state.step >= state.settings.maxSteps) {
+      pushEvent(`Stopped at step ${state.step}: reached the step limit.`);
+      pauseSimulation();
+      renderAll();
+      return;
     }
 
-    // Sort the L table based on the childId (third column)
-    lTable.sort((a, b) => a.childId - b.childId);
-
-    // Return the L table, the accumulated mutations, and the coarsened graph
-    return { lTable, nodeAccumulatedMutations, coarsenedNodes, coarsenedLinks };
-}
-
-// Store a global trait table to keep track of previous node traits across calls
-let previousNodeTraits = {};
-
-function buildTraitTable(nodeAccumulatedMutations, model) {
-    let traitDimension = lastTraitDimension || 2;
-
-    // Ensure traitDimension stays between 1 and 10
-    traitDimension = Math.min(Math.max(traitDimension, 1), 10);
-
-    // Variance for Brownian motion step size (slight deviation from 1)
-    const variance = 0;
-
-    // Start with the previous trait values
-    let nodeTraits = Object.assign({}, previousNodeTraits);
-
-    // For each node, perform the trait change model
-    for (let nodeId in nodeAccumulatedMutations) {
-        // If the node has not already been processed, process it
-        if (!nodeTraits.hasOwnProperty(nodeId)) {
-            // Find the direct parent node
-            let parentNodeId = findParentNodeId(nodeId);
-
-            // Inherit traits from the parent node
-            let parentTraits = parentNodeId && nodeTraits[parentNodeId] ? nodeTraits[parentNodeId].slice() : Array(traitDimension).fill(0);
-
-            // If the node is mutated, apply a random mutation on the inherited traits
-            let node = nodes.find(n => n.id === parseInt(nodeId));
-            if (node && node.mutated) {
-                if (model === 'brownian') {
-                    // Apply one random mutation on a single dimension
-                    let dim = Math.floor(Math.random() * traitDimension);
-
-                    // Randomly decide to increment or decrement, with a small variance on top of 1
-                    let delta = (Math.random() < 0.5 ? -1 : 1) * (1 + (Math.random() * variance * 2 - variance));
-
-                    // Update the parent's trait coordinates
-                    parentTraits[dim] += delta;
-                }
-                // If needed, other mutation models can be implemented here
-            }
-
-            // Store the result in nodeTraits
-            nodeTraits[nodeId] = parentTraits;
-        }
+    if (state.activeIds.size === 0) {
+      pushEvent('All lineages are extinct.');
+      pauseSimulation();
+      renderAll();
+      return;
     }
 
-    // Update global `previousNodeTraits`, keeping results for future calls
-    previousNodeTraits = nodeTraits;
-
-    return nodeTraits;
-}
-
-// Helper function to find the parent node ID of a given node
-function findParentNodeId(nodeId) {
-    for (let link of links) {
-        if (link.target.id === parseInt(nodeId) || link.target === parseInt(nodeId)) {
-            return link.source.id || link.source;
-        }
-    }
-    return null; // No parent found (should not happen for non-root nodes)
-}
-
-function filterTraitTable(nodeTraits, lTable, pruneExtinct) {
-    // Create a set of child IDs from the L table (the recorded nodes)
-    let recordedNodeIds = new Set();
-
-    // Loop over the L table rows
-    lTable.forEach(row => {
-        // If pruning extinct nodes, only include nodes with extinctTime == -1
-        if (pruneExtinct) {
-            if (row.extinctTime === -1) {
-                recordedNodeIds.add(row.childId);
-            }
-        } else {
-            recordedNodeIds.add(row.childId);
-        }
-    });
-
-    // Filter the trait table to include only nodes that are in the recordedNodeIds set
-    let filteredTraits = {};
-    for (let nodeId in nodeTraits) {
-        if (recordedNodeIds.has(parseInt(nodeId))) {
-            filteredTraits[nodeId] = nodeTraits[nodeId];
-        }
+    const totalRate = (state.settings.birthRate + state.settings.mutateRate + state.settings.deathRate) * state.activeIds.size;
+    if (totalRate <= 0) {
+      pushEvent('All event rates are zero, so nothing else can happen.');
+      pauseSimulation();
+      renderAll();
+      return;
     }
 
-    return filteredTraits;
-}
+    const dt = sampleExponential(totalRate, state.rng);
+    state.time += dt;
+    state.step += 1;
 
+    const focalId = pickRandomActiveId();
+    const focal = state.nodeById.get(focalId);
+    if (!focal) {
+      pauseSimulation();
+      return;
+    }
 
-// Function to display the L table using DataTables
-function displayLTable(lTable) {
-    let container = document.getElementById('lTableContainer');
-    container.innerHTML = ''; // Clear previous content
+    const roll = state.rng() * (state.settings.birthRate + state.settings.mutateRate + state.settings.deathRate);
+    let eventType = 'death';
+    if (roll < state.settings.birthRate) {
+      eventType = 'birth';
+    } else if (roll < state.settings.birthRate + state.settings.mutateRate) {
+      eventType = 'mutation';
+    }
 
-    // Create a table element with the required structure
-    let table = document.createElement('table');
-    table.id = 'lTable';
-    table.className = 'display'; // DataTables requires the 'display' class
+    if (eventType === 'death') {
+      focal.active = false;
+      focal.extinctTime = state.time;
+      state.activeIds.delete(focal.id);
+      pushEvent(`t = ${formatNum(state.time)}: lineage ${focal.id} went extinct.`);
+    } else {
+      state.nextId += 1;
+      const childId = state.nextId;
+      const trait = eventType === 'mutation' ? mutateTraits(focal.trait) : focal.trait.slice();
+      const child = createNode({
+        id: childId,
+        parentId: focal.id,
+        birthTime: state.time,
+        mutated: eventType === 'mutation',
+        trait,
+        eventType
+      });
+      focal.children.push(childId);
+      state.nodes.push(child);
+      state.activeIds.add(childId);
+      state.nodeById.set(childId, child);
+      pushEvent(`t = ${formatNum(state.time)}: ${eventType === 'mutation' ? 'mutating' : 'clonal'} daughter ${childId} budded from ${focal.id}.`);
+    }
 
-    let thead = document.createElement('thead');
-    let headerRow = document.createElement('tr');
+    pushTimeSeriesSnapshot(eventType);
+    recomputeDerived();
+    renderAll();
 
-    ['Event Time', 'Parent ID', 'Child ID', 'Extinct Time'].forEach(text => {
-        let th = document.createElement('th');
-        th.innerText = text;
-        headerRow.appendChild(th);
+    if (state.step >= state.settings.maxSteps || state.activeIds.size === 0) {
+      pauseSimulation();
+    }
+  }
+
+  function buildChildrenMap(items) {
+    const childMap = new Map();
+    items.forEach((item) => childMap.set(item.id, []));
+    items.forEach((item) => {
+      if (item.parentId && childMap.has(item.parentId)) {
+        childMap.get(item.parentId).push(item.id);
+      }
     });
-
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    let tbody = document.createElement('tbody');
-    lTable.forEach(entry => {
-        let row = document.createElement('tr');
-        let cellEventTime = document.createElement('td');
-        cellEventTime.innerText = entry.eventTime;
-        let cellParentId = document.createElement('td');
-        cellParentId.innerText = entry.parentId;
-        let cellChildId = document.createElement('td');
-        cellChildId.innerText = entry.childId;
-        let cellExtinctTime = document.createElement('td');
-        cellExtinctTime.innerText = entry.extinctTime;
-
-        row.appendChild(cellEventTime);
-        row.appendChild(cellParentId);
-        row.appendChild(cellChildId);
-        row.appendChild(cellExtinctTime);
-        tbody.appendChild(row);
+    childMap.forEach((children) => {
+      children.sort((a, b) => {
+        const aItem = items.find((d) => d.id === a);
+        const bItem = items.find((d) => d.id === b);
+        return (aItem?.birthTime || 0) - (bItem?.birthTime || 0) || a - b;
+      });
     });
+    return childMap;
+  }
 
-    table.appendChild(tbody);
-    container.appendChild(table);
+  function preorderIds(items) {
+    const childMap = buildChildrenMap(items);
+    const ordered = [];
+    function visit(id) {
+      ordered.push(id);
+      const children = childMap.get(id) || [];
+      children.forEach(visit);
+    }
+    if (items.some((d) => d.id === 1)) visit(1);
+    return ordered;
+  }
 
-    // Apply DataTables to the table
-    $(document).ready(function () {
-        $('#lTable').DataTable({
-            paging: true,
-            searching: true,
-            ordering: true,
-            info: true
+  function summarizeRecordTrait(record, nodeById) {
+    const dims = state.settings.traitDimensions;
+    const members = record.memberIds.map((id) => nodeById.get(id)).filter(Boolean);
+    if (!members.length) return Array(dims).fill(0);
+
+    let candidates = [];
+    if (record.active) {
+      candidates = members.filter((n) => n.active);
+    }
+    if (!candidates.length) {
+      const maxEnd = d3.max(members, (n) => getNodeEndTime(n));
+      candidates = members.filter((n) => Math.abs(getNodeEndTime(n) - maxEnd) < 1e-9);
+    }
+    if (!candidates.length) candidates = members;
+    return meanVector(candidates.map((n) => n.trait), dims);
+  }
+
+  function buildCoarsenedData() {
+    const nodeById = state.nodeById;
+    const nodesOrdered = [...state.nodes].sort((a, b) => a.birthTime - b.birthTime || a.id - b.id);
+    const recordByNode = new Map();
+    const stepsSinceRecord = new Map();
+    const recordMap = new Map();
+
+    function ensureRecord(nodeId, parentRecordId) {
+      if (!recordMap.has(nodeId)) {
+        const node = nodeById.get(nodeId);
+        recordMap.set(nodeId, {
+          id: nodeId,
+          parentId: parentRecordId || 0,
+          birthTime: node.birthTime,
+          endTime: node.birthTime,
+          extinctTime: null,
+          active: false,
+          mutated: node.mutated,
+          memberIds: []
         });
+      }
+      return recordMap.get(nodeId);
+    }
+
+    ensureRecord(1, 0);
+    recordByNode.set(1, 1);
+    stepsSinceRecord.set(1, 0);
+
+    nodesOrdered.slice(1).forEach((node) => {
+      const parentRecordId = recordByNode.get(node.parentId);
+      const parentSteps = stepsSinceRecord.get(node.parentId) || 0;
+      let steps = parentSteps + (node.mutated ? 1 : 0);
+      let recordId = parentRecordId;
+
+      if (state.settings.coarsenLevel === 0 || (node.mutated && steps >= state.settings.coarsenLevel)) {
+        recordId = node.id;
+        ensureRecord(node.id, parentRecordId);
+        steps = 0;
+      }
+
+      recordByNode.set(node.id, recordId);
+      stepsSinceRecord.set(node.id, steps);
     });
-}
 
+    nodesOrdered.forEach((node) => {
+      const recordId = recordByNode.get(node.id);
+      const record = recordMap.get(recordId);
+      if (!record) return;
+      record.memberIds.push(node.id);
+      record.endTime = Math.max(record.endTime, getNodeEndTime(node));
+      if (node.active) record.active = true;
+    });
 
-function LTableToNewick(LTable, age, pruneExtinct) {
-    // Make a deep copy of the LTable to avoid modifying the original
-    let L2 = JSON.parse(JSON.stringify(LTable));
+    const records = Array.from(recordMap.values()).sort((a, b) => a.birthTime - b.birthTime || a.id - b.id);
+    records.forEach((record) => {
+      record.extinctTime = record.active ? null : record.endTime;
+      record.observedTrait = summarizeRecordTrait(record, nodeById);
+      record.displayColor = record.active ? (record.mutated ? palette.red : palette.blue) : palette.grey;
+    });
 
-    // Order L2 based on the absolute value of Child ID
-    L2.sort((a, b) => Math.abs(a.childId) - Math.abs(b.childId));
+    const links = records
+      .filter((record) => record.parentId && record.parentId !== 0)
+      .map((record) => ({ source: record.parentId, target: record.id }));
 
-    // Set the Event Time of the first row to -1
+    const lTable = records.map((record) => ({
+      eventTime: record.birthTime,
+      parentId: record.parentId || 0,
+      childId: record.id,
+      extinctTime: record.active ? -1 : record.endTime
+    }));
+
+    return { records, links, recordByNode, lTable };
+  }
+
+  function getObservedRecords(coarsened, pruneExtinct) {
+    let records = coarsened.records;
+    if (pruneExtinct) {
+      records = records.filter((record) => record.active);
+    }
+    return records;
+  }
+
+  function calculateDistanceMatrix(traitTable) {
+    const ids = Object.keys(traitTable);
+    const matrix = [];
+    for (let i = 0; i < ids.length; i += 1) {
+      const row = [];
+      for (let j = 0; j < ids.length; j += 1) {
+        if (i === j) {
+          row.push(0);
+        } else {
+          row.push(euclideanDistance(traitTable[ids[i]], traitTable[ids[j]]));
+        }
+      }
+      matrix.push(row);
+    }
+    return { ids, matrix };
+  }
+
+  function euclideanDistance(a, b) {
+    let total = 0;
+    for (let i = 0; i < a.length; i += 1) {
+      total += (a[i] - b[i]) ** 2;
+    }
+    return Math.sqrt(total);
+  }
+
+  function averageDistance(clusterA, clusterB, matrix, ids) {
+    let total = 0;
+    let count = 0;
+    clusterA.nodes.forEach((a) => {
+      clusterB.nodes.forEach((b) => {
+        const i = ids.indexOf(a);
+        const j = ids.indexOf(b);
+        total += matrix[i][j];
+        count += 1;
+      });
+    });
+    return count ? total / count : 0;
+  }
+
+  function performUPGMA(traitTable) {
+    const { ids, matrix } = calculateDistanceMatrix(traitTable);
+    if (!ids.length) return null;
+    let clusters = ids.map((id) => ({ nodes: [id], distance: 0, left: null, right: null }));
+    while (clusters.length > 1) {
+      let min = Infinity;
+      let pair = [0, 1];
+      for (let i = 0; i < clusters.length; i += 1) {
+        for (let j = i + 1; j < clusters.length; j += 1) {
+          const dist = averageDistance(clusters[i], clusters[j], matrix, ids);
+          if (dist < min) {
+            min = dist;
+            pair = [i, j];
+          }
+        }
+      }
+      const [i, j] = pair;
+      const merged = {
+        nodes: [...clusters[i].nodes, ...clusters[j].nodes],
+        distance: min / 2,
+        left: clusters[i],
+        right: clusters[j]
+      };
+      clusters = clusters.filter((_, idx) => idx !== i && idx !== j);
+      clusters.push(merged);
+    }
+    return clusters[0];
+  }
+
+  function upgmaToNewick(cluster) {
+    if (!cluster) return null;
+    if (cluster.nodes.length === 1) {
+      return `${cluster.nodes[0]}:${cluster.distance.toFixed(4)}`;
+    }
+    return `(${upgmaToNewick(cluster.left)},${upgmaToNewick(cluster.right)}):${cluster.distance.toFixed(4)}`;
+  }
+
+  function buildTraitNewick(records) {
+    const table = {};
+    records.forEach((record) => {
+      table[record.id] = record.observedTrait.slice();
+    });
+    if (Object.keys(table).length < 2) return null;
+    const cluster = performUPGMA(table);
+    if (!cluster) return null;
+    return `${upgmaToNewick(cluster)};`;
+  }
+
+  function parseNewick(str) {
+    if (!str || str === ';') return null;
+    const ancestors = [];
+    let tree = {};
+    const tokens = str.split(/\s*(;|\(|\)|,|:)\s*/);
+    for (let i = 0; i < tokens.length; i += 1) {
+      const token = tokens[i];
+      switch (token) {
+        case '(':
+          const subtreeA = {};
+          tree.branchset = [subtreeA];
+          ancestors.push(tree);
+          tree = subtreeA;
+          break;
+        case ',':
+          const subtreeB = {};
+          ancestors[ancestors.length - 1].branchset.push(subtreeB);
+          tree = subtreeB;
+          break;
+        case ')':
+          tree = ancestors.pop();
+          break;
+        case ':':
+          break;
+        default:
+          if (!token) break;
+          const prev = tokens[i - 1];
+          if (prev === ')' || prev === '(' || prev === ',') tree.name = token;
+          else if (prev === ':') tree.length = parseFloat(token);
+      }
+    }
+    return tree;
+  }
+
+  function serializeNewick(node) {
+    if (!node) return '';
+    let out = '';
+    if (node.branchset && node.branchset.length) {
+      out += `(${node.branchset.map((child) => serializeNewick(child)).join(',')})`;
+    }
+    if (node.name) out += node.name;
+    if (typeof node.length === 'number' && Number.isFinite(node.length)) out += `:${node.length}`;
+    return out;
+  }
+
+  function pruneTree(node, labelsToRemove) {
+    if (!node) return null;
+    if (!node.branchset || !node.branchset.length) {
+      return labelsToRemove.has(node.name) ? null : node;
+    }
+    const kept = node.branchset.map((child) => pruneTree(child, labelsToRemove)).filter(Boolean);
+    if (!kept.length) return null;
+    node.branchset = kept;
+    return node;
+  }
+
+  function lTableToNewick(lTable, age, pruneExtinct) {
+    if (!lTable || !lTable.length) return null;
+    const L2 = JSON.parse(JSON.stringify(lTable)).sort((a, b) => Math.abs(a.childId) - Math.abs(b.childId));
     L2[0].eventTime = -1;
-
-    // Compute tend for each row
-    L2.forEach(row => {
-        row.tend = (row.extinctTime === -1) ? age : row.extinctTime;
+    L2.forEach((row) => {
+      row.tend = row.extinctTime === -1 ? age : row.extinctTime;
+      delete row.extinctTime;
     });
 
-    // Remove extinctTime from L2
-    L2.forEach(row => {
-        delete row.extinctTime;
-    });
-
-    // Build linlist
-    let linlist = L2.map(row => {
-        return {
-            eventTime: row.eventTime,
-            parentId: row.parentId,
-            childId: row.childId,
-            label: Math.abs(row.childId).toString(), // Remove "t" prefix
-            tend: row.tend
-        };
-    });
+    const linlist = L2.map((row) => ({
+      eventTime: row.eventTime,
+      parentId: row.parentId,
+      childId: row.childId,
+      label: Math.abs(row.childId).toString(),
+      tend: row.tend
+    }));
 
     let done = false;
     while (!done) {
-        // Find index j of the row with maximum eventTime
-        let j = linlist.reduce((maxIndex, row, index, arr) => {
-            return row.eventTime > arr[maxIndex].eventTime ? index : maxIndex;
-        }, 0);
+      const j = linlist.reduce((maxIdx, row, idx, arr) => (row.eventTime > arr[maxIdx].eventTime ? idx : maxIdx), 0);
+      const parent = linlist[j].parentId;
+      const parentj = linlist.findIndex((row) => row.childId === parent);
 
-        let parent = linlist[j].parentId;
-        // Find index where childId equals parent
-        let parentj = linlist.findIndex(row => row.childId === parent);
-
-        if (parentj !== -1) {
-            // Build spec1 and spec2
-            let spec1 = linlist[parentj].label + ':' + (linlist[parentj].tend - linlist[j].eventTime);
-            let spec2 = linlist[j].label + ':' + (linlist[j].tend - linlist[j].eventTime);
-            // Update parent row
-            linlist[parentj].label = '(' + spec1 + ',' + spec2 + ')';
-            linlist[parentj].tend = linlist[j].eventTime;
-            // Remove row j
-            linlist.splice(j, 1);
+      if (parentj !== -1) {
+        const spec1 = `${linlist[parentj].label}:${Math.max(0, linlist[parentj].tend - linlist[j].eventTime).toFixed(4)}`;
+        const spec2 = `${linlist[j].label}:${Math.max(0, linlist[j].tend - linlist[j].eventTime).toFixed(4)}`;
+        linlist[parentj].label = `(${spec1},${spec2})`;
+        linlist[parentj].tend = linlist[j].eventTime;
+        linlist.splice(j, 1);
+      } else {
+        const parentRow = L2.find((row) => row.childId === parent);
+        if (parentRow) {
+          linlist[j].eventTime = parentRow.eventTime;
+          linlist[j].parentId = parentRow.parentId;
+          linlist[j].childId = parentRow.childId;
         } else {
-            // Update linlist[j] with the row from L2 where childId equals parent
-            let parentRow = L2.find(row => row.childId === parent);
-            if (parentRow) {
-                linlist[j].eventTime = parentRow.eventTime;
-                linlist[j].parentId = parentRow.parentId;
-                linlist[j].childId = parentRow.childId;
-            } else {
-                // If parent not found, break the loop
-                done = true;
-            }
+          done = true;
         }
+      }
 
-        if (linlist.length === 1) {
-            done = true;
-        }
+      if (linlist.length === 1) done = true;
     }
 
-    // Append root length and semicolon
-    let newickString = linlist[0].label + ':' + linlist[0].tend + ';';
-
+    let newickString = `${linlist[0].label}:${Math.max(0, linlist[0].tend).toFixed(4)};`;
     if (pruneExtinct) {
-        // Parse the Newick string
-        let treeData = parseNewick(newickString);
-
-        // Collect labels of extinct species
-        let extinctLabels = LTable.filter(row => row.extinctTime !== -1)
-            .map(row => Math.abs(row.childId).toString()); // No "t" prefix
-
-        // Remove extinct tips from the tree
-        treeData = pruneTree(treeData, extinctLabels);
-
-        // Serialize back to Newick string
-        newickString = serializeNewick(treeData) + ';';
+      const tree = parseNewick(newickString);
+      if (!tree) return newickString;
+      const extinct = new Set(lTable.filter((row) => row.extinctTime !== -1).map((row) => Math.abs(row.childId).toString()));
+      const pruned = pruneTree(tree, extinct);
+      if (pruned) newickString = `${serializeNewick(pruned)};`;
     }
-
     return newickString;
-}
+  }
 
-function pruneTree(node, labelsToRemove) {
-    if (!node) return null;
-
-    // If node is a tip
-    if (!node.branchset || node.branchset.length === 0) {
-        // If node.name is in labelsToRemove, return null to prune
-        if (labelsToRemove.includes(node.name)) {
-            return null;
-        } else {
-            return node;
-        }
+  function collectLeaves(tree) {
+    const leaves = [];
+    function walk(node, parent = null, depth = 0) {
+      node._parent = parent;
+      node._depth = depth;
+      if (!node.branchset || !node.branchset.length) {
+        leaves.push(node);
+      } else {
+        node.branchset.forEach((child) => walk(child, node, depth + 1));
+      }
     }
+    if (tree) walk(tree);
+    return leaves;
+  }
 
-    // If node has branches
-    let newBranches = [];
-    for (let child of node.branchset) {
-        let prunedChild = pruneTree(child, labelsToRemove);
-        if (prunedChild) {
-            newBranches.push(prunedChild);
-        }
+  function edgeDistance(a, b) {
+    let x = a;
+    let y = b;
+    let dist = 0;
+    while (x._depth > y._depth) {
+      x = x._parent;
+      dist += 1;
     }
-
-    // If after pruning, no branches remain, return null to prune this node
-    if (newBranches.length === 0) {
-        return null;
+    while (y._depth > x._depth) {
+      y = y._parent;
+      dist += 1;
     }
-
-    // Otherwise, set the new branchset
-    node.branchset = newBranches;
-    return node;
-}
-
-function serializeNewick(node) {
-    if (!node) return '';
-
-    let result = '';
-
-    if (node.branchset && node.branchset.length > 0) {
-        let childrenStr = node.branchset.map(child => serializeNewick(child)).join(',');
-        result += '(' + childrenStr + ')';
+    while (x !== y) {
+      x = x._parent;
+      y = y._parent;
+      dist += 2;
     }
+    return dist;
+  }
 
-    if (node.name) {
-        result += node.name;
+  function treeDistanceVector(newick) {
+    const tree = parseNewick(newick);
+    if (!tree) return null;
+    const leaves = collectLeaves(tree);
+    if (leaves.length < 2) return null;
+    const labels = leaves.map((leaf) => leaf.name);
+    const vector = new Map();
+    for (let i = 0; i < leaves.length; i += 1) {
+      for (let j = i + 1; j < leaves.length; j += 1) {
+        const key = `${labels[i]}|${labels[j]}`;
+        vector.set(key, edgeDistance(leaves[i], leaves[j]));
+      }
     }
+    return { labels, vector };
+  }
 
-    if (node.length !== undefined) {
-        result += ':' + node.length;
+  function pearson(xs, ys) {
+    if (xs.length !== ys.length || xs.length < 2) return null;
+    const mx = d3.mean(xs);
+    const my = d3.mean(ys);
+    let num = 0;
+    let dx = 0;
+    let dy = 0;
+    for (let i = 0; i < xs.length; i += 1) {
+      const ax = xs[i] - mx;
+      const ay = ys[i] - my;
+      num += ax * ay;
+      dx += ax * ax;
+      dy += ay * ay;
     }
+    if (dx === 0 || dy === 0) return null;
+    return num / Math.sqrt(dx * dy);
+  }
 
-    return result;
-}
+  function computeAgreement(historyNewick, traitNewick) {
+    const a = treeDistanceVector(historyNewick);
+    const b = treeDistanceVector(traitNewick);
+    if (!a || !b) return null;
+    const xs = [];
+    const ys = [];
+    a.vector.forEach((value, key) => {
+      if (b.vector.has(key)) {
+        xs.push(value);
+        ys.push(b.vector.get(key));
+      }
+    });
+    return pearson(xs, ys);
+  }
 
-function parseNewick(a) {
-    for (var e = [], r = {}, s = a.split(/\s*(;|\(|\)|,|:)\s*/), t = 0; t < s.length; t++) {
-        var n = s[t];
-        switch (n) {
-            case "(":
-                var c = {};
-                r.branchset = [c];
-                e.push(r);
-                r = c;
-                break;
-            case ",":
-                var c = {};
-                e[e.length - 1].branchset.push(c);
-                r = c;
-                break;
-            case ")":
-                r = e.pop();
-                break;
-            case ":":
-                break;
-            default:
-                var h = s[t - 1];
-                ")" == h || "(" == h || "," == h ? r.name = n : ":" == h && (r.length = parseFloat(n));
-        }
+  function projectTraits(records) {
+    if (!records.length) return [];
+    const dims = state.settings.traitDimensions;
+    const data = records.map((record) => record.observedTrait.slice());
+
+    if (dims === 1) {
+      return records.map((record) => ({ record, x: record.observedTrait[0], y: 0 }));
     }
-    return r;
-}
-
-function newwickvisShowLength() {
-    const checkbox = document.getElementById('newickvis-showLengthCheckbox');
-    return checkbox.checked;
-}
-
-function newickvisDrawRadialTree(d3, data, cluster, setRadius, innerRadius, maxLength, outerRadius, width, linkExtensionConstant, linkConstant, linkExtensionVariable, linkVariable) {
-    const root = d3.hierarchy(data, d => d.branchset)
-        .sum(d => d.branchset ? 0 : 1)
-        .sort((a, b) => (a.value - b.value) || d3.ascending(a.data.length, b.data.length));
-
-    cluster(root);
-    setRadius(root, root.data.length = 0, innerRadius / maxLength(root));
-
-    const svg = d3.create("svg")
-        .attr("id", "newickvis-chart")
-        .attr("viewBox", [-outerRadius, -outerRadius, outerRadius * 2, outerRadius * 2])
-        .attr("width", width)
-        .attr("font-family", "sans-serif")
-        .attr("font-size", 40);
-
-    svg.append("style").text(`
-        .link--active {
-            stroke: #000 !important;
-            stroke-width: 1.5px;
-            filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.5));
-        }
-        .link-extension--active {
-            stroke-opacity: .6;
-            stroke-width: 1.5px;
-            stroke-dasharray: 3,2;
-        }
-        .label--active {
-            font-weight: bold;
-        }`
-    );
-
-    const linkExtension = svg.append("g")
-        .attr("fill", "none")
-        .attr("stroke", "#000")
-        .attr("stroke-opacity", 0.25)
-        .selectAll("path")
-        .data(root.links().filter(d => !d.target.children))
-        .join("path")
-        .each(function (d) { d.target.linkExtensionNode = this; })
-        .attr("d", linkExtensionConstant);
-
-    const link = svg.append("g")
-        .attr("fill", "none")
-        .attr("stroke", "#000")
-        .selectAll("path")
-        .data(root.links())
-        .join("path")
-        .each(function (d) { d.target.linkNode = this; })
-        .attr("d", linkConstant)
-        .attr("stroke", d => d.target.color);
-
-    const node = svg.append("g")
-        .selectAll("circle")
-        .data(root.descendants())
-        .join("circle")
-        .attr("transform", d => `rotate(${d.x - 90}) translate(${d.y},0)`)
-        .attr("r", d => d === root ? 14 : d.children ? 0 : 18)
-        .attr("fill", d => d === root ? "#f7d724" : d.children ? "#007bff" : "#757ca3")
-        .attr("stroke-width", 1.5)
-        .on("mouseover", newickvisMouseovered(true))
-        .on("mouseout", newickvisMouseovered(false));
-
-    svg.append("g")
-        .selectAll("text")
-        .data(root.leaves())
-        .join("text")
-        .attr("dy", ".31em")
-        .attr("transform", d => `rotate(${d.x - 90}) translate(${innerRadius + 30},0)${d.x < 180 ? "" : " rotate(180)"}`)
-        .attr("text-anchor", d => d.x < 180 ? "start" : "end")
-        .text(d => d.data.name.replace(/_/g, " "))
-        .on("mouseover", newickvisMouseovered(true))
-        .on("mouseout", newickvisMouseovered(false));
-
-    function newickvisUpdate(checked) {
-        const t = d3.transition().duration(750);
-        linkExtension.transition(t).attr("d", checked ? linkExtensionVariable : linkExtensionConstant);
-        link.transition(t).attr("d", checked ? linkVariable : linkConstant);
+    if (dims === 2 || !window.numeric || records.length < 3) {
+      return records.map((record) => ({ record, x: record.observedTrait[0], y: record.observedTrait[1] || 0 }));
     }
-
-    function newickvisMouseovered(active) {
-        return function (event, d) {
-            highlightFullGraphNode(d.data.name, active); // Highlight corresponding node in the graph
-            highlightCoarsenedGraphNode(d.data.name, active); // Highlight corresponding node in the coarsened graph
-            highlightTraitTreeNode(d.data.name, active); // Highlight corresponding node in the trait-based phylogeny
-            d3.select(this).classed("label--active", active);
-            d3.select(d.linkExtensionNode).classed("link-extension--active", active).raise();
-            do d3.select(d.linkNode).classed("link--active", active).raise();
-            while (d = d.parent);
-        };
-    }
-
-    return Object.assign(svg.node(), { newickvisUpdate });
-}
-
-function traitvisDrawRadialTree(d3, data, cluster, setRadius, innerRadius, maxLength, outerRadius, width, linkExtensionConstant, linkConstant, linkExtensionVariable, linkVariable) {
-    const root = d3.hierarchy(data, d => d.branchset)
-        .sum(d => d.branchset ? 0 : 1)
-        .sort((a, b) => (a.value - b.value) || d3.ascending(a.data.length, b.data.length));
-
-    cluster(root);
-    setRadius(root, root.data.length = 0, innerRadius / maxLength(root));
-
-    const svg = d3.create("svg")
-        .attr("id", "traitvis-chart")
-        .attr("viewBox", [-outerRadius, -outerRadius, outerRadius * 2, outerRadius * 2]) // Fit chart within the container
-        .attr("width", width) // Ensure SVG scales to fit the full container width
-        .attr("font-family", "sans-serif")
-        .attr("font-size", 40);
-
-    svg.append("style").text(`
-        .link--active {
-            stroke: #000 !important;
-            stroke-width: 1.5px;
-            filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.5));
-        }
-        .link-extension--active {
-            stroke-opacity: .6;
-            stroke-width: 1.5px;
-            stroke-dasharray: 3,2;
-        }
-        .label--active {
-            font-weight: bold;
-        }`
-    );
-
-    const linkExtension = svg.append("g")
-        .attr("fill", "none")
-        .attr("stroke", "#000")
-        .attr("stroke-opacity", 0.25)
-        .selectAll("path")
-        .data(root.links().filter(d => !d.target.children))
-        .join("path")
-        .each(function (d) { d.target.linkExtensionNode = this; })
-        .attr("d", linkExtensionConstant);
-
-    const link = svg.append("g")
-        .attr("fill", "none")
-        .attr("stroke", "#000")
-        .selectAll("path")
-        .data(root.links())
-        .join("path")
-        .each(function (d) { d.target.linkNode = this; })
-        .attr("d", linkConstant)
-        .attr("stroke", d => d.target.color);
-
-    const node = svg.append("g")
-        .selectAll("circle")
-        .data(root.descendants())
-        .join("circle")
-        .attr("transform", d => `rotate(${d.x - 90}) translate(${d.y},0)`)
-        .attr("r", d => d === root ? 14 : d.children ? 0 : 18)
-        .attr("fill", d => d === root ? "#f7d724" : d.children ? "#007bff" : "#757ca3")
-        .attr("stroke-width", 1.5)
-        .on("mouseover", traitvisMouseovered(true))
-        .on("mouseout", traitvisMouseovered(false));
-
-    svg.append("g")
-        .selectAll("text")
-        .data(root.leaves())
-        .join("text")
-        .attr("dy", ".31em")
-        .attr("transform", d => `rotate(${d.x - 90}) translate(${innerRadius + 30},0)${d.x < 180 ? "" : " rotate(180)"}`)
-        .attr("text-anchor", d => d.x < 180 ? "start" : "end")
-        .text(d => d.data.name.replace(/_/g, " "))
-        .on("mouseover", traitvisMouseovered(true))
-        .on("mouseout", traitvisMouseovered(false));
-
-    function traitvisUpdate(checked) {
-        const t = d3.transition().duration(750);
-        linkExtension.transition(t).attr("d", checked ? linkExtensionVariable : linkExtensionConstant);
-        link.transition(t).attr("d", checked ? linkVariable : linkConstant);
-    }
-
-    function traitvisMouseovered(active) {
-        return function (event, d) {
-            highlightFullGraphNode(d.data.name, active); // Highlight corresponding node in the graph
-            highlightCoarsenedGraphNode(d.data.name, active); // Highlight corresponding node in the coarsened graph
-            highlightNewickTreeNode(d.data.name, active); // Highlight corresponding node in the trait-based phylogeny
-            d3.select(this).classed("label--active", active);
-            d3.select(d.linkExtensionNode).classed("link-extension--active", active).raise();
-            do d3.select(d.linkNode).classed("link--active", active).raise();
-            while (d = d.parent);
-        };
-    }
-
-    return Object.assign(svg.node(), { traitvisUpdate });
-}
-
-function plotCurrentData() {
-    let age = simulationTime;
-
-    // Get the value of pruneExtinct checkbox
-    let pruneExtinct = document.getElementById('pruneExtinct').checked;
-
-    // Get the value of showBranchLengths checkbox
-    let showBranchLengths = document.getElementById('showBranchLengths').checked;
-
-    // Get the updated mstep value
-    let mstep = parseInt(document.getElementById('mstep').value) || 0;
-
-    // Rebuild the L table and accumulated mutations based on the new mstep
-    let { lTable, nodeAccumulatedMutations } = buildLTable(mstep);
-    lastLTable = lTable; // Update the lastLTable
-
-    let newickString = LTableToNewick(lastLTable, age, pruneExtinct);
-
-    // Parse Newick string back into a dataset
-    let newickData = parseNewick(newickString);
-
-    // Display the L table
-    // displayLTable(lTable);
-
-    // Plot the data, passing the showBranchLengths parameter
-    plotNewickData(newickData, showBranchLengths);
-}
-
-
-function plotNewickData(data, showBranchLengths) {
-    let plotContainer = document.getElementById('plot-container');
-
-    // Function to get plot container size
-    function getPlotContainerSize() {
-        return {
-            width: plotContainer.clientWidth,
-            height: plotContainer.clientHeight
-        };
-    }
-
-    let { width, height } = getPlotContainerSize();
-
-    // Remove any previous chart
-    let existingChart = plotContainer.querySelector('#newickvis-chart');
-    if (existingChart) {
-        plotContainer.removeChild(existingChart);
-    }
-
-    const outerRadius = width * 1.4;
-    const innerRadius = outerRadius - 170;
-    const cluster = d3.cluster()
-        .size([360, innerRadius])
-        .separation((a, b) => 1);
-
-    const maxLength = function maxLength(d) {
-        return d.data.length + (d.children ? d3.max(d.children, maxLength) : 0);
-    };
-
-    const setRadius = function setRadius(d, y0, k) {
-        d.radius = (y0 += d.data.length) * k;
-        if (d.children) d.children.forEach(d => setRadius(d, y0, k));
-    };
-
-    // Link helper functions
-    const linkStep = function linkStep(startAngle, startRadius, endAngle, endRadius) {
-        const c0 = Math.cos(startAngle = (startAngle - 90) / 180 * Math.PI);
-        const s0 = Math.sin(startAngle);
-        const c1 = Math.cos(endAngle = (endAngle - 90) / 180 * Math.PI);
-        const s1 = Math.sin(endAngle);
-        return "M" + startRadius * c0 + "," + startRadius * s0
-            + (endAngle === startAngle ? "" : "A" + startRadius + "," + startRadius + " 0 0 " + (endAngle > startAngle ? 1 : 0) + " " + startRadius * c1 + "," + startRadius * s1)
-            + "L" + endRadius * c1 + "," + endRadius * s1;
-    };
-
-    const linkConstant = function linkConstant(d) {
-        return linkStep(d.source.x, d.source.y, d.target.x, d.target.y);
-    };
-
-    const linkExtensionConstant = function linkExtensionConstant(d) {
-        return linkStep(d.target.x, d.target.y, d.target.x, innerRadius);
-    };
-
-    const linkVariable = function linkVariable(d) {
-        return linkStep(d.source.x, d.source.radius, d.target.x, d.target.radius);
-    };
-
-    const linkExtensionVariable = function linkExtensionVariable(d) {
-        return linkStep(d.target.x, d.target.radius, d.target.x, innerRadius);
-    };
-
-    // Remove any previous chart
-    d3.select("#newickvis-chart").selectAll("*").remove();
 
     try {
-        // Try to create the Newick tree chart
-        lastNewickChart = newickvisDrawRadialTree(d3, data, cluster, setRadius, innerRadius, maxLength, outerRadius, width, linkExtensionConstant, linkConstant, linkExtensionVariable, linkVariable);
-
-        // Clear any previous content in the plot container
-        plotContainer.innerHTML = '';
-
-        // Append the Newick chart to the plot container
-        plotContainer.appendChild(lastNewickChart);
-
-        // Try to update the Newick chart if branch lengths are to be shown
-        lastNewickChart.newickvisUpdate(showBranchLengths);
-
+      const means = Array(dims).fill(0);
+      data.forEach((row) => row.forEach((v, i) => { means[i] += v; }));
+      for (let i = 0; i < dims; i += 1) means[i] /= data.length;
+      const centered = data.map((row) => row.map((v, i) => v - means[i]));
+      const svd = numeric.svd(centered);
+      const V = svd.V;
+      const basis = V.map((row) => row.slice(0, 2));
+      const projected = numeric.dot(centered, basis);
+      return records.map((record, idx) => ({ record, x: projected[idx][0], y: projected[idx][1] }));
     } catch (error) {
-        // If an error occurs, log it (optional)
-        console.log("Cannot reconstruct the Newick tree from the data.");
-
-        // Display a message instead of the chart
-        plotContainer.innerHTML = '<p class="error-text">No Valid Phylogenetic Tree</p>';
+      return records.map((record) => ({ record, x: record.observedTrait[0], y: record.observedTrait[1] || 0 }));
     }
-}
+  }
 
-// Function to get the size of the container dynamically
-function getCoarsenedGraphContainerSize() {
-    const container = document.getElementById('coarsened-graph-container');
-    return {
-        width: container.clientWidth,
-        height: container.clientHeight
+  function recomputeDerived() {
+    state.settings = cacheSettings();
+    rebuildNodeMap();
+    const coarsened = buildCoarsenedData();
+    const observedRecords = getObservedRecords(coarsened, state.settings.pruneExtinct);
+    const historyNewick = lTableToNewick(coarsened.lTable, Math.max(state.time, 0), state.settings.pruneExtinct);
+    const traitNewick = buildTraitNewick(observedRecords);
+    const agreement = computeAgreement(historyNewick, traitNewick);
+    const traitProjection = projectTraits(observedRecords);
+
+    state.derived = {
+      coarsened,
+      observedRecords,
+      historyNewick,
+      traitNewick,
+      agreement,
+      traitProjection
     };
-}
+  }
 
-// Function to plot the coarsened graph
-function plotCoarsenedGraph() {
-    let plotContainer = document.getElementById('coarsened-graph-container');
-    plotContainer.innerHTML = ''; // Clear previous content
+  function colorForItem(item) {
+    if (!item.active) return palette.grey;
+    return item.mutated ? palette.red : palette.blue;
+  }
 
-    let { width, height } = getCoarsenedGraphContainerSize();
+  function setHighlight(recordId) {
+    state.highlightRecordId = recordId ? String(recordId) : null;
+    updateHighlights();
+  }
 
-    const svg = d3.select('#coarsened-graph-container').append('svg')
-        .attr('width', width)
-        .attr('height', height)
-        .attr('viewBox', [-width / 2, -height / 2, width, height])
-        .attr('style', 'max-width: 100%; height: auto;');
+  function updateHighlights() {
+    const id = state.highlightRecordId;
+    const dimOpacity = 0.20;
 
-    const coarsenedSimulation = d3.forceSimulation(lastCoarsenedNodes)
-        .force('link', d3.forceLink(lastCoarsenedLinks).id(d => d.id).distance(100).strength(1))
-        .force('charge', d3.forceManyBody().strength(-300))
-        .force('collision', d3.forceCollide().radius(15))
-        .force('center', d3.forceCenter())
-        .force('x', d3.forceX())
-        .force('y', d3.forceY());
+    d3.selectAll('.evonet-segment')
+      .attr('opacity', function () {
+        return !id || this.dataset.recordId === id ? 0.95 : dimOpacity;
+      })
+      .attr('stroke-width', function () {
+        return id && this.dataset.recordId === id ? 4.5 : 2.5;
+      });
 
-    let link = svg.append('g')
-        .attr('stroke', '#999')
-        .attr('stroke-opacity', 0.6)
-        .selectAll('line')
-        .data(lastCoarsenedLinks)
-        .enter().append('line')
-        .on('mouseover', function (event, d) {
-            d3.select(this).attr('stroke', '#ff0').attr('stroke-width', 3); // Highlight the link
-        })
-        .on('mouseout', function (event, d) {
-            d3.select(this).attr('stroke', '#999').attr('stroke-width', 1); // Reset link style
+    d3.selectAll('.evonet-connector')
+      .attr('opacity', function () {
+        return !id || this.dataset.recordId === id ? 0.9 : dimOpacity;
+      })
+      .attr('stroke-width', function () {
+        return id && this.dataset.recordId === id ? 2.8 : 1.5;
+      });
+
+    d3.selectAll('.evonet-birth-dot')
+      .attr('opacity', function () {
+        return !id || this.dataset.recordId === id ? 1 : dimOpacity;
+      })
+      .attr('r', function () {
+        return id && this.dataset.recordId === id ? 6 : (+this.dataset.baseR || 4.2);
+      })
+      .attr('stroke', function () {
+        return id && this.dataset.recordId === id ? palette.yellow : '#ffffff';
+      })
+      .attr('stroke-width', function () {
+        return id && this.dataset.recordId === id ? 2 : 1.2;
+      });
+
+    d3.selectAll('.evonet-inline-label')
+      .style('opacity', function () {
+        return !id || this.dataset.recordId === id ? 0.9 : 0.25;
+      })
+      .style('font-weight', function () {
+        return id && this.dataset.recordId === id ? 700 : 500;
+      });
+
+    d3.selectAll('.evonet-tree-leaf-label')
+      .style('opacity', function () {
+        return !id || this.dataset.recordId === id ? 1 : 0.22;
+      })
+      .style('font-weight', function () {
+        return id && this.dataset.recordId === id ? 700 : 500;
+      });
+
+    d3.selectAll('.evonet-tree-leaf-node')
+      .attr('opacity', function () {
+        return !id || this.dataset.recordId === id ? 1 : 0.18;
+      })
+      .attr('r', function () {
+        return id && this.dataset.recordId === id ? 5.5 : 4.2;
+      })
+      .attr('stroke', function () {
+        return id && this.dataset.recordId === id ? palette.yellow : '#ffffff';
+      })
+      .attr('stroke-width', function () {
+        return id && this.dataset.recordId === id ? 1.8 : 0.8;
+      });
+
+    d3.selectAll('.evonet-tree-leaf-link')
+      .attr('opacity', function () {
+        return !id || this.dataset.recordId === id ? 0.88 : 0.18;
+      })
+      .attr('stroke-width', function () {
+        return id && this.dataset.recordId === id ? 2.8 : 1.3;
+      });
+
+    d3.selectAll('.evonet-tree-internal-link')
+      .attr('opacity', function () {
+        return !id ? 0.88 : 0.28;
+      });
+
+    d3.selectAll('.evonet-tree-internal-node')
+      .attr('opacity', function () {
+        return !id ? 1 : 0.25;
+      });
+
+    d3.selectAll('.evonet-trait-point')
+      .attr('opacity', function () {
+        return !id || this.dataset.recordId === id ? 0.95 : 0.22;
+      })
+      .attr('r', function () {
+        return id && this.dataset.recordId === id ? 6.2 : 4.8;
+      })
+      .attr('stroke', function () {
+        return id && this.dataset.recordId === id ? palette.yellow : '#ffffff';
+      })
+      .attr('stroke-width', function () {
+        return id && this.dataset.recordId === id ? 2 : 1.1;
+      });
+
+    d3.selectAll('.evonet-trait-label')
+      .style('opacity', function () {
+        return !id || this.dataset.recordId === id ? 0.9 : 0.25;
+      })
+      .style('font-weight', function () {
+        return id && this.dataset.recordId === id ? 700 : 500;
+      });
+  }
+
+  function makeTooltip(container) {
+    let tip = container.querySelector('.evonet-tooltip');
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.className = 'evonet-tooltip';
+      container.appendChild(tip);
+    }
+    return tip;
+  }
+
+  function showTooltip(container, event, html) {
+    const tip = makeTooltip(container);
+    tip.innerHTML = html;
+    tip.style.opacity = '1';
+    const rect = container.getBoundingClientRect();
+    tip.style.left = `${event.clientX - rect.left + 12}px`;
+    tip.style.top = `${event.clientY - rect.top + 12}px`;
+  }
+
+  function hideTooltip(container) {
+    const tip = makeTooltip(container);
+    tip.style.opacity = '0';
+  }
+
+
+  function setEventDrawerOpen(open) {
+    const nextOpen = Boolean(open);
+    state.eventDrawerOpen = nextOpen;
+
+    if (state.drawerTimer) {
+      clearTimeout(state.drawerTimer);
+      state.drawerTimer = null;
+    }
+
+    if (dom.eventDrawer) {
+      dom.eventDrawer.classList.toggle('is-open', nextOpen);
+      dom.eventDrawer.setAttribute('aria-hidden', nextOpen ? 'false' : 'true');
+    }
+
+    if (dom.eventDrawerButton) {
+      dom.eventDrawerButton.classList.toggle('is-active', nextOpen);
+      dom.eventDrawerButton.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
+    }
+
+    if (dom.eventDrawerBackdrop) {
+      if (nextOpen) {
+        dom.eventDrawerBackdrop.hidden = false;
+        requestAnimationFrame(() => {
+          if (state.eventDrawerOpen && dom.eventDrawerBackdrop) dom.eventDrawerBackdrop.classList.add('is-open');
         });
+      } else {
+        dom.eventDrawerBackdrop.classList.remove('is-open');
+        state.drawerTimer = setTimeout(() => {
+          if (!state.eventDrawerOpen && dom.eventDrawerBackdrop) dom.eventDrawerBackdrop.hidden = true;
+        }, 220);
+      }
+    }
+  }
 
-    let node = svg.append('g')
+  function toggleEventDrawer(force) {
+    if (typeof force === 'boolean') {
+      setEventDrawerOpen(force);
+      return;
+    }
+    setEventDrawerOpen(!state.eventDrawerOpen);
+  }
+
+  function emptyPanel(container, title, subtitle) {
+    container.innerHTML = '';
+    const wrapper = d3.select(container)
+      .append('div')
+      .attr('class', 'evonet-empty-state');
+    wrapper.append('div').attr('class', 'evonet-empty-title').text(title);
+    if (subtitle) wrapper.append('div').attr('class', 'evonet-empty-subtitle').text(subtitle);
+  }
+
+  function renderChronogram(container, items, label) {
+    if (!container) return;
+    container.innerHTML = '';
+    if (!items.length) {
+      emptyPanel(container, `No ${label.toLowerCase()} yet.`, '');
+      return;
+    }
+
+    const { width, height } = safeContainerSize(container, 330);
+    const margin = { top: 18, right: 18, bottom: 32, left: 28 };
+    const svg = d3.select(container)
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height)
+      .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('class', 'evonet-svg');
+
+    const maxTime = Math.max(state.time, 1);
+    const x = d3.scaleLinear().domain([0, maxTime * 1.02]).range([margin.left, width - margin.right]);
+    const order = preorderIds(items);
+    const y = d3.scalePoint().domain(order.map(String)).range([margin.top, height - margin.bottom]).padding(0.6);
+    const itemMap = new Map(items.map((d) => [d.id, d]));
+
+    svg.append('g')
+      .attr('transform', `translate(0,${height - margin.bottom})`)
+      .call(d3.axisBottom(x).ticks(Math.min(6, Math.max(2, Math.floor(width / 100))))
+        .tickSizeOuter(0))
+      .call((g) => g.selectAll('text').attr('class', 'evonet-axis-label'))
+      .call((g) => g.selectAll('line').attr('stroke', '#d6dbe6'))
+      .call((g) => g.select('.domain').attr('stroke', '#c8d0dd'));
+
+    svg.append('line')
+      .attr('x1', x(state.time))
+      .attr('x2', x(state.time))
+      .attr('y1', margin.top / 2)
+      .attr('y2', height - margin.bottom)
+      .attr('stroke', '#c2c9d8')
+      .attr('stroke-dasharray', '4,4');
+
+    svg.append('text')
+      .attr('x', width - margin.right)
+      .attr('y', 14)
+      .attr('text-anchor', 'end')
+      .attr('class', 'evonet-axis-caption')
+      .text('time');
+
+    const linkLayer = svg.append('g');
+    items.forEach((item) => {
+      if (!item.parentId || !itemMap.has(item.parentId)) return;
+      const recordId = String(item.recordId ?? item.id);
+      linkLayer.append('line')
+        .attr('x1', x(item.birthTime))
+        .attr('x2', x(item.birthTime))
+        .attr('y1', y(String(item.parentId)))
+        .attr('y2', y(String(item.id)))
+        .attr('stroke', '#b7c0d0')
         .attr('stroke-width', 1.5)
-        .selectAll('g')
-        .data(lastCoarsenedNodes)
-        .enter().append('g')
-        .call(drag(coarsenedSimulation));
-
-    node.append('circle')
-        .attr('r', 10)
-        .attr('fill', d => d.active ? (d.mutated ? 'red' : '#4264a6') : 'gray')
-        .attr('stroke', d => d.mutated ? 'red' : 'white')
-        .on('mouseover', graphMouseovered(true))
-        .on('mouseout', graphMouseovered(false));
-
-    node.append('text')
-        .attr('dy', '.35em')
-        .attr('text-anchor', 'middle')
-        .text(d => d.id)
-        .style('fill', 'white')
-        .style('font-size', '12px')
-        // Bind hover events to the text element
-        .on('mouseover', function (event, d) {
-            // Trigger the same hover effect on the circle
-            d3.select(this.parentNode).select('circle')
-                .dispatch('mouseover');
-        })
-        .on('mouseout', function (event, d) {
-            // Trigger the same unhover effect on the circle
-            d3.select(this.parentNode).select('circle')
-                .dispatch('mouseout');
-        });
-
-    coarsenedSimulation.on('tick', () => {
-        link
-            .attr('x1', d => d.source.x)
-            .attr('y1', d => d.source.y)
-            .attr('x2', d => d.target.x)
-            .attr('y2', d => d.target.y);
-
-        node.attr('transform', d => `translate(${d.x},${d.y})`);
+        .attr('opacity', 0.9)
+        .attr('class', 'evonet-connector')
+        .attr('data-record-id', recordId);
     });
 
-    function graphMouseovered(active) {
-        return function (event, d) {
-            highlightNewickTreeNode(d, active); // Highlight or unhighlight the corresponding Newick tree node
-            highlightTraitTreeNode(d, active); // Highlight or unhighlight the corresponding trait-based phylogeny node
-            highlightFullGraphNode(d.id, active); // Highlight or unhighlight the corresponding full graph node
-            d3.select(this)
-                .attr('stroke', active ? '#ff0' : d => d.mutated ? 'red' : 'white') // Highlight or reset stroke
-                .attr('stroke-width', active ? 4 : 1.5) // Increase or reset stroke width
-                .attr('r', active ? 12 : 10); // Increase or reset node size
+    const lineLayer = svg.append('g');
+    items.forEach((item) => {
+      const endTime = Math.max(item.endTime ?? getNodeEndTime(item), item.birthTime + 1e-6);
+      const recordId = String(item.recordId ?? item.id);
+      const baseR = items.length <= 12 ? 4.6 : 4.2;
+      const group = lineLayer.append('g')
+        .attr('class', 'evonet-interactive')
+        .on('mouseenter', (event) => {
+          setHighlight(recordId);
+          const extra = item.recordId && item.recordId !== item.id ? `<br>Mapped species: ${item.recordId}` : '';
+          showTooltip(container, event, `
+            <strong>${label} ${item.id}</strong><br>
+            Born: ${formatNum(item.birthTime)}<br>
+            End: ${formatNum(endTime)}<br>
+            State: ${item.active ? 'extant' : 'extinct'}${extra}
+          `);
+        })
+        .on('mousemove', (event) => {
+          const extra = item.recordId && item.recordId !== item.id ? `<br>Mapped species: ${item.recordId}` : '';
+          showTooltip(container, event, `
+            <strong>${label} ${item.id}</strong><br>
+            Born: ${formatNum(item.birthTime)}<br>
+            End: ${formatNum(endTime)}<br>
+            State: ${item.active ? 'extant' : 'extinct'}${extra}
+          `);
+        })
+        .on('mouseleave', () => {
+          hideTooltip(container);
+          setHighlight(null);
+        });
+
+      group.append('line')
+        .attr('x1', x(item.birthTime))
+        .attr('x2', x(endTime))
+        .attr('y1', y(String(item.id)))
+        .attr('y2', y(String(item.id)))
+        .attr('stroke', colorForItem(item))
+        .attr('stroke-width', 2.5)
+        .attr('stroke-linecap', 'round')
+        .attr('opacity', 0.95)
+        .attr('stroke-dasharray', item.active ? null : '5,4')
+        .attr('class', 'evonet-segment')
+        .attr('data-record-id', recordId);
+
+      group.append('circle')
+        .attr('cx', x(item.birthTime))
+        .attr('cy', y(String(item.id)))
+        .attr('r', baseR)
+        .attr('fill', colorForItem(item))
+        .attr('stroke', '#ffffff')
+        .attr('stroke-width', 1.2)
+        .attr('opacity', 1)
+        .attr('class', 'evonet-birth-dot')
+        .attr('data-record-id', recordId)
+        .attr('data-base-r', baseR);
+
+      if (!item.active) {
+        group.append('line')
+          .attr('x1', x(endTime) - 3)
+          .attr('x2', x(endTime) + 3)
+          .attr('y1', y(String(item.id)) - 3)
+          .attr('y2', y(String(item.id)) + 3)
+          .attr('stroke', palette.grey)
+          .attr('stroke-width', 1.2);
+        group.append('line')
+          .attr('x1', x(endTime) - 3)
+          .attr('x2', x(endTime) + 3)
+          .attr('y1', y(String(item.id)) + 3)
+          .attr('y2', y(String(item.id)) - 3)
+          .attr('stroke', palette.grey)
+          .attr('stroke-width', 1.2);
+      }
+
+      if (items.length <= 16) {
+        group.append('text')
+          .attr('x', margin.left - 6)
+          .attr('y', y(String(item.id)) + 4)
+          .attr('text-anchor', 'end')
+          .attr('class', 'evonet-small-label evonet-inline-label')
+          .attr('data-record-id', recordId)
+          .text(item.id);
+      }
+    });
+  }
+
+  function radialLinkStep(startAngle, startRadius, endAngle, endRadius) {
+    const c0 = Math.cos((startAngle - 90) / 180 * Math.PI);
+    const s0 = Math.sin((startAngle - 90) / 180 * Math.PI);
+    const c1 = Math.cos((endAngle - 90) / 180 * Math.PI);
+    const s1 = Math.sin((endAngle - 90) / 180 * Math.PI);
+    return `M${startRadius * c0},${startRadius * s0}` +
+      (endAngle === startAngle ? '' : `A${startRadius},${startRadius} 0 0 ${endAngle > startAngle ? 1 : 0} ${startRadius * c1},${startRadius * s1}`) +
+      `L${endRadius * c1},${endRadius * s1}`;
+  }
+
+  function enrichTreeLayout(rootNode) {
+    rootNode.eachAfter((node) => {
+      if (!node.children || !node.children.length) {
+        node.leafKey = String(node.data.name || '');
+      } else {
+        node.leafKey = node.children.map((child) => child.leafKey).sort().join('|');
+      }
+    });
+
+    rootNode.each((node) => {
+      node.layoutKey = node.leafKey || String(node.data.name || '');
+      node.displayRadius = state.settings.showBranchLengths ? node.radius : node.y;
+    });
+  }
+
+  function buildRadialLayout(newick, width, height) {
+    const data = parseNewick(newick);
+    if (!data) return null;
+
+    const rootNode = d3.hierarchy(data, (d) => d.branchset)
+      .sum((d) => (d.branchset ? 0 : 1))
+      .sort((a, b) => (a.value - b.value) || d3.ascending(a.data.length || 0, b.data.length || 0));
+
+    const outerRadius = Math.min(width, height) / 2 - 8;
+    const innerRadius = Math.max(outerRadius - 58, 44);
+    const cluster = d3.cluster().size([360, innerRadius]).separation(() => 1);
+    cluster(rootNode);
+
+    function maxLength(node) {
+      return (node.data.length || 0) + (node.children ? d3.max(node.children, maxLength) : 0);
+    }
+
+    function setRadius(node, y0, k) {
+      node.radius = (y0 += node.data.length || 0) * k;
+      if (node.children) node.children.forEach((child) => setRadius(child, y0, k));
+    }
+
+    const radialScale = innerRadius / Math.max(maxLength(rootNode), 1e-6);
+    setRadius(rootNode, 0, radialScale);
+    enrichTreeLayout(rootNode);
+
+    return { rootNode, innerRadius };
+  }
+
+  function drawRadialTree(container, newick, recordMap, emptyTitle, options = {}) {
+    if (!container) return;
+    if (!newick || newick === ';') {
+      container.innerHTML = '';
+      emptyPanel(container, emptyTitle, 'You need at least two observed taxa before a tree makes sense.');
+      return;
+    }
+
+    const { width, height } = safeContainerSize(container, 330);
+    const layout = buildRadialLayout(newick, width, height);
+    if (!layout || layout.rootNode.leaves().length < 2) {
+      container.innerHTML = '';
+      emptyPanel(container, emptyTitle, 'You need at least two observed taxa before a tree makes sense.');
+      return;
+    }
+
+    let svg = d3.select(container).select('svg.evonet-svg');
+    if (svg.empty()) {
+      container.innerHTML = '';
+      svg = d3.select(container)
+        .append('svg')
+        .attr('class', 'evonet-svg');
+    }
+
+    svg.attr('width', width)
+      .attr('height', height)
+      .attr('viewBox', `${-width / 2} ${-height / 2} ${width} ${height}`);
+
+    const transition = options.animate
+      ? svg.transition().duration(520).ease(d3.easeCubicInOut)
+      : null;
+
+    const rootG = svg.selectAll('g.evonet-tree-root')
+      .data([null])
+      .join('g')
+      .attr('class', 'evonet-tree-root');
+
+    function guidePath(d) {
+      return radialLinkStep(d.target.x, d.target.displayRadius, d.target.x, layout.innerRadius);
+    }
+
+    function linkPath(d) {
+      return radialLinkStep(d.source.x, d.source.displayRadius, d.target.x, d.target.displayRadius);
+    }
+
+    function nodeTransform(d) {
+      return `rotate(${d.x - 90}) translate(${d.displayRadius},0)`;
+    }
+
+    function labelTransform(d) {
+      return `rotate(${d.x - 90}) translate(${layout.innerRadius + 10},0)${d.x < 180 ? '' : ' rotate(180)'}`;
+    }
+
+    const guideData = layout.rootNode.links().filter((d) => !d.target.children);
+    const internalLinkData = layout.rootNode.links().filter((d) => d.target.children);
+    const leafLinkData = layout.rootNode.links().filter((d) => !d.target.children);
+    const internalNodeData = layout.rootNode.descendants().filter((d) => d.children);
+    const leafNodeData = layout.rootNode.leaves();
+
+    const guideSelection = rootG.selectAll('path.evonet-tree-guide-link')
+      .data(guideData, (d) => d.target.layoutKey)
+      .join(
+        (enter) => enter.append('path')
+          .attr('class', 'evonet-tree-guide-link')
+          .attr('fill', 'none')
+          .attr('stroke', '#c7cddd')
+          .attr('stroke-dasharray', '3,3')
+          .attr('stroke-width', 1)
+          .attr('opacity', 0.7)
+          .attr('d', (d) => guidePath(d)),
+        (update) => update,
+        (exit) => {
+          if (transition) return exit.transition(transition).attr('opacity', 0).remove();
+          exit.remove();
+          return exit;
         }
-    }
+      );
+    maybeTransition(guideSelection, transition).attr('d', (d) => guidePath(d));
 
-    function drag(simulation) {
-        function dragstarted(event, d) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
+    const internalLinks = rootG.selectAll('path.evonet-tree-internal-link')
+      .data(internalLinkData, (d) => d.target.layoutKey)
+      .join(
+        (enter) => enter.append('path')
+          .attr('class', 'evonet-tree-internal-link')
+          .attr('fill', 'none')
+          .attr('stroke', '#2f3441')
+          .attr('stroke-width', 1.3)
+          .attr('opacity', 0.88)
+          .attr('d', (d) => linkPath(d)),
+        (update) => update,
+        (exit) => {
+          if (transition) return exit.transition(transition).attr('opacity', 0).remove();
+          exit.remove();
+          return exit;
         }
+      );
+    maybeTransition(internalLinks, transition).attr('d', (d) => linkPath(d));
 
-        function dragged(event, d) {
-            d.fx = event.x;
-            d.fy = event.y;
+    const leafLinks = rootG.selectAll('path.evonet-tree-leaf-link')
+      .data(leafLinkData, (d) => d.target.layoutKey)
+      .join(
+        (enter) => enter.append('path')
+          .attr('class', 'evonet-tree-leaf-link')
+          .attr('fill', 'none')
+          .attr('stroke', '#2f3441')
+          .attr('stroke-width', 1.3)
+          .attr('opacity', 0.88)
+          .attr('d', (d) => linkPath(d)),
+        (update) => update,
+        (exit) => {
+          if (transition) return exit.transition(transition).attr('opacity', 0).remove();
+          exit.remove();
+          return exit;
         }
+      );
+    leafLinks.attr('data-record-id', (d) => d.target.data.name);
+    maybeTransition(leafLinks, transition).attr('d', (d) => linkPath(d));
 
-        function dragended(event, d) {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
+    const internalNodes = rootG.selectAll('circle.evonet-tree-internal-node')
+      .data(internalNodeData, (d) => d.layoutKey)
+      .join(
+        (enter) => enter.append('circle')
+          .attr('class', 'evonet-tree-internal-node')
+          .attr('r', (d) => (d === layout.rootNode ? 5.5 : 2.8))
+          .attr('fill', (d) => (d === layout.rootNode ? palette.yellow : '#5c6577'))
+          .attr('stroke', '#ffffff')
+          .attr('stroke-width', 0.8)
+          .attr('transform', (d) => nodeTransform(d)),
+        (update) => update,
+        (exit) => {
+          if (transition) return exit.transition(transition).attr('opacity', 0).remove();
+          exit.remove();
+          return exit;
         }
+      );
+    maybeTransition(internalNodes, transition).attr('transform', (d) => nodeTransform(d));
 
-        return d3.drag()
-            .on('start', dragstarted)
-            .on('drag', dragged)
-            .on('end', dragended);
-    }
-}
-
-function highlightNewickTreeNode(originData, highlight) {
-    // Check if originData has a id property or is a id number itself
-    if (!originData.hasOwnProperty('id')) {
-        originData = { id: originData };
-    }
-
-    let newickChartNode = d3.selectAll('#newickvis-chart text')
-        .filter(d => d.data.name === originData.id.toString())
-        .data()[0]; // Get the data for the node in the Newick tree
-
-    // Check if the node exists in the Newick tree
-    if (!newickChartNode) {
-        return;
-    }
-
-    // Traverse from the focal node to the root in the Newick tree
-    do {
-        // Highlight the corresponding label in the Newick tree
-        d3.selectAll('#newickvis-chart text')
-            .filter(d => d === newickChartNode) // Match the node in the Newick tree
-            .classed("label--active", highlight); // Highlight or unhighlight the label
-
-        // Highlight the link between the node and its parent in the Newick tree
-        d3.selectAll('#newickvis-chart path')
-            .filter(d => d.target === newickChartNode) // Match the child node
-            .classed("link--active", highlight)
-            .raise(); // Highlight or unhighlight the link
-
-        // Move to the parent node in the Newick tree
-        newickChartNode = newickChartNode.parent;
-
-    } while (newickChartNode); // Continue until the root is reached (i.e., when parent is null)
-}
-
-function highlightTraitTreeNode(originData, highlight) {
-    // Check if originData has a id property or is a id number itself
-    if (!originData.hasOwnProperty('id')) {
-        originData = { id: originData };
-    }
-
-    let traitChartNode = d3.selectAll('#traitvis-chart text')
-        .filter(d => d.data.name === originData.id.toString())
-        .data()[0]; // Get the data for the node in the trait-based phylogeny
-
-    // Check if the node exists in the trait-based phylogeny
-    if (!traitChartNode) {
-        return;
-    }
-
-    // Traverse from the focal node to the root in the trait-based phylogeny
-    do {
-        // Highlight the corresponding label in the trait-based phylogeny
-        d3.selectAll('#traitvis-chart text')
-            .filter(d => d === traitChartNode) // Match the node in the trait-based phylogeny
-            .classed("label--active", highlight); // Highlight or unhighlight the label
-
-        // Highlight the link between the node and its parent in the trait-based phylogeny
-        d3.selectAll('#traitvis-chart path')
-            .filter(d => d.target === traitChartNode) // Match the child node
-            .classed("link--active", highlight)
-            .raise(); // Highlight or unhighlight the link
-
-        // Move to the parent node in the trait-based phylogeny
-        traitChartNode = traitChartNode.parent;
-
-    } while (traitChartNode); // Continue until the root is reached (i.e., when parent is null)
-}
-
-
-// Highlight the corresponding coarsened graph node
-function highlightCoarsenedGraphNode(nodeId, highlight) {
-    d3.selectAll('#coarsened-graph-container circle')
-        .filter(d => d.id === parseInt(nodeId)) // Match the id
-        .attr('stroke', highlight ? '#ff0' : d => d.mutated ? 'red' : 'white') // Highlight or reset stroke
-        .attr('stroke-width', highlight ? 4 : 1.5) // Increase or reset stroke width
-        .attr('r', highlight ? 12 : 10); // Increase or reset node size
-}
-
-// Highlight the corresponding full graph node
-function highlightFullGraphNode(nodeId, highlight) {
-    d3.selectAll('#graph-container circle')
-        .filter(d => d.id === parseInt(nodeId)) // Match the id
-        .attr('stroke', highlight ? '#ff0' : d => d.mutated ? 'red' : 'white') // Highlight or reset stroke
-        .attr('stroke-width', highlight ? 4 : 1.5) // Increase or reset stroke width
-        .attr('r', highlight ? 12 : 10); // Increase or reset node size
-}
-
-function plotCurrentTraitData() {
-    // Get the value of showBranchLengths checkbox
-    let showBranchLengths = document.getElementById('showBranchLengths').checked;
-    let pruneExtinct = document.getElementById('pruneExtinct').checked;
-
-    // Convert node traits to trait-based phylogeny
-    let filteredNodeTraits = filterTraitTable(lastNodeTraits, lastLTable, pruneExtinct);
-
-    let traitPhyloString = hclustToNewick(filteredNodeTraits);
-    // Parse Newick string back into a dataset
-    let traitData = parseNewick(traitPhyloString);
-
-    // Plot the data, passing the showBranchLengths parameter
-    plotTraitData(traitData, showBranchLengths);
-}
-
-function plotTraitData(data, showBranchLengths) {
-    let plotContainer = document.getElementById('trait-container');
-
-    // Function to get plot container size
-    function getPlotContainerSize() {
-        return {
-            width: plotContainer.clientWidth,
-            height: plotContainer.clientHeight
-        };
-    }
-
-    let { width, height } = getPlotContainerSize();
-
-    // Remove any previous chart
-    let existingChart = plotContainer.querySelector('#traitvis-chart');
-    if (existingChart) {
-        plotContainer.removeChild(existingChart);
-    }
-
-    const outerRadius = width * 1.4;
-    const innerRadius = outerRadius - 170;
-    const cluster = d3.cluster()
-        .size([360, innerRadius])
-        .separation((a, b) => 1);
-
-    const maxLength = function maxLength(d) {
-        return d.data.length + (d.children ? d3.max(d.children, maxLength) : 0);
-    };
-
-    const setRadius = function setRadius(d, y0, k) {
-        d.radius = (y0 += d.data.length) * k;
-        if (d.children) d.children.forEach(d => setRadius(d, y0, k));
-    };
-
-    // Link helper functions
-    const linkStep = function linkStep(startAngle, startRadius, endAngle, endRadius) {
-        const c0 = Math.cos(startAngle = (startAngle - 90) / 180 * Math.PI);
-        const s0 = Math.sin(startAngle);
-        const c1 = Math.cos(endAngle = (endAngle - 90) / 180 * Math.PI);
-        const s1 = Math.sin(endAngle);
-        return "M" + startRadius * c0 + "," + startRadius * s0
-            + (endAngle === startAngle ? "" : "A" + startRadius + "," + startRadius + " 0 0 " + (endAngle > startAngle ? 1 : 0) + " " + startRadius * c1 + "," + startRadius * s1)
-            + "L" + endRadius * c1 + "," + endRadius * s1;
-    };
-
-    const linkConstant = function linkConstant(d) {
-        return linkStep(d.source.x, d.source.y, d.target.x, d.target.y);
-    };
-
-    const linkExtensionConstant = function linkExtensionConstant(d) {
-        return linkStep(d.target.x, d.target.y, d.target.x, innerRadius);
-    };
-
-    const linkVariable = function linkVariable(d) {
-        return linkStep(d.source.x, d.source.radius, d.target.x, d.target.radius);
-    };
-
-    const linkExtensionVariable = function linkExtensionVariable(d) {
-        return linkStep(d.target.x, d.target.radius, d.target.x, innerRadius);
-    };
-
-    // Remove any previous chart
-    d3.select("#traitvis-chart").selectAll("*").remove();
-
-    try {
-        // Try to create the chart
-        lastTraitChart = traitvisDrawRadialTree(d3, data, cluster, setRadius, innerRadius, maxLength, outerRadius, width, linkExtensionConstant, linkConstant, linkExtensionVariable, linkVariable);
-
-        // Clear any previous content
-        plotContainer.innerHTML = '';
-
-        // Append the chart to the container
-        plotContainer.appendChild(lastTraitChart);
-
-        lastTraitChart.traitvisUpdate(showBranchLengths);
-    } catch (error) {
-        // If an error occurs, log the error (optional)
-        console.log("Cannot reconstruct the trait-based phylogeny from the data.");
-
-        // Display a message instead of the chart
-        plotContainer.innerHTML = '<p class="error-text">No Valid Trait Tree</p>';
-    }
-}
-
-// Function to calculate the distance matrix
-function calculateDistanceMatrix(nodeTraits) {
-    const nodeIds = Object.keys(nodeTraits); // Use actual node IDs as keys
-    const distanceMatrix = [];
-
-    for (let i = 0; i < nodeIds.length; i++) {
-        const row = [];
-        for (let j = 0; j < nodeIds.length; j++) {
-            if (i === j) {
-                row.push(0); // Distance between a node and itself is 0
-            } else {
-                const distance = euclideanDistance(nodeTraits[nodeIds[i]], nodeTraits[nodeIds[j]]);
-                row.push(distance);
-            }
+    const leafNodes = rootG.selectAll('circle.evonet-tree-leaf-node')
+      .data(leafNodeData, (d) => d.layoutKey)
+      .join(
+        (enter) => enter.append('circle')
+          .attr('class', 'evonet-tree-leaf-node evonet-interactive')
+          .attr('r', 4.2)
+          .attr('stroke', '#ffffff')
+          .attr('stroke-width', 0.8)
+          .attr('transform', (d) => nodeTransform(d)),
+        (update) => update,
+        (exit) => {
+          if (transition) return exit.transition(transition).attr('opacity', 0).remove();
+          exit.remove();
+          return exit;
         }
-        distanceMatrix.push(row);
-    }
+      );
+    leafNodes
+      .attr('data-record-id', (d) => d.data.name)
+      .attr('fill', (d) => {
+        const rec = recordMap.get(Number(d.data.name));
+        return rec ? rec.displayColor : palette.accent;
+      })
+      .on('mouseenter', (event, d) => {
+        setHighlight(d.data.name);
+        const rec = recordMap.get(Number(d.data.name));
+        showTooltip(container, event, `
+          <strong>Taxon ${d.data.name}</strong><br>
+          ${rec?.active ? 'Extant' : 'Extinct'}<br>
+          Birth: ${formatNum(rec?.birthTime)}
+        `);
+      })
+      .on('mousemove', (event, d) => {
+        const rec = recordMap.get(Number(d.data.name));
+        showTooltip(container, event, `
+          <strong>Taxon ${d.data.name}</strong><br>
+          ${rec?.active ? 'Extant' : 'Extinct'}<br>
+          Birth: ${formatNum(rec?.birthTime)}
+        `);
+      })
+      .on('mouseleave', () => {
+        hideTooltip(container);
+        setHighlight(null);
+      });
+    maybeTransition(leafNodes, transition).attr('transform', (d) => nodeTransform(d));
 
-    return { distanceMatrix, nodeIds }; // Return actual node IDs
-}
-
-// Function to calculate Euclidean distance between two nodes' traits
-function euclideanDistance(traits1, traits2) {
-    let sum = 0;
-    for (let i = 0; i < traits1.length; i++) {
-        sum += Math.pow(traits1[i] - traits2[i], 2);
-    }
-    return Math.sqrt(sum);
-}
-
-// Function to calculate the average distance between two clusters
-function averageDistance(cluster1, cluster2, distanceMatrix, nodeIds) {
-    let totalDist = 0;
-    let count = 0;
-
-    for (let i = 0; i < cluster1.nodes.length; i++) {
-        for (let j = 0; j < cluster2.nodes.length; j++) {
-            const node1 = nodeIds.indexOf(cluster1.nodes[i]);
-            const node2 = nodeIds.indexOf(cluster2.nodes[j]);
-            const dist = distanceMatrix[node1][node2]; // Ensure node1 and node2 map correctly
-            totalDist += dist;
-            count++;
+    const leafLabels = rootG.selectAll('text.evonet-tree-leaf-label')
+      .data(leafNodeData, (d) => d.layoutKey)
+      .join(
+        (enter) => enter.append('text')
+          .attr('class', 'evonet-tree-label evonet-tree-leaf-label')
+          .attr('dy', '.31em')
+          .attr('transform', (d) => labelTransform(d))
+          .attr('text-anchor', (d) => (d.x < 180 ? 'start' : 'end'))
+          .text((d) => d.data.name),
+        (update) => update,
+        (exit) => {
+          if (transition) return exit.transition(transition).attr('opacity', 0).remove();
+          exit.remove();
+          return exit;
         }
+      );
+    leafLabels
+      .attr('data-record-id', (d) => d.data.name)
+      .attr('text-anchor', (d) => (d.x < 180 ? 'start' : 'end'))
+      .text((d) => d.data.name)
+      .on('mouseenter', (event, d) => {
+        setHighlight(d.data.name);
+        const rec = recordMap.get(Number(d.data.name));
+        showTooltip(container, event, `
+          <strong>Taxon ${d.data.name}</strong><br>
+          ${rec?.active ? 'Extant' : 'Extinct'}<br>
+          Birth: ${formatNum(rec?.birthTime)}
+        `);
+      })
+      .on('mousemove', (event, d) => {
+        const rec = recordMap.get(Number(d.data.name));
+        showTooltip(container, event, `
+          <strong>Taxon ${d.data.name}</strong><br>
+          ${rec?.active ? 'Extant' : 'Extinct'}<br>
+          Birth: ${formatNum(rec?.birthTime)}
+        `);
+      })
+      .on('mouseleave', () => {
+        hideTooltip(container);
+        setHighlight(null);
+      });
+    maybeTransition(leafLabels, transition).attr('transform', (d) => labelTransform(d));
+  }
+
+  function renderLTT(container) {
+    if (!container) return;
+    container.innerHTML = '';
+    const data = state.timeSeries;
+    if (!data.length) {
+      emptyPanel(container, 'No time-series data yet.', '');
+      return;
     }
 
-    return totalDist / count;
-}
+    const { width, height } = safeContainerSize(container, 300);
+    const margin = { top: 16, right: 18, bottom: 34, left: 42 };
+    const svg = d3.select(container)
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height)
+      .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('class', 'evonet-svg');
 
-// Perform hierarchical clustering using UPGMA
-function performHClust(nodeTraits) {
-    const { distanceMatrix, nodeIds } = calculateDistanceMatrix(nodeTraits);
+    const x = d3.scaleLinear()
+      .domain([0, Math.max(d3.max(data, (d) => d.time), 1)])
+      .range([margin.left, width - margin.right]);
+    const y = d3.scaleLinear()
+      .domain([0, Math.max(1, d3.max(data, (d) => Math.max(d.extantLineages, d.observedSpecies, d.totalLineages)))])
+      .nice()
+      .range([height - margin.bottom, margin.top]);
 
-    // Initialize clusters with actual node IDs
-    let clusters = nodeIds.map((id, index) => ({
-        nodes: [id],  // Store original node ID here
-        distance: 0,
-        left: null,
-        right: null
-    }));
+    const line = d3.line()
+      .x((d) => x(d.time))
+      .y((d) => y(d.value))
+      .curve(d3.curveStepAfter);
 
-    while (clusters.length > 1) {
-        let minDist = Infinity;
-        let minPair = [-1, -1];
+    const series = [
+      { name: 'extant lineages', color: palette.blue, values: data.map((d) => ({ time: d.time, value: d.extantLineages })) },
+      { name: 'observed species', color: palette.accent, values: data.map((d) => ({ time: d.time, value: d.observedSpecies })) },
+      { name: 'total lineages', color: '#c06a2b', values: data.map((d) => ({ time: d.time, value: d.totalLineages })) }
+    ];
 
-        // Find the closest pair of clusters
-        for (let i = 0; i < clusters.length; i++) {
-            for (let j = i + 1; j < clusters.length; j++) {
-                const dist = averageDistance(clusters[i], clusters[j], distanceMatrix, nodeIds);
-                if (dist < minDist) {
-                    minDist = dist;
-                    minPair = [i, j];
-                }
-            }
+    svg.append('g')
+      .attr('transform', `translate(0,${height - margin.bottom})`)
+      .call(d3.axisBottom(x).ticks(Math.min(6, Math.max(2, Math.floor(width / 100))))
+        .tickSizeOuter(0))
+      .call((g) => g.selectAll('text').attr('class', 'evonet-axis-label'))
+      .call((g) => g.select('.domain').attr('stroke', '#c8d0dd'));
+
+    svg.append('g')
+      .attr('transform', `translate(${margin.left},0)`)
+      .call(d3.axisLeft(y).ticks(5))
+      .call((g) => g.selectAll('text').attr('class', 'evonet-axis-label'))
+      .call((g) => g.select('.domain').attr('stroke', '#c8d0dd'))
+      .call((g) => g.selectAll('line').attr('stroke', '#d8deea'));
+
+    series.forEach((s) => {
+      svg.append('path')
+        .datum(s.values)
+        .attr('fill', 'none')
+        .attr('stroke', s.color)
+        .attr('stroke-width', 2.2)
+        .attr('d', line);
+    });
+
+    const legend = svg.append('g').attr('transform', `translate(${margin.left},${margin.top - 4})`);
+    series.forEach((s, idx) => {
+      const g = legend.append('g').attr('transform', `translate(${idx * 118},0)`);
+      g.append('line').attr('x1', 0).attr('x2', 18).attr('y1', 0).attr('y2', 0).attr('stroke', s.color).attr('stroke-width', 2.5);
+      g.append('text').attr('x', 24).attr('y', 4).attr('class', 'evonet-small-label').text(s.name);
+    });
+  }
+
+  function renderTraitSpace(container) {
+    if (!container) return;
+    container.innerHTML = '';
+    const points = state.derived.traitProjection;
+    if (!points.length) {
+      emptyPanel(container, 'No observed taxa in trait space.', '');
+      return;
+    }
+
+    const { width, height } = safeContainerSize(container, 300);
+    const margin = { top: 18, right: 18, bottom: 36, left: 42 };
+    const svg = d3.select(container)
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height)
+      .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('class', 'evonet-svg');
+
+    const xExtent = d3.extent(points, (d) => d.x);
+    const yExtent = d3.extent(points, (d) => d.y);
+    const xPad = (xExtent[1] - xExtent[0] || 1) * 0.2;
+    const yPad = (yExtent[1] - yExtent[0] || 1) * 0.2;
+    const x = d3.scaleLinear().domain([xExtent[0] - xPad, xExtent[1] + xPad]).range([margin.left, width - margin.right]);
+    const y = d3.scaleLinear().domain([yExtent[0] - yPad, yExtent[1] + yPad]).range([height - margin.bottom, margin.top]);
+
+    svg.append('g')
+      .attr('transform', `translate(0,${height - margin.bottom})`)
+      .call(d3.axisBottom(x).ticks(5))
+      .call((g) => g.selectAll('text').attr('class', 'evonet-axis-label'))
+      .call((g) => g.select('.domain').attr('stroke', '#c8d0dd'));
+
+    svg.append('g')
+      .attr('transform', `translate(${margin.left},0)`)
+      .call(d3.axisLeft(y).ticks(5))
+      .call((g) => g.selectAll('text').attr('class', 'evonet-axis-label'))
+      .call((g) => g.select('.domain').attr('stroke', '#c8d0dd'));
+
+    svg.append('line')
+      .attr('x1', x(0)).attr('x2', x(0))
+      .attr('y1', margin.top).attr('y2', height - margin.bottom)
+      .attr('stroke', '#d6dbe6').attr('stroke-dasharray', '3,3');
+    svg.append('line')
+      .attr('x1', margin.left).attr('x2', width - margin.right)
+      .attr('y1', y(0)).attr('y2', y(0))
+      .attr('stroke', '#d6dbe6').attr('stroke-dasharray', '3,3');
+
+    svg.append('text').attr('x', width - margin.right).attr('y', height - 8).attr('text-anchor', 'end').attr('class', 'evonet-axis-caption')
+      .text(state.settings.traitDimensions > 2 ? 'PC1' : 'Trait 1');
+    svg.append('text').attr('x', margin.left).attr('y', margin.top - 4).attr('class', 'evonet-axis-caption')
+      .text(state.settings.traitDimensions > 2 ? 'PC2' : 'Trait 2');
+
+    svg.append('g').selectAll('circle').data(points).join('circle')
+      .attr('cx', (d) => x(d.x))
+      .attr('cy', (d) => y(d.y))
+      .attr('r', 4.8)
+      .attr('fill', (d) => d.record.displayColor)
+      .attr('stroke', '#ffffff')
+      .attr('stroke-width', 1.1)
+      .attr('opacity', 0.95)
+      .attr('class', 'evonet-trait-point evonet-interactive')
+      .attr('data-record-id', (d) => d.record.id)
+      .on('mouseenter', (event, d) => {
+        setHighlight(d.record.id);
+        showTooltip(container, event, `<strong>Taxon ${d.record.id}</strong><br>${d.record.observedTrait.map((v) => formatNum(v)).join(', ')}`);
+      })
+      .on('mousemove', (event, d) => {
+        showTooltip(container, event, `<strong>Taxon ${d.record.id}</strong><br>${d.record.observedTrait.map((v) => formatNum(v)).join(', ')}`);
+      })
+      .on('mouseleave', () => {
+        hideTooltip(container);
+        setHighlight(null);
+      });
+
+    if (points.length <= 14) {
+      svg.append('g').selectAll('text').data(points).join('text')
+        .attr('x', (d) => x(d.x) + 7)
+        .attr('y', (d) => y(d.y) - 7)
+        .attr('class', 'evonet-small-label evonet-trait-label')
+        .attr('data-record-id', (d) => d.record.id)
+        .text((d) => d.record.id);
+    }
+  }
+
+  function renderStatusCards() {
+    if (dom.extantCount) dom.extantCount.textContent = state.activeIds.size;
+    if (dom.extinctCount) dom.extinctCount.textContent = state.nodes.length - state.activeIds.size;
+    if (dom.observedCount) dom.observedCount.textContent = state.derived.observedRecords.length;
+    if (dom.timeCount) dom.timeCount.textContent = formatNum(state.time, 2);
+    if (dom.agreementCount) dom.agreementCount.textContent = state.derived.agreement === null ? 'n/a' : formatNum(state.derived.agreement, 2);
+
+    if (dom.statusNote) {
+      const net = state.settings.birthRate + state.settings.mutateRate - state.settings.deathRate;
+      const modelText = state.settings.traitModel === 'ou' ? `OU-like pull (α = ${formatNum(state.settings.ouAlpha, 2)})` : 'Brownian trait steps';
+      dom.statusNote.textContent = `Step ${state.step}/${state.settings.maxSteps} • ${modelText} • net diversification pressure ≈ ${formatNum(net, 2)}`;
+    }
+  }
+
+  function renderEventFeed() {
+    if (!dom.eventFeed) return;
+    dom.eventFeed.innerHTML = '';
+    if (!state.eventLog.length) {
+      dom.eventFeed.innerHTML = '<div class="evonet-feed-empty">Press Grow or Step to generate a trajectory.</div>';
+      return;
+    }
+    state.eventLog.slice(0, 12).forEach((line) => {
+      const div = document.createElement('div');
+      div.className = 'evonet-feed-line';
+      div.textContent = line;
+      dom.eventFeed.appendChild(div);
+    });
+  }
+
+  function renderAll() {
+    renderStatusCards();
+    renderEventFeed();
+    const recordByNode = state.derived.coarsened.recordByNode;
+    const animateTreeMode = state.lastRenderedBranchLengthMode !== null
+      && state.lastRenderedBranchLengthMode !== state.settings.showBranchLengths;
+
+    renderChronogram(dom.graphContainer, state.nodes.map((node) => ({
+      id: node.id,
+      parentId: node.parentId,
+      birthTime: node.birthTime,
+      endTime: getNodeEndTime(node),
+      active: node.active,
+      mutated: node.mutated,
+      recordId: recordByNode.get(node.id)
+    })), 'Lineage');
+
+    renderChronogram(dom.coarsenedContainer, state.derived.coarsened.records.map((record) => ({
+      id: record.id,
+      parentId: record.parentId,
+      birthTime: record.birthTime,
+      endTime: record.endTime,
+      active: record.active,
+      mutated: record.mutated,
+      recordId: record.id
+    })), 'Species');
+
+    const recordMap = new Map(state.derived.coarsened.records.map((record) => [record.id, record]));
+    drawRadialTree(dom.historyTreeContainer, state.derived.historyNewick, recordMap, 'No valid history tree', { animate: animateTreeMode });
+    drawRadialTree(dom.traitTreeContainer, state.derived.traitNewick, recordMap, 'No valid trait tree', { animate: animateTreeMode });
+    renderLTT(dom.lttContainer);
+    renderTraitSpace(dom.traitSpaceContainer);
+    updateHighlights();
+    state.lastRenderedBranchLengthMode = state.settings.showBranchLengths;
+  }
+
+  function exportJson() {
+    const payload = {
+      settings: state.settings,
+      time: state.time,
+      step: state.step,
+      nodes: state.nodes.map((n) => ({
+        id: n.id,
+        parentId: n.parentId,
+        birthTime: n.birthTime,
+        extinctTime: n.extinctTime,
+        active: n.active,
+        mutated: n.mutated,
+        eventType: n.eventType,
+        trait: n.trait
+      })),
+      coarsenedRecords: state.derived.coarsened.records,
+      historyNewick: state.derived.historyNewick,
+      traitNewick: state.derived.traitNewick,
+      eventLog: state.eventLog,
+      timeSeries: state.timeSeries
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `evonet-run-seed-${state.settings.seed}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function bindControls() {
+    [
+      dom.birthRate,
+      dom.mutateRate,
+      dom.deathRate,
+      dom.maxSteps,
+      dom.mstep,
+      dom.traitDimensions,
+      dom.traitSigma,
+      dom.ouAlpha,
+      dom.traitModel,
+      dom.pruneExtinct,
+      dom.showBranchLengths
+    ].forEach((el) => {
+      if (!el) return;
+      el.addEventListener('input', () => {
+        syncValueSpans();
+        if (el.id === 'mstep') {
+          recomputeDerived();
+          renderAll();
         }
+      });
+      el.addEventListener('change', () => {
+        syncValueSpans();
+        recomputeDerived();
+        renderAll();
+      });
+    });
 
-        // Merge the closest pair
-        const [i, j] = minPair;
-        const newCluster = {
-            nodes: [...clusters[i].nodes, ...clusters[j].nodes], // Combine node IDs
-            distance: minDist / 2,
-            left: clusters[i],
-            right: clusters[j]
-        };
+    dom.startButton.addEventListener('click', startSimulation);
+    dom.pauseButton.addEventListener('click', pauseSimulation);
+    dom.stepButton.addEventListener('click', () => {
+      if (!state.running) simulateStep();
+    });
+    dom.resetButton.addEventListener('click', resetSimulation);
+    dom.randomSeedButton.addEventListener('click', randomizeSeed);
+    dom.presetSelect.addEventListener('change', () => applyPreset(dom.presetSelect.value));
+    dom.exportJsonButton.addEventListener('click', exportJson);
+    dom.copyHistoryNewickButton.addEventListener('click', () => copyText(state.derived.historyNewick || ''));
+    dom.copyTraitNewickButton.addEventListener('click', () => copyText(state.derived.traitNewick || ''));
 
-        // Remove the old clusters and add the new one
-        clusters = clusters.filter((_, index) => index !== i && index !== j);
-        clusters.push(newCluster);
-    }
+    if (dom.eventDrawerButton) dom.eventDrawerButton.addEventListener('click', () => toggleEventDrawer());
+    if (dom.eventDrawerCloseButton) dom.eventDrawerCloseButton.addEventListener('click', () => toggleEventDrawer(false));
+    if (dom.eventDrawerBackdrop) dom.eventDrawerBackdrop.addEventListener('click', () => toggleEventDrawer(false));
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && state.eventDrawerOpen) {
+        toggleEventDrawer(false);
+      }
+    });
 
-    // Return the root of the cluster tree
-    return clusters[0];
-}
+    window.addEventListener('resize', debounce(() => {
+      recomputeDerived();
+      renderAll();
+    }, 120));
+  }
 
-// Convert the hierarchical cluster tree to Newick format
-function convertClusterToNewick(cluster) {
-    // Check if there is nodes array
-    if (!cluster.nodes) {
-        return '';
-    }
-    if (cluster.nodes.length === 1) {
-        // It's a leaf node, return the actual node ID
-        return `${cluster.nodes[0]}:${cluster.distance.toFixed(2)}`;
-    } else {
-        // It's an internal node
-        const left = convertClusterToNewick(cluster.left);
-        const right = convertClusterToNewick(cluster.right);
-        return `(${left},${right}):${cluster.distance.toFixed(2)}`;
-    }
-}
-
-// Convert hierarchical clustering results to Newick format
-function hclustToNewick(nodeTraits) {
-    // Check if nodeTraits is empty
-    if (Object.keys(nodeTraits).length === 0) {
-        return ';';
-    } else {
-        const cluster = performHClust(nodeTraits);
-        return convertClusterToNewick(cluster) + ';';
-    }
-}
-
-// Function to plot traits based on their dimensions
-function plotTraits(nodeTraits, traitDimension) {
-    let plotContainer = document.getElementById('trait-container');
-    // Function to get plot container size
-    function getPlotContainerSize() {
-        return {
-            width: plotContainer.clientWidth,
-            height: plotContainer.clientHeight
-        };
-    }
-
-    let { width, height } = getPlotContainerSize();
-
-    const margin = { top: 20, right: 20, bottom: 50, left: 40 };
-    const colors = d3.scaleOrdinal(d3.schemeCategory10); // Unique colors for nodes
-
-    // Clear the trait container for a fresh plot
-    const container = d3.select("#trait-container");
-    container.selectAll("*").remove();
-    // Create the SVG canvas
-    const svg = container.append("svg")
-        .attr("width", width - margin.left - margin.right)
-        .attr("height", height - margin.top - margin.bottom)
-        .append("g")
-        .attr("transform", `translate(${margin.left}, ${margin.top})`);
-
-    // Set up scales
-    const xScale = d3.scaleLinear()
-        .domain([-10, 10]) // Customize the domain based on expected trait values
-        .range([0, width]);
-
-    const yScale = d3.scaleLinear()
-        .domain([-10, 10]) // Customize the domain based on expected trait values
-        .range([height, 0]);
-
-    // Add X axis
-    svg.append("g")
-        .attr("transform", `translate(0, ${height})`)
-        .call(d3.axisBottom(xScale));
-
-    // Add Y axis
-    svg.append("g")
-        .call(d3.axisLeft(yScale));
-
-    // Create circles for nodes with unique colors and transition
-    const nodes = Object.keys(nodeTraits).map(nodeId => ({
-        id: nodeId,
-        traits: nodeTraits[nodeId]
-    }));
-
-    if (traitDimension === 1) {
-        // Plot on the X-axis
-        svg.selectAll("circle")
-            .data(nodes, d => d.id)
-            .join("circle")
-            .attr("cx", d => xScale(d.traits[0]))
-            .attr("cy", yScale(0)) // All nodes are on the Y=0 line
-            .attr("r", 5)
-            .attr("fill", d => colors(d.id))
-            .transition() // Apply animation
-            .duration(1000)
-            .attr("cx", d => xScale(d.traits[0]));
-
-    } else if (traitDimension === 2) {
-        // Plot on a 2D plane
-        svg.selectAll("circle")
-            .data(nodes, d => d.id)
-            .join("circle")
-            .attr("cx", d => xScale(d.traits[0]))
-            .attr("cy", d => yScale(d.traits[1]))
-            .attr("r", 5)
-            .attr("fill", d => colors(d.id))
-            .transition() // Apply animation
-            .duration(1000)
-            .attr("cx", d => xScale(d.traits[0]))
-            .attr("cy", d => yScale(d.traits[1]));
-
-    } else {
-        // For trait dimensions > 2, apply dimension reduction (e.g., PCA)
-        // Perform basic PCA (Principal Component Analysis)
-        const pcaData = performPCA(nodes.map(d => d.traits), 2);
-
-        // Plot the reduced PCA values
-        svg.selectAll("circle")
-            .data(nodes.map((node, i) => ({
-                id: node.id,
-                traits: pcaData[i]
-            })))
-            .join("circle")
-            .attr("cx", d => xScale(d.traits[0]))
-            .attr("cy", d => yScale(d.traits[1]))
-            .attr("r", 5)
-            .attr("fill", d => colors(d.id))
-            .transition() // Apply animation
-            .duration(1000)
-            .attr("cx", d => xScale(d.traits[0]))
-            .attr("cy", d => yScale(d.traits[1]));
-    }
-}
-
-function performPCA(data, numComponents = 2) {
-    const matrix = numeric.transpose(data);
-    const svdResult = numeric.svd(matrix);
-    const U = svdResult.U;
-    const S = svdResult.S;
-    const V = svdResult.V;
-
-    // Select the top components (principal components)
-    const topComponents = V.slice(0, numComponents).map(row => row.slice(0, numComponents));
-
-    // Project data onto the top principal components
-    const reducedData = numeric.dot(data, numeric.transpose(topComponents));
-
-    return reducedData;
-}
-
-// Event listener for the Prune Extinct Lineages checkbox
-document.getElementById('pruneExtinct').addEventListener('change', () => {
-    // Re-plot the data without advancing simulation step
-    if (lastLTable && lastNodeAccumulatedMutations) {
-        plotCurrentData();
-        plotCurrentTraitData();
-    }
-});
-
-// Event listener for the Show Branch Lengths checkbox
-document.getElementById('showBranchLengths').addEventListener('change', () => {
-    // Re-plot the data without advancing simulation step
-    if (lastLTable && lastNodeAccumulatedMutations && lastNewickChart && lastTraitChart) {
-        // Get the current state of the checkbox
-        let showBranchLengths = document.getElementById('showBranchLengths').checked;
-        lastNewickChart.newickvisUpdate(showBranchLengths);
-        lastTraitChart.traitvisUpdate(showBranchLengths);
-    }
-});
-
-// Event listener for the mstep input field
-document.getElementById('mstep').addEventListener('input', () => {
-    // Re-plot the data when mstep changes
-    if (lastLTable && lastNodeAccumulatedMutations) {
-        plotCurrentData();
-        plotCurrentTraitData();
-    }
-});
-
-// Event listener for the coarsen level input field
-document.getElementById('mstep').addEventListener('change', () => {
-    // Re-plot the data when coarsen level changes
-    let mstep = parseInt(document.getElementById('mstep').value) || 0;
-    if (lastCoarsenedNodes && lastCoarsenedLinks) {
-        let { lTable, nodeAccumulatedMutations, coarsenedNodes, coarsenedLinks } = buildLTable(mstep);
-        lastCoarsenedNodes = coarsenedNodes;
-        lastCoarsenedLinks = coarsenedLinks;
-        plotCoarsenedGraph(lastCoarsenedNodes, lastCoarsenedLinks);
-    }
-});
-
-birthRateSlider.addEventListener('input', function () {
-    birthRateValue.textContent = parseFloat(birthRateSlider.value).toFixed(2);
-    birthRate = parseFloat(birthRateSlider.value);
-    updateRates();
-});
-
-mutateRateSlider.addEventListener('input', function () {
-    mutateRateValue.textContent = parseFloat(mutateRateSlider.value).toFixed(2);
-    mutateRate = parseFloat(mutateRateSlider.value);
-    updateRates();
-});
-
-deathRateSlider.addEventListener('input', function () {
-    deathRateValue.textContent = parseFloat(deathRateSlider.value).toFixed(2);
-    deathRate = parseFloat(deathRateSlider.value);
-    updateRates()
-});
-
-window.addEventListener('resize', () => {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-        plotCurrentData(); // Re-render plot after resizing ends
-        plotCurrentTraitData(); // Re-render trait plot after resizing ends
-        updateGraph(); // Update graph after resizing ends
-        plotCoarsenedGraph(lastCoarsenedNodes, lastCoarsenedLinks); // Re-render coarsened graph after resizing ends
-    }, 10);
-});
-
-// Plot the initial data on page load
-// Initialize data before step 1
-mstep = parseInt(document.getElementById('mstep').value) || 0;
-let { lTable, nodeAccumulatedMutations, coarsenedNodes, coarsenedLinks } = buildLTable(mstep);
-lastNodeAccumulatedMutations = nodeAccumulatedMutations;
-lastCoarsenedNodes = coarsenedNodes;
-lastCoarsenedLinks = coarsenedLinks;
-
-plotCurrentData();
-plotCurrentTraitData();
-plotCoarsenedGraph(lastCoarsenedNodes, lastCoarsenedLinks);
+  bindControls();
+  syncValueSpans();
+  setEventDrawerOpen(false);
+  applyPreset('balanced');
+  resetSimulation();
+})();
