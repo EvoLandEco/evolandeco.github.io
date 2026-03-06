@@ -249,7 +249,7 @@
                 <h3 class="mt-5 mb-3">Interactive simulator</h3>
                 <p>
                     Press <strong>Grow</strong> to run one diversification trajectory. If the run becomes uninformative
-                    (e.g., everything goes extinct), press <strong>Reset</strong> and try a new parameter regime.
+                    (e.g., everything goes extinct), press <strong>Reset</strong> and try a new parameter setting.
                     You can <strong>Pause</strong> any time.
                 </p>
 
@@ -552,27 +552,6 @@
                         Rapid branching compresses internal times and can make different reconstructions disagree more strongly.
                     </li>
                 </ol>
-
-                <h3 class="mt-5 mb-3">Limitations and ideas for a v2</h3>
-                <ul>
-                    <li>
-                        <strong>Gene trees and ILS are not simulated explicitly.</strong>
-                        If you ever extend this: sampling multiple loci under a multispecies coalescent would let you show gene-tree discordance directly.<sup><a href="#ref11">[11]</a></sup><sup><a href="#ref12">[12]</a></sup>
-                    </li>
-                    <li>
-                        <strong>No explicit hybridization/introgression events.</strong>
-                        Adding reticulation events would connect this toy model more directly to network inference methods.<sup><a href="#ref8">[8]</a></sup><sup><a href="#ref9">[9]</a></sup><sup><a href="#ref10">[10]</a></sup>
-                    </li>
-                    <li>
-                        <strong>Only Brownian motion traits.</strong>
-                        A natural extension is OU/stabilizing selection, trait correlations, and measurement error—each of which can change how “more traits” behaves.
-                    </li>
-                    <li>
-                        <strong>Bridging to real pipelines.</strong>
-                        If you later add a “sequence mode,” it would be natural to cite common steps like alignment (MAFFT),
-                        maximum likelihood inference (RAxML / IQ-TREE), model selection (ModelFinder), and time calibration (BEAST).<sup><a href="#ref16">[16]</a></sup><sup><a href="#ref17">[17]</a></sup><sup><a href="#ref18">[18]</a></sup><sup><a href="#ref19">[19]</a></sup><sup><a href="#ref20">[20]</a></sup>
-                    </li>
-                </ul>
 
                 <h3 class="mt-5 mb-3">References</h3>
                 <p class="mb-3">
