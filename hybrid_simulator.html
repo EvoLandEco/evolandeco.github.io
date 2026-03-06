@@ -6,7 +6,7 @@
     <meta content="width=device-width,initial-scale=1" name="viewport" />
     <title>Hybrid COROP–Farm Dynamic Network Simulator</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <!-- iframe-resizer: child (for auto-height when embedded) -->
+    <!-- iframe-resizer: child -->
     <script>
       window.iframeResizer = {
         license: "GPLv3",
@@ -24,7 +24,6 @@
           }
         },
       };
-      // Backwards-compat: some setups still look for window.iFrameResizer
       window.iFrameResizer = window.iframeResizer;
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@iframe-resizer/child@5.5.9"></script>
@@ -1910,9 +1909,21 @@
             .range([0, hMain])
             .padding(0.02);
 
-          const seriesByT = new Map(
-            (magSeries || []).map((r) => [r.t, r.vals || []]),
-          );
+          const rows = Array.isArray(magSeries) ? magSeries : [];
+          const hasZeroBasedT = rows.some((r) => Number(r && r.t) === 0);
+          const hasOneBasedT =
+            !hasZeroBasedT && rows.some((r) => Number(r && r.t) === 1);
+          const tOffset = hasOneBasedT ? 1 : 0;
+
+          const seriesByT = new Map();
+          rows.forEach((r, idx) => {
+            if (!r) return;
+            const rawT = Number(r.t);
+            const t = Number.isFinite(rawT) ? rawT - tOffset : idx;
+            if (t >= 0 && t < T && !seriesByT.has(t)) {
+              seriesByT.set(t, r.vals || []);
+            }
+          });
 
           const cells = [];
           for (let t = 0; t < T; t++) {
@@ -2583,6 +2594,141 @@
               return out;
             }
 
+            function finalizeMagSpectrum(rawVals, n, k){
+              const finite = (rawVals || [])
+                .map(v => Number(v))
+                .filter(v => isFinite(v))
+                .sort((a,b)=>a-b);
+
+              if(!finite.length) return Array(k).fill(NaN);
+
+              // numeric.eig runs on the 2n×2n real block matrix, so each
+              // eigenvalue of the Hermitian magnetic Laplacian appears twice.
+              // Collapse those duplicated pairs, but keep multiplicity in the
+              // original n×n spectrum.
+              const paired = [];
+              for(let i=0; i+1<finite.length && paired.length<n; i+=2){
+                paired.push(0.5 * (finite[i] + finite[i+1]));
+              }
+
+              let out = paired;
+              if(out.length < Math.min(n, k)){
+                out = finite.slice(0, Math.min(n, finite.length));
+              }
+
+              const res = out.slice(0, Math.min(k, out.length));
+              while(res.length < k) res.push(NaN);
+              return res;
+            }
+
+            function diagonalJitterCopy(M, eps){
+              const n = M.length;
+              const out = M.map(row => row.slice());
+              const base = eps || 1e-10;
+              for(let i=0;i<n;i++){
+                out[i][i] += base * (1 + i / Math.max(1, n - 1));
+              }
+              return out;
+            }
+
+            function jacobiEigenvaluesSymmetric(M, tol, maxSweeps){
+              const n = M.length;
+              if(n === 0) return [];
+              if(n === 1) return [Number(M[0][0])];
+
+              const A = M.map(row => row.slice());
+              const threshold = tol || 1e-9;
+              const sweeps = maxSweeps || 18;
+
+              for(let sweep=0; sweep<sweeps; sweep++){
+                let maxOff = 0;
+
+                for(let p=0; p<n-1; p++){
+                  for(let q=p+1; q<n; q++){
+                    const apq = A[p][q];
+                    const absApq = Math.abs(apq);
+                    if(absApq > maxOff) maxOff = absApq;
+                    if(absApq < threshold) continue;
+
+                    const app = A[p][p];
+                    const aqq = A[q][q];
+                    const tau = (aqq - app) / (2 * apq);
+                    const t = tau === 0
+                      ? 1
+                      : Math.sign(tau) / (Math.abs(tau) + Math.sqrt(1 + tau * tau));
+                    const c = 1 / Math.sqrt(1 + t * t);
+                    const s = t * c;
+
+                    for(let r=0; r<n; r++){
+                      if(r === p || r === q) continue;
+                      const arp = A[r][p];
+                      const arq = A[r][q];
+                      const nrp = c * arp - s * arq;
+                      const nrq = s * arp + c * arq;
+                      A[r][p] = nrp;
+                      A[p][r] = nrp;
+                      A[r][q] = nrq;
+                      A[q][r] = nrq;
+                    }
+
+                    const npp = c*c*app - 2*s*c*apq + s*s*aqq;
+                    const nqq = s*s*app + 2*s*c*apq + c*c*aqq;
+                    A[p][p] = npp;
+                    A[q][q] = nqq;
+                    A[p][q] = 0;
+                    A[q][p] = 0;
+                  }
+                }
+
+                if(maxOff < threshold) break;
+              }
+
+              const vals = [];
+              for(let i=0;i<n;i++) vals.push(Number(A[i][i]));
+              vals.sort((a,b)=>a-b);
+              return vals;
+            }
+
+            function solveMagBlockSpectrum(B, n, k){
+              const minFinite = Math.min(k, Math.max(2, Math.min(n, 4)));
+
+              function good(res){
+                let finite = 0;
+                for(const v of res){
+                  if(isFinite(v)) finite++;
+                }
+                return finite >= minFinite;
+              }
+
+              try{
+                const eig = numeric.eig(B);
+                const res = finalizeMagSpectrum(eig && eig.lambda ? eig.lambda.x : [], n, k);
+                if(good(res)) return res;
+              }catch(err){}
+
+              // Day-1 graphs can be especially sparse / degenerate; a tiny
+              // diagonal jitter stabilizes the eigensolver without changing the
+              // visible spectrum in any meaningful way.
+              try{
+                const Bj = diagonalJitterCopy(B, 1e-10);
+                const eig = numeric.eig(Bj);
+                const res = finalizeMagSpectrum(eig && eig.lambda ? eig.lambda.x : [], n, k);
+                if(good(res)) return res;
+              }catch(err){}
+
+              try{
+                const vals = jacobiEigenvaluesSymmetric(
+                  diagonalJitterCopy(B, 1e-12),
+                  1e-8,
+                  18,
+                );
+                const res = finalizeMagSpectrum(vals, n, k);
+                if(good(res)) return res;
+              }catch(err){}
+
+              return Array(k).fill(NaN);
+            }
+
             function magneticLaplacianEigenvalues(A, q, k){
               const n = A.length;
 
@@ -2652,31 +2798,7 @@
                 }
               }
 
-              let eig;
-              try{
-                eig = numeric.eig(B);
-              }catch(err){
-                return Array(k).fill(NaN);
-              }
-
-              const vals = eig.lambda.x.slice().map(v => Number(v));
-              vals.sort((a,b)=>a-b);
-
-              const uniq = [];
-              const tol = 1e-6;
-              for(const v of vals){
-                if(!isFinite(v)) continue;
-                if(uniq.length === 0 || Math.abs(v - uniq[uniq.length-1]) > tol){
-                  uniq.push(v);
-                }
-                if(uniq.length >= n) break;
-              }
-
-              const out = uniq.length ? uniq : vals;
-              const kEff = Math.min(k, out.length);
-              const res = out.slice(0, kEff);
-              while(res.length < k) res.push(NaN);
-              return res;
+              return solveMagBlockSpectrum(B, n, k);
             }
 
             function computeMagSpectrum(edgesByDay, nodes, q, k, quality, magStep, useWeights){
