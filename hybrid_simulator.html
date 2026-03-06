@@ -6,6 +6,11 @@
     <meta content="width=device-width,initial-scale=1" name="viewport" />
     <title>Hybrid COROP–Farm Dynamic Network Simulator</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@iframe-resizer/child@5.5.9"></script>
+    <script
+      async
+      src="/node_modules/@iframe-resizer/child/index.umd.js"
+    ></script>
     <style>
       :root {
         /* Day mode (default) */
@@ -895,10 +900,7 @@
       </div>
       <div class="card" id="map-panel">
         <h2>
-          <span
-            >Network on NL COROP map
-            </span
-          >
+          <span>Network on NL COROP map </span>
           <span class="pill" id="mapBadge">loading…</span>
         </h2>
         <svg id="mapSvg"></svg>
@@ -923,20 +925,14 @@
       <div id="piMagRow">
         <div class="card" id="pi-card">
           <h2>
-            <span
-              >π-mass
-              </span
-            >
+            <span>π-mass </span>
             <span class="pill" id="piBadge">—</span>
           </h2>
           <svg id="piSvg"></svg>
         </div>
         <div class="card" id="mag-card">
           <h2>
-            <span
-              >Magnetic Laplacian spectrum
-              </span
-            >
+            <span>Magnetic Laplacian spectrum </span>
             <span class="pill" id="magBadge">—</span>
           </h2>
           <svg id="magSvg"></svg>
@@ -945,20 +941,14 @@
       <div id="teaWrap">
         <div class="card" id="tea-card">
           <h2>
-            <span
-              >TEA
-              </span
-            >
+            <span>TEA </span>
             <span class="pill" id="teaBadge">—</span>
           </h2>
           <svg id="teaSvg"></svg>
         </div>
         <div class="card" id="tna-card">
           <h2>
-            <span
-              >TNA
-              </span
-            >
+            <span>TNA </span>
             <span class="pill" id="tnaBadge">—</span>
           </h2>
           <svg id="tnaSvg"></svg>
@@ -2179,10 +2169,7 @@
           );
 
           const q = fmt3(+el.qCharge.value);
-          setBadge(
-            "#magBadge",
-            `K=${state.kEig} · q=${q} · ${wm}`,
-          );
+          setBadge("#magBadge", `K=${state.kEig} · q=${q} · ${wm}`);
           setBadge("#runBadge", `${state.focalCode || "—"} · K=${state.kEig}`);
         }
 
@@ -3181,11 +3168,13 @@
 
         async function loadGeo() {
           setStatus("Loading nl_corop.geojson…");
-          const corop = await fetch("./assets/files/nl_corop.geojson").then((r) => r.json());
-          setStatus("Loading nl_corop_labelpoint.geojson…");
-          const labels = await fetch("./assets/files/nl_corop_labelpoint.geojson").then(
+          const corop = await fetch("./assets/files/nl_corop.geojson").then(
             (r) => r.json(),
           );
+          setStatus("Loading nl_corop_labelpoint.geojson…");
+          const labels = await fetch(
+            "./assets/files/nl_corop_labelpoint.geojson",
+          ).then((r) => r.json());
 
           state.corop = corop;
           state.labels = labels;
