@@ -2854,47 +2854,21 @@
     </div>
     <!--//configure-panel-->
 
-    <!-- iframe-resizer (auto-height for embedded simulator) -->
+    <!-- iframe-resizer -->
     <script src="https://cdn.jsdelivr.net/npm/@iframe-resizer/parent@5.5.9"></script>
     <script>
       (function () {
         const iframe = document.getElementById("hybridSimIframe");
         if (!iframe || typeof iframeResize !== "function") return;
 
-        const OPTIONS = {
-          license: "GPLv3",
-          log: false,
-          checkOrigin: false,
-          warningTimeout: 10000,
-          onReady: function (iframeEl) {
-            // A couple of forced resizes help with late layout / fonts / heavy JS in the iframe.
-            try {
-              if (iframeEl.iFrameResizer) iframeEl.iFrameResizer.resize();
-            } catch (e) {}
-            requestAnimationFrame(() => {
-              try {
-                if (iframeEl.iFrameResizer) iframeEl.iFrameResizer.resize();
-              } catch (e) {}
-            });
-            setTimeout(() => {
-              try {
-                if (iframeEl.iFrameResizer) iframeEl.iFrameResizer.resize();
-              } catch (e) {}
-            }, 450);
+        iframeResize(
+          {
+            license: "GPLv3",
+            log: false,
+            checkOrigin: false,
+            warningTimeout: 10000,
           },
-        };
-
-        iframeResize(OPTIONS, iframe);
-
-        // Mobile Safari can restore pages from bfcache without rerunning everything; ask for a resize.
-        window.addEventListener(
-          "pageshow",
-          () => {
-            try {
-              if (iframe.iFrameResizer) iframe.iFrameResizer.resize();
-            } catch (e) {}
-          },
-          { passive: true },
+          iframe,
         );
       })();
     </script>
