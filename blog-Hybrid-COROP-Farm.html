@@ -42,7 +42,7 @@
       .hybrid-sim-iframe {
         width: 100%;
         height: 100vh;
-        min-height: 820px;
+        min-height: 1180px;
         border: 1px solid rgba(0, 0, 0, 0.12);
         border-radius: 12px;
         background: #fff;
@@ -102,14 +102,15 @@
           max-width: 980px;
         }
       }
-    
+
       /* Concept toolbars: compact controls */
       .concept-card .toolbar input[type="range"] {
         width: 140px;
       }
       .concept-card .toolbar .stat {
         font-variant-numeric: tabular-nums;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
           "Liberation Mono", "Courier New", monospace;
         opacity: 0.85;
         min-width: 44px;
@@ -119,7 +120,50 @@
       body.dark-mode .concept-card .toolbar input[type="range"] {
         filter: brightness(1.05) contrast(1.05);
       }
-</style>
+
+      /* Concept figures: responsive toolbars (mobile-friendly) */
+      .concept-card .toolbar {
+        flex-wrap: wrap;
+      }
+      .concept-card .toolbar .d-flex {
+        flex-wrap: wrap;
+      }
+      .concept-card .toolbar .btn {
+        white-space: normal;
+      }
+
+      @media (max-width: 576px) {
+        .concept-card .toolbar {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+        .concept-card .toolbar .title {
+          width: 100%;
+        }
+        .concept-card .toolbar .d-flex {
+          width: 100%;
+        }
+        .concept-card .toolbar input[type="range"] {
+          width: 100%;
+          max-width: none;
+        }
+        .concept-card .toolbar .stat {
+          min-width: unset;
+          text-align: left;
+        }
+        .concept-card .toolbar .btn {
+          width: 100%;
+        }
+        /* Give the more complex sketches a bit more vertical space */
+        #piMassConceptCard .viz {
+          height: 400px;
+        }
+        #magneticConceptCard .viz {
+          height: 440px;
+        }
+      }
+    </style>
     <script>
       window.MathJax = {
         tex: {
@@ -296,16 +340,6 @@
               </li>
             </ul>
 
-            <div class="alert alert-warning mt-4" role="alert">
-              <strong>Toy-model disclaimer.</strong>
-              The simulator below is designed to make the
-              <em>data structure</em> and the <em>statistics</em> tangible. It
-              does not attempt to reproduce the full Dutch trade process
-              (seasonality, production types, transport constraints, etc.). Use
-              it as an interactive “whiteboard” for interpreting the plots you
-              will see in real data.
-            </div>
-
             <h3 class="mt-5 mb-3" id="hybrid-sim">
               Interactive hybrid-network simulator
             </h3>
@@ -364,11 +398,11 @@
               intervention strategies.<sup><a href="#ref4">[4]</a></sup>
             </p>
             <p>
-              A hybrid network is a compromise: keep the focal region
-              detailed (farm nodes), and contract everything else into regional
+              A hybrid network is a compromise: keep the focal region detailed
+              (farm nodes), and contract everything else into regional
               “supernodes”. This is a form of <em>graph coarsening</em> tuned
-              for interpretation and computation. We have fewer nodes outside, but
-              still explicit cross-region flows.<sup
+              for interpretation and computation. We have fewer nodes outside,
+              but still explicit cross-region flows.<sup
                 ><a href="#ref5">[5]</a></sup
               >
             </p>
@@ -376,13 +410,15 @@
             <div class="concept-card my-4">
               <div class="toolbar">
                 <p class="title mb-0">Concept sketch: full vs hybrid network</p>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 flex-wrap">
                   <button
                     class="btn btn-sm btn-secondary"
                     id="btnConceptToggle"
+                    title="Toggle between contracted (hybrid) and expanded (full) view"
+                    aria-pressed="true"
                   >
-                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i>Contract
-                    / Expand
+                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i
+                    ><span id="btnConceptToggleLabel">Expand</span>
                   </button>
                 </div>
               </div>
@@ -398,9 +434,7 @@
               </div>
             </div>
 
-            <h3 class="mt-5 mb-3">
-              Formal definition: hybrid temporal graph
-            </h3>
+            <h3 class="mt-5 mb-3">Formal definition: hybrid temporal graph</h3>
             <p>
               Start from daily shipment records $$r = (t, u, v, w, c_u, c_v),$$
               where <em>u</em> and <em>v</em> are premises, <em>w</em> is a
@@ -438,10 +472,10 @@
             </p>
 
             <p class="mb-0">
-              This “resolution switch” is similar to multilayer
-              and multiscale network thinking: you keep multiple interaction
-              scales in one representation rather than picking a single
-              resolution everywhere.<sup><a href="#ref3">[3]</a></sup>
+              This “resolution switch” is similar to multilayer and multiscale
+              network thinking: you keep multiple interaction scales in one
+              representation rather than picking a single resolution
+              everywhere.<sup><a href="#ref3">[3]</a></sup>
             </p>
 
             <h3 class="mt-5 mb-3">Why “higher-order” statistics?</h3>
@@ -462,6 +496,33 @@
                 <p class="title mb-0">
                   Concept sketch: TEA (edge turnover) categories
                 </p>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                  <span class="small text-muted">volatility</span>
+                  <input
+                    type="range"
+                    id="teaVol"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value="0.45"
+                  />
+                  <span class="small stat" id="teaVolVal">0.45</span>
+
+                  <span class="small text-muted ms-2">persistence</span>
+                  <input
+                    type="range"
+                    id="teaPersist"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value="0.62"
+                  />
+                  <span class="small stat" id="teaPersistVal">0.62</span>
+
+                  <button class="btn btn-sm btn-secondary" id="teaReseed">
+                    <i class="fa-solid fa-dice me-1"></i>Reseed
+                  </button>
+                </div>
               </div>
               <div class="viz" id="conceptVizTEA"></div>
               <div class="p-3">
@@ -521,8 +582,7 @@
             </p>
 
             <h3 class="mt-5 mb-3">
-              Statistic family B — π-mass (random-walk mass on Farms vs
-              Regions)
+              Statistic family B — π-mass (random-walk mass on Farms vs Regions)
             </h3>
             <p>
               TEA/TNA focus on <em>turnover</em>. π-mass focuses on
@@ -568,11 +628,11 @@
               ><sup><a href="#ref9">[9]</a></sup>
             </p>
 
-            
             <div class="concept-card my-4" id="piMassConceptCard">
               <div class="toolbar">
                 <p class="title mb-0">
-                  Concept sketch: π-mass as stationary flow split (Farms vs Regions)
+                  Concept sketch: π-mass as stationary flow split (Farms vs
+                  Regions)
                 </p>
                 <div class="d-flex gap-2 align-items-center flex-wrap">
                   <span class="small text-muted">outside dominance</span>
@@ -614,16 +674,20 @@
               <div class="viz" id="conceptVizPiMass"></div>
               <div class="p-3">
                 <div class="caption">
-                  A tiny hybrid graph with 3 farms (blue) and 3 regions (orange). Circle size is the
-                  stationary probability πᵢ of a lazy random walk. The bottom bar aggregates mass into
-                  π<sub>F</sub> and π<sub>R</sub>. Increase “outside dominance” to see how contraction can
-                  concentrate mass on regional supernodes.
-                  <sup><a href="#ref7">[7]</a></sup><sup><a href="#ref8">[8]</a></sup
+                  A tiny hybrid graph with 3 farms (blue) and 3 regions
+                  (orange). Circle size is the stationary probability πᵢ of a
+                  lazy random walk. The bottom bar aggregates mass into π<sub
+                    >F</sub
+                  >
+                  and π<sub>R</sub>. Increase “outside dominance” to see how
+                  contraction can concentrate mass on regional supernodes.
+                  <sup><a href="#ref7">[7]</a></sup
+                  ><sup><a href="#ref8">[8]</a></sup
                   ><sup><a href="#ref9">[9]</a></sup>
                 </div>
               </div>
             </div>
-<h3 class="mt-5 mb-3">
+            <h3 class="mt-5 mb-3">
               Statistic family C — magnetic Laplacian spectra
               (direction-sensitive fingerprints)
             </h3>
@@ -676,11 +740,11 @@
               concentration (π-mass).<sup><a href="#ref4">[4]</a></sup>
             </p>
 
-            
             <div class="concept-card my-4" id="magneticConceptCard">
               <div class="toolbar">
                 <p class="title mb-0">
-                  Concept sketch: magnetic Laplacian (direction → phase → spectrum)
+                  Concept sketch: magnetic Laplacian (direction → phase →
+                  spectrum)
                 </p>
                 <div class="d-flex gap-2 align-items-center flex-wrap">
                   <span class="small text-muted">directionality</span>
@@ -713,15 +777,16 @@
               <div class="viz" id="conceptVizMagnetic"></div>
               <div class="p-3">
                 <div class="caption">
-                  Left: a directed ring with two directions. Direction asymmetry is encoded as a phase
-                  θ = ±2πq on each undirected pair (phase wheel). Right: eigenvalues of the magnetic
-                  normalized Laplacian L<sub>q</sub>. Increasing directionality changes circulation modes and
-                  shifts the spectrum.
-                  <sup><a href="#ref10">[10]</a></sup><sup><a href="#ref12">[12]</a></sup>
+                  Left: a directed ring with two directions. Direction asymmetry
+                  is encoded as a phase θ = ±2πq on each undirected pair (phase
+                  wheel). Right: eigenvalues of the magnetic normalized
+                  Laplacian L<sub>q</sub>. Increasing directionality changes
+                  circulation modes and shifts the spectrum.
+                  <sup><a href="#ref10">[10]</a></sup
+                  ><sup><a href="#ref12">[12]</a></sup>
                 </div>
               </div>
             </div>
-
 
             <hr class="my-5" />
 
@@ -951,14 +1016,28 @@
                 if (!host || !window.d3) return;
 
                 const btn = document.getElementById("btnConceptToggle");
+                const btnLabel = document.getElementById(
+                  "btnConceptToggleLabel",
+                );
+
                 let contracted = true;
+                let lastW = 0;
 
                 const margin = { top: 18, right: 16, bottom: 18, left: 16 };
                 const height = 360;
 
+                function setBtn() {
+                  if (!btn) return;
+                  if (btnLabel)
+                    btnLabel.textContent = contracted ? "Expand" : "Contract";
+                  btn.setAttribute("aria-pressed", String(contracted));
+                }
+
                 function draw() {
                   host.innerHTML = "";
                   const w = host.clientWidth || 800;
+                  lastW = w;
+
                   const svg = d3
                     .select(host)
                     .append("svg")
@@ -973,19 +1052,39 @@
                       "transform",
                       `translate(${margin.left},${margin.top})`,
                     );
+
                   const innerW = w - margin.left - margin.right;
                   const innerH = height - margin.top - margin.bottom;
 
-                  const panelW = (innerW - 24) / 2;
-                  const panelH = innerH;
+                  const stack = innerW < 560;
+                  const panelW = stack ? innerW : (innerW - 24) / 2;
+                  const panelH = stack ? (innerH - 18) / 2 : innerH;
 
-                  const panels = [
-                    { x: 0, title: "Full (premise-level everywhere)" },
-                    {
-                      x: panelW + 24,
-                      title: "Hybrid (focal detailed, others coarsened)",
-                    },
-                  ];
+                  const panels = stack
+                    ? [
+                        {
+                          x: 0,
+                          y: 0,
+                          title: "Full (premise-level everywhere)",
+                        },
+                        {
+                          x: 0,
+                          y: panelH + 18,
+                          title: "Hybrid (focal detailed, others coarsened)",
+                        },
+                      ]
+                    : [
+                        {
+                          x: 0,
+                          y: 0,
+                          title: "Full (premise-level everywhere)",
+                        },
+                        {
+                          x: panelW + 24,
+                          y: 0,
+                          title: "Hybrid (focal detailed, others coarsened)",
+                        },
+                      ];
 
                   const bg = g
                     .selectAll(".panel")
@@ -993,7 +1092,7 @@
                     .enter()
                     .append("g")
                     .attr("class", "panel")
-                    .attr("transform", (d) => `translate(${d.x},0)`);
+                    .attr("transform", (d) => `translate(${d.x},${d.y})`);
 
                   bg.append("rect")
                     .attr("x", 0)
@@ -1002,9 +1101,8 @@
                     .attr("ry", 10)
                     .attr("width", panelW)
                     .attr("height", panelH)
-                    .attr("fill", "transparent")
-                    .attr("stroke", "currentColor")
-                    .attr("stroke-opacity", 0.12);
+                    .attr("fill", "rgba(0,0,0,0.02)")
+                    .attr("stroke", "rgba(0,0,0,0.12)");
 
                   bg.append("text")
                     .attr("x", 12)
@@ -1014,12 +1112,15 @@
                     .attr("opacity", 0.75)
                     .text((d) => d.title);
 
+                  const rand = d3.randomLcg(0.42);
+                  const spread0 = Math.min(panelW, panelH) * 0.34;
+                  const spread1 = Math.min(panelW, panelH) * 0.32;
+
                   function cluster(cx, cy, n, spread) {
-                    const pts = d3.range(n).map((i) => ({
-                      x: cx + (Math.random() - 0.5) * spread,
-                      y: cy + (Math.random() - 0.5) * spread,
+                    return d3.range(n).map(() => ({
+                      x: cx + (rand() - 0.5) * spread,
+                      y: cy + (rand() - 0.5) * spread,
                     }));
-                    return pts;
                   }
 
                   const regions = [
@@ -1029,22 +1130,29 @@
                   ];
 
                   const fullNodes = [
-                    ...cluster(regions[0].cx, regions[0].cy, 18, 120).map(
-                      (d) => ({ ...d, group: "focal" }),
+                    ...cluster(regions[0].cx, regions[0].cy, 18, spread0).map(
+                      (d) => ({
+                        ...d,
+                        group: "focal",
+                      }),
                     ),
-                    ...cluster(regions[1].cx, regions[1].cy, 14, 110).map(
-                      (d) => ({ ...d, group: "r2" }),
+                    ...cluster(regions[1].cx, regions[1].cy, 14, spread1).map(
+                      (d) => ({
+                        ...d,
+                        group: "r2",
+                      }),
                     ),
-                    ...cluster(regions[2].cx, regions[2].cy, 14, 110).map(
-                      (d) => ({ ...d, group: "r3" }),
+                    ...cluster(regions[2].cx, regions[2].cy, 14, spread1).map(
+                      (d) => ({
+                        ...d,
+                        group: "r3",
+                      }),
                     ),
                   ];
 
                   const fullEdges = d3.range(55).map(() => {
-                    const a =
-                      fullNodes[Math.floor(Math.random() * fullNodes.length)];
-                    const b =
-                      fullNodes[Math.floor(Math.random() * fullNodes.length)];
+                    const a = fullNodes[Math.floor(rand() * fullNodes.length)];
+                    const b = fullNodes[Math.floor(rand() * fullNodes.length)];
                     return { a, b };
                   });
 
@@ -1066,27 +1174,35 @@
                   }
 
                   function hybridizeEdges(edges, nodesHybrid) {
+                    const focal = nodesHybrid.filter(
+                      (n) => n.group === "focal",
+                    );
                     const r2 = nodesHybrid.find(
-                      (n) => n.group === "r2" && n.super,
+                      (n) => n.super && n.group === "r2",
                     );
                     const r3 = nodesHybrid.find(
-                      (n) => n.group === "r3" && n.super,
+                      (n) => n.super && n.group === "r3",
                     );
-                    const mapNode = (n) => {
-                      if (n.group === "focal") return n;
-                      return n.group === "r2" ? r2 : r3;
-                    };
-                    return edges.map((e) => ({
-                      a: mapNode(e.a),
-                      b: mapNode(e.b),
-                    }));
+                    const pickF = () =>
+                      focal[Math.floor(rand() * focal.length)];
+
+                    return edges.map((e) => {
+                      const mapNode = (n) => {
+                        if (n.group === "focal") return pickF();
+                        return n.group === "r2" ? r2 : r3;
+                      };
+                      return { a: mapNode(e.a), b: mapNode(e.b) };
+                    });
                   }
 
-                  // Left panel: full graph
-                  const left = bg
-                    .filter((d, i) => i === 0)
-                    .append("g")
-                    .attr("transform", "translate(0,0)");
+                  const color = {
+                    focal: "#2f80ed",
+                    r2: "#f2994a",
+                    r3: "#f2994a",
+                  };
+
+                  // Left panel: full
+                  const left = bg.filter((d, i) => i === 0);
                   left
                     .append("g")
                     .selectAll("path")
@@ -1095,7 +1211,7 @@
                     .append("path")
                     .attr("d", (e) => `M${e.a.x},${e.a.y} L${e.b.x},${e.b.y}`)
                     .attr("stroke", "currentColor")
-                    .attr("stroke-opacity", 0.08)
+                    .attr("stroke-opacity", 0.12)
                     .attr("fill", "none");
 
                   left
@@ -1106,17 +1222,12 @@
                     .append("circle")
                     .attr("cx", (d) => d.x)
                     .attr("cy", (d) => d.y)
-                    .attr("r", 3.0)
-                    .attr("fill", (d) =>
-                      d.group === "focal" ? "#2f80ed" : "#9aa5b1",
-                    )
-                    .attr("opacity", 0.95);
+                    .attr("r", 3.2)
+                    .attr("fill", (d) => color[d.group])
+                    .attr("opacity", 0.9);
 
-                  // Right panel: hybrid vs expanded toggle
-                  const right = bg
-                    .filter((d, i) => i === 1)
-                    .append("g")
-                    .attr("transform", "translate(0,0)");
+                  // Right panel: hybrid vs expanded
+                  const right = bg.filter((d, i) => i === 1);
                   const rightNodes = contracted
                     ? hybridNodesFrom(fullNodes)
                     : fullNodes;
@@ -1143,50 +1254,72 @@
                     .append("circle")
                     .attr("cx", (d) => d.x)
                     .attr("cy", (d) => d.y)
-                    .attr("r", (d) => (d.super ? 7.5 : 3.0))
-                    .attr("fill", (d) =>
-                      d.group === "focal"
-                        ? "#2f80ed"
-                        : d.super
-                          ? "#f2994a"
-                          : "#9aa5b1",
+                    .attr("r", (d) => (d.super ? 8.5 : 3.2))
+                    .attr("fill", (d) => color[d.group])
+                    .attr("opacity", (d) => (d.super ? 0.95 : 0.9))
+                    .attr("stroke", (d) =>
+                      d.super ? "rgba(0,0,0,0.28)" : "none",
                     )
-                    .attr("opacity", 0.95);
-
-                  right
-                    .append("text")
-                    .attr("x", 12)
-                    .attr("y", panelH - 12)
-                    .attr("font-size", 11)
-                    .attr("fill", "currentColor")
-                    .attr("opacity", 0.7)
-                    .text(
-                      contracted
-                        ? "Contracted view (outside = supernodes)"
-                        : "Expanded view (premise-level everywhere)",
-                    );
+                    .attr("stroke-width", (d) => (d.super ? 1.2 : 0));
                 }
 
                 draw();
-                window.addEventListener("resize", () => draw(), {
-                  passive: true,
-                });
+                setBtn();
+
                 if (btn) {
                   btn.addEventListener("click", () => {
                     contracted = !contracted;
+                    setBtn();
                     draw();
                   });
                 }
 
+                let resizeRaf = 0;
+                window.addEventListener(
+                  "resize",
+                  () => {
+                    cancelAnimationFrame(resizeRaf);
+                    resizeRaf = requestAnimationFrame(() => {
+                      const w = host.clientWidth || 800;
+                      if (Math.abs(w - lastW) < 2) return;
+                      draw();
+                    });
+                  },
+                  { passive: true },
+                );
+
                 // ---------------------------
-                // Concept viz: TEA stack (toy)
+                // Concept viz: TEA stack
                 // ---------------------------
                 const host2 = document.getElementById("conceptVizTEA");
                 if (!host2 || !window.d3) return;
 
+                let lastWTea = 0;
+
+                const teaVolEl = document.getElementById("teaVol");
+                const teaVolValEl = document.getElementById("teaVolVal");
+                const teaPersistEl = document.getElementById("teaPersist");
+                const teaPersistValEl =
+                  document.getElementById("teaPersistVal");
+                const teaReseedBtn = document.getElementById("teaReseed");
+
+                let teaSeed = 11;
+
+                function mulberry32(a) {
+                  return function () {
+                    a |= 0;
+                    a = (a + 0x6d2b79f5) | 0;
+                    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+                    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+                    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+                  };
+                }
+
                 function drawTEA() {
                   host2.innerHTML = "";
                   const w = host2.clientWidth || 800;
+                  lastWTea = w;
+
                   const h = 360;
                   const svg = d3
                     .select(host2)
@@ -1195,7 +1328,13 @@
                     .attr("height", h)
                     .attr("viewBox", `0 0 ${w} ${h}`);
 
-                  const m = { top: 22, right: 18, bottom: 32, left: 44 };
+                  const narrow = w < 720;
+                  const m = {
+                    top: narrow ? 44 : 26,
+                    right: 18,
+                    bottom: 32,
+                    left: 44,
+                  };
                   const iw = w - m.left - m.right;
                   const ih = h - m.top - m.bottom;
 
@@ -1203,48 +1342,77 @@
                     .append("g")
                     .attr("transform", `translate(${m.left},${m.top})`);
 
-                  // Toy 10-day series
                   const T = 10;
                   const days = d3.range(T).map((d) => `d${d + 1}`);
 
+                  const vol = teaVolEl ? +teaVolEl.value : 0.45;
+                  const persistBias = teaPersistEl ? +teaPersistEl.value : 0.62;
+
+                  if (teaVolValEl) teaVolValEl.textContent = vol.toFixed(2);
+                  if (teaPersistValEl)
+                    teaPersistValEl.textContent = persistBias.toFixed(2);
+
+                  const rng = mulberry32(teaSeed);
+
                   const data = days.map((day, i) => {
-                    const persist = 40 + Math.round(25 * Math.random());
-                    const reactivated = 5 + Math.round(10 * Math.random());
-                    const fresh = 8 + Math.round(12 * Math.random());
-                    const churn = 10 + Math.round(15 * Math.random());
+                    const seasonal = 6 * Math.sin((2 * Math.PI * i) / T);
+
+                    const persist = Math.max(
+                      8,
+                      Math.round(
+                        28 + 26 * persistBias + seasonal + 8 * (rng() - 0.5),
+                      ),
+                    );
+
+                    const reactivated = Math.max(
+                      0,
+                      Math.round(2 + 14 * vol * rng()),
+                    );
+
+                    const fresh = Math.max(0, Math.round(4 + 16 * vol * rng()));
+
+                    const churn = Math.max(
+                      0,
+                      Math.round(
+                        4 + 18 * vol * rng() + 10 * (1 - persistBias) * rng(),
+                      ),
+                    );
+
                     return { day, persist, reactivated, fresh, churn };
                   });
 
                   const keys = ["persist", "reactivated", "fresh"];
-                  const stack = d3.stack().keys(keys);
-                  const stacked = stack(data);
-
-                  const maxPos = d3.max(
-                    data,
-                    (d) => d.persist + d.reactivated + d.fresh,
-                  );
-                  const maxNeg = d3.max(data, (d) => d.churn);
+                  const stack = d3.stack().keys(keys)(data);
 
                   const x = d3
                     .scaleBand()
                     .domain(days)
                     .range([0, iw])
-                    .padding(0.18);
+                    .padding(0.15);
+                  const maxPos =
+                    d3.max(data, (d) => d.persist + d.reactivated + d.fresh) ||
+                    1;
+                  const maxNeg = d3.max(data, (d) => d.churn) || 1;
                   const y = d3
                     .scaleLinear()
                     .domain([-maxNeg * 1.15, maxPos * 1.15])
                     .range([ih, 0])
                     .nice();
 
+                  const color = d3
+                    .scaleOrdinal()
+                    .domain(["persist", "reactivated", "fresh"])
+                    .range(["#2f80ed", "#56ccf2", "#6fcf97"]);
+
                   g.append("g")
-                    .attr("transform", `translate(0,${y(0)})`)
+                    .attr("transform", `translate(0,${ih})`)
                     .call(d3.axisBottom(x).tickSizeOuter(0))
                     .selectAll("text")
                     .attr("font-size", 11)
                     .attr("opacity", 0.8);
 
                   g.append("g")
-                    .call(d3.axisLeft(y).ticks(5))
+                    .call(d3.axisLeft(y).ticks(6))
                     .selectAll("text")
                     .attr("font-size", 11)
                     .attr("opacity", 0.8);
@@ -1254,37 +1422,25 @@
                     .attr("x2", iw)
                     .attr("y1", y(0))
                     .attr("y2", y(0))
-                    .attr("stroke", "currentColor")
-                    .attr("stroke-opacity", 0.2);
-
-                  const color = d3
-                    .scaleOrdinal()
-                    .domain(keys)
-                    .range(["#2f80ed", "#56ccf2", "#27ae60"]);
+                    .attr("stroke", "rgba(0,0,0,0.25)");
 
                   g.selectAll(".layer")
-                    .data(stacked)
+                    .data(stack)
                     .enter()
                     .append("g")
+                    .attr("class", "layer")
                     .attr("fill", (d) => color(d.key))
+                    .attr("opacity", 0.9)
                     .selectAll("rect")
-                    .data((d) =>
-                      d.map((v) => ({
-                        key: d.key,
-                        day: v.data.day,
-                        y0: v[0],
-                        y1: v[1],
-                      })),
-                    )
+                    .data((d) => d)
                     .enter()
                     .append("rect")
-                    .attr("x", (d) => x(d.day))
+                    .attr("x", (d) => x(d.data.day))
                     .attr("width", x.bandwidth())
-                    .attr("y", (d) => y(d.y1))
-                    .attr("height", (d) => Math.max(0, y(d.y0) - y(d.y1)))
+                    .attr("y", (d) => y(d[1]))
+                    .attr("height", (d) => Math.max(0, y(d[0]) - y(d[1])))
                     .attr("rx", 3)
-                    .attr("ry", 3)
-                    .attr("opacity", 0.92);
+                    .attr("ry", 3);
 
                   // churn bars (negative)
                   g.append("g")
@@ -1294,29 +1450,39 @@
                     .append("rect")
                     .attr("x", (d) => x(d.day))
                     .attr("width", x.bandwidth())
-                    .attr("y", (d) => y(0))
+                    .attr("y", () => y(0))
                     .attr("height", (d) => Math.max(0, y(-d.churn) - y(0)))
                     .attr("fill", "#eb5757")
                     .attr("opacity", 0.88)
                     .attr("rx", 3)
                     .attr("ry", 3);
 
-                  // legend
+                  // legend (more breathing room at the top)
                   const legend = svg
                     .append("g")
-                    .attr("transform", `translate(${m.left + 6},${10})`);
+                    .attr("transform", `translate(${m.left + 6},${20})`);
+
                   const items = [
                     { k: "persist", label: "persist" },
                     { k: "reactivated", label: "reactivated" },
                     { k: "fresh", label: "new" },
                     { k: "churn", label: "churn (lost since yesterday)" },
                   ];
+
+                  const cols = narrow ? 2 : 4;
+                  const colW = narrow ? (iw - 8) / 2 : 175;
+
                   const lg = legend
                     .selectAll("g")
                     .data(items)
                     .enter()
                     .append("g")
-                    .attr("transform", (d, i) => `translate(${i * 175},0)`);
+                    .attr("transform", (d, i) =>
+                      narrow
+                        ? `translate(${(i % cols) * colW},${Math.floor(i / cols) * 16})`
+                        : `translate(${i * colW},0)`,
+                    );
+
                   lg.append("rect")
                     .attr("width", 10)
                     .attr("height", 10)
@@ -1325,6 +1491,7 @@
                       d.k === "churn" ? "#eb5757" : color(d.k),
                     )
                     .attr("opacity", 0.95);
+
                   lg.append("text")
                     .attr("x", 14)
                     .attr("y", 0)
@@ -1334,20 +1501,43 @@
                     .text((d) => d.label);
                 }
 
-                drawTEA();
-                window.addEventListener("resize", () => drawTEA(), {
-                  passive: true,
+                [teaVolEl, teaPersistEl].forEach((el) => {
+                  if (!el) return;
+                  el.addEventListener("input", drawTEA);
+                  el.addEventListener("change", drawTEA);
                 });
+
+                if (teaReseedBtn) {
+                  teaReseedBtn.addEventListener("click", () => {
+                    teaSeed = (teaSeed + 1) % 100000;
+                    drawTEA();
+                  });
+                }
+
+                drawTEA();
+
+                let teaRaf = 0;
+                window.addEventListener(
+                  "resize",
+                  () => {
+                    cancelAnimationFrame(teaRaf);
+                    teaRaf = requestAnimationFrame(() => {
+                      const w = host2.clientWidth || 800;
+                      if (Math.abs(w - lastWTea) < 2) return;
+                      drawTEA();
+                    });
+                  },
+                  { passive: true },
+                );
               })();
             </script>
-
 
             <script>
               (function () {
                 if (!window.d3 || !window.numeric) return;
 
                 // ---------------------------
-                // Concept viz: π-mass (toy hybrid graph)
+                // Concept viz: π-mass
                 // ---------------------------
                 const hostPi = document.getElementById("conceptVizPiMass");
                 if (hostPi) {
@@ -1373,7 +1563,8 @@
                   function buildEdges(rng) {
                     // Nodes: 0..2 farms, 3..5 regions
                     const edges = [];
-                    const add = (u, v, kind) => edges.push({ u, v, kind, m: 0.85 + 0.3 * rng() });
+                    const add = (u, v, kind) =>
+                      edges.push({ u, v, kind, m: 0.85 + 0.3 * rng() });
 
                     // Farm cycle (strong local circulation)
                     add(0, 1, "FF");
@@ -1463,7 +1654,8 @@
                         for (let j = 0; j < n; j++) nx[j] += xi * row[j];
                       }
                       let diff = 0;
-                      for (let j = 0; j < n; j++) diff += Math.abs(nx[j] - x[j]);
+                      for (let j = 0; j < n; j++)
+                        diff += Math.abs(nx[j] - x[j]);
                       x = nx;
                       if (diff < tol) break;
                     }
@@ -1473,7 +1665,9 @@
 
                   function computePi(edges, dom, alpha, mode) {
                     const n = 6;
-                    const A = Array.from({ length: n }, () => new Array(n).fill(0));
+                    const A = Array.from({ length: n }, () =>
+                      new Array(n).fill(0),
+                    );
                     const wFF = 2.4 * (1 - dom) + 0.25;
                     const wRR = 0.55 + 2.2 * dom;
                     const wX = 0.65 + 1.9 * dom;
@@ -1489,7 +1683,9 @@
                     });
 
                     // Build lazy row-stochastic P
-                    const P = Array.from({ length: n }, () => new Array(n).fill(0));
+                    const P = Array.from({ length: n }, () =>
+                      new Array(n).fill(0),
+                    );
                     for (let i = 0; i < n; i++) {
                       let out = 0;
                       for (let j = 0; j < n; j++) out += A[i][j];
@@ -1512,7 +1708,8 @@
                     }
                     const sccs = sccTarjan(n, adj);
                     let lic = [];
-                    for (const scc of sccs) if (scc.length > lic.length) lic = scc;
+                    for (const scc of sccs)
+                      if (scc.length > lic.length) lic = scc;
                     lic = lic.slice().sort((a, b) => a - b);
 
                     const Psub = lic.map((i) => lic.map((j) => P[i][j]));
@@ -1525,7 +1722,14 @@
                     const piF = pi[0] + pi[1] + pi[2];
                     const piR = pi[3] + pi[4] + pi[5];
 
-                    return { A, pi, piF, piR, licSize: lic.length, weights: { wFF, wRR, wX } };
+                    return {
+                      A,
+                      pi,
+                      piF,
+                      piR,
+                      licSize: lic.length,
+                      weights: { wFF, wRR, wX },
+                    };
                   }
 
                   function drawPi() {
@@ -1554,7 +1758,9 @@
                       .style("display", "block");
 
                     const m = { top: 16, right: 14, bottom: 64, left: 14 };
-                    const g = svg.append("g").attr("transform", `translate(${m.left},${m.top})`);
+                    const g = svg
+                      .append("g")
+                      .attr("transform", `translate(${m.left},${m.top})`);
                     const iw = W - m.left - m.right;
                     const ih = H - m.top - m.bottom;
 
@@ -1571,7 +1777,7 @@
                     const yPos = (k, n) => (ih * (k + 1)) / (n + 1);
                     nodes.forEach((d) => {
                       const isFarm = d.type === "F";
-                      d.x = isFarm ? iw * 0.30 : iw * 0.70;
+                      d.x = isFarm ? iw * 0.3 : iw * 0.7;
                       d.y = isFarm ? yPos(d.idx, 4) : yPos(d.idx - 3, 4);
                     });
 
@@ -1657,7 +1863,9 @@
                       )
                       .attr("marker-end", "url(#piArrow)")
                       .append("title")
-                      .text((d) => `${nodes[d.u].id} → ${nodes[d.v].id} (${d.t})`);
+                      .text(
+                        (d) => `${nodes[d.u].id} → ${nodes[d.v].id} (${d.t})`,
+                      );
 
                     const rScale = d3
                       .scaleSqrt()
@@ -1696,7 +1904,7 @@
 
                     // Labels
                     g.append("text")
-                      .attr("x", iw * 0.30)
+                      .attr("x", iw * 0.3)
                       .attr("y", 12)
                       .attr("text-anchor", "middle")
                       .attr("font-size", 12)
@@ -1705,7 +1913,7 @@
                       .text("Farms");
 
                     g.append("text")
-                      .attr("x", iw * 0.70)
+                      .attr("x", iw * 0.7)
                       .attr("y", 12)
                       .attr("text-anchor", "middle")
                       .attr("font-size", 12)
@@ -1787,7 +1995,17 @@
                         drawPi();
                       });
                     }
-                    window.addEventListener("resize", drawPi, { passive: true });
+                    let piW = hostPi.clientWidth || 800;
+                    window.addEventListener(
+                      "resize",
+                      () => {
+                        const w = hostPi.clientWidth || 800;
+                        if (Math.abs(w - piW) < 2) return;
+                        piW = w;
+                        drawPi();
+                      },
+                      { passive: true },
+                    );
                     drawPi();
                   }
 
@@ -1795,7 +2013,7 @@
                 }
 
                 // ---------------------------
-                // Concept viz: magnetic Laplacian (toy directed ring)
+                // Concept viz: magnetic Laplacian
                 // ---------------------------
                 const hostMag = document.getElementById("conceptVizMagnetic");
                 if (hostMag) {
@@ -1818,17 +2036,25 @@
                   }
 
                   function buildAdj(n, gamma, rng) {
-                    const A = Array.from({ length: n }, () => new Array(n).fill(0));
+                    const A = Array.from({ length: n }, () =>
+                      new Array(n).fill(0),
+                    );
 
                     for (let i = 0; i < n; i++) {
                       const j1 = (i + 1) % n;
                       const j2 = (i + 2) % n;
 
                       const cw1 = (1 + gamma) * (0.9 + 0.25 * rng());
-                      const ccw1 = Math.max(0, (1 - gamma) * (0.9 + 0.25 * rng()));
+                      const ccw1 = Math.max(
+                        0,
+                        (1 - gamma) * (0.9 + 0.25 * rng()),
+                      );
 
                       const cw2 = 0.42 * (1 + gamma) * (0.9 + 0.25 * rng());
-                      const ccw2 = Math.max(0, 0.42 * (1 - gamma) * (0.9 + 0.25 * rng()));
+                      const ccw2 = Math.max(
+                        0,
+                        0.42 * (1 - gamma) * (0.9 + 0.25 * rng()),
+                      );
 
                       A[i][j1] += cw1;
                       A[j1][i] += ccw1;
@@ -1843,7 +2069,9 @@
                   function magneticEigenvalues(A, q) {
                     const n = A.length;
 
-                    const As = Array.from({ length: n }, () => new Array(n).fill(0));
+                    const As = Array.from({ length: n }, () =>
+                      new Array(n).fill(0),
+                    );
                     for (let i = 0; i < n; i++) {
                       for (let j = i + 1; j < n; j++) {
                         const mag = 0.5 * (A[i][j] + A[j][i]);
@@ -1861,8 +2089,12 @@
                     const dinv2 = d.map((x) => (x > 0 ? 1 / Math.sqrt(x) : 0));
                     const twoPiQ = 2 * Math.PI * q;
 
-                    const Hre = Array.from({ length: n }, () => new Array(n).fill(0));
-                    const Him = Array.from({ length: n }, () => new Array(n).fill(0));
+                    const Hre = Array.from({ length: n }, () =>
+                      new Array(n).fill(0),
+                    );
+                    const Him = Array.from({ length: n }, () =>
+                      new Array(n).fill(0),
+                    );
 
                     for (let i = 0; i < n; i++) {
                       for (let j = i + 1; j < n; j++) {
@@ -1879,8 +2111,12 @@
                       }
                     }
 
-                    const Lre = Array.from({ length: n }, () => new Array(n).fill(0));
-                    const Lim = Array.from({ length: n }, () => new Array(n).fill(0));
+                    const Lre = Array.from({ length: n }, () =>
+                      new Array(n).fill(0),
+                    );
+                    const Lim = Array.from({ length: n }, () =>
+                      new Array(n).fill(0),
+                    );
 
                     for (let i = 0; i < n; i++) {
                       for (let j = 0; j < n; j++) {
@@ -1897,7 +2133,9 @@
                     }
 
                     const N2 = 2 * n;
-                    const B = Array.from({ length: N2 }, () => new Array(N2).fill(0));
+                    const B = Array.from({ length: N2 }, () =>
+                      new Array(N2).fill(0),
+                    );
                     for (let i = 0; i < n; i++) {
                       for (let j = 0; j < n; j++) {
                         const x = Lre[i][j];
@@ -1917,7 +2155,10 @@
                       const tol = 1e-6;
                       for (const v of vals) {
                         if (!isFinite(v)) continue;
-                        if (uniq.length === 0 || Math.abs(v - uniq[uniq.length - 1]) > tol) {
+                        if (
+                          uniq.length === 0 ||
+                          Math.abs(v - uniq[uniq.length - 1]) > tol
+                        ) {
                           uniq.push(v);
                         }
                         if (uniq.length >= n) break;
@@ -1943,7 +2184,9 @@
                     const n = 10;
 
                     const A = buildAdj(n, gamma, rng);
-                    const eigs = magneticEigenvalues(A, q).map((v) => (isFinite(v) ? v : NaN));
+                    const eigs = magneticEigenvalues(A, q).map((v) =>
+                      isFinite(v) ? v : NaN,
+                    );
 
                     const svg = d3
                       .select(hostMag)
@@ -1957,10 +2200,30 @@
                     const iw = W - m.left - m.right;
                     const ih = H - m.top - m.bottom;
 
-                    const leftW = iw * 0.45;
-                    const rightW = iw - leftW - 18;
+                    const narrow = iw < 520;
+                    const gap = 18;
 
-                    const g = svg.append("g").attr("transform", `translate(${m.left},${m.top})`);
+                    // Layout: side-by-side on wide screens; stacked on narrow screens.
+                    const ringW = narrow ? iw : iw * 0.45;
+                    const specW = narrow ? iw : iw - ringW - gap;
+                    const ringH = narrow ? ih * 0.54 : ih;
+                    const specH = narrow ? ih - ringH - gap : ih;
+
+                    const g = svg
+                      .append("g")
+                      .attr("transform", `translate(${m.left},${m.top})`);
+
+                    const ring = g
+                      .append("g")
+                      .attr("transform", `translate(0,0)`);
+                    const spec = g
+                      .append("g")
+                      .attr(
+                        "transform",
+                        narrow
+                          ? `translate(0,${ringH + gap})`
+                          : `translate(${ringW + gap},0)`,
+                      );
 
                     // Arrow marker
                     const defs = svg.append("defs");
@@ -1978,43 +2241,7 @@
                       .attr("fill", "currentColor")
                       .attr("opacity", 0.55);
 
-                    // Left: directed ring
-                    const cx = leftW * 0.52;
-                    const cy = ih * 0.56;
-                    const R = Math.min(leftW, ih) * 0.34;
-
-                    const nodes = d3.range(n).map((i) => {
-                      const ang = (2 * Math.PI * i) / n - Math.PI / 2;
-                      return { i, ang, x: cx + R * Math.cos(ang), y: cy + R * Math.sin(ang) };
-                    });
-
-                    function arcPath(aAng, bAng, r, sweep) {
-                      const x1 = cx + r * Math.cos(aAng);
-                      const y1 = cy + r * Math.sin(aAng);
-                      const x2 = cx + r * Math.cos(bAng);
-                      const y2 = cy + r * Math.sin(bAng);
-                      const large = 0;
-                      return `M${x1},${y1} A${r},${r} 0 ${large} ${sweep} ${x2},${y2}`;
-                    }
-
-                    const edges = [];
-                    for (let i = 0; i < n; i++) {
-                      for (let j = 0; j < n; j++) {
-                        if (i === j) continue;
-                        if (A[i][j] <= 1e-9) continue;
-                        // only show the ring-ish edges (step 1 and step 2) for clarity
-                        const d1 = (j - i + n) % n;
-                        const d2 = (i - j + n) % n;
-                        const isStep = d1 === 1 || d1 === 2 || d2 === 1 || d2 === 2;
-                        if (!isStep) continue;
-                        edges.push({ i, j, w: A[i][j], step: d1, back: d2 });
-                      }
-                    }
-
-                    const maxW = d3.max(edges, (d) => d.w) || 1;
-
-                    const ring = g.append("g").attr("transform", `translate(0,0)`);
-
+                    // Left/top: directed ring
                     ring
                       .append("text")
                       .attr("x", 0)
@@ -2022,48 +2249,101 @@
                       .attr("font-size", 12)
                       .attr("fill", "currentColor")
                       .attr("opacity", 0.75)
-                      .text("Toy directed ring");
+                      .text("Directed edges induce phases");
+
+                    const cx = ringW * 0.52;
+                    const cy = ringH * 0.56;
+                    const R = Math.min(ringW, ringH) * 0.34;
+
+                    const nodes = d3.range(n).map((i) => {
+                      const ang = (2 * Math.PI * i) / n - Math.PI / 2;
+                      return {
+                        i,
+                        ang,
+                        x: cx + R * Math.cos(ang),
+                        y: cy + R * Math.sin(ang),
+                      };
+                    });
+
+                    function arcPath(aAng, bAng, r, sweep) {
+                      const a0 = [
+                        cx + r * Math.cos(aAng),
+                        cy + r * Math.sin(aAng),
+                      ];
+                      const b0 = [
+                        cx + r * Math.cos(bAng),
+                        cy + r * Math.sin(bAng),
+                      ];
+                      const large = 0; // always use the short arc
+                      return `M${a0[0]},${a0[1]} A${r},${r} 0 ${large} ${sweep} ${b0[0]},${b0[1]}`;
+                    }
+
+                    const edges = [];
+                    for (let i = 0; i < n; i++)
+                      edges.push({ u: i, v: (i + 1) % n, w: 1.0 });
+                    for (let u = 0; u < n; u++) {
+                      for (let v = 0; v < n; v++) {
+                        if (u === v) continue;
+                        if (A[u][v] > 0.8) edges.push({ u, v, w: A[u][v] });
+                      }
+                    }
 
                     ring
-                      .selectAll("path.edge")
+                      .append("g")
+                      .selectAll("path")
                       .data(edges)
                       .enter()
                       .append("path")
-                      .attr("class", "edge")
                       .attr("d", (e) => {
-                        const a = nodes[e.i].ang;
-                        const b = nodes[e.j].ang;
-                        const sgn = Math.sign(A[e.i][e.j] - A[e.j][e.i]);
-                        const r = R + (sgn >= 0 ? 10 : -10);
+                        const sgn = Math.sign(A[e.u][e.v] - A[e.v][e.u]);
+                        const wrapTop =
+                          (e.u <= 1 && e.v >= n - 2) ||
+                          (e.v <= 1 && e.u >= n - 2);
+
+                        const offset = wrapTop ? 6 : 10; // smaller offset for the 1/2 ↔ 9/10 wraps
+                        const r = R + (sgn >= 0 ? offset : -offset);
                         const sweep = sgn >= 0 ? 1 : 0;
-                        return arcPath(a, b, r, sweep);
+
+                        return arcPath(
+                          nodes[e.u].ang,
+                          nodes[e.v].ang,
+                          r,
+                          sweep,
+                        );
                       })
                       .attr("fill", "none")
-                      .attr("stroke", (e) => {
-                        const sgn = Math.sign(A[e.i][e.j] - A[e.j][e.i]);
-                        return sgn >= 0 ? "#2f80ed" : "#eb5757";
-                      })
-                      .attr("stroke-width", (e) => 0.7 + 2.4 * (e.w / maxW))
-                      .attr("stroke-opacity", 0.55)
-                      .attr("marker-end", "url(#magArrow)")
-                      .append("title")
-                      .text((e) => `edge ${e.i} → ${e.j}, w=${e.w.toFixed(2)}`);
+                      .attr("stroke", "currentColor")
+                      .attr("stroke-opacity", 0.22)
+                      .attr("stroke-width", (e) => 1 + 2.2 * e.w)
+                      .attr("marker-end", "url(#magArrow)");
 
                     ring
-                      .selectAll("circle.node")
+                      .append("g")
+                      .selectAll("circle")
                       .data(nodes)
                       .enter()
                       .append("circle")
-                      .attr("class", "node")
                       .attr("cx", (d) => d.x)
                       .attr("cy", (d) => d.y)
-                      .attr("r", 4.6)
-                      .attr("fill", "currentColor")
-                      .attr("opacity", 0.78);
+                      .attr("r", 6.2)
+                      .attr("fill", "#2f80ed")
+                      .attr("opacity", 0.9);
 
-                    // Right: spectrum
-                    const spec = g.append("g").attr("transform", `translate(${leftW + 18},0)`);
+                    ring
+                      .append("g")
+                      .selectAll("text")
+                      .data(nodes)
+                      .enter()
+                      .append("text")
+                      .attr("x", (d) => d.x)
+                      .attr("y", (d) => d.y + 3.8)
+                      .attr("text-anchor", "middle")
+                      .attr("font-size", 10)
+                      .attr("fill", "white")
+                      .attr("opacity", 0.95)
+                      .text((d) => d.i + 1);
 
+                    // Right/bottom: spectrum
                     spec
                       .append("text")
                       .attr("x", 0)
@@ -2076,32 +2356,38 @@
                     const sx = d3
                       .scaleBand()
                       .domain(d3.range(n).map((i) => i + 1))
-                      .range([0, rightW])
+                      .range([0, specW])
                       .padding(0.15);
 
                     const finite = eigs.filter((v) => isFinite(v));
-                    const ymax = finite.length ? Math.max(2.0, d3.max(finite) * 1.06) : 2.0;
+                    const ymax = finite.length
+                      ? Math.max(2.0, d3.max(finite) * 1.06)
+                      : 2.0;
 
-                    const sy = d3.scaleLinear().domain([0, ymax]).range([ih - 4, 28]).nice();
+                    const sy = d3
+                      .scaleLinear()
+                      .domain([0, ymax])
+                      .range([specH - 4, 28])
+                      .nice();
 
                     spec
                       .append("g")
-                      .attr("transform", `translate(0,${ih - 4})`)
+                      .attr("transform", `translate(0,${specH - 4})`)
                       .call(d3.axisBottom(sx).tickSizeOuter(0))
                       .selectAll("text")
                       .attr("font-size", 11)
-                      .attr("opacity", 0.7);
+                      .attr("opacity", 0.8);
 
                     spec
                       .append("g")
-                      .attr("transform", `translate(0,0)`)
                       .call(d3.axisLeft(sy).ticks(5))
                       .selectAll("text")
                       .attr("font-size", 11)
-                      .attr("opacity", 0.7);
+                      .attr("opacity", 0.8);
 
-                    // lollipops
-                    const pts = eigs.map((v, i) => ({ i: i + 1, v }));
+                    const pts = d3
+                      .range(n)
+                      .map((i) => ({ i: i + 1, v: eigs[i] }));
 
                     spec
                       .append("g")
@@ -2128,10 +2414,16 @@
                       .attr("fill", "#56ccf2")
                       .attr("opacity", (d) => (isFinite(d.v) ? 0.92 : 0.18))
                       .append("title")
-                      .text((d) => (isFinite(d.v) ? `λ${d.i} = ${d.v.toFixed(4)}` : `λ${d.i}: NA`));
+                      .text((d) =>
+                        isFinite(d.v)
+                          ? `λ${d.i} = ${d.v.toFixed(4)}`
+                          : `λ${d.i}: NA`,
+                      );
 
                     // Phase wheel (θ = ±2πq)
-                    const wheel = spec.append("g").attr("transform", `translate(${rightW - 54},${34})`);
+                    const wheel = spec
+                      .append("g")
+                      .attr("transform", `translate(${specW - 54},${34})`);
                     const r0 = 22;
                     const theta = 2 * Math.PI * q;
 
@@ -2157,30 +2449,19 @@
                         .attr("opacity", 0.9);
                     }
 
-                    // Note: y-axis points down in SVG, so sin is consistent with our ring angles.
+                    // SVG y-axis points down.
                     arrow(-Math.PI / 2 + theta, "#2f80ed");
                     arrow(-Math.PI / 2 - theta, "#eb5757");
 
-                    wheel
-                      .append("text")
-                      .attr("x", 0)
-                      .attr("y", r0 + 14)
-                      .attr("text-anchor", "middle")
-                      .attr("font-size", 10)
-                      .attr("fill", "currentColor")
-                      .attr("opacity", 0.65)
-                      .text("θ=±2πq");
-
-                    // tiny badge
                     spec
                       .append("text")
-                      .attr("x", rightW)
-                      .attr("y", 12)
-                      .attr("text-anchor", "end")
+                      .attr("x", 0)
+                      .attr("y", 28)
+                      .attr("text-anchor", "start")
                       .attr("font-size", 11)
                       .attr("fill", "currentColor")
                       .attr("opacity", 0.65)
-                      .text(`q=${q.toFixed(2)} · γ=${gamma.toFixed(2)}`);
+                      .text(`q=${q.toFixed(2)} · y=${gamma.toFixed(2)}`);
                   }
 
                   function bind() {
@@ -2195,7 +2476,17 @@
                         drawMag();
                       });
                     }
-                    window.addEventListener("resize", drawMag, { passive: true });
+                    let magW = hostMag.clientWidth || 800;
+                    window.addEventListener(
+                      "resize",
+                      () => {
+                        const w = hostMag.clientWidth || 800;
+                        if (Math.abs(w - magW) < 2) return;
+                        magW = w;
+                        drawMag();
+                      },
+                      { passive: true },
+                    );
                     drawMag();
                   }
 
@@ -2203,7 +2494,6 @@
                 }
               })();
             </script>
-
           </div>
           <nav class="blog-nav nav nav-justified my-5">
             <a
@@ -2211,9 +2501,7 @@
               href="blog-herdlink.html"
               >Previous<i class="arrow-prev fas fa-long-arrow-alt-left"></i
             ></a>
-            <a
-              class="nav-link-next nav-item nav-link rounded-right"
-              href="#"
+            <a class="nav-link-next nav-item nav-link rounded-right" href="#"
               >Next<i class="arrow-next fas fa-long-arrow-alt-right"></i
             ></a>
           </nav>
@@ -2320,53 +2608,43 @@
     <script>
       (function () {
         const iframe = document.getElementById("hybridSimIframe");
-        if (!iframe) return;
+        if (!iframe || typeof iframeResize !== "function") return;
 
-        const CHILD_SRC =
-          "https://cdn.jsdelivr.net/npm/@iframe-resizer/child@5.5.7";
         const OPTIONS = {
           license: "GPLv3",
           log: false,
           checkOrigin: false,
+          warningTimeout: 10000,
+          onReady: function (iframeEl) {
+            // A couple of forced resizes help with late layout / fonts / heavy JS in the iframe.
+            try {
+              if (iframeEl.iFrameResizer) iframeEl.iFrameResizer.resize();
+            } catch (e) {}
+            requestAnimationFrame(() => {
+              try {
+                if (iframeEl.iFrameResizer) iframeEl.iFrameResizer.resize();
+              } catch (e) {}
+            });
+            setTimeout(() => {
+              try {
+                if (iframeEl.iFrameResizer) iframeEl.iFrameResizer.resize();
+              } catch (e) {}
+            }, 450);
+          },
         };
 
-        function bind() {
-          if (typeof iframeResize !== "function") return;
-          iframeResize(OPTIONS, "#hybridSimIframe");
-        }
+        iframeResize(OPTIONS, iframe);
 
-        function tryInjectChild() {
-          try {
-            const doc = iframe.contentDocument || iframe.contentWindow.document;
-            if (!doc || !doc.head) return bind();
-
-            if (doc.querySelector("script[data-irs-child]")) return bind();
-
-            const s = doc.createElement("script");
-            s.async = true;
-            s.src = CHILD_SRC;
-            s.setAttribute("data-irs-child", "1");
-            s.onload = bind;
-            doc.head.appendChild(s);
-
-            // Fallback: still bind after a short delay in case onload is blocked.
-            setTimeout(bind, 200);
-          } catch (e) {
-            // Cross-origin: cannot inject; bind anyway (requires child to include its script).
-            bind();
-          }
-        }
-
-        // Run after iframe loads so we can inject on same-origin setups.
-        iframe.addEventListener("load", tryInjectChild, { passive: true });
-
-        // If the iframe is already loaded (fast cache), attempt immediately.
-        if (
-          iframe.contentDocument &&
-          iframe.contentDocument.readyState === "complete"
-        ) {
-          tryInjectChild();
-        }
+        // Mobile Safari can restore pages from bfcache without rerunning everything; ask for a resize.
+        window.addEventListener(
+          "pageshow",
+          () => {
+            try {
+              if (iframe.iFrameResizer) iframe.iFrameResizer.resize();
+            } catch (e) {}
+          },
+          { passive: true },
+        );
       })();
     </script>
 

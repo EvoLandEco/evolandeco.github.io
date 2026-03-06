@@ -6,12 +6,29 @@
     <meta content="width=device-width,initial-scale=1" name="viewport" />
     <title>Hybrid COROP–Farm Dynamic Network Simulator</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- iframe-resizer: child (for auto-height when embedded) -->
+    <script>
+      window.iframeResizer = {
+        license: "GPLv3",
+        onReady: function () {
+          const p = window.parentIframe || window.parentIFrame;
+          if (p && typeof p.resize === "function") {
+            try {
+              p.resize();
+            } catch (e) {}
+            setTimeout(() => {
+              try {
+                p.resize();
+              } catch (e) {}
+            }, 450);
+          }
+        },
+      };
+      // Backwards-compat: some setups still look for window.iFrameResizer
+      window.iFrameResizer = window.iframeResizer;
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/@iframe-resizer/child@5.5.9"></script>
-    <script
-      async
-      src="/node_modules/@iframe-resizer/child/index.umd.js"
-    ></script>
-    <style>
+<style>
       :root {
         /* Day mode (default) */
         --bg: #f5f7fb;
@@ -742,6 +759,7 @@
     </style>
   </head>
   <body>
+    <div id="iframeRoot" data-iframe-size>
     <header>
       <div class="title">
         <h1>Hybrid COROP–Farm Dynamic Network Simulator</h1>
@@ -3223,5 +3241,6 @@
           });
       })();
     </script>
+      </div>
   </body>
 </html>
