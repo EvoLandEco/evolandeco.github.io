@@ -425,11 +425,11 @@
               <div class="viz" id="conceptVizHybrid"></div>
               <div class="p-3">
                 <div class="caption">
-                  Left: farms everywhere (full premise graph). Right: one focal
-                  region stays farm-level; all other regions are contracted to
-                  one node each. The point is not exact geography, but the
-                  <em>resolution switch</em> and the preserved cross-region
-                  edges.
+                  Left: farms everywhere (full premise graph). Right: click to
+                  contract or expand the same graph. In the contracted view,
+                  focal farms stay as themselves, non-focal farms are merged
+                  into region supernodes, parallel edges are aggregated, and
+                  within-region links appear as supernode self-loops.
                 </div>
               </div>
             </div>
@@ -1031,6 +1031,214 @@
                   if (btnLabel)
                     btnLabel.textContent = contracted ? "Expand" : "Contract";
                   btn.setAttribute("aria-pressed", String(contracted));
+                  btn.setAttribute(
+                    "title",
+                    contracted
+                      ? "Show the full premise-level graph on the right"
+                      : "Apply the hybrid contraction map on the right",
+                  );
+                }
+
+                function pairKey(a, b) {
+                  return a.id < b.id ? `${a.id}|${b.id}` : `${b.id}|${a.id}`;
+                }
+
+                function buildNodes(panelW, panelH) {
+                  const rand = d3.randomLcg(0.42);
+                  const spread0 = Math.min(panelW, panelH) * 0.34;
+                  const spread1 = Math.min(panelW, panelH) * 0.32;
+
+                  const regions = [
+                    {
+                      name: "focal",
+                      label: "focal",
+                      cx: panelW * 0.35,
+                      cy: panelH * 0.58,
+                      halo: spread0 * 0.72,
+                    },
+                    {
+                      name: "r2",
+                      label: "region 2",
+                      cx: panelW * 0.7,
+                      cy: panelH * 0.35,
+                      halo: spread1 * 0.72,
+                    },
+                    {
+                      name: "r3",
+                      label: "region 3",
+                      cx: panelW * 0.74,
+                      cy: panelH * 0.76,
+                      halo: spread1 * 0.72,
+                    },
+                  ];
+
+                  function cluster(region, n, prefix, spread) {
+                    return d3.range(n).map((i) => ({
+                      id: `${prefix}${i + 1}`,
+                      label: `${prefix.toUpperCase()}${i + 1}`,
+                      group: region.name,
+                      x: region.cx + (rand() - 0.5) * spread,
+                      y: region.cy + (rand() - 0.5) * spread,
+                    }));
+                  }
+
+                  const focal = cluster(regions[0], 18, "f", spread0);
+                  const r2 = cluster(regions[1], 14, "r2_", spread1);
+                  const r3 = cluster(regions[2], 14, "r3_", spread1);
+
+                  return {
+                    regions,
+                    focal,
+                    r2,
+                    r3,
+                    fullNodes: [...focal, ...r2, ...r3],
+                  };
+                }
+
+                function sampleEdges(rng, sources, targets, count) {
+                  const edges = [];
+                  const used = new Set();
+                  const maxPairs =
+                    sources === targets
+                      ? (sources.length * (sources.length - 1)) / 2
+                      : sources.length * targets.length;
+                  const targetCount = Math.min(count, maxPairs);
+                  let guard = 0;
+
+                  while (
+                    edges.length < targetCount &&
+                    guard < targetCount * 60 + 200
+                  ) {
+                    const a = sources[Math.floor(rng() * sources.length)];
+                    const b = targets[Math.floor(rng() * targets.length)];
+                    guard += 1;
+
+                    if (!a || !b || a.id === b.id) continue;
+
+                    const key = pairKey(a, b);
+                    if (used.has(key)) continue;
+                    used.add(key);
+
+                    edges.push({
+                      id: `e${edges.length + 1}_${key}`,
+                      a,
+                      b,
+                    });
+                  }
+
+                  return edges;
+                }
+
+                function buildFullEdges(groups) {
+                  const rng = d3.randomLcg(0.314159);
+                  return [
+                    ...sampleEdges(rng, groups.focal, groups.focal, 18),
+                    ...sampleEdges(rng, groups.r2, groups.r2, 12),
+                    ...sampleEdges(rng, groups.r3, groups.r3, 12),
+                    ...sampleEdges(rng, groups.focal, groups.r2, 10),
+                    ...sampleEdges(rng, groups.focal, groups.r3, 10),
+                    ...sampleEdges(rng, groups.r2, groups.r3, 8),
+                  ];
+                }
+
+                function buildHybrid(groups, fullEdges) {
+                  const byGroup = Object.fromEntries(
+                    groups.regions.map((r) => [r.name, r]),
+                  );
+
+                  const supernodes = {
+                    r2: {
+                      id: "r2_super",
+                      label: "R2",
+                      group: "r2",
+                      super: true,
+                      mergedCount: groups.r2.length,
+                      x: byGroup.r2.cx,
+                      y: byGroup.r2.cy,
+                    },
+                    r3: {
+                      id: "r3_super",
+                      label: "R3",
+                      group: "r3",
+                      super: true,
+                      mergedCount: groups.r3.length,
+                      x: byGroup.r3.cx,
+                      y: byGroup.r3.cy,
+                    },
+                  };
+
+                  const mapNode = (node) =>
+                    node.group === "focal" ? node : supernodes[node.group];
+
+                  const edgeMap = new Map();
+
+                  fullEdges.forEach((edge) => {
+                    const a = mapNode(edge.a);
+                    const b = mapNode(edge.b);
+                    const key = `${a.id}->${b.id}`;
+
+                    if (!edgeMap.has(key)) {
+                      edgeMap.set(key, {
+                        id: key,
+                        a,
+                        b,
+                        count: 0,
+                      });
+                    }
+
+                    edgeMap.get(key).count += 1;
+                  });
+
+                  return {
+                    nodes: [...groups.focal, supernodes.r2, supernodes.r3],
+                    edges: Array.from(edgeMap.values()),
+                  };
+                }
+
+                function drawRegionHalos(panel, regions, color) {
+                  const halos = panel.append("g").attr("opacity", 0.18);
+
+                  halos
+                    .selectAll("circle")
+                    .data(regions)
+                    .enter()
+                    .append("circle")
+                    .attr("cx", (d) => d.cx)
+                    .attr("cy", (d) => d.cy)
+                    .attr("r", (d) => d.halo)
+                    .attr("fill", (d) => color[d.name])
+                    .attr("stroke", "currentColor")
+                    .attr("stroke-dasharray", "3,4")
+                    .attr("stroke-opacity", 0.18);
+
+                  halos
+                    .selectAll("text")
+                    .data(regions)
+                    .enter()
+                    .append("text")
+                    .attr("x", (d) => d.cx)
+                    .attr("y", (d) => Math.max(36, d.cy - d.halo - 8))
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", 10.5)
+                    .attr("fill", "currentColor")
+                    .attr("opacity", 0.55)
+                    .text((d) => d.label);
+                }
+
+                function contractedEdgeColor(edge, color) {
+                  const sameGroup = edge.a.group === edge.b.group;
+                  if (sameGroup && edge.a.group === "focal") return color.focal;
+                  if (sameGroup) return color[edge.a.group];
+                  return "currentColor";
+                }
+
+                function selfLoopPath(node, pad) {
+                  const r = pad;
+                  const cx = node.x + r * 0.9;
+                  const cy = node.y - r * 0.15;
+                  return `M${cx + r},${cy}
+                          A${r},${r} 0 1,1 ${cx - r},${cy}
+                          A${r},${r} 0 1,1 ${cx + r},${cy}`;
                 }
 
                 function draw() {
@@ -1059,8 +1267,9 @@
                   const stack = innerW < 560;
                   const panelW = stack ? innerW : (innerW - 24) / 2;
                   const panelH = stack ? (innerH - 18) / 2 : innerH;
+                  const showDetailNotes = panelH >= 200;
 
-                  const panels = stack
+                  const panelDefs = stack
                     ? [
                         {
                           x: 0,
@@ -1070,7 +1279,9 @@
                         {
                           x: 0,
                           y: panelH + 18,
-                          title: "Hybrid (focal detailed, others coarsened)",
+                          title: contracted
+                            ? "Hybrid (φ applied + edges aggregated)"
+                            : "Expanded full view",
                         },
                       ]
                     : [
@@ -1082,19 +1293,22 @@
                         {
                           x: panelW + 24,
                           y: 0,
-                          title: "Hybrid (focal detailed, others coarsened)",
+                          title: contracted
+                            ? "Hybrid (φ applied + edges aggregated)"
+                            : "Expanded full view",
                         },
                       ];
 
-                  const bg = g
+                  const panels = g
                     .selectAll(".panel")
-                    .data(panels)
+                    .data(panelDefs)
                     .enter()
                     .append("g")
                     .attr("class", "panel")
                     .attr("transform", (d) => `translate(${d.x},${d.y})`);
 
-                  bg.append("rect")
+                  panels
+                    .append("rect")
                     .attr("x", 0)
                     .attr("y", 0)
                     .attr("rx", 10)
@@ -1104,7 +1318,8 @@
                     .attr("fill", "rgba(0,0,0,0.02)")
                     .attr("stroke", "rgba(0,0,0,0.12)");
 
-                  bg.append("text")
+                  panels
+                    .append("text")
                     .attr("x", 12)
                     .attr("y", 18)
                     .attr("font-size", 12)
@@ -1112,88 +1327,9 @@
                     .attr("opacity", 0.75)
                     .text((d) => d.title);
 
-                  const rand = d3.randomLcg(0.42);
-                  const spread0 = Math.min(panelW, panelH) * 0.34;
-                  const spread1 = Math.min(panelW, panelH) * 0.32;
-
-                  function cluster(cx, cy, n, spread) {
-                    return d3.range(n).map(() => ({
-                      x: cx + (rand() - 0.5) * spread,
-                      y: cy + (rand() - 0.5) * spread,
-                    }));
-                  }
-
-                  const regions = [
-                    { name: "focal", cx: panelW * 0.35, cy: panelH * 0.58 },
-                    { name: "r2", cx: panelW * 0.7, cy: panelH * 0.35 },
-                    { name: "r3", cx: panelW * 0.74, cy: panelH * 0.76 },
-                  ];
-
-                  const fullNodes = [
-                    ...cluster(regions[0].cx, regions[0].cy, 18, spread0).map(
-                      (d) => ({
-                        ...d,
-                        group: "focal",
-                      }),
-                    ),
-                    ...cluster(regions[1].cx, regions[1].cy, 14, spread1).map(
-                      (d) => ({
-                        ...d,
-                        group: "r2",
-                      }),
-                    ),
-                    ...cluster(regions[2].cx, regions[2].cy, 14, spread1).map(
-                      (d) => ({
-                        ...d,
-                        group: "r3",
-                      }),
-                    ),
-                  ];
-
-                  const fullEdges = d3.range(55).map(() => {
-                    const a = fullNodes[Math.floor(rand() * fullNodes.length)];
-                    const b = fullNodes[Math.floor(rand() * fullNodes.length)];
-                    return { a, b };
-                  });
-
-                  function hybridNodesFrom(full) {
-                    const focal = full.filter((n) => n.group === "focal");
-                    const r2 = {
-                      x: regions[1].cx,
-                      y: regions[1].cy,
-                      group: "r2",
-                      super: true,
-                    };
-                    const r3 = {
-                      x: regions[2].cx,
-                      y: regions[2].cy,
-                      group: "r3",
-                      super: true,
-                    };
-                    return [...focal, r2, r3];
-                  }
-
-                  function hybridizeEdges(edges, nodesHybrid) {
-                    const focal = nodesHybrid.filter(
-                      (n) => n.group === "focal",
-                    );
-                    const r2 = nodesHybrid.find(
-                      (n) => n.super && n.group === "r2",
-                    );
-                    const r3 = nodesHybrid.find(
-                      (n) => n.super && n.group === "r3",
-                    );
-                    const pickF = () =>
-                      focal[Math.floor(rand() * focal.length)];
-
-                    return edges.map((e) => {
-                      const mapNode = (n) => {
-                        if (n.group === "focal") return pickF();
-                        return n.group === "r2" ? r2 : r3;
-                      };
-                      return { a: mapNode(e.a), b: mapNode(e.b) };
-                    });
-                  }
+                  const groups = buildNodes(panelW, panelH);
+                  const fullEdges = buildFullEdges(groups);
+                  const hybrid = buildHybrid(groups, fullEdges);
 
                   const color = {
                     focal: "#2f80ed",
@@ -1201,8 +1337,9 @@
                     r3: "#f2994a",
                   };
 
-                  // Left panel: full
-                  const left = bg.filter((d, i) => i === 0);
+                  const left = panels.filter((d, i) => i === 0);
+                  drawRegionHalos(left, groups.regions, color);
+
                   left
                     .append("g")
                     .selectAll("path")
@@ -1211,56 +1348,170 @@
                     .append("path")
                     .attr("d", (e) => `M${e.a.x},${e.a.y} L${e.b.x},${e.b.y}`)
                     .attr("stroke", "currentColor")
-                    .attr("stroke-opacity", 0.12)
+                    .attr("stroke-opacity", 0.11)
+                    .attr("stroke-width", 1)
                     .attr("fill", "none");
 
                   left
                     .append("g")
                     .selectAll("circle")
-                    .data(fullNodes)
+                    .data(groups.fullNodes)
                     .enter()
                     .append("circle")
                     .attr("cx", (d) => d.x)
                     .attr("cy", (d) => d.y)
                     .attr("r", 3.2)
                     .attr("fill", (d) => color[d.group])
-                    .attr("opacity", 0.9);
+                    .attr("opacity", 0.92);
 
-                  // Right panel: hybrid vs expanded
-                  const right = bg.filter((d, i) => i === 1);
-                  const rightNodes = contracted
-                    ? hybridNodesFrom(fullNodes)
-                    : fullNodes;
-                  const rightEdges = contracted
-                    ? hybridizeEdges(fullEdges, rightNodes)
-                    : fullEdges;
+                  const right = panels.filter((d, i) => i === 1);
 
-                  right
-                    .append("g")
-                    .selectAll("path")
-                    .data(rightEdges)
-                    .enter()
-                    .append("path")
-                    .attr("d", (e) => `M${e.a.x},${e.a.y} L${e.b.x},${e.b.y}`)
-                    .attr("stroke", "currentColor")
-                    .attr("stroke-opacity", contracted ? 0.12 : 0.08)
-                    .attr("fill", "none");
+                  if (!contracted) {
+                    drawRegionHalos(right, groups.regions, color);
 
-                  right
-                    .append("g")
-                    .selectAll("circle")
-                    .data(rightNodes)
-                    .enter()
-                    .append("circle")
-                    .attr("cx", (d) => d.x)
-                    .attr("cy", (d) => d.y)
-                    .attr("r", (d) => (d.super ? 8.5 : 3.2))
-                    .attr("fill", (d) => color[d.group])
-                    .attr("opacity", (d) => (d.super ? 0.95 : 0.9))
-                    .attr("stroke", (d) =>
-                      d.super ? "rgba(0,0,0,0.28)" : "none",
-                    )
-                    .attr("stroke-width", (d) => (d.super ? 1.2 : 0));
+                    right
+                      .append("g")
+                      .selectAll("path")
+                      .data(fullEdges)
+                      .enter()
+                      .append("path")
+                      .attr("d", (e) => `M${e.a.x},${e.a.y} L${e.b.x},${e.b.y}`)
+                      .attr("stroke", "currentColor")
+                      .attr("stroke-opacity", 0.11)
+                      .attr("stroke-width", 1)
+                      .attr("fill", "none");
+
+                    right
+                      .append("g")
+                      .selectAll("circle")
+                      .data(groups.fullNodes)
+                      .enter()
+                      .append("circle")
+                      .attr("cx", (d) => d.x)
+                      .attr("cy", (d) => d.y)
+                      .attr("r", 3.2)
+                      .attr("fill", (d) => color[d.group])
+                      .attr("opacity", 0.92);
+                  } else {
+                    const edgeWidth = d3
+                      .scaleSqrt()
+                      .domain([1, d3.max(hybrid.edges, (d) => d.count) || 1])
+                      .range([1.2, 6.2]);
+
+                    right
+                      .append("g")
+                      .selectAll("path")
+                      .data(hybrid.edges)
+                      .enter()
+                      .append("path")
+                      .attr("d", (e) =>
+                        e.a.id === e.b.id
+                          ? selfLoopPath(
+                              e.a,
+                              (e.a.super ? 12 : 8) + edgeWidth(e.count) * 1.4,
+                            )
+                          : `M${e.a.x},${e.a.y} L${e.b.x},${e.b.y}`,
+                      )
+                      .attr("fill", "none")
+                      .attr("stroke", (e) => contractedEdgeColor(e, color))
+                      .attr("stroke-opacity", (e) =>
+                        e.a.id === e.b.id ? 0.42 : 0.26,
+                      )
+                      .attr("stroke-width", (e) => edgeWidth(e.count))
+                      .attr("stroke-linecap", "round")
+                      .append("title")
+                      .text((e) => {
+                        const labelA = e.a.super
+                          ? `${e.a.label} (supernode)`
+                          : e.a.label;
+                        const labelB = e.b.super
+                          ? `${e.b.label} (supernode)`
+                          : e.b.label;
+                        return `${labelA} ↔ ${labelB} · ${e.count} merged edge${e.count === 1 ? "" : "s"}`;
+                      });
+
+                    right
+                      .append("g")
+                      .selectAll("circle")
+                      .data(hybrid.nodes)
+                      .enter()
+                      .append("circle")
+                      .attr("cx", (d) => d.x)
+                      .attr("cy", (d) => d.y)
+                      .attr("r", (d) => (d.super ? 11.5 : 3.2))
+                      .attr("fill", (d) => color[d.group])
+                      .attr("opacity", 0.95)
+                      .attr("stroke", (d) =>
+                        d.super ? "currentColor" : "none",
+                      )
+                      .attr("stroke-opacity", (d) => (d.super ? 0.2 : 0))
+                      .attr("stroke-width", (d) => (d.super ? 1.2 : 0))
+                      .append("title")
+                      .text((d) =>
+                        d.super
+                          ? `${d.label}: ${d.mergedCount} farms merged`
+                          : d.label,
+                      );
+
+                    right
+                      .append("g")
+                      .selectAll("text.superlabel")
+                      .data(hybrid.nodes.filter((d) => d.super))
+                      .enter()
+                      .append("text")
+                      .attr("class", "superlabel")
+                      .attr("x", (d) => d.x)
+                      .attr("y", (d) => d.y + 4)
+                      .attr("text-anchor", "middle")
+                      .attr("font-size", 11)
+                      .attr("font-weight", 700)
+                      .attr("fill", "#fff")
+                      .text((d) => d.label);
+
+                    if (showDetailNotes) {
+                      right
+                        .append("g")
+                        .selectAll("text.supercount")
+                        .data(hybrid.nodes.filter((d) => d.super))
+                        .enter()
+                        .append("text")
+                        .attr("class", "supercount")
+                        .attr("x", (d) => d.x)
+                        .attr("y", (d) => d.y + 20)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", 10.5)
+                        .attr("fill", "currentColor")
+                        .attr("opacity", 0.65)
+                        .text((d) => `${d.mergedCount} farms merged`);
+
+                      const noteLine1 =
+                        panelW < 340
+                          ? "φ keeps focal farms; others merge by region"
+                          : "φ keeps focal farms, merges other farms by region";
+                      const noteLine2 =
+                        panelW < 340
+                          ? "width = merged count; loops = collapsed internals"
+                          : "thicker edge = more merged edges; loops = within-region structure";
+
+                      right
+                        .append("text")
+                        .attr("x", 12)
+                        .attr("y", panelH - 20)
+                        .attr("font-size", 10.5)
+                        .attr("fill", "currentColor")
+                        .attr("opacity", 0.62)
+                        .text(noteLine1);
+
+                      right
+                        .append("text")
+                        .attr("x", 12)
+                        .attr("y", panelH - 7)
+                        .attr("font-size", 10.5)
+                        .attr("fill", "currentColor")
+                        .attr("opacity", 0.62)
+                        .text(noteLine2);
+                    }
+                  }
                 }
 
                 draw();
