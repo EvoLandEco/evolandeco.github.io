@@ -871,7 +871,7 @@
               <div class="row">
                 <select
                   id="qualitySelect"
-                  title="Fast: magnetic spectra every other day + interpolation. Balanced: daily. Full: daily with more eigenvalues."
+                  title="Fast: spectra every other day + interpolation on an active-node approximation. Balanced: daily on the full node set. Full: daily on the full node set with more eigenvalues."
                 >
                   <option value="fast">Fast</option>
                   <option selected="" value="balanced">Balanced</option>
@@ -2757,8 +2757,9 @@
                 for(let j=i+1;j<n;j++){
                   const mag = As[i][j];
                   if(mag === 0) continue;
-                  const sgn = Math.sign(A[i][j] - A[j][i]);
-                  const theta = twoPiQ * sgn;
+                  const total = A[i][j] + A[j][i];
+                  const imbalance = total > 0 ? (A[i][j] - A[j][i]) / total : 0;
+                  const theta = twoPiQ * imbalance;
                   const c = Math.cos(theta);
                   const s = Math.sin(theta);
                   Hre[i][j] = mag * c;
@@ -2806,7 +2807,7 @@
               const out = Array.from({length: T}, (_,t)=>({t, vals: Array(k).fill(NaN)}));
 
               const step = Math.max(1, magStep || 1);
-              const useInduced = (quality !== 'full');
+              const useInduced = (quality === 'fast');
 
               const computedTs = [];
               for(let t=0;t<edgesByDay.length;t+=step){
