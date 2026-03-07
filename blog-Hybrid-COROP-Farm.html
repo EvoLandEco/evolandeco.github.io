@@ -703,15 +703,17 @@
             </p>
 
             <p class="mb-2">
-              One common construction (used by the simulator) starts from a
+              The weighted construction used in the simulator starts from a
               directed adjacency $A$ and defines:
             </p>
             <ul>
               <li>symmetric magnitude $A_s = \tfrac{1}{2}(A + A^\top)$</li>
-              <li>antisymmetry $\Delta = A - A^\top$</li>
               <li>
-                phase $\Theta_{uv} = 2\pi q\,\mathrm{sign}(\Delta_{uv})$ (charge
-                parameter $q$)
+                imbalance ratio $R_{uv} = \dfrac{A_{uv} - A_{vu}}{A_{uv} + A_{vu}}$
+                when $A_{uv}+A_{vu}>0$
+              </li>
+              <li>
+                phase $\Theta_{uv} = 2\pi q\,R_{uv}$ (charge parameter $q$)
               </li>
               <li>
                 magnetic adjacency $H_{uv} = (A_s)_{uv}\,e^{i\Theta_{uv}}$
@@ -723,11 +725,13 @@
             </ul>
 
             <p>
-              For each day, we compute the first <em>K</em> eigenvalues of $L_q$
-              and show them as a heatmap across time. In directed graphs,
-              changes in this spectrum can reflect shifts in “circulation modes”
-              (cycles, one-way backbones, and directional community
-              structure).<sup><a href="#ref11">[11]</a></sup
+              In the full-quality setting, the simulator computes the first
+              <em>K</em> eigenvalues of $L_q$ for each day on the full node set
+              and shows them as a heatmap across time. The fast setting uses an
+              active-node approximation and interpolates skipped days for
+              responsiveness. In directed graphs, changes in this spectrum can
+              reflect shifts in “circulation modes” (cycles, one-way backbones,
+              and directional community structure).<sup><a href="#ref11">[11]</a></sup
               ><sup><a href="#ref12">[12]</a></sup>
             </p>
 
@@ -743,7 +747,7 @@
             <div class="concept-card my-4" id="magneticConceptCard">
               <div class="toolbar">
                 <p class="title mb-0">
-                  Concept sketch: magnetic Laplacian (direction → phase →
+                  Concept sketch: magnetic Laplacian (imbalance → phase →
                   spectrum)
                 </p>
                 <div class="d-flex gap-2 align-items-center flex-wrap">
@@ -777,11 +781,13 @@
               <div class="viz" id="conceptVizMagnetic"></div>
               <div class="p-3">
                 <div class="caption">
-                  Left: a directed ring with two directions. Direction asymmetry
-                  is encoded as a phase θ = ±2πq on each undirected pair (phase
-                  wheel). Right: eigenvalues of the magnetic normalized
-                  Laplacian L<sub>q</sub>. Increasing directionality changes
-                  circulation modes and shifts the spectrum.
+                  Left: a directed ring with two directions. Reciprocal-weight
+                  imbalance is encoded as a phase θ = 2πqR on each pair, where
+                  R = (A<sub>uv</sub> - A<sub>vu</sub>)/(A<sub>uv</sub> + A<sub>vu</sub>);
+                  the wheel shows one representative pair. Right: eigenvalues of
+                  the magnetic normalized Laplacian L<sub>q</sub>. Increasing
+                  directional imbalance changes circulation modes and shifts the
+                  spectrum.
                   <sup><a href="#ref10">[10]</a></sup
                   ><sup><a href="#ref12">[12]</a></sup>
                 </div>
@@ -2351,8 +2357,9 @@
                       for (let j = i + 1; j < n; j++) {
                         const mag = As[i][j];
                         if (mag === 0) continue;
-                        const sgn = Math.sign(A[i][j] - A[j][i]);
-                        const theta = twoPiQ * sgn;
+                        const total = A[i][j] + A[j][i];
+                        const imbalance = total > 0 ? (A[i][j] - A[j][i]) / total : 0;
+                        const theta = twoPiQ * imbalance;
                         const c = Math.cos(theta);
                         const s = Math.sin(theta);
                         Hre[i][j] = mag * c;
@@ -2435,6 +2442,9 @@
                     const n = 10;
 
                     const A = buildAdj(n, gamma, rng);
+                    const repTotal = A[0][1] + A[1][0];
+                    const repImbalance =
+                      repTotal > 0 ? (A[0][1] - A[1][0]) / repTotal : 0;
                     const eigs = magneticEigenvalues(A, q).map((v) =>
                       isFinite(v) ? v : NaN,
                     );
@@ -2500,7 +2510,7 @@
                       .attr("font-size", 12)
                       .attr("fill", "currentColor")
                       .attr("opacity", 0.75)
-                      .text("Directed edges induce phases");
+                      .text("Weighted directional imbalance induces phases");
 
                     const cx = ringW * 0.52;
                     const cy = ringH * 0.56;
@@ -2671,12 +2681,12 @@
                           : `λ${d.i}: NA`,
                       );
 
-                    // Phase wheel (θ = ±2πq)
+                    // Phase wheel for one representative reciprocal pair
                     const wheel = spec
                       .append("g")
                       .attr("transform", `translate(${specW - 54},${34})`);
                     const r0 = 22;
-                    const theta = 2 * Math.PI * q;
+                    const theta = 2 * Math.PI * q * repImbalance;
 
                     wheel
                       .append("circle")
@@ -2712,7 +2722,7 @@
                       .attr("font-size", 11)
                       .attr("fill", "currentColor")
                       .attr("opacity", 0.65)
-                      .text(`q=${q.toFixed(2)} · y=${gamma.toFixed(2)}`);
+                      .text(`q=${q.toFixed(2)} · γ=${gamma.toFixed(2)} · R*=${repImbalance.toFixed(2)}`);
                   }
 
                   function bind() {
