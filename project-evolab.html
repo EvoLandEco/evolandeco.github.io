@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>EvoLab - Project - Tianjian Qin</title>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Project: EvoLab - a standalone diversification simulator for lineage history and phylogeny reconstruction">
+  <meta name="author" content="Tianjian Qin">
+  <link rel="shortcut icon" href="favicon.ico">
+
+  <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
+  <script defer src="assets/fontawesome/js/all.js"></script>
+  <link id="theme-style" rel="stylesheet" href="assets/css/theme-1.css">
+</head>
+
+<body>
+
+<header class="header text-center">
+  <div class="force-overflow">
+    <h1 class="blog-name pt-lg-4 mb-0">
+      <a class="no-text-decoration" href="index.html">Tianjian Qin</a>
+    </h1>
+
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navigation"
+              aria-controls="navigation" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div id="navigation" class="collapse navbar-collapse flex-column">
+        <div class="profile-section pt-3 pt-lg-0">
+          <img class="profile-image mb-3 rounded-circle mx-auto" src="assets/images/profile.png" alt="image">
+
+          <div class="bio mb-3">
+            Hi, my name is Tianjian. I'm a computational biologist &amp; data scientist.
+          </div>
+
+          <ul class="social-list list-inline py-2 mx-auto">
+            <li class="list-inline-item"><a href="https://www.linkedin.com/in/tjqin/"><i class="fab fa-linkedin-in fa-fw"></i></a></li>
+            <li class="list-inline-item"><a href="https://github.com/EvoLandEco"><i class="fab fa-github-alt fa-fw"></i></a></li>
+            <li class="list-inline-item"><a href="https://www.researchgate.net/profile/Tianjian-Qin"><i class="fa-brands fa-researchgate"></i></a></li>
+            <li class="list-inline-item"><a href="https://qtj.me/gallery"><i class="fa-regular fa-lightbulb fa-beat"></i></a></li>
+          </ul>
+          <hr>
+        </div>
+
+        <ul class="navbar-nav flex-column text-start">
+          <li class="nav-item"><a class="nav-link" href="index.html"><i class="fas fa-user fa-fw me-2"></i>About Me</a></li>
+          <li class="nav-item"><a class="nav-link" href="portfolio.html"><i class="fas fa-laptop-code fa-fw me-2"></i>Portfolio</a></li>
+          <li class="nav-item"><a class="nav-link" href="resume.html"><i class="fas fa-file-alt fa-fw me-2"></i>Resume</a></li>
+          <li class="nav-item"><a class="nav-link" href="blog-home.html"><i class="fas fa-blog fa-fw me-2"></i>Blog</a></li>
+        </ul>
+
+        <div class="my-2">
+          <a class="btn btn-primary" href="mailto:tianjianqin@outlook.com" target="_blank">
+            <i class="fas fa-paper-plane me-2"></i>Contact Me
+          </a>
+        </div>
+
+        <div class="dark-mode-toggle text-center w-100">
+          <hr class="mb-4">
+          <h4 class="toggle-name mb-3"><i class="fas fa-adjust me-1"></i>Dark Mode</h4>
+          <input class="toggle" id="darkmode" type="checkbox">
+          <label class="toggle-btn mx-auto mb-0" for="darkmode"></label>
+        </div>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<div class="main-wrapper">
+
+  <section class="cta-section theme-bg-light py-5">
+    <div class="container single-col-max-width">
+      <h2 class="heading text-center">EvoLab</h2>
+      <p class="text-center mb-0">
+        A standalone diversification simulator for lineage history, coarse-grained taxa, and trait-based tree reconstruction.
+      </p>
+    </div>
+  </section>
+
+  <section class="project px-3 py-5 p-md-5">
+    <div class="container">
+
+      <div class="project-meta theme-bg-light p-4">
+        <div class="row g-4 g-lg-5">
+          <div class="col-md-5 col-lg-4 col-xxl-3 d-none d-md-block">
+            <img class="project-thumb img-fluid rounded" src="assets/images/project/project-evolab.jpg" alt="EvoLab thumbnail">
+          </div>
+
+          <div class="col-12 col-md-7 col-lg-8 col-xxl-9">
+            <div class="client-info">
+              <h3 class="client-name font-weight-bold mb-4">EvoLab</h3>
+
+              <ul class="client-meta list-unstyled">
+                <li class="mb-2">
+                  <i class="fa-solid fa-code me-2"></i><strong>Stack:</strong>
+                  <i class="fa-brands fa-js me-1"></i>JavaScript,
+                  <span class="ms-1">D3.js</span>,
+                  <span class="ms-1">numeric.js</span>
+                </li>
+                <li class="mb-2">
+                  <i class="fa-solid fa-code-commit me-2"></i><strong>Version:</strong>
+                  0.1-alpha <i class="fa-solid fa-flask"></i>
+                </li>
+                <li class="mb-2">
+                  <i class="fas fa-link fa-fw me-2"></i><strong>App:</strong>
+                  <a class="theme-link" href="evolab/evolab.html">evolab/evolab.html</a>
+                </li>
+              </ul>
+
+              <div class="client-bio mb-4">
+                EvoLab is a lightweight simulator for watching diversification before it gets flattened into a final tree.
+                It combines a continuous-time budding process, a user-set coarsening rule for observed taxa, and linked
+                history-versus-trait summaries in a single static web app.
+              </div>
+
+              <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-primary" href="evolab/evolab.html">
+                  <i class="fa-solid fa-arrow-up-right-from-square me-2"></i>Open App
+                </a>
+                <a class="btn btn-outline-primary" href="blog-Subspecies-Level-Diversification.html">
+                  <i class="fa-solid fa-book me-2"></i>Read Blog Post
+                </a>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="project-sections py-5">
+
+        <div class="project-section mb-5">
+          <h3 class="project-section-title mb-3">What it does</h3>
+          <p>
+            EvoLab keeps the process in view. Each run starts from one lineage and lets extant lineages
+            produce clonal daughters, produce mutating daughters, or go extinct in continuous time.
+            The app then compares what happened at the lineage level with what you would recover after
+            coarse-graining that same history into observed taxa.
+          </p>
+          <ul>
+            <li><strong>Full lineage chronogram</strong> for the event-level record.</li>
+            <li><strong>Coarsened species chronogram</strong> after the chosen mutational threshold.</li>
+            <li><strong>History tree and trait tree</strong> so you can compare event history with distance-based reconstruction.</li>
+            <li><strong>Lineages through time and trait space</strong> for tempo and geometry.</li>
+          </ul>
+          <p class="mb-0">
+            The conceptual framing and interpretation live in
+            <a class="theme-link" href="blog-Subspecies-Level-Diversification.html">the blog post</a>.
+          </p>
+        </div>
+
+        <div class="project-section mb-5" id="quickstart">
+          <h3 class="project-section-title mb-3">Quickstart</h3>
+          <p>
+            EvoLab is packaged as one static HTML page. Run it from a small local server so browser features like clipboard export behave as expected.
+          </p>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr><th>Step</th><th>Command / Action</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><kbd>1</kbd></td>
+                  <td><code>git clone https://github.com/EvoLandEco/EvoLab.git</code></td>
+                </tr>
+                <tr>
+                  <td><kbd>2</kbd></td>
+                  <td><code>cd EvoLab &amp;&amp; python -m http.server 8000</code></td>
+                </tr>
+                <tr>
+                  <td><kbd>3</kbd></td>
+                  <td>Open <code>http://localhost:8000/evolab.html</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="mb-0">
+            The page currently loads D3, numeric.js, Bootstrap, and Font Awesome from public CDNs.
+          </p>
+        </div>
+
+        <div class="project-section mb-5">
+          <h3 class="project-section-title mb-3">How the simulator works</h3>
+          <p>
+            Event times are sampled with a Gillespie-style stochastic simulation algorithm. At each event,
+            one extant lineage is selected and one outcome occurs: clonal birth, mutating birth, or extinction.
+            Traits evolve either as unconstrained Brownian steps or with OU-like pull toward an optimum.
+          </p>
+          <p class="mb-0">
+            The <strong>Coarsen Level</strong> slider decides how many mutational steps must accumulate before
+            a daughter lineage gets promoted into a new observed taxon. That is the main bridge between
+            the hidden lineage process and the species-level record.
+          </p>
+        </div>
+
+        <div class="project-section mb-5">
+          <h3 class="project-section-title mb-3">How to use</h3>
+          <ol>
+            <li>Pick a preset or set your own birth, mutation, and death rates.</li>
+            <li>Set the step limit and coarsen level.</li>
+            <li>Choose the trait model and tune trait dimension, step size, and OU pull when needed.</li>
+            <li>Use <strong>Grow</strong> for animated runs or <strong>Step</strong> for event-by-event inspection.</li>
+            <li>Export the run as JSON or copy either Newick tree for downstream work.</li>
+          </ol>
+        </div>
+
+        <div class="project-section mb-5">
+          <h3 class="project-section-title mb-3">Packaging</h3>
+          <p>
+            The site ships EvoLab in two forms:
+          </p>
+          <ul>
+            <li><strong>Embedded mode</strong> inside the subspecies blog post, using the shared site assets.</li>
+            <li><strong>Standalone mode</strong> in <code>evolab/evolab.html</code>, with the simulator packaged into one file for the separate repo.</li>
+          </ul>
+          <p class="mb-0">
+            The repo-ready folder also includes a short README and an MIT license file.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <section class="promo-section theme-bg-light py-5 text-center">
+    <div class="container single-col-max-width">
+      <h2 class="title">Have a question?</h2>
+      <p>Feel free to click on the button below to send me a message.</p>
+      <div class="text-center">
+        <a class="btn btn-primary" href="mailto:tianjianqin@outlook.com" target="_blank">
+          <i class="fas fa-paper-plane me-2"></i>Contact Me
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer text-center py-4">
+    <small class="copyright">Copyright &copy; Tianjian Qin</small>
+  </footer>
+
+</div>
+
+<div id="config-panel" class="config-panel config-panel-hide d-none d-lg-block">
+  <div class="panel-inner">
+    <a id="config-trigger" class="config-trigger text-center" href="#">
+      <i class="fas fa-cog mx-auto" data-fa-transform="down-6"></i>
+    </a>
+    <h5 class="panel-title">Choose Colour</h5>
+    <ul id="color-options" class="list-inline mb-0">
+      <li class="theme-1 active list-inline-item"><a data-style="assets/css/theme-1.css" href="#"></a></li>
+      <li class="theme-2 list-inline-item"><a data-style="assets/css/theme-2.css" href="#"></a></li>
+      <li class="theme-3 list-inline-item"><a data-style="assets/css/theme-3.css" href="#"></a></li>
+      <li class="theme-4 list-inline-item"><a data-style="assets/css/theme-4.css" href="#"></a></li>
+      <li class="theme-5 list-inline-item"><a data-style="assets/css/theme-5.css" href="#"></a></li>
+      <li class="theme-6 list-inline-item"><a data-style="assets/css/theme-6.css" href="#"></a></li>
+      <li class="theme-7 list-inline-item"><a data-style="assets/css/theme-7.css" href="#"></a></li>
+      <li class="theme-8 list-inline-item"><a data-style="assets/css/theme-8.css" href="#"></a></li>
+      <li class="theme-9 list-inline-item"><a data-style="assets/css/theme-9.css" href="#"></a></li>
+      <li class="theme-10 list-inline-item"><a data-style="assets/css/theme-10.css" href="#"></a></li>
+    </ul>
+    <a id="config-close" class="close" href="#"><i class="fa fa-times-circle"></i></a>
+  </div>
+</div>
+
+<script src="assets/plugins/popper.min.js"></script>
+<script src="assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+<script src="assets/plugins/js-cookie.min.js"></script>
+<script src="assets/js/dark-mode.js"></script>
+<script src="assets/js/demo/style-switcher.js"></script>
+
+</body>
+</html>
