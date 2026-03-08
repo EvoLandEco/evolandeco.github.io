@@ -1,11 +1,11 @@
 # EvoLab
 
-**A standalone diversification simulator for lineage history, coarse-grained taxa, and trait-based tree reconstruction.**  
-One static HTML app for exploring budding lineages, species-level coarsening, extinction, and how trait summaries can disagree with event history.
+**A diversification simulator for lineage history, coarse-grained taxa, and trait-based tree reconstruction.**  
+Static HTML app for exploring budding lineages, species-level coarsening, extinction, and how trait summaries can disagree with event history.
 
 [![Version](https://img.shields.io/badge/version-v0.1--alpha-3b82f6)](#)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-
+[![Last Commit](https://img.shields.io/github/last-commit/EvoLandEco/EvoLab)](https://github.com/EvoLandEco/EvoLab)
 ---
 
 ## What is EvoLab?
@@ -18,6 +18,10 @@ EvoLab is an interactive teaching and exploration tool built around a continuous
 - The same run is then shown through linked views: full history, coarsened chronogram, history tree, trait tree, lineages through time, and trait space.
 
 For the full discussion and interpretation, see **[the blog post](https://qtj.me/blog-Subspecies-Level-Diversification.html)**.
+
+Control             |  Visualizations
+:-------------------------:|:-------------------------:
+![Screenshot 1](assets/screenshots/UI-A.png)  |  ![Screenshot 2](assets/screenshots/UI-B.png)
 
 ---
 
