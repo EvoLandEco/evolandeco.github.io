@@ -162,6 +162,22 @@
         #magneticConceptCard .viz {
           height: 440px;
         }
+
+        #piWalkConceptCard .viz {
+          height: 360px;
+        }
+        #piClassConceptCard .viz {
+          height: 380px;
+        }
+
+        @media (max-width: 576px) {
+          #piWalkConceptCard .viz {
+            height: 440px;
+          }
+          #piClassConceptCard .viz {
+            height: 460px;
+          }
+        }
       }
     </style>
     <script>
@@ -371,7 +387,7 @@
                 class="hybrid-sim-iframe"
                 loading="lazy"
                 scrolling="no"
-                src="hybrid_simulator.html"
+                src="hybrid_simulator_aligned.html"
                 title="Hybrid COROP–Farm simulator"
               ></iframe>
             </div>
@@ -584,35 +600,156 @@
             <h3 class="mt-5 mb-3">
               Statistic family B — π-mass (random-walk mass on Farms vs Regions)
             </h3>
+
             <p>
               TEA/TNA focus on <em>turnover</em>. π-mass focuses on
-              <em>where flow concentrates</em>. Construct a (lazy) random walk
-              on the directed graph snapshot:
+              <em>where flow concentrates</em>. One simple choice is a
+              <em>lazy</em> random walk on the directed graph snapshot:
             </p>
             <p>
-              $$ P = (1-\alpha)D^{-1}A + \alpha I, $$ where $A$ is the adjacency
-              (unweighted or weighted), $D$ is the out-degree (or out-strength)
-              diagonal, and $\alpha \in (0,1)$ adds “laziness”. A
-              teleporting/lazy step is a standard trick to improve stability and
-              convergence of the stationary distribution on directed graphs.<sup
-                ><a href="#ref7">[7]</a></sup
-              ><sup><a href="#ref9">[9]</a></sup>
+              $$ P_{\mathrm{lazy}} = (1-\alpha)D^{-1}A + \alpha I, $$ where $A$
+              is the adjacency (unweighted or weighted), $D$ is the out-degree
+              (or out-strength) diagonal, and $\alpha \in (0,1)$ adds a chance
+              of <em>waiting</em> at the current node. Laziness is useful
+              because it smooths day-to-day oscillations and helps break
+              periodic behavior, but it does not by itself connect parts of a
+              graph that are unreachable from one another.<sup
+                ><a href="#ref9">[9]</a></sup
+              >
             </p>
 
             <p>
-              Because directed graphs may not be strongly connected, we compute
-              the stationary distribution on the largest strongly connected
-              component (LIC), then aggregate stationary mass by node type:
-              $$\pi_F(t)=\sum_{i\in LIC,\,type(i)=farm} \pi_i,\quad
-              \pi_R(t)=\sum_{i\in LIC,\,type(i)=region} \pi_i.$$
+              A different choice is <em>teleporting</em> PageRank: $$
+              P_{\mathrm{tele}} = (1-\beta)D^{-1}A + \beta\,\mathbf{1}v^\top, $$
+              where $v$ is a positive teleportation distribution. This is a
+              broader restart mechanism: instead of sometimes waiting, the walk
+              sometimes jumps to a new node. With positive teleportation
+              weights, every node can still be reached through the restart
+              channel, which gives a well-defined full-graph stationary
+              distribution even when the raw directed snapshot is reducible. In
+              plain language: <em>lazy</em> means “sometimes stay put”, whereas
+              <em>teleporting</em> means “sometimes restart somewhere else”.<sup
+                ><a href="#ref7">[7]</a></sup
+              ><sup><a href="#ref14">[14]</a></sup>
+            </p>
+
+            <div class="concept-card my-4" id="piWalkConceptCard">
+              <div class="toolbar">
+                <p class="title mb-0">
+                  Concept sketch: lazy step vs teleporting step
+                </p>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                  <span class="small text-muted">lazy α</span>
+                  <input
+                    type="range"
+                    id="piWalkLazy"
+                    min="0"
+                    max="0.40"
+                    step="0.01"
+                    value="0.10"
+                  />
+                  <span class="small stat" id="piWalkLazyVal">0.10</span>
+
+                  <span class="small text-muted ms-2">teleport β</span>
+                  <input
+                    type="range"
+                    id="piWalkTele"
+                    min="0"
+                    max="0.40"
+                    step="0.01"
+                    value="0.15"
+                  />
+                  <span class="small stat" id="piWalkTeleVal">0.15</span>
+                </div>
+              </div>
+              <div class="viz" id="conceptVizPiWalk"></div>
+              <div class="p-3">
+                <div class="caption">
+                  The same hybrid graph is shown twice. Left: a lazy walk adds a
+                  self-loop, so part of the probability stays at the current
+                  node. Right: a teleporting walk adds a restart channel, shown
+                  as dashed arrows from the highlighted node. Laziness helps
+                  with periodicity, but teleportation is what reconnects a
+                  reducible directed graph in the Markov-chain sense.<sup
+                    ><a href="#ref9">[9]</a></sup
+                  ><sup><a href="#ref14">[14]</a></sup>
+                </div>
+              </div>
+            </div>
+
+            <p>
+              Once a walk has been defined, π-mass aggregates stationary
+              probability by node type: $$\pi_F(t)=\sum_{i:\,type(i)=farm}
+              \pi_i,\quad \pi_R(t)=\sum_{i:\,type(i)=region} \pi_i.$$ The
+              subtlety is the <em>state space</em> on which $\pi$ is computed.
+            </p>
+
+            <p>
+              A largest strongly connected component (LSCC, or LIC in the
+              simulator labels) is a set of nodes that can all reach one
+              another. But mutual reachability does not imply <em>closure</em>:
+              probability may still leak out to nodes outside that component. A
+              <em>largest closed strongly connected class</em> is both mutually
+              reachable and non-escaping. That difference matters because in a
+              finite Markov chain, stationary mass lives on essential closed
+              classes, not on transient leaky ones.<sup
+                ><a href="#ref9">[9]</a></sup
+              >
+            </p>
+
+            <div class="concept-card my-4" id="piClassConceptCard">
+              <div class="toolbar">
+                <p class="title mb-0">
+                  Concept sketch: largest SCC vs largest closed SCC
+                </p>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                  <span class="small text-muted">leak strength</span>
+                  <input
+                    type="range"
+                    id="piLeak"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value="0.35"
+                  />
+                  <span class="small stat" id="piLeakVal">0.35</span>
+                </div>
+              </div>
+              <div class="viz" id="conceptVizPiClass"></div>
+              <div class="p-3">
+                <div class="caption">
+                  Blue nodes form the largest strongly connected component.
+                  Orange nodes form a smaller closed class. When the red leak
+                  arrow is positive, the blue SCC is no longer closed: a walker
+                  can leave it and not come back. Restricting π-mass to the blue
+                  SCC renormalizes that loss away, whereas the full finite chain
+                  eventually puts stationary mass only on the closed class. This
+                  is the source of the mass-leak limitation in an LIC-based
+                  summary.<sup><a href="#ref9">[9]</a></sup>
+                </div>
+              </div>
+            </div>
+
+            <p>
+              The current simulator uses a lazy-walk π-mass computed on the
+              largest strongly connected component because it is fast and easy
+              to teach. That makes it a useful exploratory diagnostic, but it
+              can overstate mass retained in a leaky class. For formal analyses,
+              two safer choices are to use a teleporting PageRank on the full
+              snapshot or to restrict the calculation to a largest closed
+              strongly connected class.<sup><a href="#ref9">[9]</a></sup
+              ><sup><a href="#ref14">[14]</a></sup>
             </p>
 
             <p>
               <b>Interpretation (hybrid network quality).</b>
+              Once the walk definition and state space have been fixed,
+              π<sub>F</sub>(t) and π<sub>R</sub>(t) summarize whether long-run
+              flow sits mainly in focal farms or in external region supernodes.
               If contraction is too aggressive, mass can collapse onto region
               supernodes (π<sub>R</sub>≈1), washing out focal structure; if the
               focal subgraph becomes too isolated, π<sub>F</sub>≈1 and the
-              outside context is effectively gone. A “reasonable” hybrid
+              outside context is almost gone. A “reasonable” hybrid
               representation tends to keep a meaningful split across time,
               reflecting both local circulation and external pressure.
             </p>
@@ -623,9 +760,11 @@
               canonical example).<sup><a href="#ref7">[7]</a></sup> It is useful
               for prioritizing nodes for monitoring, intervention, caching, or
               auditing when you believe the system behaves like repeated
-              movement on edges. For background on random walks and mixing, see
-              Lovász and Levin–Peres–Wilmer.<sup><a href="#ref8">[8]</a></sup
-              ><sup><a href="#ref9">[9]</a></sup>
+              movement on edges. For background on random walks, PageRank, and
+              mixing, see Page et al., Lovász, Langville–Meyer, and
+              Levin–Peres–Wilmer.<sup><a href="#ref8">[8]</a></sup
+              ><sup><a href="#ref9">[9]</a></sup
+              ><sup><a href="#ref14">[14]</a></sup>
             </p>
 
             <div class="concept-card my-4" id="piMassConceptCard">
@@ -675,15 +814,17 @@
               <div class="p-3">
                 <div class="caption">
                   A tiny hybrid graph with 3 farms (blue) and 3 regions
-                  (orange). Circle size is the stationary probability πᵢ of a
-                  lazy random walk. The bottom bar aggregates mass into π<sub
-                    >F</sub
-                  >
-                  and π<sub>R</sub>. Increase “outside dominance” to see how
-                  contraction can concentrate mass on regional supernodes.
-                  <sup><a href="#ref7">[7]</a></sup
-                  ><sup><a href="#ref8">[8]</a></sup
-                  ><sup><a href="#ref9">[9]</a></sup>
+                  (orange). Circle size is the stationary probability πᵢ after
+                  the walk and the state space have already been fixed. The
+                  bottom bar aggregates mass into π<sub>F</sub> and
+                  π<sub>R</sub>. Increase “outside dominance” to see how
+                  contraction can concentrate mass on regional supernodes. In
+                  formal work, the same split can be computed either with a
+                  teleporting PageRank on the full graph or on a closed class,
+                  depending on the question being asked.<sup
+                    ><a href="#ref7">[7]</a></sup
+                  ><sup><a href="#ref9">[9]</a></sup
+                  ><sup><a href="#ref14">[14]</a></sup>
                 </div>
               </div>
             </div>
@@ -709,8 +850,8 @@
             <ul>
               <li>symmetric magnitude $A_s = \tfrac{1}{2}(A + A^\top)$</li>
               <li>
-                imbalance ratio $R_{uv} = \dfrac{A_{uv} - A_{vu}}{A_{uv} + A_{vu}}$
-                when $A_{uv}+A_{vu}>0$
+                imbalance ratio $R_{uv} = \dfrac{A_{uv} - A_{vu}}{A_{uv} +
+                A_{vu}}$ when $A_{uv}+A_{vu}>0$
               </li>
               <li>
                 phase $\Theta_{uv} = 2\pi q\,R_{uv}$ (charge parameter $q$)
@@ -725,14 +866,38 @@
             </ul>
 
             <p>
+              Earlier magnetic constructions typically use a sign-based phase,
+              so any reciprocal pair with the same dominant direction receives
+              the same phase magnitude even if one pair is nearly balanced and
+              the other is strongly one-sided.<sup
+                ><a href="#ref10">[10]</a></sup
+              ><sup><a href="#ref12">[12]</a></sup> In the simulator we instead
+              use the weighted reciprocal-imbalance phase $\Theta_{uv}=2\pi
+              q\,(A_{uv}-A_{vu})/(A_{uv}+A_{vu})$. To our knowledge this is an
+              application-driven variant rather than a standard choice in the
+              magnetic-Laplacian literature. Its practical advantage is that it
+              separates nearly balanced reciprocal traffic from strongly
+              one-sided reciprocal traffic, which a sign-only phase cannot do.
+              That extra resolution is useful when both reciprocity and flow
+              magnitude matter.<sup><a href="#ref12">[12]</a></sup
+              ><sup><a href="#ref17">[17]</a></sup>
+            </p>
+
+            <p>
               In the full-quality setting, the simulator computes the first
               <em>K</em> eigenvalues of $L_q$ for each day on the full node set
               and shows them as a heatmap across time. The fast setting uses an
               active-node approximation and interpolates skipped days for
               responsiveness. In directed graphs, changes in this spectrum can
               reflect shifts in “circulation modes” (cycles, one-way backbones,
-              and directional community structure).<sup><a href="#ref11">[11]</a></sup
-              ><sup><a href="#ref12">[12]</a></sup>
+              and directional community structure). The heatmap is therefore
+              best read as a direction-sensitive fingerprint. For formal
+              goodness-of-fit, however, a quantitative per-day spectral distance
+              between observed and simulated networks—such as a distance between
+              magnetic spectra or magnetic spectral densities—would be stronger
+              than visual inspection alone.<sup><a href="#ref11">[11]</a></sup
+              ><sup><a href="#ref12">[12]</a></sup
+              ><sup><a href="#ref15">[15]</a></sup>
             </p>
 
             <p class="mb-0">
@@ -782,14 +947,17 @@
               <div class="p-3">
                 <div class="caption">
                   Left: a directed ring with two directions. Reciprocal-weight
-                  imbalance is encoded as a phase θ = 2πqR on each pair, where
-                  R = (A<sub>uv</sub> - A<sub>vu</sub>)/(A<sub>uv</sub> + A<sub>vu</sub>);
-                  the wheel shows one representative pair. Right: eigenvalues of
-                  the magnetic normalized Laplacian L<sub>q</sub>. Increasing
-                  directional imbalance changes circulation modes and shifts the
-                  spectrum.
+                  imbalance is encoded as a phase θ = 2πqR on each pair, where R
+                  = (A<sub>uv</sub> - A<sub>vu</sub>)/(A<sub>uv</sub> +
+                  A<sub>vu</sub>). A sign-only phase would give the same phase
+                  magnitude to weak and strong imbalances; this weighted variant
+                  does not. The wheel shows one representative pair. Right:
+                  eigenvalues of the magnetic normalized Laplacian
+                  L<sub>q</sub>. Increasing directional imbalance changes
+                  circulation modes and shifts the spectrum.
                   <sup><a href="#ref10">[10]</a></sup
-                  ><sup><a href="#ref12">[12]</a></sup>
+                  ><sup><a href="#ref12">[12]</a></sup
+                  ><sup><a href="#ref17">[17]</a></sup>
                 </div>
               </div>
             </div>
@@ -866,6 +1034,35 @@
             </div>
 
             <hr class="my-5" />
+
+            <h3 class="mt-5 mb-3">Using these summaries for goodness of fit</h3>
+            <p>
+              These statistics and plots are most informative when treated as
+              posterior-predictive or simulation-based model checks rather than
+              as standalone pictures. The central question is not simply whether
+              an observed curve “looks plausible”, but whether networks
+              generated by the fitted model reproduce the observed trajectory of
+              the same descriptors. In network analysis, that means comparing
+              observed statistics with the distribution of those statistics on
+              replicated networks generated from the fitted model.<sup
+                ><a href="#ref16">[16]</a></sup
+              ><sup><a href="#ref18">[18]</a></sup>
+            </p>
+            <p>
+              Practically, one can compute TEA/TNA summaries, π-mass, and a
+              magnetic spectral discrepancy for the observed snapshot on each
+              day and for many replicated snapshots. The visual layer should
+              then show the observed trajectory against replicated envelopes,
+              while the quantitative layer should summarize error over time—for
+              example by average absolute deviation, calibration bands, or a
+              snapshot-wise spectral distance. Visual comparison remains useful
+              for intuition, but the envelope and the error summary are what
+              make a goodness-of-fit claim reproducible and comparable across
+              models.<sup><a href="#ref12">[12]</a></sup
+              ><sup><a href="#ref15">[15]</a></sup
+              ><sup><a href="#ref16">[16]</a></sup
+              ><sup><a href="#ref18">[18]</a></sup>
+            </p>
 
             <h3 class="mt-5 mb-3">References</h3>
             <p class="mb-3">
@@ -1009,6 +1206,59 @@
                   target="_blank"
                   rel="noopener"
                   >cbs.nl definition</a
+                >
+              </li>
+
+              <li id="ref14">
+                Langville AN, Meyer CD. 2004. Deeper Inside PageRank.
+                <em>Internet Mathematics</em>.
+                <a
+                  href="https://doi.org/10.1080/15427951.2004.10129091"
+                  target="_blank"
+                  rel="noopener"
+                  >doi:10.1080/15427951.2004.10129091</a
+                >
+              </li>
+              <li id="ref15">
+                Shore J, Lubin B. 2015. Spectral goodness of fit for network
+                models. <em>Social Networks</em>.
+                <a
+                  href="https://doi.org/10.1016/j.socnet.2015.04.004"
+                  target="_blank"
+                  rel="noopener"
+                  >doi:10.1016/j.socnet.2015.04.004</a
+                >
+              </li>
+              <li id="ref16">
+                Vaca-Ramírez F, Peixoto TP. 2022. Systematic assessment of the
+                quality of fit of the stochastic block model for empirical
+                networks. <em>Physical Review E</em>.
+                <a
+                  href="https://doi.org/10.1103/PhysRevE.105.054311"
+                  target="_blank"
+                  rel="noopener"
+                  >doi:10.1103/PhysRevE.105.054311</a
+                >
+              </li>
+              <li id="ref17">
+                Yin M, Zhu L. 2016. Reciprocity in directed networks.
+                <em>Physica A</em>.
+                <a
+                  href="https://doi.org/10.1016/j.physa.2015.12.008"
+                  target="_blank"
+                  rel="noopener"
+                  >doi:10.1016/j.physa.2015.12.008</a
+                >
+              </li>
+              <li id="ref18">
+                Hunter DR, Goodreau SM, Handcock MS. 2008. Goodness of fit of
+                social network models.
+                <em>Journal of the American Statistical Association</em>.
+                <a
+                  href="https://doi.org/10.1198/016214507000000446"
+                  target="_blank"
+                  rel="noopener"
+                  >doi:10.1198/016214507000000446</a
                 >
               </li>
             </ol>
@@ -2014,7 +2264,7 @@
                       .attr("viewBox", `0 0 ${W} ${H}`)
                       .style("display", "block");
 
-                    const m = { top: 16, right: 14, bottom: 64, left: 14 };
+                    const m = { top: 16, right: 14, bottom: 78, left: 14 };
                     const g = svg
                       .append("g")
                       .attr("transform", `translate(${m.left},${m.top})`);
@@ -2159,27 +2409,53 @@
                       .style("pointer-events", "none")
                       .text((d) => d.id);
 
-                    // Labels
-                    g.append("text")
-                      .attr("x", iw * 0.3)
-                      .attr("y", 12)
-                      .attr("text-anchor", "middle")
-                      .attr("font-size", 12)
-                      .attr("fill", "currentColor")
-                      .attr("opacity", 0.7)
-                      .text("Farms");
+                    // Centered legend below the network
+                    const legendY = ih + 8;
+                    const legendItems = [
+                      { key: "F", label: "Farms" },
+                      { key: "R", label: "Regions" },
+                    ];
+                    const legendGap = 34;
+                    const legendItemW = 78;
+                    const legendTotalW =
+                      legendItemW * legendItems.length +
+                      legendGap * (legendItems.length - 1);
+                    const legendX0 = (iw - legendTotalW) / 2;
 
-                    g.append("text")
-                      .attr("x", iw * 0.7)
-                      .attr("y", 12)
-                      .attr("text-anchor", "middle")
+                    const legend = g
+                      .append("g")
+                      .attr("transform", `translate(${legendX0},${legendY})`);
+
+                    const lg = legend
+                      .selectAll("g")
+                      .data(legendItems)
+                      .enter()
+                      .append("g")
+                      .attr(
+                        "transform",
+                        (d, i) =>
+                          `translate(${i * (legendItemW + legendGap)},0)`,
+                      );
+
+                    lg.append("circle")
+                      .attr("cx", 7)
+                      .attr("cy", 0)
+                      .attr("r", 5.5)
+                      .attr("fill", (d) => col[d.key])
+                      .attr("opacity", 0.95)
+                      .attr("stroke", "currentColor")
+                      .attr("stroke-opacity", 0.12);
+
+                    lg.append("text")
+                      .attr("x", 18)
+                      .attr("y", 4)
                       .attr("font-size", 12)
                       .attr("fill", "currentColor")
-                      .attr("opacity", 0.7)
-                      .text("Regions");
+                      .attr("opacity", 0.78)
+                      .text((d) => d.label);
 
                     // π_F vs π_R bar
-                    const barY = ih + 20;
+                    const barY = ih + 28;
                     const barW = Math.min(420, iw * 0.72);
                     const barX = (iw - barW) / 2;
                     const barH = 14;
@@ -2358,7 +2634,8 @@
                         const mag = As[i][j];
                         if (mag === 0) continue;
                         const total = A[i][j] + A[j][i];
-                        const imbalance = total > 0 ? (A[i][j] - A[j][i]) / total : 0;
+                        const imbalance =
+                          total > 0 ? (A[i][j] - A[j][i]) / total : 0;
                         const theta = twoPiQ * imbalance;
                         const c = Math.cos(theta);
                         const s = Math.sin(theta);
@@ -2556,14 +2833,26 @@
                       .enter()
                       .append("path")
                       .attr("d", (e) => {
-                        const sgn = Math.sign(A[e.u][e.v] - A[e.v][e.u]);
+                        const total = A[e.u][e.v] + A[e.v][e.u];
+                        const imbalance =
+                          total > 0 ? (A[e.u][e.v] - A[e.v][e.u]) / total : 0;
+
                         const wrapTop =
                           (e.u <= 1 && e.v >= n - 2) ||
                           (e.v <= 1 && e.u >= n - 2);
 
-                        const offset = wrapTop ? 6 : 10; // smaller offset for the 1/2 ↔ 9/10 wraps
-                        const r = R + (sgn >= 0 ? offset : -offset);
-                        const sweep = sgn >= 0 ? 1 : 0;
+                        const baseOffset = wrapTop ? 6 : 10;
+
+                        // Keep the teaching sketch visually outside the ring even when
+                        // imbalance is near zero or slightly negative.
+                        const extraOffset =
+                          Math.abs(imbalance) < 0.08
+                            ? 0
+                            : 5 * Math.abs(imbalance);
+                        const r = R + baseOffset + extraOffset;
+
+                        // Use a consistent outward arc direction for the concept sketch.
+                        const sweep = 1;
 
                         return arcPath(
                           nodes[e.u].ang,
@@ -2722,7 +3011,9 @@
                       .attr("font-size", 11)
                       .attr("fill", "currentColor")
                       .attr("opacity", 0.65)
-                      .text(`q=${q.toFixed(2)} · γ=${gamma.toFixed(2)} · R*=${repImbalance.toFixed(2)}`);
+                      .text(
+                        `q=${q.toFixed(2)} · γ=${gamma.toFixed(2)} · R*=${repImbalance.toFixed(2)}`,
+                      );
                   }
 
                   function bind() {
@@ -2912,5 +3203,717 @@
       id="dsq-count-scr"
       src="//qtj-me.disqus.com/count.js"
     ></script>
+
+    <script>
+      (function () {
+        if (!window.d3) return;
+
+        // ---------------------------------
+        // Concept viz: lazy vs teleporting
+        // ---------------------------------
+        const hostWalk = document.getElementById("conceptVizPiWalk");
+        if (hostWalk) {
+          const lazyEl = document.getElementById("piWalkLazy");
+          const lazyValEl = document.getElementById("piWalkLazyVal");
+          const teleEl = document.getElementById("piWalkTele");
+          const teleValEl = document.getElementById("piWalkTeleVal");
+
+          function buildBaseGraph() {
+            const nodes = [
+              { id: "F1", type: "F", x: 0.24, y: 0.26 },
+              { id: "F2", type: "F", x: 0.22, y: 0.58 },
+              { id: "F3", type: "F", x: 0.3, y: 0.82 },
+              { id: "R1", type: "R", x: 0.74, y: 0.22 },
+              { id: "R2", type: "R", x: 0.78, y: 0.52 },
+              { id: "R3", type: "R", x: 0.7, y: 0.82 },
+            ];
+            const edges = [
+              [0, 1],
+              [1, 2],
+              [2, 0],
+              [0, 3],
+              [1, 4],
+              [2, 5],
+              [3, 4],
+              [4, 5],
+              [5, 3],
+              [4, 1],
+            ];
+            return { nodes, edges };
+          }
+
+          function drawPiWalk() {
+            hostWalk.innerHTML = "";
+            const W = hostWalk.clientWidth || 800;
+            const H = hostWalk.clientHeight || 360;
+
+            const alpha = lazyEl ? +lazyEl.value : 0.1;
+            const beta = teleEl ? +teleEl.value : 0.15;
+            if (lazyValEl) lazyValEl.textContent = alpha.toFixed(2);
+            if (teleValEl) teleValEl.textContent = beta.toFixed(2);
+
+            const svg = d3
+              .select(hostWalk)
+              .append("svg")
+              .attr("width", "100%")
+              .attr("height", "100%")
+              .attr("viewBox", `0 0 ${W} ${H}`)
+              .style("display", "block");
+
+            const m = { top: 18, right: 16, bottom: 44, left: 16 };
+            const iw = W - m.left - m.right;
+            const ih = H - m.top - m.bottom;
+            const narrow = iw < 560;
+            const gap = 18;
+            const panelW = narrow ? iw : (iw - gap) / 2;
+            const panelH = narrow ? (ih - gap) / 2 : ih;
+
+            const panels = [
+              {
+                key: "lazy",
+                title: "Lazy walk: follow edges or stay",
+                x: 0,
+                y: 0,
+              },
+              {
+                key: "tele",
+                title: "Teleporting walk: follow edges or restart",
+                x: narrow ? 0 : panelW + gap,
+                y: narrow ? panelH + gap : 0,
+              },
+            ];
+
+            const root = svg
+              .append("g")
+              .attr("transform", `translate(${m.left},${m.top})`);
+            const { nodes, edges } = buildBaseGraph();
+            const focus = 0; // F1
+
+            function panelCoords(panel, d) {
+              const xPad = 12;
+              const topPad = 28;
+              const bottomPad = 54;
+              const usableW = Math.max(40, panelW - 2 * xPad);
+              const usableH = Math.max(40, panelH - topPad - bottomPad);
+              return {
+                x: panel.x + xPad + d.x * usableW,
+                y: panel.y + topPad + d.y * usableH,
+              };
+            }
+
+            const defs = svg.append("defs");
+            defs
+              .append("marker")
+              .attr("id", "piWalkArrow")
+              .attr("viewBox", "0 -5 10 10")
+              .attr("refX", 13)
+              .attr("refY", 0)
+              .attr("markerWidth", 6)
+              .attr("markerHeight", 6)
+              .attr("orient", "auto")
+              .append("path")
+              .attr("d", "M0,-5L10,0L0,5")
+              .attr("fill", "currentColor")
+              .attr("opacity", 0.55);
+
+            function curve(a, b, panel, bendSign = 1) {
+              const p0 = panelCoords(panel, nodes[a]);
+              const p1 = panelCoords(panel, nodes[b]);
+              const mx = (p0.x + p1.x) / 2;
+              const my = (p0.y + p1.y) / 2;
+              const dx = p1.x - p0.x;
+              const dy = p1.y - p0.y;
+              const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+              const ux = -dy / dist;
+              const uy = dx / dist;
+              const bend = Math.min(42, 0.18 * dist);
+              const cx = mx + bendSign * ux * bend;
+              const cy = my + bendSign * uy * bend;
+              return `M${p0.x},${p0.y} Q${cx},${cy} ${p1.x},${p1.y}`;
+            }
+
+            function selfLoop(panel, d, r) {
+              const p = panelCoords(panel, d);
+              const rr = r;
+              return `M${p.x + rr},${p.y}
+                      A${rr},${rr} 0 1,1 ${p.x - rr},${p.y}
+                      A${rr},${rr} 0 1,1 ${p.x + rr},${p.y}`;
+            }
+
+            panels.forEach((panel) => {
+              const g = root.append("g").attr("transform", `translate(0,0)`);
+              g.append("rect")
+                .attr("x", panel.x)
+                .attr("y", panel.y)
+                .attr("width", panelW)
+                .attr("height", panelH)
+                .attr("rx", 10)
+                .attr("ry", 10)
+                .attr("fill", "rgba(0,0,0,0.02)")
+                .attr("stroke", "rgba(0,0,0,0.12)");
+
+              g.append("text")
+                .attr("x", panel.x + 12)
+                .attr("y", panel.y + 18)
+                .attr("font-size", 12)
+                .attr("fill", "currentColor")
+                .attr("opacity", 0.78)
+                .text(panel.title);
+
+              // Base network
+              g.append("g")
+                .selectAll("path.edge")
+                .data(edges)
+                .enter()
+                .append("path")
+                .attr("class", "edge")
+                .attr("d", (e, i) =>
+                  curve(e[0], e[1], panel, i % 2 === 0 ? 1 : -1),
+                )
+                .attr("fill", "none")
+                .attr("stroke", "currentColor")
+                .attr("stroke-opacity", 0.12)
+                .attr("stroke-width", 1.1)
+                .attr("marker-end", "url(#piWalkArrow)");
+
+              // Highlight outgoing dynamics from focus node
+              const out = edges.filter((e) => e[0] === focus);
+              const edgeProb =
+                panel.key === "lazy"
+                  ? (1 - alpha) / out.length
+                  : (1 - beta) / out.length;
+
+              g.append("g")
+                .selectAll("path.focus")
+                .data(out)
+                .enter()
+                .append("path")
+                .attr("class", "focus")
+                .attr("d", (e, i) =>
+                  curve(e[0], e[1], panel, i % 2 === 0 ? 1 : -1),
+                )
+                .attr("fill", "none")
+                .attr("stroke", panel.key === "lazy" ? "#2f80ed" : "#f2994a")
+                .attr("stroke-opacity", 0.92)
+                .attr("stroke-width", 1.8 + 12 * edgeProb)
+                .attr("marker-end", "url(#piWalkArrow)");
+
+              // Lazy self-loops or teleport dashed arrows
+              if (panel.key === "lazy") {
+                g.append("g")
+                  .selectAll("path.loop")
+                  .data(nodes)
+                  .enter()
+                  .append("path")
+                  .attr("d", (d) =>
+                    selfLoop(
+                      panel,
+                      d,
+                      d.id === "F1" ? 12 + 26 * alpha : 6 + 12 * alpha,
+                    ),
+                  )
+                  .attr("fill", "none")
+                  .attr("stroke", "#2f80ed")
+                  .attr("stroke-opacity", (d) => (d.id === "F1" ? 0.7 : 0.18))
+                  .attr("stroke-width", (d) =>
+                    d.id === "F1" ? 1.4 + 18 * alpha : 0.8,
+                  )
+                  .attr("stroke-dasharray", (d) =>
+                    d.id === "F1" ? "0" : "3,3",
+                  );
+              } else {
+                const teleTargets = nodes.map((d, i) => ({ u: focus, v: i }));
+                g.append("g")
+                  .selectAll("path.tele")
+                  .data(teleTargets)
+                  .enter()
+                  .append("path")
+                  .attr("d", (e, i) => {
+                    if (e.u === e.v)
+                      return selfLoop(panel, nodes[e.u], 12 + 18 * beta);
+                    return curve(e.u, e.v, panel, i % 2 === 0 ? 1 : -1);
+                  })
+                  .attr("fill", "none")
+                  .attr("stroke", "#f2994a")
+                  .attr("stroke-opacity", (e) => (e.u === e.v ? 0.45 : 0.28))
+                  .attr("stroke-width", (e) =>
+                    e.u === e.v
+                      ? 1.2 + 10 * beta
+                      : 0.6 + 8 * (beta / nodes.length),
+                  )
+                  .attr("stroke-dasharray", "4,4")
+                  .attr("marker-end", (e) =>
+                    e.u === e.v ? null : "url(#piWalkArrow)",
+                  );
+              }
+
+              // Nodes
+              const nodeG = g.append("g");
+              nodeG
+                .selectAll("circle")
+                .data(nodes)
+                .enter()
+                .append("circle")
+                .attr("cx", (d) => panelCoords(panel, d).x)
+                .attr("cy", (d) => panelCoords(panel, d).y)
+                .attr("r", (d) => (d.id === "F1" ? 10 : 8))
+                .attr("fill", (d) => (d.type === "F" ? "#2f80ed" : "#f2994a"))
+                .attr("opacity", (d) => (d.id === "F1" ? 0.98 : 0.88))
+                .attr("stroke", "currentColor")
+                .attr("stroke-opacity", (d) => (d.id === "F1" ? 0.22 : 0.1))
+                .attr("stroke-width", (d) => (d.id === "F1" ? 1.5 : 1.0));
+
+              nodeG
+                .selectAll("text")
+                .data(nodes)
+                .enter()
+                .append("text")
+                .attr("x", (d) => panelCoords(panel, d).x)
+                .attr("y", (d) => panelCoords(panel, d).y + 4)
+                .attr("text-anchor", "middle")
+                .attr("font-size", 11)
+                .attr("fill", "#fff")
+                .text((d) => d.id);
+
+              // Centered legend below each panel
+              const barW = Math.max(96, Math.min(180, panelW - 42));
+              const barH = 12;
+              const barX = panel.x + (panelW - barW) / 2;
+              const barY = panel.y + panelH - 34;
+              const legendTitleY = barY - 10;
+              const labelY = barY + 24;
+              const legendFont = panelW < 240 ? 10 : 11;
+
+              g.append("text")
+                .attr("x", panel.x + panelW / 2)
+                .attr("y", legendTitleY)
+                .attr("text-anchor", "middle")
+                .attr("font-size", legendFont)
+                .attr("fill", "currentColor")
+                .attr("opacity", 0.72)
+                .text(
+                  panel.key === "lazy"
+                    ? "edge-following vs stay"
+                    : "edge-following vs restart",
+                );
+
+              g.append("rect")
+                .attr("x", barX)
+                .attr("y", barY)
+                .attr("width", barW)
+                .attr("height", barH)
+                .attr("rx", 999)
+                .attr("ry", 999)
+                .attr("fill", "currentColor")
+                .attr("opacity", 0.08);
+
+              const edgeMass = panel.key === "lazy" ? 1 - alpha : 1 - beta;
+              const extraMass = panel.key === "lazy" ? alpha : beta;
+              const edgeCol = panel.key === "lazy" ? "#2f80ed" : "#2f80ed";
+              const extraCol = panel.key === "lazy" ? "#56ccf2" : "#f2994a";
+
+              g.append("rect")
+                .attr("x", barX)
+                .attr("y", barY)
+                .attr("width", barW * edgeMass)
+                .attr("height", barH)
+                .attr("rx", 999)
+                .attr("ry", 999)
+                .attr("fill", edgeCol)
+                .attr("opacity", 0.95);
+
+              g.append("rect")
+                .attr("x", barX + barW * edgeMass)
+                .attr("y", barY)
+                .attr("width", barW * extraMass)
+                .attr("height", barH)
+                .attr("rx", 999)
+                .attr("ry", 999)
+                .attr("fill", extraCol)
+                .attr("opacity", 0.95);
+
+              g.append("text")
+                .attr("x", barX)
+                .attr("y", labelY)
+                .attr("font-size", legendFont)
+                .attr("fill", "currentColor")
+                .attr("opacity", 0.78)
+                .text(`follow ${edgeMass.toFixed(2)}`);
+
+              g.append("text")
+                .attr("x", barX + barW)
+                .attr("y", labelY)
+                .attr("text-anchor", "end")
+                .attr("font-size", legendFont)
+                .attr("fill", "currentColor")
+                .attr("opacity", 0.78)
+                .text(
+                  panel.key === "lazy"
+                    ? `stay ${extraMass.toFixed(2)}`
+                    : `restart ${extraMass.toFixed(2)}`,
+                );
+            });
+          }
+
+          [lazyEl, teleEl].forEach((el) => {
+            if (!el) return;
+            el.addEventListener("input", drawPiWalk);
+            el.addEventListener("change", drawPiWalk);
+          });
+
+          let lastW = hostWalk.clientWidth || 800;
+          window.addEventListener(
+            "resize",
+            () => {
+              const w = hostWalk.clientWidth || 800;
+              if (Math.abs(w - lastW) < 2) return;
+              lastW = w;
+              drawPiWalk();
+            },
+            { passive: true },
+          );
+
+          drawPiWalk();
+        }
+
+        // ---------------------------------------------
+        // Concept viz: largest SCC vs largest closed SCC
+        // ---------------------------------------------
+        const hostClass = document.getElementById("conceptVizPiClass");
+        if (hostClass) {
+          const leakEl = document.getElementById("piLeak");
+          const leakValEl = document.getElementById("piLeakVal");
+
+          function stationary(P, maxIter = 2500, tol = 1e-10) {
+            const n = P.length;
+            let x = new Array(n).fill(1 / n);
+            for (let it = 0; it < maxIter; it++) {
+              const nx = new Array(n).fill(0);
+              for (let i = 0; i < n; i++) {
+                const xi = x[i];
+                if (xi === 0) continue;
+                for (let j = 0; j < n; j++) nx[j] += xi * P[i][j];
+              }
+              let diff = 0;
+              for (let j = 0; j < n; j++) diff += Math.abs(nx[j] - x[j]);
+              x = nx;
+              if (diff < tol) break;
+            }
+            const s = x.reduce((a, b) => a + b, 0) || 1;
+            return x.map((v) => v / s);
+          }
+
+          function drawPiClass() {
+            hostClass.innerHTML = "";
+            const W = hostClass.clientWidth || 800;
+            const H = hostClass.clientHeight || 380;
+            const leak = leakEl ? +leakEl.value : 0.35;
+            if (leakValEl) leakValEl.textContent = leak.toFixed(2);
+
+            const svg = d3
+              .select(hostClass)
+              .append("svg")
+              .attr("width", "100%")
+              .attr("height", "100%")
+              .attr("viewBox", `0 0 ${W} ${H}`)
+              .style("display", "block");
+
+            const m = { top: 18, right: 14, bottom: 92, left: 14 };
+            const iw = W - m.left - m.right;
+            const ih = H - m.top - m.bottom;
+            const g = svg
+              .append("g")
+              .attr("transform", `translate(${m.left},${m.top})`);
+
+            const nodes = [
+              { id: "F1", type: "F", cls: "big", x: 0.18, y: 0.28 },
+              { id: "F2", type: "F", cls: "big", x: 0.18, y: 0.68 },
+              { id: "R1", type: "R", cls: "big", x: 0.42, y: 0.26 },
+              { id: "R2", type: "R", cls: "big", x: 0.42, y: 0.7 },
+              { id: "R3", type: "R", cls: "sink", x: 0.78, y: 0.36 },
+              { id: "R4", type: "R", cls: "sink", x: 0.78, y: 0.66 },
+            ];
+
+            function px(d) {
+              return d.x * iw;
+            }
+            function py(d) {
+              return d.y * ih;
+            }
+
+            const edgeDefs = [
+              { u: 0, v: 2, w: 1.0, cls: "big" },
+              { u: 2, v: 1, w: 1.0, cls: "big" },
+              { u: 1, v: 3, w: 1.0, cls: "big" },
+              { u: 3, v: 0, w: 1.0, cls: "big" },
+              { u: 0, v: 1, w: 0.6, cls: "big" },
+              { u: 1, v: 0, w: 0.6, cls: "big" },
+              { u: 2, v: 3, w: 0.6, cls: "big" },
+              { u: 3, v: 2, w: 0.6, cls: "big" },
+              { u: 4, v: 5, w: 1.0, cls: "sink" },
+              { u: 5, v: 4, w: 1.0, cls: "sink" },
+              { u: 3, v: 4, w: leak, cls: "leak" },
+            ];
+
+            const defs = svg.append("defs");
+            defs
+              .append("marker")
+              .attr("id", "piClassArrow")
+              .attr("viewBox", "0 -5 10 10")
+              .attr("refX", 13)
+              .attr("refY", 0)
+              .attr("markerWidth", 6)
+              .attr("markerHeight", 6)
+              .attr("orient", "auto")
+              .append("path")
+              .attr("d", "M0,-5L10,0L0,5")
+              .attr("fill", "currentColor")
+              .attr("opacity", 0.58);
+
+            function curve(u, v, bendSign = 1) {
+              const a = nodes[u],
+                b = nodes[v];
+              const x0 = px(a),
+                y0 = py(a),
+                x1 = px(b),
+                y1 = py(b);
+              const mx = (x0 + x1) / 2,
+                my = (y0 + y1) / 2;
+              const dx = x1 - x0,
+                dy = y1 - y0;
+              const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+              const ux = -dy / dist,
+                uy = dx / dist;
+              const bend = Math.min(52, 0.18 * dist);
+              const cx = mx + bendSign * ux * bend;
+              const cy = my + bendSign * uy * bend;
+              return `M${x0},${y0} Q${cx},${cy} ${x1},${y1}`;
+            }
+
+            // Background halos for classes
+            g.append("ellipse")
+              .attr("cx", iw * 0.3)
+              .attr("cy", ih * 0.48)
+              .attr("rx", iw * 0.22)
+              .attr("ry", ih * 0.36)
+              .attr("fill", "#2f80ed")
+              .attr("opacity", 0.09)
+              .attr("stroke", "#2f80ed")
+              .attr("stroke-opacity", 0.22)
+              .attr("stroke-dasharray", "4,4");
+
+            g.append("ellipse")
+              .attr("cx", iw * 0.78)
+              .attr("cy", ih * 0.51)
+              .attr("rx", iw * 0.1)
+              .attr("ry", ih * 0.22)
+              .attr("fill", "#f2994a")
+              .attr("opacity", 0.11)
+              .attr("stroke", "#f2994a")
+              .attr("stroke-opacity", 0.28)
+              .attr("stroke-dasharray", "4,4");
+
+            g.append("text")
+              .attr("x", iw * 0.09)
+              .attr("y", 14)
+              .attr("font-size", 12)
+              .attr("fill", "currentColor")
+              .attr("opacity", 0.75)
+              .text("Largest SCC (blue) versus smaller closed class (orange)");
+
+            // Edges
+            g.append("g")
+              .selectAll("path")
+              .data(edgeDefs)
+              .enter()
+              .append("path")
+              .attr("d", (d, i) => curve(d.u, d.v, i % 2 === 0 ? 1 : -1))
+              .attr("fill", "none")
+              .attr("stroke", (d) =>
+                d.cls === "big"
+                  ? "#2f80ed"
+                  : d.cls === "sink"
+                    ? "#f2994a"
+                    : "#eb5757",
+              )
+              .attr("stroke-opacity", (d) =>
+                d.cls === "leak" ? 0.25 + 0.65 * leak : 0.55,
+              )
+              .attr("stroke-width", (d) =>
+                d.cls === "leak" ? 1.0 + 10 * leak : 1.2 + 1.8 * d.w,
+              )
+              .attr("stroke-dasharray", (d) =>
+                d.cls === "leak" ? "5,4" : null,
+              )
+              .attr("marker-end", "url(#piClassArrow)");
+
+            // Nodes
+            g.append("g")
+              .selectAll("circle")
+              .data(nodes)
+              .enter()
+              .append("circle")
+              .attr("cx", (d) => px(d))
+              .attr("cy", (d) => py(d))
+              .attr("r", 11)
+              .attr("fill", (d) => (d.type === "F" ? "#2f80ed" : "#f2994a"))
+              .attr("opacity", 0.92)
+              .attr("stroke", "currentColor")
+              .attr("stroke-opacity", 0.12);
+
+            g.append("g")
+              .selectAll("text.node")
+              .data(nodes)
+              .enter()
+              .append("text")
+              .attr("class", "node")
+              .attr("x", (d) => px(d))
+              .attr("y", (d) => py(d) + 4)
+              .attr("text-anchor", "middle")
+              .attr("font-size", 11)
+              .attr("fill", "#fff")
+              .text((d) => d.id);
+
+            g.append("text")
+              .attr("x", iw * 0.26)
+              .attr("y", ih - 188)
+              .attr("font-size", 11)
+              .attr("fill", "#2f80ed")
+              .attr("opacity", 0.85)
+              .text("largest SCC");
+
+            g.append("text")
+              .attr("x", iw * 0.72)
+              .attr("y", ih - 118)
+              .attr("font-size", 11)
+              .attr("fill", "#f2994a")
+              .attr("opacity", 0.88)
+              .text("largest closed SCC");
+
+            g.append("text")
+              .attr("x", iw * 0.48)
+              .attr("y", ih * 0.46)
+              .attr("font-size", 11)
+              .attr("fill", "#eb5757")
+              .attr("opacity", 0.82)
+              .text(
+                leak > 0.001 ? "probability can leak out" : "no outward leak",
+              );
+
+            // Restricted stationary mass on the big SCC
+            const Pbig = [
+              [0.18, 0.22, 0.42, 0.18],
+              [0.24, 0.16, 0.16, 0.44],
+              [0.18, 0.4, 0.14, 0.28],
+              [0.34, 0.14, 0.3, 0.22],
+            ];
+            const pibig = stationary(Pbig);
+            const piBigF = pibig[0] + pibig[1];
+            const piBigR = pibig[2] + pibig[3];
+
+            // Full chain interpretation: with any positive leak, the closed class is the only essential class
+            const piFullF = leak > 0.001 ? 0 : piBigF;
+            const piFullR = leak > 0.001 ? 1 : piBigR;
+
+            function massBar(y, label, leftVal, rightVal, colorL, colorR) {
+              const barW = Math.min(360, iw * 0.54);
+              const barH = 12;
+              const x = (iw - barW) / 2;
+
+              g.append("text")
+                .attr("x", x)
+                .attr("y", y - 8)
+                .attr("font-size", 11)
+                .attr("fill", "currentColor")
+                .attr("opacity", 0.74)
+                .text(label);
+
+              g.append("rect")
+                .attr("x", x)
+                .attr("y", y)
+                .attr("width", barW)
+                .attr("height", barH)
+                .attr("rx", 999)
+                .attr("ry", 999)
+                .attr("fill", "currentColor")
+                .attr("opacity", 0.08);
+
+              g.append("rect")
+                .attr("x", x)
+                .attr("y", y)
+                .attr("width", barW * leftVal)
+                .attr("height", barH)
+                .attr("rx", 999)
+                .attr("ry", 999)
+                .attr("fill", colorL)
+                .attr("opacity", 0.95);
+
+              g.append("rect")
+                .attr("x", x + barW * leftVal)
+                .attr("y", y)
+                .attr("width", barW * rightVal)
+                .attr("height", barH)
+                .attr("rx", 999)
+                .attr("ry", 999)
+                .attr("fill", colorR)
+                .attr("opacity", 0.95);
+
+              g.append("text")
+                .attr("x", x)
+                .attr("y", y + 28)
+                .attr("font-size", 11)
+                .attr("fill", "currentColor")
+                .attr("opacity", 0.82)
+                .text(`π_F=${leftVal.toFixed(2)}`);
+
+              g.append("text")
+                .attr("x", x + barW)
+                .attr("y", y + 28)
+                .attr("text-anchor", "end")
+                .attr("font-size", 11)
+                .attr("fill", "currentColor")
+                .attr("opacity", 0.82)
+                .text(`π_R=${rightVal.toFixed(2)}`);
+            }
+
+            massBar(
+              ih,
+              "Restricted to largest SCC",
+              piBigF,
+              piBigR,
+              "#2f80ed",
+              "#f2994a",
+            );
+            massBar(
+              ih + 60,
+              "Full chain / closed-class view",
+              piFullF,
+              piFullR,
+              "#2f80ed",
+              "#f2994a",
+            );
+          }
+
+          if (leakEl) {
+            leakEl.addEventListener("input", drawPiClass);
+            leakEl.addEventListener("change", drawPiClass);
+          }
+
+          let lastW = hostClass.clientWidth || 800;
+          window.addEventListener(
+            "resize",
+            () => {
+              const w = hostClass.clientWidth || 800;
+              if (Math.abs(w - lastW) < 2) return;
+              lastW = w;
+              drawPiClass();
+            },
+            { passive: true },
+          );
+
+          drawPiClass();
+        }
+      })();
+    </script>
   </body>
 </html>
