@@ -1,0 +1,587 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>From bare hex grid to spatial science sandbox</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --bg-2: #0d1830;
+      --panel: rgba(12, 22, 40, 0.86);
+      --line: rgba(148, 163, 184, 0.18);
+      --text: #e8f1fb;
+      --muted: #9ab0ca;
+      --sky: #7dd3fc;
+      --mint: #34d399;
+      --amber: #f59e0b;
+      --rose: #fb7185;
+      --violet: #a78bfa;
+      --shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 15%, rgba(125, 211, 252, 0.10), transparent 24%),
+        radial-gradient(circle at 85% 20%, rgba(167, 139, 250, 0.12), transparent 22%),
+        radial-gradient(circle at 70% 80%, rgba(52, 211, 153, 0.08), transparent 18%),
+        linear-gradient(180deg, #091222 0%, #060d18 100%);
+      line-height: 1.6;
+    }
+
+    .page {
+      width: min(1160px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 56px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 24px;
+      align-items: center;
+      padding: 24px 0 34px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(125, 211, 252, 0.10);
+      border: 1px solid rgba(125, 211, 252, 0.16);
+      color: var(--sky);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 14px currentColor;
+    }
+
+    h1 {
+      margin: 18px 0 14px;
+      font-size: clamp(2.4rem, 5vw, 4.4rem);
+      line-height: 0.96;
+      letter-spacing: -0.05em;
+    }
+
+    .lead {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 62ch;
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: 14px;
+      text-decoration: none;
+      color: var(--text);
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(14, 24, 44, 0.96), rgba(10, 18, 34, 0.96));
+      box-shadow: var(--shadow);
+      font-weight: 700;
+    }
+
+    .button.primary {
+      border-color: rgba(125, 211, 252, 0.24);
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.20), rgba(34, 197, 94, 0.14));
+    }
+
+    .mockup {
+      border-radius: 28px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(13, 23, 42, 0.96), rgba(9, 16, 30, 0.96));
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      min-height: 420px;
+    }
+
+    .mockup::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 75% 10%, rgba(125, 211, 252, 0.12), transparent 22%);
+      pointer-events: none;
+    }
+
+    .mockup-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 12px;
+      height: 100%;
+    }
+
+    .card,
+    .feature,
+    .equation,
+    .question,
+    .note,
+    .panel {
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(13, 23, 42, 0.96), rgba(9, 16, 30, 0.96));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .mock-hex {
+      position: relative;
+      min-height: 310px;
+      padding: 14px;
+      overflow: hidden;
+    }
+
+    .mock-hex .grid {
+      position: absolute;
+      inset: 18px;
+      background:
+        radial-gradient(circle at 18% 24%, rgba(52, 211, 153, 0.9), transparent 8%),
+        radial-gradient(circle at 40% 42%, rgba(56, 189, 248, 0.95), transparent 8%),
+        radial-gradient(circle at 58% 38%, rgba(245, 158, 11, 0.88), transparent 9%),
+        radial-gradient(circle at 72% 56%, rgba(167, 139, 250, 0.92), transparent 8%),
+        radial-gradient(circle at 65% 72%, rgba(251, 113, 133, 0.88), transparent 7%),
+        radial-gradient(circle at 26% 72%, rgba(14, 165, 233, 0.88), transparent 10%),
+        linear-gradient(180deg, rgba(6, 12, 22, 0.96), rgba(8, 15, 28, 0.96));
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+
+    .mock-hex .grid::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(30deg, rgba(148,163,184,0.10) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148,163,184,0.08) 1px, transparent 1px),
+        linear-gradient(150deg, rgba(148,163,184,0.10) 1px, transparent 1px);
+      background-size: 42px 24px, 42px 24px, 42px 24px;
+      opacity: 0.45;
+      mix-blend-mode: screen;
+    }
+
+    .mock-sidebar {
+      display: grid;
+      gap: 12px;
+    }
+
+    .mock-module {
+      min-height: 70px;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      background: linear-gradient(180deg, rgba(14, 24, 44, 0.96), rgba(11, 18, 32, 0.96));
+    }
+
+    .mock-module .line {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.14);
+      margin-bottom: 9px;
+    }
+
+    .mock-module .line.short { width: 58%; }
+    .mock-module .line.mid { width: 82%; }
+    .mock-module .line.tiny { width: 38%; }
+
+    section {
+      margin-top: 24px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: clamp(1.6rem, 3vw, 2.5rem);
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 54ch;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .feature {
+      padding: 22px;
+    }
+
+    .feature .icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.05rem;
+      margin-bottom: 14px;
+      color: #06111d;
+    }
+
+    .sky { background: linear-gradient(180deg, #7dd3fc, #38bdf8); }
+    .mint { background: linear-gradient(180deg, #6ee7b7, #34d399); }
+    .amber { background: linear-gradient(180deg, #fcd34d, #f59e0b); }
+    .rose { background: linear-gradient(180deg, #fda4af, #fb7185); }
+    .violet { background: linear-gradient(180deg, #c4b5fd, #a78bfa); }
+    .slate { background: linear-gradient(180deg, #e2e8f0, #94a3b8); }
+
+    .feature h3,
+    .equation h3,
+    .question h3,
+    .note h3 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+    }
+
+    .feature p,
+    .equation p,
+    .question p,
+    .note p,
+    .body-copy,
+    .kicker {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .body-copy {
+      max-width: 78ch;
+      margin-bottom: 18px;
+    }
+
+    .equation-grid,
+    .question-grid,
+    .note-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .equation,
+    .question,
+    .note {
+      padding: 22px;
+    }
+
+    .formula {
+      margin: 16px 0 14px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(125, 211, 252, 0.08);
+      border: 1px solid rgba(125, 211, 252, 0.14);
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+      overflow-x: auto;
+      color: #eff8ff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .callout {
+      margin-top: 18px;
+      padding: 18px 20px;
+      border-radius: 18px;
+      border: 1px solid rgba(52, 211, 153, 0.16);
+      background: linear-gradient(180deg, rgba(52, 211, 153, 0.08), rgba(9, 16, 30, 0.96));
+      color: #eafff7;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 16px;
+    }
+
+    .panel {
+      padding: 22px;
+    }
+
+    .mini-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .mini-item {
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      background: rgba(9, 16, 30, 0.65);
+    }
+
+    .mini-item strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    footer {
+      margin-top: 36px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .split,
+      .feature-grid,
+      .equation-grid,
+      .question-grid,
+      .note-grid,
+      .mockup-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page { width: min(100% - 20px, 1160px); }
+      .feature-grid,
+      .equation-grid,
+      .question-grid,
+      .note-grid { grid-template-columns: 1fr; }
+      .section-head { display: block; }
+      .section-head p { margin-top: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">Blog post / design note</div>
+        <h1>From a bare hex grid to a spatial science sandbox</h1>
+        <p class="lead">This upgraded simulator turns a simple hex‑map prototype into a richer research and communication tool. It now behaves more like an exploratory lab: it has scenario presets, reproducible randomness, ecological and evolutionary dynamics, multiple linked diagnostics, and a layout that feels ready for a scientific web product instead of just a proof of concept.</p>
+        <p class="lead">The result is not just prettier. It is more legible, more hypothesis‑friendly, and much better at showing why a spatially explicit model matters when fragmentation, disturbance, dispersal, and adaptation interact.</p>
+        <div class="cta-row">
+          <a class="button primary" href="hive_improved.html">Open the simulator</a>
+          <a class="button" href="#what-changed">See what changed</a>
+          <a class="button" href="#next">Future extensions</a>
+        </div>
+      </div>
+      <div class="mockup" aria-hidden="true">
+        <div class="mockup-grid">
+          <div class="mock-hex card">
+            <div class="grid"></div>
+          </div>
+          <div class="mock-sidebar">
+            <div class="mock-module">
+              <div class="line short"></div>
+              <div class="line mid"></div>
+              <div class="line tiny"></div>
+            </div>
+            <div class="mock-module">
+              <div class="line mid"></div>
+              <div class="line short"></div>
+              <div class="line mid"></div>
+            </div>
+            <div class="mock-module">
+              <div class="line tiny"></div>
+              <div class="line mid"></div>
+              <div class="line short"></div>
+            </div>
+            <div class="mock-module">
+              <div class="line mid"></div>
+              <div class="line tiny"></div>
+              <div class="line short"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section id="what-changed">
+      <div class="section-head">
+        <h2>What changed</h2>
+        <p>The redesign focused on three goals at once: make the page easier to read, make the controls scientifically interpretable, and make the outcomes visible through views that answer real spatial questions.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature">
+          <div class="icon sky">01</div>
+          <h3>Layered map views</h3>
+          <p>The landscape can now be viewed as population load, trait mean, habitat quality, environmental optimum, trait mismatch, or disturbance intensity. That means the same grid can answer different questions without changing the underlying simulation.</p>
+        </article>
+        <article class="feature">
+          <div class="icon mint">02</div>
+          <h3>Scientifically meaningful metrics</h3>
+          <p>The dashboard tracks total abundance, occupancy, invasion front radius, mean trait, adaptation debt, trait diversity, and patchiness. Those are much more informative than a single map snapshot.</p>
+        </article>
+        <article class="feature">
+          <div class="icon amber">03</div>
+          <h3>Linked diagnostics</h3>
+          <p>Alongside the map, the interface now shows time series, trait histograms, radial profiles, and per‑step fluxes. This turns the simulator into a compact multi‑panel figure generator.</p>
+        </article>
+        <article class="feature">
+          <div class="icon rose">04</div>
+          <h3>Disturbance and fragmentation</h3>
+          <p>Patch disturbances and hard barriers make the landscape more realistic and more interesting. Users can inspect resilience, recolonization, refugia, and the cost of broken connectivity.</p>
+        </article>
+        <article class="feature">
+          <div class="icon violet">05</div>
+          <h3>Adaptive dynamics</h3>
+          <p>The simulator now includes local optima, mutational noise, adaptive tracking, and selection against mismatch. That makes it possible to explore evolutionary rescue and lag under moving environments.</p>
+        </article>
+        <article class="feature">
+          <div class="icon slate">06</div>
+          <h3>Preset stories and reproducibility</h3>
+          <p>Preset scenarios make the app immediately demo‑ready, while an explicit random seed makes it much easier to reproduce and compare runs.</p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Model logic in one glance</h2>
+        <p>The new version keeps the model exploratory, but gives it a clearer ecological backbone. Population, environment, and trait state each have a visual role and a dynamical role.</p>
+      </div>
+      <p class="body-copy">At a high level, each hex stores a population size <strong>N</strong>, a mean trait <strong>φ</strong>, habitat quality <strong>H</strong>, an environmental optimum <strong>θ</strong>, and a disturbance level. Population changes through births, deaths, emigration, and immigration. Traits shift through adaptation, mutation, drift, and weak coupling to neighboring patches.</p>
+      <div class="equation-grid">
+        <article class="equation">
+          <h3>Local demography</h3>
+          <div class="formula">Nᵢ(t+1) = Nᵢ(t) + Bᵢ − Dᵢ + Iᵢ − Eᵢ</div>
+          <p>Births are limited by local crowding and niche mismatch. Deaths increase with disturbance and overcrowding. Dispersal moves individuals through the hex neighborhood.</p>
+        </article>
+        <article class="equation">
+          <h3>Adaptive tracking</h3>
+          <div class="formula">φᵢ(t+1) = φᵢ(t) + α(θᵢ − φᵢ) + ε<sub>mut</sub> + ε<sub>drift</sub></div>
+          <p>Trait dynamics let the simulation show adaptation debt, tracking of moving optima, and the interaction between mutation and spatial spread.</p>
+        </article>
+        <article class="equation">
+          <h3>Habitat structure</h3>
+          <div class="formula">Kᵢ = K₀ · Hᵢ</div>
+          <p>Carrying capacity varies with habitat quality, which means the landscape matters even before any disturbance or climate shift is applied.</p>
+        </article>
+      </div>
+      <div class="callout">A useful design rule here is that every latent variable should either influence a decision, appear in a tooltip, or earn a chart. Otherwise it becomes hidden complexity instead of visible science.</div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>What the visuals are good for</h2>
+        <p>The new interface is built so that each panel answers a different kind of question.</p>
+      </div>
+      <div class="question-grid">
+        <article class="question">
+          <h3>How fast is the spread?</h3>
+          <p>Use the normalized demography chart plus the invasion front metric. Together they separate local growth from genuine spatial expansion.</p>
+        </article>
+        <article class="question">
+          <h3>Is the population adapting?</h3>
+          <p>Use the evolutionary tracking chart and the mismatch layer. The gap between trait mean and optimum shows adaptation lag immediately.</p>
+        </article>
+        <article class="question">
+          <h3>Where is the wave front?</h3>
+          <p>Use the radial profile. It shows whether abundance is concentrated near the seed, spread smoothly, or piling up behind barriers and bottlenecks.</p>
+        </article>
+        <article class="question">
+          <h3>Is diversity collapsing?</h3>
+          <p>Use the trait histogram and diversity metric to see whether a scenario produces convergence, broad polymorphism, or fragmented local niches.</p>
+        </article>
+        <article class="question">
+          <h3>Are disturbances changing outcomes?</h3>
+          <p>Use the disturbance layer together with the flux panel. This makes it easier to distinguish internal decline from externally forced loss.</p>
+        </article>
+        <article class="question">
+          <h3>Are corridors actually helping?</h3>
+          <p>Use the corridor preset, then compare occupancy, patchiness, and migrants. The answer becomes visual instead of abstract.</p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Why this matters for a risk platform</h2>
+        <p>A spatial sandbox like this complements network dashboards and timeseries views because it lets users reason about mechanisms, not just summaries.</p>
+      </div>
+      <div class="split">
+        <article class="panel">
+          <p class="body-copy">If your broader platform is about risk assessment, this kind of page plays a distinct role. A trade network view tells you <em>where connections exist</em>. A timeseries tells you <em>what changed over time</em>. A spatial simulator helps users think about <em>why a pattern might emerge under different assumptions</em>.</p>
+          <p class="body-copy">That makes it valuable for communication, training, scenario exploration, and early prototyping of intervention logic before a more formal model is fitted.</p>
+        </article>
+        <article class="panel">
+          <div class="mini-list">
+            <div class="mini-item">
+              <strong>For science communication</strong>
+              Show how fragmentation, barriers, or adaptation can change spread trajectories.
+            </div>
+            <div class="mini-item">
+              <strong>For stakeholder workshops</strong>
+              Use presets to compare alternative futures and discuss where interventions make sense.
+            </div>
+            <div class="mini-item">
+              <strong>For product design</strong>
+              Learn which metrics and map layers users naturally reach for before investing in more complex tooling.
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="next">
+      <div class="section-head">
+        <h2>Where to take it next</h2>
+        <p>The current version is a strong interactive demo. The next step is to decide whether you want it to become a communication piece, a teaching tool, or a calibrated modeling workflow.</p>
+      </div>
+      <div class="note-grid">
+        <article class="note">
+          <h3>Empirical calibration</h3>
+          <p>Swap generic habitat and optimum fields for measured covariates or gridded risk surfaces. Then use the same visual grammar for real scenarios.</p>
+        </article>
+        <article class="note">
+          <h3>Intervention experiments</h3>
+          <p>Add barrier removal, targeted suppression, vaccination, culling, or corridor construction as explicit actions that can be toggled during a run.</p>
+        </article>
+        <article class="note">
+          <h3>Network + space coupling</h3>
+          <p>Link the spatial layer to movement or contact networks so users can explore what happens when jump dispersal and local diffusion coexist.</p>
+        </article>
+      </div>
+    </section>
+
+    <footer>
+      This page was written to accompany the upgraded simulator as a standalone HTML blog post. It is designed to be dropped directly into a project site or adapted into a longer article with screenshots, calibration notes, or empirical case studies.
+    </footer>
+  </main>
+</body>
+</html>
