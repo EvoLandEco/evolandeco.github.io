@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Diversification Models and Neural Inference · Tianjian Qin · PhD Ceremony</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="canonical" href="https://qtj.me/defense.html" />
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Diversification Models and Neural Inference" />
+  <meta property="og:description" content="PhD thesis by Tianjian Qin on diversification models, ecological limits, evolutionary relatedness, and neural inference from extant phylogenies." />
+  <meta property="og:url" content="https://qtj.me/defense.html" />
+  <meta property="og:image" content="https://qtj.me/assets/files/og-cover.jpg" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Diversification Models and Neural Inference" />
+  <meta name="twitter:description" content="PhD thesis by Tianjian Qin on diversification models, ecological limits, evolutionary relatedness, and neural inference from extant phylogenies." />
+  <meta name="twitter:image" content="https://qtj.me/assets/files/og-cover.jpg" />
+
+  <meta name="citation_title" content="Diversification Models and Neural Inference" />
+  <meta name="citation_author" content="Qin, Tianjian" />
+  <meta name="citation_publication_date" content="2026/05/19" />
+  <meta name="citation_pdf_url" content="https://research.rug.nl/files/1515277445/Complete_thesis.pdf" />
+  <meta name="citation_doi" content="10.33612/diss.1515277442" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Thesis",
+    "name": "Diversification Models and Neural Inference",
+    "description": "This thesis investigates the drivers of species diversification and the ability of deep learning methods to recover diversification mechanisms from extant phylogenies.",
+    "author": {
+      "@type": "Person",
+      "name": "Tianjian Qin",
+      "identifier": "https://orcid.org/my-orcid?orcid=0000-0003-2540-1778",
+      "sameAs": ["https://orcid.org/my-orcid?orcid=0000-0003-2540-1778"]
+    },
+    "datePublished": "2026-05-19",
+    "inLanguage": "en",
+    "identifier": "https://doi.org/10.33612/diss.1515277442",
+    "url": "https://qtj.me/defense.html",
+    "codeRepository": "https://qtj.me/portfolio.html"
+  }
+  </script>
+
+  <style>
+    :root{
+      --ink:#172033;
+      --muted:#647084;
+      --bg:#f4f7fb;
+      --line:#dfe7f2;
+      --blue:#234c7a;
+      --blue2:#5c7fae;
+      --gold:#d9873a;
+      --soft:#eaf1f8;
+      --shadow:0 24px 70px rgba(23,32,51,.12);
+      --radius:24px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font:16px/1.65 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(92,127,174,.24), transparent 30%),
+        radial-gradient(circle at 88% 2%, rgba(217,135,58,.18), transparent 26%),
+        linear-gradient(180deg,#f8fbff 0%,var(--bg) 52%,#eef3f9 100%);
+    }
+
+    a{color:var(--blue);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .wrap{width:min(1120px,calc(100% - 36px));margin:auto}
+
+    .nav{
+      position:sticky;top:0;z-index:10;
+      backdrop-filter:blur(18px);
+      background:rgba(248,251,255,.78);
+      border-bottom:1px solid rgba(223,231,242,.8);
+    }
+    .nav-inner{height:64px;display:flex;align-items:center;justify-content:space-between}
+    .brand{font-weight:800;letter-spacing:.02em}
+    .brand i{color:var(--blue);margin-right:8px}
+    .nav a{margin-left:18px;color:var(--muted);font-size:.94rem}
+    .nav a i{margin-right:6px;color:var(--blue2)}
+
+    .hero{padding:76px 0 44px}
+    .hero-grid{display:grid;grid-template-columns:1.18fr .82fr;gap:34px;align-items:stretch}
+    .hero-card{
+      background:rgba(255,255,255,.84);
+      border:1px solid rgba(223,231,242,.92);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:42px;
+      position:relative;
+      overflow:hidden;
+    }
+    .hero-card:after{
+      content:"";
+      position:absolute;right:-120px;top:-120px;
+      width:300px;height:300px;border-radius:50%;
+      background:linear-gradient(135deg,rgba(92,127,174,.22),rgba(217,135,58,.16));
+    }
+    .hero-card > *{position:relative;z-index:1}
+
+    .eyebrow{
+      display:inline-flex;gap:8px;align-items:center;
+      color:var(--blue);
+      background:var(--soft);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:7px 12px;
+      font-weight:700;
+      font-size:.86rem;
+    }
+    h1{
+      margin:22px 0 14px;
+      font-size:clamp(2.35rem,5vw,4.9rem);
+      line-height:1.02;
+      letter-spacing:-.055em;
+      max-width:850px;
+    }
+    .lead{color:var(--muted);font-size:1.12rem;max-width:760px;margin:0 0 26px}
+
+    .cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      min-height:46px;padding:0 17px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:#fff;
+      font-weight:750;
+      color:var(--ink);
+      box-shadow:0 8px 22px rgba(23,32,51,.07);
+      white-space:nowrap;
+      transition:transform .15s ease, box-shadow .15s ease;
+    }
+    .btn:hover{text-decoration:none;transform:translateY(-1px)}
+    .btn.primary{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border-color:transparent}
+    .btn.invite{background:linear-gradient(135deg,var(--gold),#e5a461);color:#fff;border-color:transparent;box-shadow:0 12px 30px rgba(217,135,58,.24)}
+    .btn.small{min-height:34px;padding:0 12px;border-radius:11px;font-size:.86rem;box-shadow:none}
+    .btn.light{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.28);box-shadow:none}
+    .btn.light:hover{background:rgba(255,255,255,.19)}
+
+    .event-card{
+      background:linear-gradient(180deg,#17365b,#234c7a);
+      color:#fff;
+      border-radius:var(--radius);
+      padding:34px;
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .event-card:before{
+      content:"";
+      position:absolute;inset:auto -80px -90px auto;
+      width:230px;height:230px;border-radius:50%;
+      background:rgba(255,255,255,.12);
+    }
+    .event-card > *{position:relative;z-index:1}
+    .datebox{
+      width:118px;height:118px;border-radius:22px;
+      background:rgba(255,255,255,.13);
+      border:1px solid rgba(255,255,255,.25);
+      display:grid;place-items:center;
+      margin-bottom:24px;
+    }
+    .datebox strong{display:block;font-size:2.5rem;line-height:1}
+    .datebox span{display:block;text-align:center;text-transform:uppercase;letter-spacing:.12em;font-size:.8rem}
+    .event-card h2{font-size:1.5rem;margin:0 0 14px}
+    .event-card p{color:rgba(255,255,255,.82);margin:.2rem 0}
+    .event-card p i{width:20px;color:rgba(255,255,255,.78)}
+    .event-actions{margin-top:22px;display:flex;flex-wrap:wrap;gap:10px}
+    .mini{margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.22);display:grid;gap:10px}
+    .mini div{display:flex;justify-content:space-between;gap:18px}
+    .mini span{color:rgba(255,255,255,.68)}
+
+    section{padding:36px 0}
+    .section-title{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:18px}
+    .section-title h2{margin:0;font-size:1.65rem;letter-spacing:-.025em}
+    .section-title h2 i{color:var(--blue2);margin-right:10px}
+    .section-title p{margin:0;color:var(--muted)}
+
+    .panel{
+      background:rgba(255,255,255,.86);
+      border:1px solid var(--line);
+      border-radius:22px;
+      box-shadow:0 16px 45px rgba(23,32,51,.07);
+      padding:28px;
+    }
+
+    .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px}
+    .summary-card{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:20px;
+      padding:22px;
+      box-shadow:0 10px 26px rgba(23,32,51,.06);
+    }
+    .summary-card i{font-size:1.45rem;color:var(--blue2);margin-bottom:12px}
+    .summary-card h3{margin:0 0 8px;font-size:1.05rem}
+    .summary-card p{margin:0;color:var(--muted);font-size:.96rem}
+
+    .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+    .resource{
+      min-height:128px;
+      border-radius:20px;
+      padding:18px;
+      background:#fff;
+      border:1px solid var(--line);
+      box-shadow:0 10px 26px rgba(23,32,51,.06);
+      transition:transform .15s ease, box-shadow .15s ease;
+    }
+    .resource:hover{text-decoration:none;transform:translateY(-1px)}
+    .resource i{display:block;color:var(--blue2);font-size:1.35rem;margin-bottom:12px}
+    .resource b{display:block;margin-bottom:6px;color:var(--ink)}
+    .resource span{color:var(--muted);font-size:.92rem}
+
+    .timeline{display:grid;gap:0}
+    .slot{
+      display:grid;
+      grid-template-columns:150px 1fr auto;
+      gap:18px;
+      padding:18px 0;
+      border-bottom:1px solid var(--line);
+      align-items:center;
+    }
+    .slot:last-child{border-bottom:0}
+    .time{font-weight:800;color:var(--blue)}
+    .time i{margin-right:7px;color:var(--blue2)}
+    .slot h3{margin:0 0 2px;font-size:1.02rem}
+    .slot h3 i{width:22px;color:var(--gold)}
+    .slot p{margin:0;color:var(--muted)}
+    .address{margin-top:6px;font-size:.93rem;color:#46556c}
+    .address i{width:18px;color:var(--blue2)}
+
+    pre{
+      margin:0;
+      overflow:auto;
+      background:#101827;
+      color:#e9eef7;
+      border-radius:18px;
+      padding:20px;
+      font-size:.9rem;
+    }
+
+    footer{padding:46px 0 60px;color:var(--muted);text-align:center}
+    footer i{color:var(--blue2);margin-right:6px}
+
+    @media(max-width:980px){
+      .slot{grid-template-columns:130px 1fr}
+      .slot .btn{grid-column:2}
+    }
+    @media(max-width:900px){
+      .hero-grid,.summary-grid{grid-template-columns:1fr}
+      .cards{grid-template-columns:1fr 1fr}
+      .nav a{display:none}
+    }
+    @media(max-width:560px){
+      .hero-card,.event-card,.panel{padding:22px}
+      .cards{grid-template-columns:1fr}
+      .slot{grid-template-columns:1fr;gap:8px}
+      .slot .btn{grid-column:auto;width:max-content}
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="nav">
+    <div class="wrap nav-inner">
+      <div class="brand"><i class="fa-solid fa-graduation-cap"></i>Tianjian Qin · PhD Ceremony</div>
+      <div>
+        <a href="#abstract"><i class="fa-solid fa-align-left"></i>Abstract</a>
+        <a href="#resources"><i class="fa-solid fa-folder-open"></i>Resources</a>
+        <a href="#program"><i class="fa-regular fa-calendar"></i>Program</a>
+        <a href="#citation"><i class="fa-solid fa-quote-right"></i>Citation</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <div class="wrap hero-grid">
+        <div class="hero-card">
+          <span class="eyebrow"><i class="fa-solid fa-building-columns"></i> University of Groningen · PhD thesis</span>
+          <h1>Diversification Models and Neural Inference</h1>
+          <p class="lead">
+            This thesis investigates the drivers of species diversification, and to what extent deep learning methods can recover different drivers from extant phylogenies.
+          </p>
+
+          <div class="cta">
+            <a class="btn primary" href="https://research.rug.nl/files/1515277445/Complete_thesis.pdf"><i class="fa-solid fa-file-pdf"></i>Download thesis</a>
+            <a class="btn invite" href="https://research.rug.nl/files/1515277447/Propositions.pdf"><i class="fa-solid fa-scroll"></i>Download propositions</a>
+          </div>
+        </div>
+
+        <aside class="event-card">
+          <div class="datebox">
+            <div>
+              <strong>19</strong>
+              <span>May<br>2026</span>
+            </div>
+          </div>
+
+          <h2>Public PhD defense</h2>
+          <p><i class="fa-regular fa-clock"></i><strong>12:45</strong> · Aula, University of Groningen</p>
+          <p><i class="fa-solid fa-location-dot"></i>Broerstraat 5, 9712 CP Groningen</p>
+
+          <div class="event-actions">
+            <a class="btn light" href="https://qtj.me/assets/files/invitation.pdf"><i class="fa-solid fa-envelope-open-text"></i>Download invitation PDF</a>
+          </div>
+
+          <div class="mini">
+            <div><span>Candidate</span><strong>Tianjian Qin</strong></div>
+            <div><span>Institution</span><strong>University of Groningen</strong></div>
+            <div><span>Field</span><strong>Theoretical biology</strong></div>
+          </div>
+        </aside>
+      </div>
+    </header>
+
+    <section id="abstract">
+      <div class="wrap">
+        <div class="section-title">
+          <h2><i class="fa-solid fa-align-left"></i>Summary</h2>
+          <p></p>
+        </div>
+
+        <div class="panel">
+          <div class="summary-grid">
+            <article class="summary-card">
+              <i class="fa-solid fa-seedling"></i>
+              <h3>Modeling diversification</h3>
+              <p>
+                I introduce a birth death model, <em>eve</em>, in which speciation rates depend on both species richness and evolutionary relatedness measured at different phylogenetic scales.
+              </p>
+            </article>
+
+            <article class="summary-card">
+              <i class="fa-solid fa-brain"></i>
+              <h3>Neural parameter inference</h3>
+              <p>
+                I develop an ensemble neural network framework combining dense, graph and recurrent neural networks trained on tree topologies, branching times and summary statistics.
+              </p>
+            </article>
+
+            <article class="summary-card">
+              <i class="fa-solid fa-diagram-project"></i>
+              <h3>Identifiability limits</h3>
+              <p>
+                I use the <em>eve</em> model as a testbed to map when neural networks can and cannot infer diversification mechanisms from phylogenies.
+              </p>
+            </article>
+          </div>
+
+          <p>
+            Tree shape and the distribution of speciation rates across lineages depend strongly on the scale at which evolutionary relatedness acts, while negative species richness dependence can partly mask the influence of evolutionary relatedness on standard tree statistics. The model generates a wide range of empirically realistic, often imbalanced, phylogenies.
+          </p>
+
+          <p>
+            The neural ensemble yields estimates faster than maximum likelihood approaches and is less sensitive to tree size for constant rate and diversity dependent models. However, both likelihood based and neural network estimators struggle under protracted speciation, highlighting limits imposed by the information content of trees.
+          </p>
+
+          <p>
+            In many cases the neural networks struggle to tell the three scenarios apart, and when the trees carry little information the estimated parameters tend to drift back toward average values. Strong global richness dependence further erodes recoverability, whereas sufficiently strong evolutionary relatedness effects can create narrow regions of practical identifiability. Together, these results delineate the prospects and limits of using flexible diversification models and deep learning to unravel evolutionary dynamics from extant phylogenies.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="resources">
+      <div class="wrap">
+        <div class="section-title">
+          <h2><i class="fa-solid fa-folder-open"></i>Resources</h2>
+          <p></p>
+        </div>
+
+        <div class="cards">
+          <a class="resource" href="https://research.rug.nl/files/1515277445/Complete_thesis.pdf">
+            <i class="fa-solid fa-file-pdf"></i>
+            <b>Thesis PDF</b>
+            <span>Final manuscript</span>
+          </a>
+          <a class="resource" href="https://research.rug.nl/files/1515277447/Propositions.pdf">
+            <i class="fa-solid fa-scroll"></i>
+            <b>Propositions</b>
+            <span>Accompanying propositions</span>
+          </a>
+          <a class="resource" href="https://qtj.me/assets/files/invitation.pdf">
+            <i class="fa-solid fa-envelope-open-text"></i>
+            <b>Invitation PDF</b>
+            <span>Printable defense invitation</span>
+          </a>
+          <a class="resource" href="https://qtj.me/portfolio.html">
+            <i class="fa-solid fa-code"></i>
+            <b>Codebase</b>
+            <span>Research code and reproducibility materials</span>
+          </a>
+          <a class="resource" href="https://doi.org/10.33612/diss.1515277442">
+            <i class="fa-solid fa-fingerprint"></i>
+            <b>DOI</b>
+            <span>Permanent thesis record</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section id="program">
+      <div class="wrap">
+        <div class="section-title">
+          <h2><i class="fa-regular fa-calendar"></i>Program</h2>
+          <p><strong>Tuesday, 19 May 2026</strong></p>
+        </div>
+
+        <div class="panel timeline">
+          <div class="slot">
+            <div class="time"><i class="fa-regular fa-clock"></i>12:45–13:30</div>
+            <div>
+              <h3><i class="fa-solid fa-building-columns"></i>PhD Ceremony</h3>
+              <p>Aula, University of Groningen</p>
+              <div class="address"><i class="fa-solid fa-location-dot"></i>Academiegebouw, Broerstraat 5, 9712 CP Groningen, The Netherlands</div>
+            </div>
+            <a class="btn small" href="https://qtj.me/assets/files/phd-ceremony.ics"><i class="fa-regular fa-calendar-plus"></i>Add to calendar</a>
+          </div>
+
+          <div class="slot">
+            <div class="time"><i class="fa-regular fa-clock"></i>13:45–15:00</div>
+            <div>
+              <h3><i class="fa-solid fa-champagne-glasses"></i>Reception</h3>
+              <p>Spiegelzaal, University of Groningen</p>
+              <div class="address"><i class="fa-solid fa-location-dot"></i>Academiegebouw, Broerstraat 5, 9712 CP Groningen, The Netherlands</div>
+            </div>
+            <a class="btn small" href="https://qtj.me/assets/files/reception.ics"><i class="fa-regular fa-calendar-plus"></i>Add to calendar</a>
+          </div>
+
+          <div class="slot">
+            <div class="time"><i class="fa-regular fa-clock"></i>15:00–17:00</div>
+            <div>
+              <h3><i class="fa-solid fa-route"></i>Zernike Campus Tour</h3>
+              <p>Feringa Building, Linnaeusborg, and other highlights of the campus</p>
+              <div class="address"><i class="fa-solid fa-location-dot"></i>Zernike Campus Groningen, Nijenborgh area, Groningen, The Netherlands</div>
+            </div>
+            <a class="btn small" href="https://qtj.me/assets/files/zernike-campus-tour.ics"><i class="fa-regular fa-calendar-plus"></i>Add to calendar</a>
+          </div>
+
+          <div class="slot">
+            <div class="time"><i class="fa-regular fa-clock"></i>18:30–20:30</div>
+            <div>
+              <h3><i class="fa-solid fa-utensils"></i>Dinner</h3>
+              <p>Details to be confirmed with invited guests</p>
+              <div class="address"><i class="fa-solid fa-location-dot"></i>Address to be decided</div>
+            </div>
+            <a class="btn small" href="https://qtj.me/assets/files/dinner.ics"><i class="fa-regular fa-calendar-plus"></i>Add to calendar</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="citation">
+      <div class="wrap">
+        <div class="section-title">
+          <h2><i class="fa-solid fa-quote-right"></i>Citation</h2>
+          <p></p>
+        </div>
+        <pre><code>@phdthesis{qin2026diversification,
+  author    = {Tianjian Qin},
+  title     = {Diversification Models and Neural Inference},
+  school    = {University of Groningen},
+  year      = {2026},
+  month     = {may},
+  doi       = {10.33612/diss.1515277442},
+  url       = {https://qtj.me/defense.html},
+  note      = {Defense: 19 May 2026}
+}</code></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <i class="fa-regular fa-envelope"></i>© 2026 Tianjian Qin ·
+      <a href="mailto:tianjianqin@outlook.com">tianjianqin@outlook.com</a>
+    </div>
+  </footer>
+</body>
+</html>
