@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Diversification Models and Neural Inference · Tianjian Qin · PhD Ceremony</title>
+  <title>Diversification Models and Neural Inference · Tianjian Qin · PhD Thesis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="canonical" href="https://qtj.me/defense.html" />
 
@@ -154,13 +154,37 @@
       position:relative;
       overflow:hidden;
     }
+    .event-card.completed{
+      background:linear-gradient(180deg,#525c6c,#747d8d);
+      box-shadow:0 18px 55px rgba(23,32,51,.1);
+    }
     .event-card:before{
       content:"";
       position:absolute;inset:auto -80px -90px auto;
       width:230px;height:230px;border-radius:50%;
       background:rgba(255,255,255,.12);
     }
+    .event-card.completed:before{background:rgba(255,255,255,.08)}
+    .event-card.completed:after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(135deg,rgba(255,255,255,.12),transparent 38%,rgba(23,32,51,.16));
+      pointer-events:none;
+    }
     .event-card > *{position:relative;z-index:1}
+    .status-pill{
+      display:inline-flex;align-items:center;gap:8px;
+      color:#fff;
+      background:rgba(255,255,255,.15);
+      border:1px solid rgba(255,255,255,.28);
+      border-radius:999px;
+      padding:7px 12px;
+      margin-bottom:16px;
+      font-weight:800;
+      font-size:.86rem;
+    }
+    .status-pill i{color:#d9f2e5}
     .datebox{
       width:118px;height:118px;border-radius:22px;
       background:rgba(255,255,255,.13);
@@ -238,6 +262,25 @@
     .slot p{margin:0;color:var(--muted)}
     .address{margin-top:6px;font-size:.93rem;color:#46556c}
     .address i{width:18px;color:var(--blue2)}
+    .past-note{
+      display:flex;align-items:center;gap:10px;
+      margin:0 0 16px;
+      padding:13px 15px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:#eef2f6;
+      color:#566173;
+      font-weight:750;
+    }
+    .past-note i{color:#758195}
+    .timeline.past{background:rgba(245,247,250,.9)}
+    .timeline.past .slot{filter:grayscale(.72);opacity:.72}
+    .timeline.past .time{color:#6e7786}
+    .timeline.past .time i,
+    .timeline.past .slot h3 i,
+    .timeline.past .address i{color:#8792a0}
+    .timeline.past .slot p,
+    .timeline.past .address{color:#7a8491}
 
     pre{
       margin:0;
@@ -273,7 +316,7 @@
 <body>
   <nav class="nav">
     <div class="wrap nav-inner">
-      <div class="brand"><i class="fa-solid fa-graduation-cap"></i>Tianjian Qin · PhD Ceremony</div>
+      <div class="brand"><i class="fa-solid fa-graduation-cap"></i>Tianjian Qin · PhD Thesis</div>
         <div>
           <a href="https://qtj.me/"><i class="fa-solid fa-user"></i>About Me</a>
           <a href="#abstract"><i class="fa-solid fa-align-left"></i>Summary</a>
@@ -300,7 +343,7 @@
           </div>
         </div>
 
-        <aside class="event-card">
+        <aside class="event-card completed">
           <div class="datebox">
             <div>
               <strong>19</strong>
@@ -308,14 +351,10 @@
             </div>
           </div>
 
-          <h2>Public PhD defense</h2>
+          <div class="status-pill"><i class="fa-solid fa-circle-check"></i>Successfully defended</div>
+          <h2>PhD defense</h2>
           <p><i class="fa-regular fa-clock"></i><strong>12:45</strong> · Aula, Academiegebouw</p>
-          <p><i class="fa-solid fa-video"></i><a class="event-link" href="https://video.rug.nl/media/t/0_p0qzvx04">Defense livestream</a></p>
           <p><i class="fa-solid fa-location-dot"></i>Broerstraat 5, 9712 CP Groningen</p>
-
-          <div class="event-actions">
-            <a class="btn light" href="https://qtj.me/assets/files/invitation.pdf"><i class="fa-solid fa-envelope-open-text"></i>Download invitation PDF</a>
-          </div>
 
           <div class="mini">
             <div><span>Candidate</span><strong>Tianjian Qin</strong></div>
@@ -393,10 +432,10 @@
             <b>Propositions</b>
             <span>Accompanying propositions</span>
           </a>
-          <a class="resource" href="https://qtj.me/assets/files/invitation.pdf">
-            <i class="fa-solid fa-envelope-open-text"></i>
-            <b>Invitation PDF</b>
-            <span>Printable defense invitation</span>
+          <a class="resource" href="https://video.rug.nl/media/t/0_p0qzvx04">
+            <i class="fa-solid fa-video"></i>
+            <b>Defense recording</b>
+            <span>Video page</span>
           </a>
           <a class="resource" href="https://qtj.me/portfolio.html">
             <i class="fa-solid fa-code"></i>
@@ -416,28 +455,28 @@
       <div class="wrap">
         <div class="section-title">
           <h2><i class="fa-regular fa-calendar"></i>Program</h2>
-          <p><strong>Tuesday, 19 May 2026</strong></p>
+          <p><strong>Past events</strong></p>
         </div>
 
-        <div class="panel timeline">
+        <p class="past-note"><i class="fa-solid fa-circle-check"></i>These events took place on Tuesday, 19 May 2026.</p>
+
+        <div class="panel timeline past">
           <div class="slot">
             <div class="time"><i class="fa-regular fa-clock"></i>12:45–13:30</div>
             <div>
-              <h3><i class="fa-solid fa-building-columns"></i>PhD Ceremony</h3>
-              <p>Aula, University of Groningen</p>
+              <h3><i class="fa-solid fa-building-columns"></i>PhD ceremony</h3>
+              <p>Aula, Academiegebouw</p>
               <div class="address"><i class="fa-solid fa-location-dot"></i>Academiegebouw, Broerstraat 5, 9712 CP Groningen, The Netherlands</div>
             </div>
-            <a class="btn small" href="https://qtj.me/assets/files/phd-ceremony.ics"><i class="fa-regular fa-calendar-plus"></i>Add to calendar</a>
           </div>
 
           <div class="slot">
             <div class="time"><i class="fa-regular fa-clock"></i>13:45–15:00</div>
             <div>
               <h3><i class="fa-solid fa-champagne-glasses"></i>Reception</h3>
-              <p>Spiegelzaal, University of Groningen</p>
+              <p>Spiegelzaal, Academiegebouw</p>
               <div class="address"><i class="fa-solid fa-location-dot"></i>Academiegebouw, Broerstraat 5, 9712 CP Groningen, The Netherlands</div>
             </div>
-            <a class="btn small" href="https://qtj.me/assets/files/reception.ics"><i class="fa-regular fa-calendar-plus"></i>Add to calendar</a>
           </div>
 
           <div class="slot">
@@ -447,17 +486,14 @@
               <p>Feringa Building, Linnaeusborg, and other highlights of the campus</p>
               <div class="address"><i class="fa-solid fa-location-dot"></i>Zernike Campus Groningen, Nijenborgh area, Groningen, The Netherlands</div>
             </div>
-            <a class="btn small" href="https://qtj.me/assets/files/zernike-campus-tour.ics"><i class="fa-regular fa-calendar-plus"></i>Add to calendar</a>
           </div>
 
           <div class="slot">
             <div class="time"><i class="fa-regular fa-clock"></i>18:30–20:30</div>
             <div>
               <h3><i class="fa-solid fa-utensils"></i>Dinner</h3>
-              <p>Details to be confirmed with invited guests</p>
-              <div class="address"><i class="fa-solid fa-location-dot"></i>Address to be decided</div>
+              <p>With invited guests</p>
             </div>
-            <a class="btn small" href="https://qtj.me/assets/files/dinner.ics"><i class="fa-regular fa-calendar-plus"></i>Add to calendar</a>
           </div>
         </div>
       </div>
