@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.content-collections/
+*.tsbuildinfo
+playwright-report/
+test-results/
+
+out/
+evidence/*.png
+evidence/*.log
+evidence/browser-tests.json

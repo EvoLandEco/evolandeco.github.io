@@ -1,0 +1,849 @@
+{
+  "indexed": {
+    "date-parts": [
+      [
+        2026,
+        6,
+        5
+      ]
+    ],
+    "date-time": "2026-06-05T10:15:42Z",
+    "timestamp": 1780654542025,
+    "version": "3.54.1"
+  },
+  "reference-count": 86,
+  "publisher": "Wiley",
+  "issue": "4",
+  "license": [
+    {
+      "start": {
+        "date-parts": [
+          [
+            2020,
+            3,
+            18
+          ]
+        ],
+        "date-time": "2020-03-18T00:00:00Z",
+        "timestamp": 1584489600000
+      },
+      "content-version": "vor",
+      "delay-in-days": 0,
+      "URL": "http://onlinelibrary.wiley.com/termsAndConditions#vor"
+    }
+  ],
+  "funder": [
+    {
+      "DOI": "10.13039/501100001809",
+      "name": "National Natural Science Foundation of China",
+      "doi-asserted-by": "publisher",
+      "award": [
+        "31470475"
+      ],
+      "award-info": [
+        {
+          "award-number": [
+            "31470475"
+          ]
+        }
+      ],
+      "id": [
+        {
+          "id": "10.13039/501100001809",
+          "id-type": "DOI",
+          "asserted-by": "publisher"
+        }
+      ]
+    }
+  ],
+  "content-domain": {
+    "domain": [
+      "onlinelibrary.wiley.com"
+    ],
+    "crossmark-restriction": true
+  },
+  "short-container-title": [
+    "Plant Biol J"
+  ],
+  "published-print": {
+    "date-parts": [
+      [
+        2020,
+        7
+      ]
+    ]
+  },
+  "abstract": "<jats:title>Abstract</jats:title><jats:p><jats:list list-type=\"bullet\"><jats:list-item><jats:p>Highly biodiversity communities have been shown to better resist plant invasions through complementarity effects. Species richness (SR) is a widely used biodiversity metric but lacks explanatory power when there are only a few species. Communities with low SR can have a wide variety of phylogenetic diversities (PD), which might allow for a better prediction of invasibility.</jats:p></jats:list-item><jats:list-item><jats:p>We assessed the effect of diversity reduction of a wetland community assemblage typical of the Beijing area on biotic resistance to invasion of the exotic weed<jats:italic>Alternanthera philoxeroides</jats:italic>and compared the reduction in SR and PD in predicting community invasibility.</jats:p></jats:list-item><jats:list-item><jats:p>The eight studied resident species performed similarly when grown alone and when grown in eight\u2010species communities together with the invasive<jats:italic>A.\u00a0philoxeroides.</jats:italic>Variation partitioning showed that PD contributed more to variation in both<jats:italic>A.\u00a0philoxeroides</jats:italic>traits and community indicators than SR. All<jats:italic>A.\u00a0philoxeroides</jats:italic>traits and community indicators, except for evenness index, showed a linear relationship with PD. However, only stem length of<jats:italic>A.\u00a0philoxeroides</jats:italic>differed between the one\u2010 and two\u2010species treatments, and the diversity index of the communities differed between the one\u2010 and two\u2010species treatments and between the one\u2010 and four\u2010species treatments.</jats:p></jats:list-item><jats:list-item><jats:p>Our results showed that in natural or semi\u2010natural wetlands with relatively low SR, PD may be a better predictor of invasibility than SR. When designing management strategies for mitigating<jats:italic>A.\u00a0philoxeroides</jats:italic>invasion, deliberately raising PD is expected to be more efficient than simply increasing species number.</jats:p></jats:list-item></jats:list></jats:p>",
+  "DOI": "10.1111/plb.13101",
+  "type": "journal-article",
+  "created": {
+    "date-parts": [
+      [
+        2020,
+        2,
+        20
+      ]
+    ],
+    "date-time": "2020-02-20T08:27:28Z",
+    "timestamp": 1582187248000
+  },
+  "page": "591-599",
+  "update-policy": "https://doi.org/10.1002/crossmark_policy",
+  "source": "Crossref",
+  "is-referenced-by-count": 26,
+  "title": [
+    "Phylogenetic diversity is a better predictor of wetland community resistance to<i>Alternanthera philoxeroides</i>invasion than species richness"
+  ],
+  "prefix": "10.1111",
+  "volume": "22",
+  "author": [
+    {
+      "given": "T.\u2010J.",
+      "family": "Qin",
+      "sequence": "first",
+      "affiliation": [
+        {
+          "name": "School of Nature Conservation Beijing Forestry University Beijing China"
+        }
+      ],
+      "role": [
+        {
+          "vocabulary": "crossref",
+          "role": "author"
+        }
+      ]
+    },
+    {
+      "given": "J.",
+      "family": "Zhou",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "School of Nature Conservation Beijing Forestry University Beijing China"
+        }
+      ],
+      "role": [
+        {
+          "vocabulary": "crossref",
+          "role": "author"
+        }
+      ]
+    },
+    {
+      "given": "Y.",
+      "family": "Sun",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "Department of Biology University of Fribourg Fribourg Switzerland"
+        }
+      ],
+      "role": [
+        {
+          "vocabulary": "crossref",
+          "role": "author"
+        }
+      ]
+    },
+    {
+      "given": "H.",
+      "family": "M\u00fcller\u2010Sch\u00e4rer",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "Department of Biology University of Fribourg Fribourg Switzerland"
+        }
+      ],
+      "role": [
+        {
+          "vocabulary": "crossref",
+          "role": "author"
+        }
+      ]
+    },
+    {
+      "given": "F.\u2010L.",
+      "family": "Luo",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "School of Nature Conservation Beijing Forestry University Beijing China"
+        }
+      ],
+      "role": [
+        {
+          "vocabulary": "crossref",
+          "role": "author"
+        }
+      ]
+    },
+    {
+      "ORCID": "https://orcid.org/0000-0002-9658-9969",
+      "authenticated-orcid": false,
+      "given": "B.\u2010C.",
+      "family": "Dong",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "School of Nature Conservation Beijing Forestry University Beijing China"
+        }
+      ],
+      "role": [
+        {
+          "vocabulary": "crossref",
+          "role": "author"
+        }
+      ]
+    },
+    {
+      "ORCID": "https://orcid.org/0000-0003-4061-2485",
+      "authenticated-orcid": false,
+      "given": "H.\u2010L.",
+      "family": "Li",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "School of Nature Conservation Beijing Forestry University Beijing China"
+        }
+      ],
+      "role": [
+        {
+          "vocabulary": "crossref",
+          "role": "author"
+        }
+      ]
+    },
+    {
+      "ORCID": "https://orcid.org/0000-0001-5007-1745",
+      "authenticated-orcid": false,
+      "given": "F.\u2010H.",
+      "family": "Yu",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "Institute of Wetland Ecology &amp; Clone Ecology/Zhejiang Provincial Key Laboratory of Plant Evolutionary Ecology and Conservation Taizhou University Taizhou China"
+        }
+      ],
+      "role": [
+        {
+          "vocabulary": "crossref",
+          "role": "author"
+        }
+      ]
+    }
+  ],
+  "member": "311",
+  "published-online": {
+    "date-parts": [
+      [
+        2020,
+        3,
+        18
+      ]
+    ]
+  },
+  "reference": [
+    {
+      "key": "e_1_2_7_2_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/gcbb.12317"
+    },
+    {
+      "key": "e_1_2_7_3_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s11104-019-04123-9"
+    },
+    {
+      "key": "e_1_2_7_4_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/1365-2664.12639"
+    },
+    {
+      "key": "e_1_2_7_5_1",
+      "doi-asserted-by": "crossref",
+      "first-page": "289",
+      "DOI": "10.1111/j.2517-6161.1995.tb02031.x",
+      "article-title": "Controlling the false discovery rate \u2013 a practical and powerful approach to multiple testing",
+      "volume": "57",
+      "author": "Benjamini Y.",
+      "year": "1995",
+      "journal-title": "Journal of the Royal Statistical Society: Series A (Statistics in Society)"
+    },
+    {
+      "key": "e_1_2_7_6_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/jvs.12199"
+    },
+    {
+      "key": "e_1_2_7_7_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/1365-2435.13220"
+    },
+    {
+      "key": "e_1_2_7_8_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/boj.12385"
+    },
+    {
+      "key": "e_1_2_7_9_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1890/11-0426.1"
+    },
+    {
+      "key": "e_1_2_7_10_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/bioinformatics/btp348"
+    },
+    {
+      "key": "e_1_2_7_11_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1073/pnas.0709069104"
+    },
+    {
+      "key": "e_1_2_7_12_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1038/nature11148"
+    },
+    {
+      "key": "e_1_2_7_13_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1371/journal.pone.0081456"
+    },
+    {
+      "key": "e_1_2_7_14_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s10530-011-0141-5"
+    },
+    {
+      "key": "e_1_2_7_15_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1016/j.ppees.2019.125498"
+    },
+    {
+      "key": "e_1_2_7_16_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/plb.13001"
+    },
+    {
+      "key": "e_1_2_7_17_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/jpe/rty057"
+    },
+    {
+      "key": "e_1_2_7_18_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1890/1051-0761(2002)012[0602:SCADAG]2.0.CO;2"
+    },
+    {
+      "key": "e_1_2_7_19_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/jpe/rts024"
+    },
+    {
+      "key": "e_1_2_7_20_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1146/annurev-ecolsys-121415-032116"
+    },
+    {
+      "key": "e_1_2_7_21_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1016/j.baae.2014.10.007"
+    },
+    {
+      "key": "e_1_2_7_22_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1461-0248.2005.00753.x"
+    },
+    {
+      "key": "e_1_2_7_23_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s10530-009-9546-9"
+    },
+    {
+      "key": "e_1_2_7_24_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.2307/2390260"
+    },
+    {
+      "key": "e_1_2_7_25_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/1365-2435.12425"
+    },
+    {
+      "key": "e_1_2_7_26_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/oik.04334"
+    },
+    {
+      "key": "e_1_2_7_27_1",
+      "first-page": "17",
+      "article-title": "Alligator weed: tasty vegetable in Australian backyards",
+      "volume": "39",
+      "author": "Gunasekera L.",
+      "year": "2001",
+      "journal-title": "Journal of Aquatic Plant Management"
+    },
+    {
+      "key": "e_1_2_7_28_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s00442-004-1494-6"
+    },
+    {
+      "key": "e_1_2_7_29_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1600/0363644054223549"
+    },
+    {
+      "key": "e_1_2_7_30_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1890/15-0463.1"
+    },
+    {
+      "key": "e_1_2_7_31_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/BF00012730"
+    },
+    {
+      "key": "e_1_2_7_32_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1654-1103.2009.01139.x"
+    },
+    {
+      "key": "e_1_2_7_33_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1073/pnas.1310247110"
+    },
+    {
+      "key": "e_1_2_7_34_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/molbev/mst010"
+    },
+    {
+      "key": "e_1_2_7_35_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/bioinformatics/btq166"
+    },
+    {
+      "key": "e_1_2_7_36_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1046/j.0305-0270.2003.00990.x"
+    },
+    {
+      "key": "e_1_2_7_37_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1186/s12898-017-0126-z"
+    },
+    {
+      "key": "e_1_2_7_38_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1365-2664.2011.01979.x"
+    },
+    {
+      "key": "e_1_2_7_39_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1073/pnas.1201343109"
+    },
+    {
+      "key": "e_1_2_7_40_1",
+      "first-page": "1675",
+      "article-title": "Diversity and priority conservation graded wetland vascular plants in Beijing (in Chinese)",
+      "volume": "26",
+      "author": "Lei T.",
+      "year": "2006",
+      "journal-title": "Acta Ecologica Sinica"
+    },
+    {
+      "key": "e_1_2_7_41_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1461-0248.2011.01715.x"
+    },
+    {
+      "key": "e_1_2_7_42_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s13762-012-0025-y"
+    },
+    {
+      "key": "e_1_2_7_43_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/aob/mcu057"
+    },
+    {
+      "key": "e_1_2_7_44_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1365-2427.2009.02355.x"
+    },
+    {
+      "key": "e_1_2_7_45_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/1365-2435.12388"
+    },
+    {
+      "key": "e_1_2_7_46_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1654-109X.2012.01202.x"
+    },
+    {
+      "key": "e_1_2_7_47_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/jbi.12823"
+    },
+    {
+      "key": "e_1_2_7_48_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1016/j.actao.2006.03.003"
+    },
+    {
+      "key": "e_1_2_7_49_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1360/aps06134"
+    },
+    {
+      "key": "e_1_2_7_50_1",
+      "volume-title": "APE: analyses of phylogenetics and evolution in R language",
+      "author": "Paradis E.",
+      "year": "2017"
+    },
+    {
+      "key": "e_1_2_7_51_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1071/BT12225"
+    },
+    {
+      "key": "e_1_2_7_52_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1365-2664.2004.00871.x"
+    },
+    {
+      "key": "e_1_2_7_53_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/ele.12395"
+    },
+    {
+      "key": "e_1_2_7_54_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1098/rspb.2016.1597"
+    },
+    {
+      "key": "e_1_2_7_55_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1526-100X.2005.00056.x"
+    },
+    {
+      "key": "e_1_2_7_56_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/jpe/rtz004"
+    },
+    {
+      "key": "e_1_2_7_57_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1071/MF17335"
+    },
+    {
+      "key": "e_1_2_7_58_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1073/pnas.0306602101"
+    },
+    {
+      "key": "e_1_2_7_59_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s00114-014-1198-7"
+    },
+    {
+      "key": "e_1_2_7_60_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1038/nature09492"
+    },
+    {
+      "key": "e_1_2_7_61_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1614/WS-07-132.1"
+    },
+    {
+      "key": "e_1_2_7_62_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1016/j.foreco.2016.02.013"
+    },
+    {
+      "key": "e_1_2_7_63_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.2307/1933900"
+    },
+    {
+      "key": "e_1_2_7_64_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.4039/tce.2015.8"
+    },
+    {
+      "key": "e_1_2_7_65_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1461-0248.2012.01795.x"
+    },
+    {
+      "key": "e_1_2_7_66_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/bioinformatics/btl446"
+    },
+    {
+      "key": "e_1_2_7_67_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1086/321317"
+    },
+    {
+      "key": "e_1_2_7_68_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/molbev/msm092"
+    },
+    {
+      "key": "e_1_2_7_69_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1890/0012-9658(1999)080[1455:TECOCI]2.0.CO;2"
+    },
+    {
+      "key": "e_1_2_7_70_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1029/2009WR008280"
+    },
+    {
+      "key": "e_1_2_7_71_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/1365-2435.12432"
+    },
+    {
+      "key": "e_1_2_7_72_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1023/B:HYDR.0000025052.81373.f3"
+    },
+    {
+      "key": "e_1_2_7_73_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/jvs.12653"
+    },
+    {
+      "key": "e_1_2_7_74_1",
+      "first-page": "380",
+      "article-title": "A study on communities of aquatic vascular plants in Beijing",
+      "volume": "40",
+      "author": "Wang C.",
+      "year": "2004",
+      "journal-title": "Journal of Beijing Normal University"
+    },
+    {
+      "key": "e_1_2_7_75_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/aob/mcn005"
+    },
+    {
+      "key": "e_1_2_7_76_1",
+      "first-page": "282",
+      "article-title": "Effects of water and nitrogen on root/shoot ratio and water use efficiency of winter wheat",
+      "volume": "21",
+      "author": "Wang Y.",
+      "year": "2013",
+      "journal-title": "Chinese Journal of Eco\u2010Agriculture"
+    },
+    {
+      "key": "e_1_2_7_77_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/nph.14820"
+    },
+    {
+      "key": "e_1_2_7_78_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1016/j.ppees.2019.125484"
+    },
+    {
+      "key": "e_1_2_7_79_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/jpe/rtt020"
+    },
+    {
+      "key": "e_1_2_7_80_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.2307/1218190"
+    },
+    {
+      "key": "e_1_2_7_81_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1461-0248.2010.01515.x"
+    },
+    {
+      "key": "e_1_2_7_82_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1016/j.scitotenv.2016.12.177"
+    },
+    {
+      "key": "e_1_2_7_83_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1365-2745.2010.01668.x"
+    },
+    {
+      "key": "e_1_2_7_84_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s11738-015-1784-0"
+    },
+    {
+      "key": "e_1_2_7_85_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1146/annurev.energy.30.050504.144248"
+    },
+    {
+      "key": "e_1_2_7_86_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1016/j.envexpbot.2016.12.014"
+    },
+    {
+      "key": "e_1_2_7_87_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/ele.13090"
+    }
+  ],
+  "container-title": [
+    "Plant Biology"
+  ],
+  "original-title": [],
+  "language": "en",
+  "link": [
+    {
+      "URL": "https://api.wiley.com/onlinelibrary/tdm/v1/articles/10.1111%2Fplb.13101",
+      "content-type": "application/pdf",
+      "content-version": "vor",
+      "intended-application": "text-mining"
+    },
+    {
+      "URL": "https://onlinelibrary.wiley.com/doi/pdf/10.1111/plb.13101",
+      "content-type": "application/pdf",
+      "content-version": "vor",
+      "intended-application": "text-mining"
+    },
+    {
+      "URL": "https://onlinelibrary.wiley.com/doi/full-xml/10.1111/plb.13101",
+      "content-type": "application/xml",
+      "content-version": "vor",
+      "intended-application": "text-mining"
+    },
+    {
+      "URL": "https://onlinelibrary.wiley.com/doi/pdf/10.1111/plb.13101",
+      "content-type": "unspecified",
+      "content-version": "vor",
+      "intended-application": "similarity-checking"
+    }
+  ],
+  "deposited": {
+    "date-parts": [
+      [
+        2024,
+        7,
+        31
+      ]
+    ],
+    "date-time": "2024-07-31T21:36:41Z",
+    "timestamp": 1722461801000
+  },
+  "score": 1,
+  "resource": {
+    "primary": {
+      "URL": "https://onlinelibrary.wiley.com/doi/10.1111/plb.13101"
+    }
+  },
+  "subtitle": [],
+  "editor": [
+    {
+      "given": "D.",
+      "family": "Byers",
+      "sequence": "additional",
+      "affiliation": [],
+      "role": [
+        {
+          "vocabulary": "crossref",
+          "role": "editor"
+        }
+      ]
+    }
+  ],
+  "short-title": [],
+  "issued": {
+    "date-parts": [
+      [
+        2020,
+        3,
+        18
+      ]
+    ]
+  },
+  "references-count": 86,
+  "journal-issue": {
+    "issue": "4",
+    "published-print": {
+      "date-parts": [
+        [
+          2020,
+          7
+        ]
+      ]
+    }
+  },
+  "alternative-id": [
+    "10.1111/plb.13101"
+  ],
+  "URL": "https://doi.org/10.1111/plb.13101",
+  "archive": [
+    "Portico"
+  ],
+  "relation": {},
+  "ISSN": [
+    "1435-8603",
+    "1438-8677"
+  ],
+  "issn-type": [
+    {
+      "value": "1435-8603",
+      "type": "print"
+    },
+    {
+      "value": "1438-8677",
+      "type": "electronic"
+    }
+  ],
+  "subject": [],
+  "published": {
+    "date-parts": [
+      [
+        2020,
+        3,
+        18
+      ]
+    ]
+  },
+  "assertion": [
+    {
+      "value": "2019-10-15",
+      "order": 0,
+      "name": "received",
+      "label": "Received",
+      "group": {
+        "name": "publication_history",
+        "label": "Publication History"
+      }
+    },
+    {
+      "value": "2020-02-08",
+      "order": 1,
+      "name": "accepted",
+      "label": "Accepted",
+      "group": {
+        "name": "publication_history",
+        "label": "Publication History"
+      }
+    },
+    {
+      "value": "2020-03-18",
+      "order": 2,
+      "name": "published",
+      "label": "Published",
+      "group": {
+        "name": "publication_history",
+        "label": "Publication History"
+      }
+    }
+  ]
+}

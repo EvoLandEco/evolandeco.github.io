@@ -1,0 +1,76 @@
+{
+  "articles": [
+    {
+      "slug": "convert-html-to-pdf-with-nodejs-and-puppeteer",
+      "title": "Convert HTML to PDF with Node.js and Puppeteer",
+      "category": "Development",
+      "summary": "A practical workflow for rendering web pages as PDF documents.",
+      "image": "/art/blog/pdf.webp"
+    },
+    {
+      "slug": "hybrid-corop-farm",
+      "title": "Hybrid Dynamic Networks and Higher-Order Statistics",
+      "category": "Networks",
+      "summary": "Dynamic livestock networks, spatial structure and higher-order statistics.",
+      "image": "/art/blog/networks.webp"
+    },
+    {
+      "slug": "integrating-pytorch-models-in-r-package",
+      "title": "Integrating Pre-Trained PyTorch Models into Your R Package",
+      "category": "Machine learning",
+      "summary": "Connect PyTorch inference with an R package using reticulate.",
+      "image": "/art/blog/pytorch.webp"
+    },
+    {
+      "slug": "protocol-transforming-phylogeny-to-gcn",
+      "title": "A Protocol to Bridge Phylogeny and GCN",
+      "category": "Machine learning",
+      "summary": "Represent phylogenetic trees as graphs for neural learning.",
+      "image": "/art/blog/phylogeny.webp"
+    },
+    {
+      "slug": "subspecies-level-diversification",
+      "title": "Sub-Species Level Diversification and Phylogeny Reconstruction",
+      "category": "Evolution",
+      "summary": "Explore diversification below the species level and reconstruct lineage histories.",
+      "image": "/art/blog/diversification.webp"
+    },
+    {
+      "slug": "herdlink",
+      "title": "HerdLink: Exploring NL Livestock Trade as a Network",
+      "category": "Networks",
+      "summary": "Explore livestock movements through connected maps and network views.",
+      "image": "/art/blog/herdlink.webp"
+    }
+  ],
+  "tools": [
+    {
+      "title": "EvoLab",
+      "href": "/explorations/evolab.html",
+      "slug": "evolab",
+      "summary": "Simulate diversification and explore the trees it produces.",
+      "image": "/art/blog/evolab.webp"
+    },
+    {
+      "title": "Hybrid network simulator",
+      "href": "/explorations/hybrid-networks.html",
+      "slug": "hybrid-networks",
+      "summary": "Explore connections between regional and farm-level networks.",
+      "image": "/art/blog/hybrid.webp"
+    },
+    {
+      "title": "Spatial Hex Lab",
+      "href": "/explorations/spatial-hex-lab.html",
+      "slug": "spatial-hex-lab",
+      "summary": "Experiment with ecological spread across a hexagonal landscape.",
+      "image": "/art/blog/spatial.webp"
+    },
+    {
+      "title": "Hexagon grid simulation",
+      "href": "/explorations/hexagon-grid.html",
+      "slug": "hexagon-grid",
+      "summary": "Explore spatial growth, obstacles and neighbourhoods.",
+      "image": "/art/blog/hexagon.webp"
+    }
+  ]
+}

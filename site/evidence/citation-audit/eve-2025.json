@@ -1,0 +1,1065 @@
+{
+  "indexed": {
+    "date-parts": [
+      [
+        2026,
+        2,
+        26
+      ]
+    ],
+    "date-time": "2026-02-26T15:52:27Z",
+    "timestamp": 1772121147074,
+    "version": "3.50.1"
+  },
+  "reference-count": 69,
+  "publisher": "Elsevier BV",
+  "license": [
+    {
+      "start": {
+        "date-parts": [
+          [
+            2025,
+            2,
+            1
+          ]
+        ],
+        "date-time": "2025-02-01T00:00:00Z",
+        "timestamp": 1738368000000
+      },
+      "content-version": "tdm",
+      "delay-in-days": 0,
+      "URL": "https://www.elsevier.com/tdm/userlicense/1.0/"
+    },
+    {
+      "start": {
+        "date-parts": [
+          [
+            2025,
+            2,
+            1
+          ]
+        ],
+        "date-time": "2025-02-01T00:00:00Z",
+        "timestamp": 1738368000000
+      },
+      "content-version": "tdm",
+      "delay-in-days": 0,
+      "URL": "https://www.elsevier.com/legal/tdmrep-license"
+    },
+    {
+      "start": {
+        "date-parts": [
+          [
+            2024,
+            11,
+            18
+          ]
+        ],
+        "date-time": "2024-11-18T00:00:00Z",
+        "timestamp": 1731888000000
+      },
+      "content-version": "vor",
+      "delay-in-days": 0,
+      "URL": "http://creativecommons.org/licenses/by/4.0/"
+    }
+  ],
+  "funder": [
+    {
+      "DOI": "10.13039/501100004543",
+      "name": "China Scholarship Council",
+      "doi-asserted-by": "publisher",
+      "id": [
+        {
+          "id": "10.13039/501100004543",
+          "id-type": "DOI",
+          "asserted-by": "publisher"
+        }
+      ]
+    },
+    {
+      "DOI": "10.13039/501100001721",
+      "name": "Rijksuniversiteit Groningen",
+      "doi-asserted-by": "publisher",
+      "id": [
+        {
+          "id": "10.13039/501100001721",
+          "id-type": "DOI",
+          "asserted-by": "publisher"
+        }
+      ]
+    }
+  ],
+  "content-domain": {
+    "domain": [
+      "elsevier.com",
+      "sciencedirect.com"
+    ],
+    "crossmark-restriction": true
+  },
+  "short-container-title": [
+    "Journal of Theoretical Biology"
+  ],
+  "published-print": {
+    "date-parts": [
+      [
+        2025,
+        2
+      ]
+    ]
+  },
+  "DOI": "10.1016/j.jtbi.2024.111992",
+  "type": "journal-article",
+  "created": {
+    "date-parts": [
+      [
+        2024,
+        11,
+        16
+      ]
+    ],
+    "date-time": "2024-11-16T11:35:57Z",
+    "timestamp": 1731756957000
+  },
+  "page": "111992",
+  "update-policy": "https://doi.org/10.1016/elsevier_cm_policy",
+  "source": "Crossref",
+  "is-referenced-by-count": 2,
+  "special_numbering": "C",
+  "title": [
+    "Impact of evolutionary relatedness on species diversification and tree shape"
+  ],
+  "prefix": "10.1016",
+  "volume": "598",
+  "author": [
+    {
+      "ORCID": "https://orcid.org/0000-0003-2540-1778",
+      "authenticated-orcid": false,
+      "given": "Tianjian",
+      "family": "Qin",
+      "sequence": "first",
+      "affiliation": [],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    },
+    {
+      "ORCID": "https://orcid.org/0000-0003-4247-8785",
+      "authenticated-orcid": false,
+      "given": "Luis",
+      "family": "Valente",
+      "sequence": "additional",
+      "affiliation": [],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    },
+    {
+      "ORCID": "https://orcid.org/0000-0003-2142-7612",
+      "authenticated-orcid": false,
+      "given": "Rampal S.",
+      "family": "Etienne",
+      "sequence": "additional",
+      "affiliation": [],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    }
+  ],
+  "member": "78",
+  "reference": [
+    {
+      "issue": "1",
+      "key": "10.1016/j.jtbi.2024.111992_b1",
+      "doi-asserted-by": "crossref",
+      "first-page": "1",
+      "DOI": "10.1038/s41467-018-05419-7",
+      "article-title": "Clade diversification dynamics and the biotic and abiotic controls of speciation and extinction rates",
+      "volume": "9",
+      "author": "Aguil\u00e9e",
+      "year": "2018",
+      "journal-title": "Nature Commun."
+    },
+    {
+      "issue": "6236",
+      "key": "10.1016/j.jtbi.2024.111992_b2",
+      "doi-asserted-by": "crossref",
+      "first-page": "713",
+      "DOI": "10.1038/340713a0",
+      "article-title": "Interspecific competition increases local extinction rate in a metapopulation system",
+      "volume": "340",
+      "author": "Bengtsson",
+      "year": "1989",
+      "journal-title": "Nature"
+    },
+    {
+      "issue": "4",
+      "key": "10.1016/j.jtbi.2024.111992_b3",
+      "doi-asserted-by": "crossref",
+      "first-page": "685",
+      "DOI": "10.1080/10635150600889625",
+      "article-title": "Which random processes describe the tree of life? A Large-scale study of phylogenetic tree imbalance",
+      "volume": "55",
+      "author": "Blum",
+      "year": "2006",
+      "journal-title": "Syst. Biol."
+    },
+    {
+      "key": "10.1016/j.jtbi.2024.111992_b4",
+      "doi-asserted-by": "crossref",
+      "first-page": "459",
+      "DOI": "10.1146/annurev.ecolsys.38.091206.095804",
+      "article-title": "Sympatric speciation: models and empirical evidence",
+      "volume": "38",
+      "author": "Bolnick",
+      "year": "2007",
+      "journal-title": "Annu. Rev. Ecol. Evol. Syst."
+    },
+    {
+      "issue": "3",
+      "key": "10.1016/j.jtbi.2024.111992_b5",
+      "doi-asserted-by": "crossref",
+      "first-page": "376",
+      "DOI": "10.1111/j.1472-4642.2010.00650.x",
+      "article-title": "Rarest of the rare: advances in combining evolutionary distinctiveness and scarcity to inform conservation at biogeographical scales",
+      "volume": "16",
+      "author": "Cadotte",
+      "year": "2010",
+      "journal-title": "Diversity and Distributions"
+    },
+    {
+      "issue": "sp8",
+      "key": "10.1016/j.jtbi.2024.111992_b6",
+      "doi-asserted-by": "crossref",
+      "first-page": "S223",
+      "DOI": "10.1890/11-0426.1",
+      "article-title": "Phylogenetic diversity promotes ecosystem stability",
+      "volume": "93",
+      "author": "Cadotte",
+      "year": "2012",
+      "journal-title": "Ecology"
+    },
+    {
+      "issue": "8",
+      "key": "10.1016/j.jtbi.2024.111992_b7",
+      "doi-asserted-by": "crossref",
+      "first-page": "2261",
+      "DOI": "10.1890/09-0418.1",
+      "article-title": "Apparent competition with an invasive plant hastens the extinction of an endangered lupine",
+      "volume": "91",
+      "author": "Dangremond",
+      "year": "2010",
+      "journal-title": "Ecology"
+    },
+    {
+      "issue": "1",
+      "key": "10.1016/j.jtbi.2024.111992_b8",
+      "doi-asserted-by": "crossref",
+      "first-page": "1",
+      "DOI": "10.1016/S0169-7439(99)00047-7",
+      "article-title": "The Mahalanobis distance",
+      "volume": "50",
+      "author": "De Maesschalck",
+      "year": "2000",
+      "journal-title": "Chemometr. Intell. Lab. Syst."
+    },
+    {
+      "issue": "2",
+      "key": "10.1016/j.jtbi.2024.111992_b9",
+      "doi-asserted-by": "crossref",
+      "first-page": "433",
+      "DOI": "10.1093/sysbio/syac074",
+      "article-title": "The phylogenetic limits to diversity-dependent diversification",
+      "volume": "72",
+      "author": "Etienne",
+      "year": "2023",
+      "journal-title": "Syst. Biol."
+    },
+    {
+      "issue": "1732",
+      "key": "10.1016/j.jtbi.2024.111992_b10",
+      "first-page": "1300",
+      "article-title": "Diversity-dependence brings molecular phylogenies closer to agreement with the fossil record",
+      "volume": "279",
+      "author": "Etienne",
+      "year": "2012",
+      "journal-title": "Proc. R. Soc. Lond. [Biol.]"
+    },
+    {
+      "issue": "8",
+      "key": "10.1016/j.jtbi.2024.111992_b11",
+      "doi-asserted-by": "crossref",
+      "first-page": "2430",
+      "DOI": "10.1111/evo.12433",
+      "article-title": "Estimating the duration of speciation from phylogenies",
+      "volume": "68",
+      "author": "Etienne",
+      "year": "2014",
+      "journal-title": "Evolution"
+    },
+    {
+      "issue": "2",
+      "key": "10.1016/j.jtbi.2024.111992_b12",
+      "doi-asserted-by": "crossref",
+      "first-page": "204",
+      "DOI": "10.1093/sysbio/syr091",
+      "article-title": "Prolonging the past counteracts the pull of the present: Protracted speciation can explain observed slowdowns in diversification",
+      "volume": "61",
+      "author": "Etienne",
+      "year": "2012",
+      "journal-title": "Syst. Biol."
+    },
+    {
+      "issue": "1",
+      "key": "10.1016/j.jtbi.2024.111992_b13",
+      "doi-asserted-by": "crossref",
+      "first-page": "1",
+      "DOI": "10.1016/0006-3207(92)91201-3",
+      "article-title": "Conservation evaluation and phylogenetic diversity",
+      "volume": "61",
+      "author": "Faith",
+      "year": "1992",
+      "journal-title": "Biol. Conserv."
+    },
+    {
+      "issue": "1",
+      "key": "10.1016/j.jtbi.2024.111992_b14",
+      "doi-asserted-by": "crossref",
+      "first-page": "1",
+      "DOI": "10.1086/284325",
+      "article-title": "Phylogenies and the comparative method",
+      "volume": "125",
+      "author": "Felsenstein",
+      "year": "1985",
+      "journal-title": "Amer. Nat."
+    },
+    {
+      "issue": "1873",
+      "key": "10.1016/j.jtbi.2024.111992_b15",
+      "article-title": "Diversity-dependent evolutionary rates in early Palaeozoic zooplankton",
+      "volume": "285",
+      "author": "Foote",
+      "year": "2018",
+      "journal-title": "Proc. R. Soc. Lond. [Biol.]"
+    },
+    {
+      "issue": "5",
+      "key": "10.1016/j.jtbi.2024.111992_b16",
+      "doi-asserted-by": "crossref",
+      "first-page": "600",
+      "DOI": "10.1111/1365-2435.12425",
+      "article-title": "Phylogenetic patterns are not proxies of community assembly mechanisms (they are far better)",
+      "volume": "29",
+      "author": "Gerhold",
+      "year": "2015",
+      "journal-title": "Funct. Ecol."
+    },
+    {
+      "issue": "3",
+      "key": "10.1016/j.jtbi.2024.111992_b17",
+      "doi-asserted-by": "crossref",
+      "first-page": "324",
+      "DOI": "10.1006/tpbi.1998.1409",
+      "article-title": "Evolutionary dynamics of seed size and seedling competitive ability",
+      "volume": "55",
+      "author": "Geritz",
+      "year": "1999",
+      "journal-title": "Theor. Popul. Biol."
+    },
+    {
+      "issue": "4",
+      "key": "10.1016/j.jtbi.2024.111992_b18",
+      "doi-asserted-by": "crossref",
+      "first-page": "403",
+      "DOI": "10.1016/0021-9991(76)90041-3",
+      "article-title": "A general method for numerically simulating the stochastic time evolution of coupled chemical reactions",
+      "volume": "22",
+      "author": "Gillespie",
+      "year": "1976",
+      "journal-title": "J. Comput. Phys."
+    },
+    {
+      "issue": "3",
+      "key": "10.1016/j.jtbi.2024.111992_b19",
+      "doi-asserted-by": "crossref",
+      "first-page": "E68",
+      "DOI": "10.1086/511334",
+      "article-title": "Phylogenetic measures of biodiversity",
+      "volume": "169",
+      "author": "Helmus",
+      "year": "2007",
+      "journal-title": "Amer. Nat."
+    },
+    {
+      "issue": "2",
+      "key": "10.1016/j.jtbi.2024.111992_b20",
+      "doi-asserted-by": "crossref",
+      "first-page": "397",
+      "DOI": "10.1007/s00442-019-04498-7",
+      "article-title": "Environmental gradients influence differences in leaf functional traits between native and non-native plants",
+      "volume": "191",
+      "author": "Henn",
+      "year": "2019",
+      "journal-title": "Oecologia"
+    },
+    {
+      "key": "10.1016/j.jtbi.2024.111992_b21",
+      "series-title": "evesim: Evolutionary relatedness dependent diversification simulation powered by the Rcpp backend SimTable",
+      "author": "Hildenbrandt",
+      "year": "2024"
+    },
+    {
+      "issue": "1",
+      "key": "10.1016/j.jtbi.2024.111992_b22",
+      "doi-asserted-by": "crossref",
+      "first-page": "227",
+      "DOI": "10.1146/annurev-ecolsys-110411-160411",
+      "article-title": "Rethinking community assembly through the lens of coexistence theory",
+      "volume": "43",
+      "author": "HilleRisLambers",
+      "year": "2012",
+      "journal-title": "Annu. Rev. Ecol. Evol. Syst."
+    },
+    {
+      "key": "10.1016/j.jtbi.2024.111992_b23",
+      "series-title": "Tree Size",
+      "author": "Janzen",
+      "year": "2023"
+    },
+    {
+      "key": "10.1016/j.jtbi.2024.111992_b24",
+      "doi-asserted-by": "crossref",
+      "DOI": "10.1016/j.ympev.2024.108168",
+      "article-title": "Phylogenetic tree statistics: A systematic overview using the new R package \u2018treestats\u2019",
+      "volume": "200",
+      "author": "Janzen",
+      "year": "2024",
+      "journal-title": "Mol. Phylogenet. Evol."
+    },
+    {
+      "issue": "4",
+      "key": "10.1016/j.jtbi.2024.111992_b25",
+      "doi-asserted-by": "crossref",
+      "first-page": "1317",
+      "DOI": "10.1111/brv.12504",
+      "article-title": "Reconciling the concepts and measures of diversity, rarity and originality in ecology and evolution",
+      "volume": "94",
+      "author": "Kondratyeva",
+      "year": "2019",
+      "journal-title": "Biol. Rev."
+    },
+    {
+      "issue": "12",
+      "key": "10.1016/j.jtbi.2024.111992_b26",
+      "doi-asserted-by": "crossref",
+      "first-page": "2604",
+      "DOI": "10.1111/j.0014-3820.2006.tb01893.x",
+      "article-title": "Does niche conservatism promote speciation? A case study in north American Salamanders",
+      "volume": "60",
+      "author": "Kozak",
+      "year": "2006",
+      "journal-title": "Evolution"
+    },
+    {
+      "issue": "4",
+      "key": "10.1016/j.jtbi.2024.111992_b27",
+      "doi-asserted-by": "crossref",
+      "first-page": "694",
+      "DOI": "10.2307/2410323",
+      "article-title": "Inferring the rates of branching and extinction from molecular phylogenies",
+      "volume": "49",
+      "author": "Kubo",
+      "year": "1995",
+      "journal-title": "Evolution"
+    },
+    {
+      "issue": "5",
+      "key": "10.1016/j.jtbi.2024.111992_b28",
+      "doi-asserted-by": "crossref",
+      "first-page": "1210",
+      "DOI": "10.1093/sysbio/syac027",
+      "article-title": "Robust, universal tree balance indices",
+      "volume": "71",
+      "author": "Lemant",
+      "year": "2022",
+      "journal-title": "Syst. Biol."
+    },
+    {
+      "issue": "14",
+      "key": "10.1016/j.jtbi.2024.111992_b29",
+      "doi-asserted-by": "crossref",
+      "first-page": "3168",
+      "DOI": "10.1016/j.cub.2021.04.066",
+      "article-title": "Why extinction estimates from extant phylogenies are so often zero",
+      "volume": "31",
+      "author": "Louca",
+      "year": "2021",
+      "journal-title": "Curr. Biol."
+    },
+    {
+      "issue": "4",
+      "key": "10.1016/j.jtbi.2024.111992_b30",
+      "doi-asserted-by": "crossref",
+      "first-page": "646",
+      "DOI": "10.1086/286013",
+      "article-title": "Phylogenies and the comparative method: A general approach to incorporating phylogenetic information into the analysis of interspecific data",
+      "volume": "149",
+      "author": "Martins",
+      "year": "1997",
+      "journal-title": "Amer. Nat."
+    },
+    {
+      "issue": "9",
+      "key": "10.1016/j.jtbi.2024.111992_b31",
+      "doi-asserted-by": "crossref",
+      "first-page": "1085",
+      "DOI": "10.1111/j.1461-0248.2010.01509.x",
+      "article-title": "Opposing effects of competitive exclusion on the phylogenetic structure of communities",
+      "volume": "13",
+      "author": "Mayfield",
+      "year": "2010",
+      "journal-title": "Ecol. Lett."
+    },
+    {
+      "issue": "1",
+      "key": "10.1016/j.jtbi.2024.111992_b32",
+      "doi-asserted-by": "crossref",
+      "first-page": "2888",
+      "DOI": "10.1038/s41467-018-05126-3",
+      "article-title": "Prioritizing phylogenetic diversity captures functional diversity unreliably",
+      "volume": "9",
+      "author": "Mazel",
+      "year": "2018",
+      "journal-title": "Nature Commun."
+    },
+    {
+      "issue": "4",
+      "key": "10.1016/j.jtbi.2024.111992_b33",
+      "doi-asserted-by": "crossref",
+      "first-page": "315",
+      "DOI": "10.1111/j.1461-0248.2007.01020.x",
+      "article-title": "Evolution and the latitudinal diversity gradient: speciation, extinction and biogeography",
+      "volume": "10",
+      "author": "Mittelbach",
+      "year": "2007",
+      "journal-title": "Ecol. Lett."
+    },
+    {
+      "issue": "4",
+      "key": "10.1016/j.jtbi.2024.111992_b34",
+      "doi-asserted-by": "crossref",
+      "first-page": "190",
+      "DOI": "10.1016/j.tree.2014.01.010",
+      "article-title": "Why does diversification slow down?",
+      "volume": "29",
+      "author": "Moen",
+      "year": "2014",
+      "journal-title": "Trends Ecol. Evol."
+    },
+    {
+      "issue": "1307",
+      "key": "10.1016/j.jtbi.2024.111992_b35",
+      "doi-asserted-by": "crossref",
+      "first-page": "77",
+      "DOI": "10.1098/rstb.1994.0054",
+      "article-title": "Extinction rates can be estimated from molecular phylogenies",
+      "volume": "344",
+      "author": "Nee",
+      "year": "1994",
+      "journal-title": "Philos. Trans. R. Soc. London [Biol.]"
+    },
+    {
+      "issue": "17",
+      "key": "10.1016/j.jtbi.2024.111992_b36",
+      "doi-asserted-by": "crossref",
+      "first-page": "8322",
+      "DOI": "10.1073/pnas.89.17.8322",
+      "article-title": "Tempo and mode of evolution revealed from molecular phylogenies",
+      "volume": "89",
+      "author": "Nee",
+      "year": "1992",
+      "journal-title": "Proc. Natl. Acad. Sci. USA"
+    },
+    {
+      "issue": "1",
+      "key": "10.1016/j.jtbi.2024.111992_b37",
+      "doi-asserted-by": "crossref",
+      "first-page": "859",
+      "DOI": "10.1038/s41467-019-08600-8",
+      "article-title": "Global conservation of phylogenetic diversity captures more than just functional diversity",
+      "volume": "10",
+      "author": "Owen",
+      "year": "2019",
+      "journal-title": "Nature Commun."
+    },
+    {
+      "issue": "3",
+      "key": "10.1016/j.jtbi.2024.111992_b38",
+      "doi-asserted-by": "crossref",
+      "DOI": "10.1371/journal.pbio.0060071",
+      "article-title": "Density-dependent cladogenesis in birds",
+      "volume": "6",
+      "author": "Phillimore",
+      "year": "2008",
+      "journal-title": "PLoS Biol."
+    },
+    {
+      "issue": "1",
+      "key": "10.1016/j.jtbi.2024.111992_b39",
+      "doi-asserted-by": "crossref",
+      "first-page": "4576",
+      "DOI": "10.1038/s41467-023-39629-5",
+      "article-title": "Clade density and the evolution of diversity-dependent diversification",
+      "volume": "14",
+      "author": "Pie",
+      "year": "2023",
+      "journal-title": "Nature Commun."
+    },
+    {
+      "issue": "1844",
+      "key": "10.1016/j.jtbi.2024.111992_b40",
+      "article-title": "Quantifying species contributions to ecosystem processes: a global assessment of functional trait and phylogenetic metrics across avian seed-dispersal networks",
+      "volume": "283",
+      "author": "Pigot",
+      "year": "2016",
+      "journal-title": "Philos. Trans. R. Soc. London [Biol.]"
+    },
+    {
+      "issue": "7",
+      "key": "10.1016/j.jtbi.2024.111992_b41",
+      "doi-asserted-by": "crossref",
+      "first-page": "1855",
+      "DOI": "10.1111/evo.13269",
+      "article-title": "Interactions within and between clades shaped the diversification of terrestrial carnivores",
+      "volume": "71",
+      "author": "Pires",
+      "year": "2017",
+      "journal-title": "Evolution"
+    },
+    {
+      "key": "10.1016/j.jtbi.2024.111992_b42",
+      "doi-asserted-by": "crossref",
+      "first-page": "301",
+      "DOI": "10.1146/annurev-ecolsys-063008-102010",
+      "article-title": "Phylogenetic approaches to the study of extinction",
+      "volume": "39",
+      "author": "Purvis",
+      "year": "2008",
+      "journal-title": "Annu. Rev. Ecol. Evol. Syst."
+    },
+    {
+      "issue": "1459",
+      "key": "10.1016/j.jtbi.2024.111992_b43",
+      "doi-asserted-by": "crossref",
+      "first-page": "2267",
+      "DOI": "10.1098/rspb.2000.1278",
+      "article-title": "Testing macro\u2013evolutionary models using incomplete molecular phylogenies",
+      "volume": "267",
+      "author": "Pybus",
+      "year": "2000",
+      "journal-title": "Philos. Trans. R. Soc. London [Biol.]"
+    },
+    {
+      "issue": "4",
+      "key": "10.1016/j.jtbi.2024.111992_b44",
+      "doi-asserted-by": "crossref",
+      "first-page": "1248",
+      "DOI": "10.1111/brv.12154",
+      "article-title": "Phylogenetic niche conservatism and the evolutionary basis of ecological speciation",
+      "volume": "90",
+      "author": "Pyron",
+      "year": "2015",
+      "journal-title": "Biol. Rev."
+    },
+    {
+      "key": "10.1016/j.jtbi.2024.111992_b45",
+      "series-title": "eve - Evolution emulator, phylogenetically dependent",
+      "author": "Qin",
+      "year": "2023"
+    },
+    {
+      "key": "10.1016/j.jtbi.2024.111992_b46",
+      "series-title": "Performance and robustness of parameter estimation from phylogenetic trees using neural networks",
+      "author": "Qin",
+      "year": "2024"
+    },
+    {
+      "issue": "4",
+      "key": "10.1016/j.jtbi.2024.111992_b47",
+      "doi-asserted-by": "crossref",
+      "first-page": "591",
+      "DOI": "10.1111/plb.13101",
+      "article-title": "Phylogenetic diversity is a better predictor of wetland community resistance to Alternanthera philoxeroides invasion than species richness",
+      "volume": "22",
+      "author": "Qin",
+      "year": "2020",
+      "journal-title": "Plant Biol."
+    },
+    {
+      "issue": "8",
+      "key": "10.1016/j.jtbi.2024.111992_b48",
+      "doi-asserted-by": "crossref",
+      "first-page": "434",
+      "DOI": "10.1016/j.tree.2010.05.002",
+      "article-title": "Diversity dynamics: molecular phylogenies need the fossil record",
+      "volume": "25",
+      "author": "Quental",
+      "year": "2010",
+      "journal-title": "Trends Ecol. Evol."
+    },
+    {
+      "issue": "8",
+      "key": "10.1016/j.jtbi.2024.111992_b49",
+      "doi-asserted-by": "crossref",
+      "first-page": "735",
+      "DOI": "10.1111/j.1461-0248.2009.01333.x",
+      "article-title": "Ecological limits and diversification rate: alternative paradigms to explain the variation in species richness among clades and regions",
+      "volume": "12",
+      "author": "Rabosky",
+      "year": "2009",
+      "journal-title": "Ecol. Lett."
+    },
+    {
+      "issue": "6",
+      "key": "10.1016/j.jtbi.2024.111992_b50",
+      "doi-asserted-by": "crossref",
+      "first-page": "629",
+      "DOI": "10.1093/sysbio/syp069",
+      "article-title": "Heritability of extinction rates links diversification patterns in molecular phylogenies and fossils",
+      "volume": "58",
+      "author": "Rabosky",
+      "year": "2009",
+      "journal-title": "Syst. Biol."
+    },
+    {
+      "issue": "51",
+      "key": "10.1016/j.jtbi.2024.111992_b51",
+      "doi-asserted-by": "crossref",
+      "first-page": "22178",
+      "DOI": "10.1073/pnas.1007606107",
+      "article-title": "Equilibrium speciation dynamics in a model adaptive radiation of island lizards",
+      "volume": "107",
+      "author": "Rabosky",
+      "year": "2010",
+      "journal-title": "Proc. Natl. Acad. Sci. USA"
+    },
+    {
+      "issue": "4",
+      "key": "10.1016/j.jtbi.2024.111992_b52",
+      "doi-asserted-by": "crossref",
+      "first-page": "606",
+      "DOI": "10.1016/j.jtbi.2007.12.006",
+      "article-title": "Evolutionarily distinctive species often capture more phylogenetic diversity than expected",
+      "volume": "251",
+      "author": "Redding",
+      "year": "2008",
+      "journal-title": "J. Theoret. Biol."
+    },
+    {
+      "issue": "4",
+      "key": "10.1016/j.jtbi.2024.111992_b53",
+      "doi-asserted-by": "crossref",
+      "first-page": "1265",
+      "DOI": "10.1073/pnas.0913626107",
+      "article-title": "Evolutionary diversification, coevolution between populations and their antagonists, and the filling of niche space",
+      "volume": "107",
+      "author": "Ricklefs",
+      "year": "2010",
+      "journal-title": "Proc. Natl. Acad. Sci. USA"
+    },
+    {
+      "key": "10.1016/j.jtbi.2024.111992_b54",
+      "article-title": "Diversity-dependent diversification",
+      "author": "Rillo",
+      "year": "2022",
+      "journal-title": "Oxford Bibliogr. Online"
+    },
+    {
+      "issue": "1",
+      "key": "10.1016/j.jtbi.2024.111992_b55",
+      "doi-asserted-by": "crossref",
+      "first-page": "99",
+      "DOI": "10.1093/sysbio/45.1.99",
+      "article-title": "Central moments and probability distributions of three measures of phylogenetic tree imbalance",
+      "volume": "45",
+      "author": "Rogers",
+      "year": "1996",
+      "journal-title": "Syst. Biol."
+    },
+    {
+      "issue": "1",
+      "key": "10.1016/j.jtbi.2024.111992_b56",
+      "doi-asserted-by": "crossref",
+      "first-page": "158",
+      "DOI": "10.1093/sysbio/syad072",
+      "article-title": "Phylogenetic biodiversity metrics should account for both accumulation and attrition of evolutionary heritage",
+      "volume": "73",
+      "author": "Rosindell",
+      "year": "2024",
+      "journal-title": "Syst. Biol."
+    },
+    {
+      "issue": "3",
+      "key": "10.1016/j.jtbi.2024.111992_b57",
+      "doi-asserted-by": "crossref",
+      "first-page": "223",
+      "DOI": "10.1017/S0094837300005972",
+      "article-title": "A kinetic model of Phanerozoic taxonomic diversity I. Analysis of marine orders",
+      "volume": "4",
+      "author": "Sepkoski",
+      "year": "1978",
+      "journal-title": "Paleobiology"
+    },
+    {
+      "issue": "7",
+      "key": "10.1016/j.jtbi.2024.111992_b58",
+      "doi-asserted-by": "crossref",
+      "first-page": "637",
+      "DOI": "10.1111/j.1461-0248.2012.01795.x",
+      "article-title": "Phylogenetic diversity and the functioning of ecosystems",
+      "volume": "15",
+      "author": "Srivastava",
+      "year": "2012",
+      "journal-title": "Ecol. Lett."
+    },
+    {
+      "issue": "6",
+      "key": "10.1016/j.jtbi.2024.111992_b59",
+      "first-page": "1292",
+      "article-title": "Does imbalance in phylogenies reflect only bias?",
+      "volume": "56",
+      "author": "Stam",
+      "year": "2002",
+      "journal-title": "Evolution"
+    },
+    {
+      "issue": "12",
+      "key": "10.1016/j.jtbi.2024.111992_b60",
+      "doi-asserted-by": "crossref",
+      "first-page": "884",
+      "DOI": "10.1016/j.tree.2017.09.014",
+      "article-title": "Environmental filtering, niche construction, and trait variability: The missing discussion",
+      "volume": "32",
+      "author": "Thakur",
+      "year": "2017",
+      "journal-title": "Trends Ecol. Evol."
+    },
+    {
+      "key": "10.1016/j.jtbi.2024.111992_b61",
+      "doi-asserted-by": "crossref",
+      "DOI": "10.1016/j.quascirev.2020.106331",
+      "article-title": "Quantifying the potential causes of Neanderthal extinction: Abrupt climate change versus competition and interbreeding",
+      "volume": "238",
+      "author": "Timmermann",
+      "year": "2020",
+      "journal-title": "Quat. Sci. Rev."
+    },
+    {
+      "issue": "6",
+      "key": "10.1016/j.jtbi.2024.111992_b62",
+      "doi-asserted-by": "crossref",
+      "first-page": "1473",
+      "DOI": "10.1002/ecy.2349",
+      "article-title": "On the relationship between phylogenetic diversity and trait diversity",
+      "volume": "99",
+      "author": "Tucker",
+      "year": "2018",
+      "journal-title": "Ecology"
+    },
+    {
+      "key": "10.1016/j.jtbi.2024.111992_b63",
+      "unstructured": "Valentine, J.W., 1973. Evolutionary Paleoecology of the Marine Biosphere. Englewood Cliffs, New Jersey, ISBN: 0132937204."
+    },
+    {
+      "issue": "5",
+      "key": "10.1016/j.jtbi.2024.111992_b64",
+      "doi-asserted-by": "crossref",
+      "first-page": "615",
+      "DOI": "10.1111/1365-2435.12432",
+      "article-title": "Species richness, but not phylogenetic diversity, influences community biomass production and temporal stability in a re-examination of 16 grassland biodiversity studies",
+      "volume": "29",
+      "author": "Venail",
+      "year": "2015",
+      "journal-title": "Funct. Ecol."
+    },
+    {
+      "issue": "2",
+      "key": "10.1016/j.jtbi.2024.111992_b65",
+      "doi-asserted-by": "crossref",
+      "first-page": "145",
+      "DOI": "10.1086/303378",
+      "article-title": "Exploring the phylogenetic structure of ecological communities: an example for rain forest trees",
+      "volume": "156",
+      "author": "Webb",
+      "year": "2000",
+      "journal-title": "Amer. Nat."
+    },
+    {
+      "issue": "1",
+      "key": "10.1016/j.jtbi.2024.111992_b66",
+      "doi-asserted-by": "crossref",
+      "first-page": "475",
+      "DOI": "10.1146/annurev.ecolsys.33.010802.150448",
+      "article-title": "Phylogenies and community ecology",
+      "volume": "33",
+      "author": "Webb",
+      "year": "2002",
+      "journal-title": "Annu. Rev. Ecol. Syst."
+    },
+    {
+      "issue": "2",
+      "key": "10.1016/j.jtbi.2024.111992_b67",
+      "doi-asserted-by": "crossref",
+      "first-page": "75",
+      "DOI": "10.1086/659883",
+      "article-title": "The causes of species richness patterns across space, time, and clades and the role of \u201cecological limits\u201d",
+      "volume": "86",
+      "author": "Wiens",
+      "year": "2011",
+      "journal-title": "Q. Rev. Biol."
+    },
+    {
+      "issue": "3",
+      "key": "10.1016/j.jtbi.2024.111992_b68",
+      "doi-asserted-by": "crossref",
+      "first-page": "670",
+      "DOI": "10.1093/evolut/qpad006",
+      "article-title": "Can we ignore trait-dependent colonization and diversification in island biogeography?",
+      "volume": "77",
+      "author": "Xie",
+      "year": "2023",
+      "journal-title": "Evolution"
+    },
+    {
+      "issue": "8",
+      "key": "10.1016/j.jtbi.2024.111992_b69",
+      "doi-asserted-by": "crossref",
+      "first-page": "1211",
+      "DOI": "10.1111/ele.13090",
+      "article-title": "Species composition, functional and phylogenetic distances correlate with success of invasive Chromolaena odorata in an experimental test",
+      "volume": "21",
+      "author": "Zheng",
+      "year": "2018",
+      "journal-title": "Ecol. Lett."
+    }
+  ],
+  "container-title": [
+    "Journal of Theoretical Biology"
+  ],
+  "original-title": [],
+  "language": "en",
+  "link": [
+    {
+      "URL": "https://api.elsevier.com/content/article/PII:S0022519324002777?httpAccept=text/xml",
+      "content-type": "text/xml",
+      "content-version": "vor",
+      "intended-application": "text-mining"
+    },
+    {
+      "URL": "https://api.elsevier.com/content/article/PII:S0022519324002777?httpAccept=text/plain",
+      "content-type": "text/plain",
+      "content-version": "vor",
+      "intended-application": "text-mining"
+    }
+  ],
+  "deposited": {
+    "date-parts": [
+      [
+        2024,
+        12,
+        12
+      ]
+    ],
+    "date-time": "2024-12-12T06:37:13Z",
+    "timestamp": 1733985433000
+  },
+  "score": 1,
+  "resource": {
+    "primary": {
+      "URL": "https://linkinghub.elsevier.com/retrieve/pii/S0022519324002777"
+    }
+  },
+  "subtitle": [],
+  "short-title": [],
+  "issued": {
+    "date-parts": [
+      [
+        2025,
+        2
+      ]
+    ]
+  },
+  "references-count": 69,
+  "alternative-id": [
+    "S0022519324002777"
+  ],
+  "URL": "https://doi.org/10.1016/j.jtbi.2024.111992",
+  "relation": {
+    "has-preprint": [
+      {
+        "id-type": "doi",
+        "id": "10.1101/2023.11.09.566365",
+        "asserted-by": "object"
+      }
+    ]
+  },
+  "ISSN": [
+    "0022-5193"
+  ],
+  "issn-type": [
+    {
+      "value": "0022-5193",
+      "type": "print"
+    }
+  ],
+  "subject": [],
+  "published": {
+    "date-parts": [
+      [
+        2025,
+        2
+      ]
+    ]
+  },
+  "assertion": [
+    {
+      "value": "Elsevier",
+      "name": "publisher",
+      "label": "This article is maintained by"
+    },
+    {
+      "value": "Impact of evolutionary relatedness on species diversification and tree shape",
+      "name": "articletitle",
+      "label": "Article Title"
+    },
+    {
+      "value": "Journal of Theoretical Biology",
+      "name": "journaltitle",
+      "label": "Journal Title"
+    },
+    {
+      "value": "https://doi.org/10.1016/j.jtbi.2024.111992",
+      "name": "articlelink",
+      "label": "CrossRef DOI link to publisher maintained version"
+    },
+    {
+      "value": "article",
+      "name": "content_type",
+      "label": "Content Type"
+    },
+    {
+      "value": "\u00a9 2024 The Authors. Published by Elsevier Ltd.",
+      "name": "copyright",
+      "label": "Copyright"
+    }
+  ],
+  "article-number": "111992"
+}

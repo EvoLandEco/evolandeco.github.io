@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <title>Integrating Pre-Trained PyTorch Models into Your R Package - Blog - Tianjian Qin</title>
+
+    
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Blog Post">
+    <meta name="author" content="Tianjian Qin">
+    
+
+    
+    <style>@import url("https://fonts.googleapis.com/css?family=Roboto:300,400,500,700") layer(legacy);</style>
+    <style>@import url("https://fonts.googleapis.com/icon?family=Material+Icons") layer(legacy);</style>
+
+    
+    <script defer="" src="/notebook-assets/fontawesome/js/all.js"></script>
+
+    
+    <style>@import url("/notebook-assets/plugins/highlight/styles/monokai-sublime.min.css") layer(legacy);</style>
+    <style>@import url("https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.css") layer(legacy);</style>
+    <style>@import url("https://cdn.datatables.net/buttons/3.0.2/css/buttons.bootstrap5.css") layer(legacy);</style>
+    <style>@import url("/notebook-assets/css/treeview.css") layer(legacy);</style>
+
+    
+    <style>@import url("/notebook-assets/css/theme-1.css") layer(legacy);</style>
+
+    <style>@layer legacy {
+        pre {
+            margin: 0 auto 0 0; /* Left align the block */
+            overflow-x: auto; /* Enable horizontal scrolling if the content overflows */
+            word-wrap: break-word; /* Break long words */
+        }
+        code {
+            margin: 0px !Important;
+            width: 100%;
+            border-radius: 10px;
+        }
+        .center-repo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+    }</style>
+
+<link rel="stylesheet" href="/reading/controls.css"><link rel="stylesheet" href="/reading/article.css"></head>
+
+<body>
+
+
+
+<div class="main-wrapper">
+
+    <article class="blog-post">
+        <div class="container single-col-max-width">
+            
+
+            <div class="blog-post-body">
+                
+                <p>Integrating pre-trained PyTorch models into R can significantly enhance the flexibility and power of your R projects. This tutorial will walk you through the process taking my R package <code>EvoNN</code> as an example. Before we dive in, ensure you have the latest versions of R and Python installed on your machine. Familiarity with Python virtual environments, PyTorch and basic R package development is assumed. For those new to these concepts, refer to the Python and PyTorch documentations. I also recommend to read Hadley Wickham's R package development guide beforehand.</p>
+
+                <h3 class="mt-5 mb-3">Maintaining Python Dependencies</h3>
+                <p>In EvoNN, we manually maintain a list of Python library dependencies (<code>pkglist.csv</code>) in the <code>/inst</code> directory. This list is distributed along with the package.</p>
+                <p>Below is how the list looks like, the list contains dependencies for PyTorch and PyTorch Geometric:</p>
+
+                <table id="csvTable" class="display table table-striped my-5" style="width:100%"></table>
+
+                <h3 class="mt-5 mb-3">Storing Pretrained Models and Python Scripts</h3>
+                <p>The <code>/inst</code> directory also stores pre-trained neural network models (<code>weights.pt</code>) and Python scripts (<code>import.py</code> and <code>function.py</code>) that contain the necessary libraries, functions defining the neural network architecture, and data loading mechanisms.</p>
+
+                <p>For an intuitive impression of how the <code>EvoNN</code> package is structured, you can play around with the interactive tree viewer below to see the core files and their relative locations.</p>
+                
+                <div class="row">
+                    <button id="toggleAll" class="btn btn-primary">Expand All</button>
+                    <div class="col-12" id="treeView">
+                    </div>
+                </div>
+
+                <h3 class="mt-5 mb-3">Preparing Python Source Files</h3>
+                <p>We can divide our Python scripts into two parts. The first part, <code>import.py</code>, contains the necessary Python libraries to load the pre-trained model and perform the neural network estimation. The second part, <code>function.py</code>, contains the Python function that performs the neural network estimation.</p>
+
+                <p>For example, in the <code>import.py</code> file you can write this:</p>
+                <pre><code class="python"># import.py
+import torch
+import torch_geometric
+import torch.nn as nn
+import torch.nn.functional as F
+from torch_geometric.nn import GCNConv</code></pre>
+                <br>
+                <p>And in the <code>function.py</code> you can write some thing like this:</p>
+                <pre><code class="python"># function.py
+# Not working code, demonstration purposes only
+def py_function(py_tree):
+    def create_dataset(tree):
+        # Define the dataset creation process
+        return dataset
+
+    py_dataset = create_dataset(py_tree)
+
+    # Define the neural network architecture
+    class Net(nn.Module):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.conv1 = GCNConv(16, 16)
+            self.conv2 = GCNConv(16, 16)
+            self.fc = nn.Linear(16, 1)
+
+        def forward(self, data):
+            x, edge_index = data.x, data.edge_index
+            x = F.relu(self.conv1(x, edge_index))
+            x = F.relu(self.conv2(x, edge_index))
+            x = F.dropout(x, training=self.training)
+            x = self.fc(x)
+            return x
+
+    # Load the pre-trained model
+    model = Net()
+    model.load_state_dict(torch.load("weights.pt"))
+    model.eval()
+
+    # Perform neural network estimation
+    out = model(py_dataset)
+    # Convert to a data dict of numpy arrays
+    out = convert_to_numpy(out)
+    return out</code></pre>
+                <br>
+                <p>You can of course combine the two parts or divide the script in a totally different manner, it is just a matter of personal taste, the code will work anyway as long as you source all the snippets in a correct order, that is, the same order as they were in the original (working) script. </p>
+
+                <h3 class="mt-5 mb-3">Environment Setup with zzz.R and .onLoad()</h3>
+                <p>You might have noticed the werid <code>zzz.R</code> file. Conventionally, we define the behavior of the <code>.onLoad()</code> function within this file. This function will be called every time our package is loaded.</p>
+                <p>The <code>.onLoad()</code> function has mainly two tasks:</p>
+                <ul>
+                    <li>Check the Python environment and install the required dependencies if necessary.</li>
+                    <li>Import Python functions into R.
+                </li></ul>
+                <p>If no virtual environment exists, we create a new one named "EvoNN" and install the required dependencies. If the virtual environment already exists, we need to verify that the necessary packages are installed with the correct versions. If everything is in order, we can activate the existing virtual environment directly.</p>
+                <p>Below is a simplified version of the <code>.onLoad()</code> function:</p>
+                <pre><code class="r"># zzz.R
+# Not working code, demonstration purposes only
+py_function_to_r &lt;- NULL # Global variable to store imported Python function
+
+.onLoad &lt;- function(libname, pkgname){
+  # Read package version list
+  pkglist &lt;- utils::read.csv(system.file("pkglist.csv", package = "EvoNN"), row.names = 1)
+  install_list &lt;- paste0(pkglist$package, "==", pkglist$version)
+
+  # Check if the EvoNN virtual environment exists
+  env_exists &lt;- reticulate::virtualenv_exists("EvoNN")
+  if (env_exists) {
+    # Check if the virtual environment has the required versions of the packages
+    current_pkgs &lt;- reticulate::py_list_packages("EvoNN")
+    mismatched_pkgs &lt;- compare_pkgs(current_pkgs, pkglist)
+
+    # Reinstall the packages if they do not match
+    if (length(mismatched_pkgs) &gt; 0) {
+      reticulate::virtualenv_install("EvoNN", packages = mismatched_pkgs)
+    }
+  } else {
+    # Create the virtual environment if it does not exist
+    reticulate::virtualenv_create("EvoNN", packages = install_list)
+  }
+
+  # Use the EvoNN virtual environment
+  # Note that here we must explicitly set required = TRUE
+  reticulate::use_virtualenv("EvoNN", required = TRUE)
+  # Import Python dependencies
+  reticulate::source_python(system.file(paste0("model/", "import.py"), package = "EvoNN"))
+  # Import Python functions
+  reticulate::source_python(system.file(paste0("model/", "function.py"), package = "EvoNN"))
+  # Assign the function needed (assume it is defined as py_function) to the global environment
+  py_function_to_r &lt;&lt;- reticulate::py$py_function
+}</code></pre>
+                <br>
+                <p>In the above code block this line is very important:</p>
+                <pre><code class="r">reticulate::use_virtualenv("EvoNN", required = TRUE)</code></pre>
+                <br>
+                <p>Here we explicitly set <code>required = TRUE</code>, because its default value in <code>use_virtualenv()</code>, <code>use_python()</code>, and <code>use_conda()</code> is different within <code>.onLoad()</code>. It is <code>required = TRUE</code> in most contexts, except in <code>.onLoad(</code>).</p>
+                <p>If we do not set <code>required = TRUE</code>, our on-load script may fail if users have already initialized their own Python environment in which the dependencies are missing.</p>
+                <h3 class="mt-5 mb-3">Embedding Imported Python Function into R Function</h3>
+                <p>Till now, we have successfully imported the Python function into R. The next step is to embed the imported Python function into an R function. This R function will be the interface for users to call the Python function.</p>
+                <p>In <code>EvoNN</code>, we defined an <code>nn_estimate()</code> function to load a phylogenetic tree into R, convert it to the desired data formats, and then use <code>reticulate::r_to_py()</code> to convert the R objects to Python objects. These objects are passed to the imported Python function, which return neural network estimates back to R.</p>
+                <p>Below is a simplified version of the  <code>nn_estimate()</code> function:</p>
+                <pre><code class="r"># function.R
+# Not working code, demonstration purposes only
+nn_estimate &lt;- function(phylo_tree) {
+    # Load Phylo Tree
+    phylo_tree &lt;- function_to_read_tree(phylo_tree)
+    # Convert Phylo Tree to Desired Data Format
+    phylo_tree &lt;- function_to_convert_tree(phylo_tree)
+    # Convert R object to Python object
+    py_tree &lt;- reticulate::r_to_py(phylo_tree)
+    # Call the Imported Python function
+    out &lt;- py_function_to_r(py_tree)
+    return(out)
+}</code></pre>
+                <h3 class="mt-5 mb-3">Passing the R <cm></cm>D Check</h3>
+                <p>After completing the above steps, run <code>R CMD check</code> to ensure your package is free of errors and warnings. By following this guide, Python integration won't be an obstacle. However, if you encounter any problems during the <code>R CMD check</code>, refer to <a href="https://rstudio.github.io/reticulate/articles/package.html">Using reticulate in an R Package</a> for possible solutions, especially if you plan to upload your package to CRAN.</p>
+
+                <h3 class="mt-5 mb-3">In the End</h3>
+                <p>The implementation of Python integration into an R package using reticulate is highly flexible. Here, we introduced a manual example, but you can also let the reticulate package automatically configure the Python environment for you by adding some lines to your R package's <code>DESCRIPTION</code> file. Below is an example:</p>
+                <pre><code class="r">Package: rscipy
+Title: An R Interface to scipy
+Version: 1.0.0
+Description: Provides an R interface to the Python package scipy.
+Config/reticulate:
+  list(
+    packages = list(
+      list(package = "scipy")
+    )
+  )
+&lt; ... other fields ... &gt;
+Installation</code></pre>
+                <br>
+                <p>However, the autoconfiguration will always install <code>miniconda</code> to manage Python dependencies, which might not be the best practice for small projects or if we intend to run the code on a cluster computer. We may want to use Python's virtual environment instead.</p>
+                <p>The reticulate developers prefer not to configure the Python environment automatically for users. Instead, they suggest providing an installation function that allows users the freedom to choose where to set up the required virtual environment. They also suggest avoiding the use of <code>reticulate::source_python()</code> within <code>.onLoad()</code> as it modifies the user's global environment and forces reticulate to initialize Python, possibly before the user has selected the desired Python version. They recommend using the <code>reticulate::import()</code> function family to load dependencies. Click <a href="https://rstudio.github.io/reticulate/articles/python_dependencies.html">here</a> to read more about the good practices of managing an R package’s Python dependencies.</p>
+                <p>These suggestions, while being safe and robust, may pose challenges for both R package developers and their users. For developers, <code>reticulate::import()</code> doesn't always work, such as some submodules required by the <code>EvoNN</code> package. For users, additional knowledge may be required to get everything set up correctly, especially for those who primarily use R and lack Python experience. Therefore, this article provided a manual workaround trying to relieve some pain. Unexpected issues may still occur on the user-side, given the complex nature of Python versions, packages and environment management.</p>
+                <p>This article used simplified <code>EvoNN</code> code to demonstrate how to conveniently integrate pre-trained PyTorch models into your R projects. If you have any difficulty understanding or porting the examples, please visit the <code>EvoNN</code> GitHub repository below for the complete codebase. Click on the image below to open:</p>
+                <div class="center-repo">
+                    <a href="https://github.com/EvoLandEco/EvoNN">
+                        <span>View repository ↗</span>
+                    </a>
+                </div>
+            </div>
+
+            
+
+            
+
+        </div>
+    </article>
+
+    
+
+</div>
+
+
+
+<div id="config-panel" class="config-panel config-panel-hide d-none">
+    <div class="panel-inner">
+        <a id="config-trigger" class="config-trigger text-center" href="#"><i class="fas fa-cog mx-auto" data-fa-transform="down-6"></i></a>
+        <h5 class="panel-title">Choose Colour</h5>
+        <ul id="color-options" class="list-inline mb-0">
+            <li class="theme-1 active list-inline-item"><a data-style="/notebook-assets/css/theme-1.css" href="#"></a></li>
+            <li class="theme-2  list-inline-item"><a data-style="/notebook-assets/css/theme-2.css" href="#"></a></li>
+            <li class="theme-3  list-inline-item"><a data-style="/notebook-assets/css/theme-3.css" href="#"></a></li>
+            <li class="theme-4  list-inline-item"><a data-style="/notebook-assets/css/theme-4.css" href="#"></a></li>
+            <li class="theme-5  list-inline-item"><a data-style="/notebook-assets/css/theme-5.css" href="#"></a></li>
+            <li class="theme-6  list-inline-item"><a data-style="/notebook-assets/css/theme-6.css" href="#"></a></li>
+            <li class="theme-7  list-inline-item"><a data-style="/notebook-assets/css/theme-7.css" href="#"></a></li>
+            <li class="theme-8  list-inline-item"><a data-style="/notebook-assets/css/theme-8.css" href="#"></a></li>
+            <li class="theme-9  list-inline-item"><a data-style="/notebook-assets/css/theme-9.css" href="#"></a></li>
+            <li class="theme-10  list-inline-item"><a data-style="/notebook-assets/css/theme-10.css" href="#"></a></li>
+        </ul>
+        <a id="config-close" class="close" href="#"><i class="fa fa-times-circle"></i></a>
+    </div>
+</div>
+
+
+
+<script src="/notebook-assets/plugins/popper.min.js"></script>
+<script src="/notebook-assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.0.2/js/dataTables.buttons.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.print.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.bootstrap5.js"></script>
+
+
+<script src="https://cdn.datatables.net/plug-ins/1.10.24/sorting/natural.js"></script>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        $.ajax({
+            url: '/notebook-assets/files/pkglist.csv', // Replace with the path to your CSV file
+            dataType: 'text',
+        }).done(function(data) {
+            // Parse the CSV file
+            const parsedData = Papa.parse(data, {
+                header: true, // Assumes the first row contains the headers
+                dynamicTyping: true,
+            });
+
+            // Create HTML table
+            let tableHtml = '<thead><tr>';
+            for (const header of parsedData.meta.fields) {
+                tableHtml += `<th>${header}</th>`;
+            }
+            tableHtml += '</tr></thead><tbody>';
+
+            for (const row of parsedData.data) {
+                tableHtml += '<tr>';
+                for (const header of parsedData.meta.fields) {
+                    tableHtml += `<td>${row[header]}</td>`;
+                }
+                tableHtml += '</tr>';
+            }
+            tableHtml += '</tbody>';
+
+            $('#csvTable').html(tableHtml);
+
+            new DataTable( $('#csvTable'), {
+                layout: {
+                    topStart: {
+                        buttons: ['copy', 'excel', 'pdf']
+                    }
+                },
+                columnDefs: [
+                    { type: 'natural', targets: '_all' }
+                ]
+            });
+        });
+    });
+</script>
+
+
+<script src="/notebook-assets/js/treeview.js"></script>
+<script>
+    /* TreeView */
+    const TreeView = () => {
+        return section(
+            { className: "container" },
+            Folder(
+                { name: "EvoNN (package root)" },
+                Folder({ name: "inst" }, Folder({ name: "model" }, File({ name: "weights.pt" }), File({ name: "import.py"}), File({ name: "function.py"})), File({ name: "pkglist.csv" })),
+                Folder({ name: "R" }, File({ name: "function.R" }), File({ name: "zzz.R" }))
+            )
+        );
+    };
+
+    const app = document.querySelector("#treeView");
+    app.appendChild(createElement(TreeView));
+
+    document.getElementById("toggleAll").addEventListener("click", (event) => {
+        const expandAll = event.target.textContent === "Expand All";
+        event.target.textContent = expandAll ? "Collapse All" : "Expand All";
+
+        document.querySelectorAll(".folder-header").forEach(header => {
+            header.setAttribute("opened", expandAll);
+            const icons = header.querySelectorAll(".material-icons");
+            icons.forEach(icon => {
+                if (/arrow/i.test(icon.textContent)) {
+                    icon.textContent = expandAll ? openedArrowIcon : closedArrowIcon;
+                } else {
+                    icon.textContent = expandAll ? openedFolderIcon : closedFolderIcon;
+                }
+            });
+            const sibling = header.nextElementSibling;
+            if (sibling) {
+                if (expandAll) {
+                    sibling.classList.remove("hide");
+                } else {
+                    sibling.classList.add("hide");
+                }
+            }
+        });
+    });
+</script>
+
+
+<style>@import url("https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.css") layer(legacy);</style>
+<script src="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+<script>hljs.addPlugin(new CopyButtonPlugin());</script>
+
+
+<script src="/notebook-assets/js/blog.js"></script>
+
+
+<script src="/notebook-assets/plugins/js-cookie.min.js"></script>
+
+
+
+
+
+
+
+
+<script src="/reading/theme.js"></script><script src="/reading/resize.js"></script>
+
+
+</body></html>

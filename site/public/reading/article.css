@@ -1,0 +1,20 @@
+html, body { min-height: 0; height: auto; margin: 0; background: transparent; font-size: 16px; line-height: 1.85; }
+html { background: var(--ui-bg); }
+.header, .footer, .blog-post-header, .blog-nav, .theme-switcher, .config-wrapper, .blog-comments-section { display: none; }
+.main-wrapper, .blog-post, .blog-post-body { margin: 0; padding: 0; }
+.blog-post > .container { max-width: none; padding: 0; }
+h2, h3, h4, h5 { letter-spacing: -.02em; font-weight: 650; line-height: 1.35; margin: 2em 0 .8em; }
+h2 { font-size: 26px; } h3 { font-size: 22px; }
+p, ul, ol { margin-bottom: 1.25em; }
+img { max-width: 100%; height: auto; border-radius: 12px; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
+table { display: block; max-width: 100%; overflow: auto; border-collapse: collapse; }
+th, td { padding: 10px 14px; border-bottom: 1px solid var(--ui-border); }
+blockquote { border-left: 3px solid var(--ui-primary); padding: 4px 20px; color: var(--ui-muted); }
+figcaption, .image-caption { font-size: 14px; color: var(--ui-muted); }
+.link-mask { display: none; }
+iframe { max-width: 100%; min-height: 600px; border: 1px solid var(--ui-border); border-radius: 14px; }
+.card-img { max-height: 250px; object-fit: cover; }
+.fa-beat { animation: none; }
+@media(max-width: 500px) { .row { display: block; } .row > * { width: 100%; } .sim-shell { overflow: auto; } .container { padding: 0; } }
+.main-wrapper, .blog-post, .blog-post > .container, .blog-post-body { background: transparent; box-shadow: none; }

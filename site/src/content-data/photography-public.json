@@ -1,0 +1,12 @@
+{
+  "title": "Photography",
+  "intro": "Photographs, collected by country.",
+  "summary": {
+    "countryCount": null,
+    "countryLabel": null,
+    "albumCount": 0,
+    "photoCount": 0
+  },
+  "countries": [],
+  "albums": []
+}

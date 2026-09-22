@@ -1,0 +1,425 @@
+{
+  "institution": [
+    {
+      "name": "bioRxiv"
+    }
+  ],
+  "indexed": {
+    "date-parts": [
+      [
+        2026,
+        3,
+        25
+      ]
+    ],
+    "date-time": "2026-03-25T12:26:47Z",
+    "timestamp": 1774441607616,
+    "version": "3.50.1"
+  },
+  "posted": {
+    "date-parts": [
+      [
+        2026,
+        1,
+        13
+      ]
+    ]
+  },
+  "group-title": "Evolutionary Biology",
+  "reference-count": 44,
+  "publisher": "openRxiv",
+  "license": [
+    {
+      "start": {
+        "date-parts": [
+          [
+            2026,
+            1,
+            13
+          ]
+        ],
+        "date-time": "2026-01-13T00:00:00Z",
+        "timestamp": 1768262400000
+      },
+      "content-version": "vor",
+      "delay-in-days": 0,
+      "URL": "http://creativecommons.org/licenses/by/4.0/"
+    }
+  ],
+  "content-domain": {
+    "domain": [],
+    "crossmark-restriction": false
+  },
+  "short-container-title": [],
+  "accepted": {
+    "date-parts": [
+      [
+        2026,
+        1,
+        13
+      ]
+    ]
+  },
+  "abstract": "<jats:title>Abstract</jats:title>\n                <jats:p>Reconstructing the forces that shaped macroevolutionary histories from extant phylogenies is fundamentally challenging: richly parameterized diversification models are often only weakly identifiable; different evolutionary mechanisms can yield nearly indistinguishable tree shapes. Here we use a model with evolutionary relatedness dependence to evaluate how much information about such forces can be recovered from simulated trees. We train graph neural networks and long short-term memory classifiers to distinguish three scenarios of feedback of diversity on diversification: effect of phylogenetic diversity (total branch length), evolutionary distinctiveness (average phylogenetic distance of a species to all other species in a clade), and nearest-neighbor distance (phylogenetic distance to the mostly closely related species). We also train a suite of regression networks to estimate the underlying diversification parameters. We then analyze classification performance, calibration of predicted class probabilities, regression errors, and their dependence on tree size and on the strength and sign of richness and relatedness effects. Across network architectures and complexity levels, scenario classification is only moderately accurate and strongly asymmetric as revealed by the confusion matrix. Trees generated under an effect of nearest-neighbor distance on diversification tend to be correctly classified, whereas those with an effect of evolutionary distinctiveness are frequently misclassified. Regression networks systematically shrink predictions toward the empirical mean, especially for complex models, suggesting broad regions of parameter space with low identifiability. Strong global dependence of diversification rates on diversity further erodes recoverability by driving large variations in tree size that mask the subtler signatures of related-ness effects. In contrast, sufficiently strong speciation-relatedness effects can carve out narrow regions of parameter space in which scenarios and parameters become practically recoverable. Together, our results provide a map of when neural networks can and cannot infer diversification mechanisms from extant trees under our evolutionary relatedness dependence model, and they underscore the need for additional data or constraints when using flexible diversification models for macroevolutionary inference.</jats:p>",
+  "DOI": "10.64898/2026.01.12.699140",
+  "type": "posted-content",
+  "created": {
+    "date-parts": [
+      [
+        2026,
+        1,
+        14
+      ]
+    ],
+    "date-time": "2026-01-14T20:40:19Z",
+    "timestamp": 1768423219000
+  },
+  "source": "Crossref",
+  "is-referenced-by-count": 1,
+  "title": [
+    "Identifying Evolutionary Relatedness Effects on Diversification from Phylogenies using Neural Networks"
+  ],
+  "prefix": "10.64898",
+  "author": [
+    {
+      "ORCID": "https://orcid.org/0000-0003-2540-1778",
+      "authenticated-orcid": false,
+      "given": "Tianjian",
+      "family": "Qin",
+      "sequence": "first",
+      "affiliation": [
+        {
+          "name": "Groningen Institute for Evolutionary Life Sciences, University of Groningen, Nijenborgh 7, Groningen, 9747 AG, The Netherlands"
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    },
+    {
+      "ORCID": "https://orcid.org/0000-0002-3841-2110",
+      "authenticated-orcid": false,
+      "given": "Koen",
+      "family": "van Benthem",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "Groningen Institute for Evolutionary Life Sciences, University of Groningen, Nijenborgh 7, Groningen, 9747 AG, The Netherlands"
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    },
+    {
+      "ORCID": "https://orcid.org/0000-0003-4247-8785",
+      "authenticated-orcid": false,
+      "given": "Luis",
+      "family": "Valente",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "Groningen Institute for Evolutionary Life Sciences, University of Groningen, Nijenborgh 7, Groningen, 9747 AG, The Netherlands"
+        },
+        {
+          "name": "Naturalis Biodiversity Center, Darwinweg 2, Leiden, 2333 CR, The Netherlands"
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    },
+    {
+      "given": "Rampal",
+      "family": "Etienne",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "Groningen Institute for Evolutionary Life Sciences, University of Groningen, Nijenborgh 7, Groningen, 9747 AG, The Netherlands"
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    }
+  ],
+  "member": "54368",
+  "reference": [
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.48550/arXiv.2107.07511"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.2",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1554/0014-3820(2003)057[0717:TFPSIC]2.0.CO;2"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.3",
+      "unstructured": "Blundell, C. , Cornebise, J. , Kavukcuoglu, K. , Wierstra, D. , 2015. Weight uncertainty in neural network, in: International conference on machine learning, PMLR. pp. 1613\u20131622. URL: https://proceedings.mlr.press/v37/blundell15."
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.4",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s40300-019-00156-3"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.5",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1098/rspb.2011.1439"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.6",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/evo.12433"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.7",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/sysbio/syr091"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.8",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.48550/ARXIV.1903.02428"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.9",
+      "unstructured": "Gal, Y. , Ghahramani, Z ., 2016. Dropout as a Bayesian approximation: Repre-senting model uncertainty in deep learning, in: Proceedings of The 33rd In-ternational Conference on Machine Learning, PMLR. pp. 1050\u20131059. URL: https://proceedings.mlr.press/v48/gal16.html."
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.10",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1016/j.jtbi.2008.04.005"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.11",
+      "unstructured": "Guo, C. , Pleiss, G. , Sun, Y. , Weinberger, K.Q. , 2017. On calibration of modern neural networks, in: International conference on machine learning, PMLR. pp. 1321\u20131330. URL: http://proceedings.mlr.press/v70/guo17a.html."
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.12",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/978-1-4612-4380-9_35"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.13",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/978-3-030-57077-4_10"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.14",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.48550/ARXIV.1609.02907"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.15",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/brv.12504"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.16",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.2307/2410323"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.17",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1101/2023.03.03.530992"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.18",
+      "unstructured": "Lakshminarayanan, B. , Pritzel, A. , Blundell, C. , 2017. Simple and scal-able predictive uncertainty estimation using deep ensembles, in: Ad-vances in Neural Information Processing Systems, Curran Associates, Inc. URL: https://proceedings.neurips.cc/paper_files/paper/2017/hash/9ef2ed4b7fd2c810847ffa5fa85bce38-Abstract.html."
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.19",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/sysbio/syad044"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.20",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1080/01621459.2017.1307116"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.21",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.48550/ARXIV.1711.05101"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.22",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1038/s41586-020-2176-1"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.23",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1109/isbi.2008.4541126"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.24",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1016/j.tree.2014.01.010"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.25",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1098/rstb.1994.0054"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.26",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1098/rstb.1994.0068"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.27",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1073/pnas.89.17.8322"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.28",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1145/1102351.1102430"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.29",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/evo.14124"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.30",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1371/journal.pbio.0060071"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.31",
+      "unstructured": "Qin, T. , 2023. eveGNN: Codebase for phylogenetic tree parameter estimation with neural networks. URL: https://github.com/EvoLandEco/eveGNN.tex.copyright: MIT."
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.32",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/sysbio/syaf060"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.33",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1016/j.jtbi.2024.111992"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.34",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1016/j.tree.2010.05.002"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.35",
+      "unstructured": "R Core Team, 2025.R: A language and environment for statistical computing."
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.36",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1461-0248.2010.01463.x"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.37",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.48550/ARXIV.1402.1128"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.38",
+      "unstructured": "Shafer, G. , Vovk, V ., 2008. A tutorial on conformal prediction. Journal of Ma-chine Learning Research 9. URL: https://www.jmlr.org/papers/volume9/shafer08a/shafer08a.pdf?trk=public_post_comment-text."
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.39",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1461-0248.2012.01795.x"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.40",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1016/S0025-5564(00)00061-4"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.41",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/sysbio/sys036"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.42",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1038/s41467-022-31511-0"
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.43",
+      "unstructured": "Ying, Z. , You, J. , Morris, C. , Ren, X. , Hamilton, W. , Leskovec, J. , 2018. Hierarchical graph representation learning with differentiable pooling, in: Advances in Neural Information Processing Systems, Curran Associates, Inc. URL: https://proceedings.neurips.cc/paper_files/paper/2018/hash/e77dbaf6759253c7c6d0efc5690369c7-Abstract.html."
+    },
+    {
+      "key": "2026020510511583000_2026.01.12.699140v1.44",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1145/775047.775151"
+    }
+  ],
+  "container-title": [],
+  "original-title": [],
+  "link": [
+    {
+      "URL": "https://syndication.highwire.org/content/doi/10.64898/2026.01.12.699140",
+      "content-type": "unspecified",
+      "content-version": "vor",
+      "intended-application": "similarity-checking"
+    }
+  ],
+  "deposited": {
+    "date-parts": [
+      [
+        2026,
+        2,
+        5
+      ]
+    ],
+    "date-time": "2026-02-05T18:51:23Z",
+    "timestamp": 1770317483000
+  },
+  "score": 1,
+  "resource": {
+    "primary": {
+      "URL": "http://biorxiv.org/lookup/doi/10.64898/2026.01.12.699140"
+    }
+  },
+  "subtitle": [],
+  "short-title": [],
+  "issued": {
+    "date-parts": [
+      [
+        2026,
+        1,
+        13
+      ]
+    ]
+  },
+  "references-count": 44,
+  "URL": "https://doi.org/10.64898/2026.01.12.699140",
+  "relation": {},
+  "subject": [],
+  "published": {
+    "date-parts": [
+      [
+        2026,
+        1,
+        13
+      ]
+    ]
+  },
+  "subtype": "preprint"
+}

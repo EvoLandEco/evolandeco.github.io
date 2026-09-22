@@ -1,0 +1,357 @@
+{
+  "navigation": [
+    {
+      "label": "Home",
+      "path": "/",
+      "icon": "House",
+      "migrating": false
+    },
+    {
+      "label": "Research",
+      "path": "/research",
+      "icon": "Network",
+      "migrating": false
+    },
+    {
+      "label": "Papers",
+      "path": "/publications",
+      "icon": "BookOpen",
+      "migrating": false
+    },
+    {
+      "label": "Software",
+      "path": "/software",
+      "icon": "Code2",
+      "migrating": false
+    },
+    {
+      "label": "Blog",
+      "path": "/blog",
+      "icon": "NotebookPen",
+      "migrating": true
+    },
+    {
+      "label": "Footprint",
+      "path": "/photography",
+      "icon": "Camera",
+      "migrating": true
+    }
+  ],
+  "iconCloudItems": [
+    {
+      "id": "python",
+      "label": "Python",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/python.svg"
+    },
+    {
+      "id": "r",
+      "label": "R",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/r.svg"
+    },
+    {
+      "id": "cpp",
+      "label": "C++",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/cpp.svg"
+    },
+    {
+      "id": "javascript",
+      "label": "JavaScript",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/javascript.svg"
+    },
+    {
+      "id": "pytorch",
+      "label": "PyTorch",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/pytorch.svg"
+    },
+    {
+      "id": "react",
+      "label": "React",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/react.svg"
+    },
+    {
+      "id": "d3",
+      "label": "D3.js",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/d3.svg"
+    },
+    {
+      "id": "docker",
+      "label": "Docker",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/docker.svg"
+    },
+    {
+      "id": "git",
+      "label": "Git",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/git.svg"
+    },
+    {
+      "id": "linux",
+      "label": "Linux",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/linux.svg"
+    },
+    {
+      "id": "sql",
+      "label": "SQL",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/sql.svg"
+    },
+    {
+      "id": "threejs",
+      "label": "Three.js",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/threejs.svg"
+    },
+    {
+      "id": "vite",
+      "label": "Vite",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/vite.svg"
+    },
+    {
+      "id": "bash",
+      "label": "Bash",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/bash.svg"
+    },
+    {
+      "id": "latex",
+      "label": "LaTeX",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/latex.svg"
+    }
+  ],
+  "software": [
+    {
+      "id": "evonn",
+      "name": "EvoNN",
+      "role": "Developer"
+    },
+    {
+      "id": "evesim",
+      "name": "evesim",
+      "role": "Developer"
+    },
+    {
+      "id": "netforge",
+      "name": "NetForge",
+      "role": "Developer"
+    },
+    {
+      "id": "herdlink",
+      "name": "HerdLink",
+      "role": "Developer"
+    },
+    {
+      "id": "netspectra",
+      "name": "NetSpectra",
+      "role": "Developer"
+    },
+    {
+      "id": "evolab",
+      "name": "EvoLab",
+      "role": "Developer"
+    },
+    {
+      "id": "miniape",
+      "name": "miniape",
+      "role": "Developer"
+    },
+    {
+      "id": "treestats",
+      "name": "treestats",
+      "role": "Collaborator"
+    },
+    {
+      "id": "ddd",
+      "name": "DDD",
+      "role": "Collaborator"
+    },
+    {
+      "id": "daisie",
+      "name": "DAISIE",
+      "role": "Collaborator"
+    }
+  ],
+  "publications": [
+    {
+      "id": "evonn-2026",
+      "title": "Parameter estimation from phylogenetic trees using neural networks and ensemble learning.",
+      "venue": "Systematic Biology",
+      "year": 2026,
+      "status": "peer-reviewed",
+      "authors": [
+        {
+          "displayName": "Qin, T."
+        },
+        {
+          "displayName": "van Benthem, K. J."
+        },
+        {
+          "displayName": "Valente, L."
+        },
+        {
+          "displayName": "Etienne, R. S."
+        }
+      ]
+    },
+    {
+      "id": "eve-2025",
+      "title": "Impact of evolutionary relatedness on species diversification and tree shape.",
+      "venue": "Journal of Theoretical Biology",
+      "year": 2025,
+      "status": "peer-reviewed",
+      "authors": [
+        {
+          "displayName": "Qin, T."
+        },
+        {
+          "displayName": "Valente, L."
+        },
+        {
+          "displayName": "Etienne, R. S."
+        }
+      ]
+    },
+    {
+      "id": "resistance-2020",
+      "title": "Phylogenetic diversity is a better predictor of wetland community resistance to Alternanthera philoxeroides invasion than species richness.",
+      "venue": "Plant Biology",
+      "year": 2020,
+      "status": "peer-reviewed",
+      "authors": [
+        {
+          "displayName": "Qin, T.-J."
+        },
+        {
+          "displayName": "Zhou, J."
+        },
+        {
+          "displayName": "Sun, Y."
+        },
+        {
+          "displayName": "Müller-Schärer, H."
+        },
+        {
+          "displayName": "Luo, F.-L."
+        },
+        {
+          "displayName": "Dong, B.-C."
+        },
+        {
+          "displayName": "Li, H.-L."
+        },
+        {
+          "displayName": "Yu, F.-H."
+        }
+      ]
+    },
+    {
+      "id": "growth-2019",
+      "title": "Growth traits of the exotic plant Hydrocotyle vulgaris and the evenness of resident plant communities are mediated by community age, not species diversity.",
+      "venue": "Weed Research",
+      "year": 2019,
+      "status": "peer-reviewed",
+      "authors": [
+        {
+          "displayName": "Qin, T.-J."
+        },
+        {
+          "displayName": "Guan, Y.-T."
+        },
+        {
+          "displayName": "Quan, H."
+        },
+        {
+          "displayName": "Dong, B.-C."
+        },
+        {
+          "displayName": "Luo, F.-L."
+        },
+        {
+          "displayName": "Zhang, M.-X."
+        },
+        {
+          "displayName": "Li, H.-L."
+        },
+        {
+          "displayName": "Yu, F.-H."
+        }
+      ]
+    },
+    {
+      "id": "sediment-2018",
+      "title": "Sediment type and nitrogen deposition affect the relationship between Alternanthera philoxeroides and experimental wetland plant communities.",
+      "venue": "Marine and Freshwater Research",
+      "year": 2018,
+      "status": "peer-reviewed",
+      "authors": [
+        {
+          "displayName": "Qin, T.-J."
+        },
+        {
+          "displayName": "Guan, Y.-T."
+        },
+        {
+          "displayName": "Zhang, M.-X."
+        },
+        {
+          "displayName": "Li, H.-L."
+        },
+        {
+          "displayName": "Yu, F.-H."
+        }
+      ]
+    },
+    {
+      "id": "netforge-2026",
+      "title": "From Movement to Spread: Generating Livestock Contact Networks that Preserve Infection Dynamics.",
+      "venue": "bioRxiv",
+      "year": 2026,
+      "status": "preprint",
+      "authors": [
+        {
+          "displayName": "Qin, T."
+        },
+        {
+          "displayName": "Atamer Balkan, B."
+        },
+        {
+          "displayName": "Schmid, B. V."
+        },
+        {
+          "displayName": "ten Bosch, Q. A."
+        }
+      ]
+    },
+    {
+      "id": "relatedness-2026",
+      "title": "Identifying evolutionary relatedness effects on diversification from phylogenies using neural networks.",
+      "venue": "bioRxiv",
+      "year": 2026,
+      "status": "preprint",
+      "authors": [
+        {
+          "displayName": "Qin, T."
+        },
+        {
+          "displayName": "van Benthem, K."
+        },
+        {
+          "displayName": "Valente, L."
+        },
+        {
+          "displayName": "Etienne, R. S."
+        }
+      ]
+    }
+  ]
+}

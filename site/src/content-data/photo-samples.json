@@ -1,0 +1,185 @@
+[
+  {
+    "id": "sample-landscapes",
+    "countryCode": "",
+    "countryName": "Norway",
+    "countrySlug": "sample-landscapes",
+    "href": "/photography/sample-landscapes",
+    "title": "Norway",
+    "description": "Stock photographs for the gallery preview.",
+    "cover": {
+      "id": "mountain-lake",
+      "href": "/photography/sample-landscapes/mountain-lake",
+      "alt": "A winding road below green cliffs in low cloud",
+      "caption": "A winding road below green cliffs in low cloud.",
+      "takenOn": null,
+      "locationLabel": null,
+      "creator": "Andrew Ridley",
+      "image": {
+        "src": "/photography/samples/mountain-lake.webp",
+        "width": 1200,
+        "height": 800
+      },
+      "sourceUrl": "https://unsplash.com/photos/Kt5hRENuotI"
+    },
+    "photos": [
+      {
+        "id": "mountain-lake",
+        "href": "/photography/sample-landscapes/mountain-lake",
+        "alt": "A winding road below green cliffs in low cloud",
+        "caption": "A winding road below green cliffs in low cloud.",
+        "takenOn": null,
+        "locationLabel": null,
+        "creator": "Andrew Ridley",
+        "image": {
+          "src": "/photography/samples/mountain-lake.webp",
+          "width": 1200,
+          "height": 800
+        },
+        "sourceUrl": "https://unsplash.com/photos/Kt5hRENuotI"
+      },
+      {
+        "id": "river-valley",
+        "href": "/photography/sample-landscapes/river-valley",
+        "alt": "A blue fjord between steep rocky mountains",
+        "caption": "A blue fjord between steep rocky mountains.",
+        "takenOn": null,
+        "locationLabel": null,
+        "creator": "Alexey Topolyanskiy",
+        "image": {
+          "src": "/photography/samples/river-valley.webp",
+          "width": 1200,
+          "height": 800
+        },
+        "sourceUrl": "https://unsplash.com/photos/-oWyJoSqBRM"
+      }
+    ],
+    "sampleLocation": {
+      "lat": 61,
+      "lng": 7,
+      "flag": "no"
+    }
+  },
+  {
+    "id": "sample-wild-places",
+    "countryCode": "",
+    "countryName": "United States",
+    "countrySlug": "sample-wild-places",
+    "href": "/photography/sample-wild-places",
+    "title": "United States",
+    "description": "Stock photographs for the gallery preview.",
+    "cover": {
+      "id": "canyon",
+      "href": "/photography/sample-wild-places/canyon",
+      "alt": "Orange sandstone cliffs lit by the setting sun",
+      "caption": "Orange sandstone cliffs lit by the setting sun.",
+      "takenOn": null,
+      "locationLabel": null,
+      "creator": "Philippe Wuyts",
+      "image": {
+        "src": "/photography/samples/canyon.webp",
+        "width": 800,
+        "height": 1200
+      },
+      "sourceUrl": "https://unsplash.com/photos/_h7aBovKia4"
+    },
+    "photos": [
+      {
+        "id": "canyon",
+        "href": "/photography/sample-wild-places/canyon",
+        "alt": "Orange sandstone cliffs lit by the setting sun",
+        "caption": "Orange sandstone cliffs lit by the setting sun.",
+        "takenOn": null,
+        "locationLabel": null,
+        "creator": "Philippe Wuyts",
+        "image": {
+          "src": "/photography/samples/canyon.webp",
+          "width": 800,
+          "height": 1200
+        },
+        "sourceUrl": "https://unsplash.com/photos/_h7aBovKia4"
+      },
+      {
+        "id": "waterfall",
+        "href": "/photography/sample-wild-places/waterfall",
+        "alt": "A waterfall surrounded by green forest and mist",
+        "caption": "A waterfall surrounded by green forest and mist.",
+        "takenOn": null,
+        "locationLabel": null,
+        "creator": "Andrew Coelho",
+        "image": {
+          "src": "/photography/samples/waterfall.webp",
+          "width": 1200,
+          "height": 800
+        },
+        "sourceUrl": "https://unsplash.com/photos/VB-w_3dnyvI"
+      }
+    ],
+    "sampleLocation": {
+      "lat": 37,
+      "lng": -113,
+      "flag": "us"
+    }
+  },
+  {
+    "id": "sample-light",
+    "countryCode": "",
+    "countryName": "New Zealand",
+    "countrySlug": "sample-light",
+    "href": "/photography/sample-light",
+    "title": "New Zealand",
+    "description": "Stock photographs for the gallery preview.",
+    "cover": {
+      "id": "forest",
+      "href": "/photography/sample-light/forest",
+      "alt": "Sunlit pines beneath sheer granite cliffs",
+      "caption": "Sunlit pines beneath sheer granite cliffs.",
+      "takenOn": null,
+      "locationLabel": null,
+      "creator": "Christian Joudrey",
+      "image": {
+        "src": "/photography/samples/forest.webp",
+        "width": 1600,
+        "height": 700
+      },
+      "sourceUrl": "https://unsplash.com/photos/mWRR1xj95hg"
+    },
+    "photos": [
+      {
+        "id": "forest",
+        "href": "/photography/sample-light/forest",
+        "alt": "Sunlit pines beneath sheer granite cliffs",
+        "caption": "Sunlit pines beneath sheer granite cliffs.",
+        "takenOn": null,
+        "locationLabel": null,
+        "creator": "Christian Joudrey",
+        "image": {
+          "src": "/photography/samples/forest.webp",
+          "width": 1600,
+          "height": 700
+        },
+        "sourceUrl": "https://unsplash.com/photos/mWRR1xj95hg"
+      },
+      {
+        "id": "coast",
+        "href": "/photography/sample-light/coast",
+        "alt": "Dark storm clouds over waves breaking on a beach",
+        "caption": "Dark storm clouds over waves breaking on a beach.",
+        "takenOn": null,
+        "locationLabel": null,
+        "creator": "Patrick Fore",
+        "image": {
+          "src": "/photography/samples/coast.webp",
+          "width": 1200,
+          "height": 800
+        },
+        "sourceUrl": "https://unsplash.com/photos/V6s1cmE39XM"
+      }
+    ],
+    "sampleLocation": {
+      "lat": -44,
+      "lng": 169,
+      "flag": "nz"
+    }
+  }
+]

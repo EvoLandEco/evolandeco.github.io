@@ -1,0 +1,67 @@
+:root {
+  --ui-bg: #ffffff; --ui-card: #f7f9fc; --ui-text: #182230; --ui-muted: #566273;
+  --ui-border: #dce3ec; --ui-primary: #315ba6; --ui-on-primary: #fff; --ui-accent: #eaf0f9;
+  color-scheme: light;
+}
+html.dark {
+  --ui-bg: #10161f; --ui-card: #192230; --ui-text: #e8edf5; --ui-muted: #a9b7ca;
+  --ui-border: #324156; --ui-primary: #96baff; --ui-on-primary: #101b30; --ui-accent: #24344d;
+  color-scheme: dark;
+}
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--ui-bg); color: var(--ui-text); color-scheme: inherit;
+  --bg: var(--ui-bg); --panel: var(--ui-card); --panel2: var(--ui-card); --panel-2: var(--ui-card); --panel-3: var(--ui-card);
+  --text: var(--ui-text); --text-strong: var(--ui-text); --muted: var(--ui-muted); --accent: var(--ui-primary);
+  --line: var(--ui-border); --stroke: var(--ui-border); --stroke2: var(--ui-border);
+  --inputBg: var(--ui-bg); --inputBorder: var(--ui-border); --headerBg: var(--ui-bg);
+}
+button, .btn, a.button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  min-height: 38px; padding: 8px 14px; border: 1px solid var(--ui-border); border-radius: 10px;
+  background: var(--ui-bg); color: var(--ui-text); font: 500 14px/1.4 system-ui, sans-serif;
+  box-shadow: 0 1px 2px #14294208; text-decoration: none; cursor: pointer;
+  transition: background-color .15s, border-color .15s; transform: none;
+}
+button:hover, .btn:hover, a.button:hover { background: var(--ui-accent); color: var(--ui-text); border-color: var(--ui-primary); transform: none; }
+button.primary, .btn-primary, #startButton, #regenBtn { background: var(--ui-primary); color: var(--ui-on-primary); border-color: var(--ui-primary); }
+button:disabled, .btn.disabled { opacity: .45; cursor: not-allowed; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; }
+input:not([type=range]):not([type=checkbox]):not([type=radio]), select, textarea, .form-control, .form-select {
+  color: var(--ui-text); background: var(--ui-bg); border: 1px solid var(--ui-border); border-radius: 8px;
+  padding: 8px 10px; font: inherit; min-height: 38px; max-width: 100%; box-shadow: none;
+}
+input[type=range], input[type=checkbox], input[type=radio] { accent-color: var(--ui-primary); }
+label { color: var(--ui-text); }
+a { color: var(--ui-primary); text-underline-offset: 4px; }
+.card, .panel, .app-panel, .concept-card, .widget-shell, .sim-shell, .sim-panel, .sim-control-card,
+.sim-run-card, .sim-preset-box, .metric-card, .overlay-panel-card, .overlay-metric, .ctrl, .sim-settings-details {
+  background: var(--ui-card); color: var(--ui-text); border: 1px solid var(--ui-border); border-radius: 14px; box-shadow: none;
+}
+.card-body, .panel-body { padding: 18px; }
+.card-title, .panel-title, .metric-value, h1, h2, h3, h4, h5 { color: var(--ui-text); }
+.pill, .chip, .legend-chip, .status-pill, .sim-summary-chip, .sim-kicker, .app-kicker {
+  background: var(--ui-accent); color: var(--ui-primary); border: 1px solid var(--ui-border); border-radius: 999px;
+}
+.chip.active, .layer-menu-button.active { background: var(--ui-primary); color: var(--ui-on-primary); }
+.alert { padding: 16px 20px; border: 1px solid var(--ui-border); border-left: 3px solid var(--ui-primary); border-radius: 12px; background: var(--ui-card); color: var(--ui-text); }
+pre { background: var(--ui-card); color: var(--ui-text); border: 1px solid var(--ui-border); border-radius: 12px; padding: 18px; overflow: auto; line-height: 1.7; }
+pre code, .hljs { background: transparent; color: var(--ui-text); }
+.hljs-keyword, .hljs-selector-tag { color: var(--ui-primary); }
+.hljs-string, .hljs-title { color: #398775; }
+.dark .hljs-string, .dark .hljs-title { color: #90cdb9; }
+.hljs-comment { color: var(--ui-muted); }
+summary { cursor: pointer; color: var(--ui-text); }
+.embedded .app-header, .embedded .theme-toggle, .embedded #simThemeWrap, .embedded .dark-toggle { display: none; }
+.embedded .app-shell { padding: 16px; }
+#controlPanel { width: 240px; max-width: 40%; min-width: 150px; padding: 16px; background: var(--ui-card); border-right: 1px solid var(--ui-border); box-shadow: none; overflow-y: auto; }
+#controlPanel > div { background: transparent; gap: 10px; padding: 8px 0; }
+#controlPanel button { background: var(--ui-bg); color: var(--ui-text); border: 1px solid var(--ui-border); border-radius: 10px; }
+#controlPanel #startButton { background: var(--ui-primary); color: var(--ui-on-primary); }
+#svgCanvas { background: var(--ui-bg); border-color: var(--ui-border); }
+@media (prefers-reduced-motion: reduce) { button, .btn { transition: none; } }
+.app, .sidebar, .sidebar-header, .section, .app-header, .map-panel, .sim-topbar, .sim-run-toolbar, .sim-statusline {
+  background: var(--ui-card); color: var(--ui-text); border-color: var(--ui-border); box-shadow: none;
+}
+.app { background: var(--ui-bg); }
+.embedded .app-panel { padding: 0; border: 0; background: transparent; }

@@ -1,0 +1,67 @@
+[
+  {
+    "path": "art/herdlink-minimal.webp",
+    "sha256": "ebf3dd20fe2c79ffc7c10c2b42008c134ae866707b967ce420b2e10f85aa5985",
+    "source": "OpenAI built-in image generation",
+    "purpose": "Conceptual illustration, not empirical data"
+  },
+  {
+    "path": "art/netforge-minimal.webp",
+    "sha256": "f866e7518cc4d75c0751a72a8ade3f71ca13a8945a251b994dc0cf58aa6aa22a",
+    "source": "OpenAI built-in image generation",
+    "purpose": "Conceptual illustration, not empirical data"
+  },
+  {
+    "path": "art/evolutionary-inference-minimal.webp",
+    "sha256": "dc0a32619586ebc695199a2cd889ad1e476ea8b548e008f127022bcb8e53a6cf",
+    "source": "OpenAI built-in image generation",
+    "purpose": "Conceptual illustration, not empirical data"
+  },
+  {
+    "path": "art/one-health-minimal.webp",
+    "sha256": "65d262189b36570cafa03f0bd1bd84d1b64e9f8172537fdac05f6f01471a6918",
+    "source": "OpenAI built-in image generation",
+    "purpose": "Conceptual illustration, not empirical data"
+  },
+  {
+    "picsumId": "1043",
+    "creator": "Christian Joudrey",
+    "source": "https://unsplash.com/photos/mWRR1xj95hg",
+    "purpose": "Labelled stock placeholder, not owner photography"
+  },
+  {
+    "picsumId": "1018",
+    "creator": "Andrew Ridley",
+    "source": "https://unsplash.com/photos/Kt5hRENuotI",
+    "purpose": "Labelled stock placeholder, not owner photography"
+  },
+  {
+    "picsumId": "1019",
+    "creator": "Patrick Fore",
+    "source": "https://unsplash.com/photos/V6s1cmE39XM",
+    "purpose": "Labelled stock placeholder, not owner photography"
+  },
+  {
+    "picsumId": "1015",
+    "creator": "Alexey Topolyanskiy",
+    "source": "https://unsplash.com/photos/-oWyJoSqBRM",
+    "purpose": "Labelled stock placeholder, not owner photography"
+  },
+  {
+    "picsumId": "1039",
+    "creator": "Andrew Coelho",
+    "source": "https://unsplash.com/photos/VB-w_3dnyvI",
+    "purpose": "Labelled stock placeholder, not owner photography"
+  },
+  {
+    "picsumId": "1016",
+    "creator": "Philippe Wuyts",
+    "source": "https://unsplash.com/photos/_h7aBovKia4",
+    "purpose": "Labelled stock placeholder, not owner photography"
+  },
+  {
+    "path": "Tianjian-Qin-CV.pdf",
+    "source": "User attachment CV_Data_Scientist_New.pdf",
+    "sha256": "80215a32825e68629713b8e3ae4b7e64e4913dffe62543f6b54c4364e0d554c3"
+  }
+]
