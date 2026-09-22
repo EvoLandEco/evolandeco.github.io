@@ -1,0 +1,157 @@
+[
+  {
+    "id": "evonn",
+    "title": "EvoNN",
+    "href": "https://evolandeco.github.io/EvoNN/",
+    "image": "/art/evolutionary-inference-refined.webp",
+    "status": "Research software",
+    "summary": "Neural inference from phylogenetic trees.",
+    "stack": [
+      "R",
+      "Python",
+      "PyTorch"
+    ],
+    "links": [
+      {
+        "label": "Website",
+        "url": "https://evolandeco.github.io/EvoNN/"
+      },
+      {
+        "label": "Source",
+        "url": "https://github.com/EvoLandEco/EvoNN"
+      }
+    ]
+  },
+  {
+    "id": "evesim",
+    "title": "evesim",
+    "href": "https://github.com/EvoLandEco/evesim",
+    "image": "/art/evesim-refined.webp",
+    "status": "Research software",
+    "summary": "Fast simulation of diversification shaped by evolutionary relatedness.",
+    "stack": [
+      "R",
+      "C++",
+      "Rcpp",
+      "Simulation"
+    ],
+    "links": [
+      {
+        "label": "Source",
+        "url": "https://github.com/EvoLandEco/evesim"
+      }
+    ]
+  },
+  {
+    "id": "netforge",
+    "title": "NetForge",
+    "href": "https://qtj.me/NetForge/",
+    "image": "/art/netforge-refined.webp",
+    "status": "Research software",
+    "summary": "Synthetic livestock contact networks for studying disease spread.",
+    "stack": [
+      "Python",
+      "Stochastic block models",
+      "Simulation"
+    ],
+    "links": [
+      {
+        "label": "Website",
+        "url": "https://qtj.me/NetForge/"
+      },
+      {
+        "label": "Source",
+        "url": "https://github.com/EvoLandEco/NetForge"
+      }
+    ]
+  },
+  {
+    "id": "herdlink",
+    "title": "HerdLink",
+    "href": "https://herdlink.nl",
+    "image": "/art/herdlink-refined.webp",
+    "status": "Research software",
+    "summary": "Explore livestock networks and compare intervention scenarios.",
+    "stack": [
+      "React",
+      "JavaScript",
+      "D3.js",
+      "Vite",
+      "Simulation"
+    ],
+    "links": [
+      {
+        "label": "Website",
+        "url": "https://herdlink.nl"
+      },
+      {
+        "label": "Source",
+        "url": "https://github.com/EvoLandEco/herdlink-web"
+      }
+    ]
+  },
+  {
+    "id": "netspectra",
+    "title": "NetSpectra",
+    "href": "/blog/explore/hybrid-networks",
+    "image": "/art/netspectra-refined.webp",
+    "status": "Research software",
+    "summary": "Explore hybrid movement networks and their higher-order statistics.",
+    "stack": [
+      "JavaScript",
+      "D3.js",
+      "Turf.js"
+    ],
+    "links": [
+      {
+        "label": "Website",
+        "url": "/blog/explore/hybrid-networks"
+      },
+      {
+        "label": "Source",
+        "url": "https://github.com/EvoLandEco/NetSpectra"
+      }
+    ]
+  },
+  {
+    "id": "evolab",
+    "title": "EvoLab",
+    "href": "/blog/explore/evolab",
+    "image": "/art/evolab-refined.webp",
+    "status": "Research software",
+    "summary": "Explore lineage diversification and reconstruct evolutionary trees.",
+    "stack": [
+      "JavaScript",
+      "Simulation",
+      "Phylogenetics"
+    ],
+    "links": [
+      {
+        "label": "Website",
+        "url": "/blog/explore/evolab"
+      },
+      {
+        "label": "Source",
+        "url": "https://github.com/EvoLandEco/EvoLab"
+      }
+    ]
+  },
+  {
+    "id": "miniape",
+    "title": "miniape",
+    "href": "https://github.com/EvoLandEco/miniape",
+    "image": "/art/miniape-refined.webp",
+    "status": "Research software",
+    "summary": "Phylogenetic data handling for the browser.",
+    "stack": [
+      "JavaScript",
+      "Phylogenetics"
+    ],
+    "links": [
+      {
+        "label": "Source",
+        "url": "https://github.com/EvoLandEco/miniape"
+      }
+    ]
+  }
+]

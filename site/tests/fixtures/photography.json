@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "fixtureOnly": true,
+  "title": "Photography test fixture",
+  "intro": "Synthetic records for automated tests. Not a personal travel history.",
+  "travelLogStatus": "partial",
+  "countries": [
+    {
+      "code": "NL",
+      "name": "Netherlands",
+      "slug": "netherlands",
+      "visibility": "public",
+      "visitConfirmed": true,
+      "mapMarker": {
+        "lat": 52,
+        "lng": 5
+      }
+    },
+    {
+      "code": "JP",
+      "name": "Japan",
+      "slug": "japan",
+      "visibility": "public",
+      "visitConfirmed": true,
+      "mapMarker": {
+        "lat": 36,
+        "lng": 138
+      }
+    },
+    {
+      "code": "FR",
+      "name": "France",
+      "slug": "france",
+      "visibility": "public",
+      "visitConfirmed": true,
+      "mapMarker": {
+        "lat": 47,
+        "lng": 2
+      }
+    },
+    {
+      "code": "BE",
+      "name": "Belgium",
+      "slug": "belgium",
+      "visibility": "private",
+      "visitConfirmed": true,
+      "mapMarker": {
+        "lat": 51,
+        "lng": 4
+      }
+    },
+    {
+      "code": "DE",
+      "name": "Germany",
+      "slug": "germany",
+      "visibility": "public",
+      "visitConfirmed": false,
+      "mapMarker": {
+        "lat": 51,
+        "lng": 10
+      }
+    }
+  ],
+  "albums": [
+    {
+      "id": "album-nl",
+      "countryCode": "NL",
+      "title": "Synthetic NL album",
+      "description": "Test records only.",
+      "status": "published",
+      "coverPhotoId": "fixture-nl-landscape",
+      "photoOrder": [
+        "fixture-nl-landscape",
+        "fixture-nl-portrait",
+        "fixture-nl-draft"
+      ]
+    },
+    {
+      "id": "album-jp",
+      "countryCode": "JP",
+      "title": "Synthetic JP album",
+      "description": "Test records only.",
+      "status": "published",
+      "coverPhotoId": "fixture-jp-panorama",
+      "photoOrder": [
+        "fixture-jp-panorama"
+      ]
+    },
+    {
+      "id": "album-fr",
+      "countryCode": "FR",
+      "title": "Synthetic FR album",
+      "description": "Test records only.",
+      "status": "draft",
+      "coverPhotoId": null,
+      "photoOrder": []
+    },
+    {
+      "id": "album-be",
+      "countryCode": "BE",
+      "title": "Synthetic BE album",
+      "description": "Test records only.",
+      "status": "published",
+      "coverPhotoId": "fixture-be-private",
+      "photoOrder": [
+        "fixture-be-private"
+      ]
+    }
+  ],
+  "photos": [
+    {
+      "id": "fixture-nl-landscape",
+      "albumId": "album-nl",
+      "status": "published",
+      "sourcePath": "media-private/fixture-nl-landscape.png",
+      "publishApproved": true,
+      "rights": {
+        "creator": "Synthetic test fixture",
+        "permissionConfirmed": true
+      },
+      "alt": "Labelled geometric image for a gallery test.",
+      "caption": "Test image, not a personal photograph.",
+      "takenOn": "2020",
+      "locationLabel": null,
+      "image": {
+        "src": "/photography/media/fixture-nl-landscape.webp",
+        "width": 1600,
+        "height": 1067
+      }
+    },
+    {
+      "id": "fixture-nl-portrait",
+      "albumId": "album-nl",
+      "status": "published",
+      "sourcePath": "media-private/fixture-nl-portrait.png",
+      "publishApproved": true,
+      "rights": {
+        "creator": "Synthetic test fixture",
+        "permissionConfirmed": true
+      },
+      "alt": "Labelled geometric image for a gallery test.",
+      "caption": "Test image, not a personal photograph.",
+      "takenOn": "2020",
+      "locationLabel": null,
+      "image": {
+        "src": "/photography/media/fixture-nl-portrait.webp",
+        "width": 1000,
+        "height": 1500
+      }
+    },
+    {
+      "id": "fixture-nl-draft",
+      "albumId": "album-nl",
+      "status": "draft",
+      "sourcePath": "media-private/fixture-nl-draft.png",
+      "publishApproved": false,
+      "rights": {
+        "creator": "Synthetic test fixture",
+        "permissionConfirmed": false
+      },
+      "alt": "",
+      "caption": "Test image, not a personal photograph.",
+      "takenOn": null,
+      "locationLabel": null,
+      "image": null
+    },
+    {
+      "id": "fixture-jp-panorama",
+      "albumId": "album-jp",
+      "status": "published",
+      "sourcePath": "media-private/fixture-jp-panorama.png",
+      "publishApproved": true,
+      "rights": {
+        "creator": "Synthetic test fixture",
+        "permissionConfirmed": true
+      },
+      "alt": "Labelled geometric image for a gallery test.",
+      "caption": "Test image, not a personal photograph.",
+      "takenOn": "2020",
+      "locationLabel": null,
+      "image": {
+        "src": "/photography/media/fixture-jp-panorama.webp",
+        "width": 2400,
+        "height": 800
+      }
+    },
+    {
+      "id": "fixture-be-private",
+      "albumId": "album-be",
+      "status": "published",
+      "sourcePath": "media-private/fixture-be-private.png",
+      "publishApproved": true,
+      "rights": {
+        "creator": "Synthetic test fixture",
+        "permissionConfirmed": true
+      },
+      "alt": "Labelled geometric image for a gallery test.",
+      "caption": "Test image, not a personal photograph.",
+      "takenOn": "2020",
+      "locationLabel": null,
+      "image": {
+        "src": "/photography/media/fixture-be-private.webp",
+        "width": 1200,
+        "height": 800
+      }
+    }
+  ]
+}

@@ -1,0 +1,615 @@
+{
+  "indexed": {
+    "date-parts": [
+      [
+        2025,
+        10,
+        14
+      ]
+    ],
+    "date-time": "2025-10-14T07:09:13Z",
+    "timestamp": 1760425753208,
+    "version": "3.40.5"
+  },
+  "reference-count": 48,
+  "publisher": "Wiley",
+  "issue": "5",
+  "license": [
+    {
+      "start": {
+        "date-parts": [
+          [
+            2019,
+            7,
+            11
+          ]
+        ],
+        "date-time": "2019-07-11T00:00:00Z",
+        "timestamp": 1562803200000
+      },
+      "content-version": "vor",
+      "delay-in-days": 0,
+      "URL": "http://onlinelibrary.wiley.com/termsAndConditions#vor"
+    }
+  ],
+  "content-domain": {
+    "domain": [
+      "onlinelibrary.wiley.com"
+    ],
+    "crossmark-restriction": true
+  },
+  "short-container-title": [
+    "Weed Research"
+  ],
+  "published-print": {
+    "date-parts": [
+      [
+        2019,
+        10
+      ]
+    ]
+  },
+  "abstract": "<jats:title>Summary</jats:title><jats:p>Biological invasions are determined by interactions between resident plant communities and exotic plants. Time of invasion and species diversity of resident plant communities may greatly affect exotic plant invasions. We assembled low\u2010 and high\u2010diversity resident plant communities by sowing seeds of four and eight grassland species, respectively, and at each of three time periods (1, 4 and 7\u00a0weeks after sowing), the resident communities were invaded by <jats:italic>Hydrocotyle vulgaris</jats:italic> or not. We also constructed a plant community with <jats:italic>H.\u00a0vulgaris</jats:italic> alone. Presence of <jats:italic>H.\u00a0vulgaris</jats:italic> had no effect on biomass of the resident communities or biomass of each component species. Community age significantly affected biomass and evenness of the resident communities, and their competition with <jats:italic>H.\u00a0vulgaris</jats:italic>, but the priority effect of the resident communities was slight. Increasing species richness did not change the interaction between <jats:italic>H.\u00a0vulgaris</jats:italic> and the resident plant communities. These findings suggest a weaker competitive exclusionary effect of <jats:italic>H.\u00a0vulgaris</jats:italic> on the resident communities with early germination, and <jats:italic>H.\u00a0vulgaris</jats:italic> tended to have no significant impact on intact resident terrestrial plant communities. Thus, the potential risk of <jats:italic>H.\u00a0vulgaris</jats:italic> invasion is low, especially in the communities with young age.</jats:p>",
+  "DOI": "10.1111/wre.12373",
+  "type": "journal-article",
+  "created": {
+    "date-parts": [
+      [
+        2019,
+        7,
+        12
+      ]
+    ],
+    "date-time": "2019-07-12T03:48:18Z",
+    "timestamp": 1562903298000
+  },
+  "page": "377-386",
+  "update-policy": "https://doi.org/10.1002/crossmark_policy",
+  "source": "Crossref",
+  "is-referenced-by-count": 6,
+  "title": [
+    "Growth traits of the exotic plant <i>Hydrocotyle vulgaris</i> and the evenness of resident plant communities are mediated by community age, not species diversity"
+  ],
+  "prefix": "10.1111",
+  "volume": "59",
+  "author": [
+    {
+      "given": "T\u2010J",
+      "family": "Qin",
+      "sequence": "first",
+      "affiliation": [
+        {
+          "name": "School of Nature Conservation Beijing Forestry University Beijing China"
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    },
+    {
+      "given": "Y\u2010T",
+      "family": "Guan",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "School of Nature Conservation Beijing Forestry University Beijing China"
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    },
+    {
+      "given": "H",
+      "family": "Quan",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "School of Nature Conservation Beijing Forestry University Beijing China"
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    },
+    {
+      "given": "B\u2010C",
+      "family": "Dong",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "School of Nature Conservation Beijing Forestry University Beijing China"
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    },
+    {
+      "given": "F\u2010L",
+      "family": "Luo",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "School of Nature Conservation Beijing Forestry University Beijing China"
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    },
+    {
+      "given": "M\u2010X",
+      "family": "Zhang",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "School of Nature Conservation Beijing Forestry University Beijing China"
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    },
+    {
+      "ORCID": "https://orcid.org/0000-0003-4061-2485",
+      "authenticated-orcid": false,
+      "given": "H\u2010L",
+      "family": "Li",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "School of Nature Conservation Beijing Forestry University Beijing China"
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    },
+    {
+      "given": "F\u2010H",
+      "family": "Yu",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "Zhejiang Provincial Key Laboratory of Plant Evolutionary Ecology and Conservation Taizhou University Taizhou China"
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    }
+  ],
+  "member": "311",
+  "published-online": {
+    "date-parts": [
+      [
+        2019,
+        7,
+        11
+      ]
+    ]
+  },
+  "reference": [
+    {
+      "key": "e_1_2_9_2_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1016/j.foreco.2018.05.015"
+    },
+    {
+      "key": "e_1_2_9_3_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1890/09-1301.1"
+    },
+    {
+      "key": "e_1_2_9_4_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1016/j.jenvman.2016.04.040"
+    },
+    {
+      "key": "e_1_2_9_5_1",
+      "first-page": "7",
+      "article-title": "Observation of micromorphological characters of five species in Oxalis",
+      "volume": "16",
+      "author": "Chen M\u2010L",
+      "year": "2007",
+      "journal-title": "Journal of Plant Resources and Environment"
+    },
+    {
+      "key": "e_1_2_9_6_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1365-2664.2007.01398.x"
+    },
+    {
+      "key": "e_1_2_9_7_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/1365-2435.12031"
+    },
+    {
+      "key": "e_1_2_9_8_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/oik.01433"
+    },
+    {
+      "key": "e_1_2_9_9_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.2111/1551-5028(2007)60[304:IOPFGR]2.0.CO;2"
+    },
+    {
+      "key": "e_1_2_9_10_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s10530-012-0257-2"
+    },
+    {
+      "key": "e_1_2_9_11_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1890/110137"
+    },
+    {
+      "key": "e_1_2_9_12_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/jpe/rtu003"
+    },
+    {
+      "key": "e_1_2_9_13_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/aob/mcs100"
+    },
+    {
+      "key": "e_1_2_9_14_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s004420000549"
+    },
+    {
+      "key": "e_1_2_9_15_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1146/annurev-ecolsys-102209-144650"
+    },
+    {
+      "volume-title": "The Ecology of Invasions by Animals and Plants",
+      "year": "2000",
+      "author": "Elton CS",
+      "key": "e_1_2_9_16_1"
+    },
+    {
+      "key": "e_1_2_9_17_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1890/06-0568"
+    },
+    {
+      "key": "e_1_2_9_18_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s00442-011-2230-7"
+    },
+    {
+      "key": "e_1_2_9_19_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s11258-018-0806-6"
+    },
+    {
+      "key": "e_1_2_9_20_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1526-100X.2008.00497.x"
+    },
+    {
+      "key": "e_1_2_9_21_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1523-1739.2008.00951.x"
+    },
+    {
+      "key": "e_1_2_9_22_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1186/s12898-016-0077-9"
+    },
+    {
+      "key": "e_1_2_9_23_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s10530-014-0647-8"
+    },
+    {
+      "key": "e_1_2_9_24_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s10530-011-0163-z"
+    },
+    {
+      "key": "e_1_2_9_25_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/jxb/ert198"
+    },
+    {
+      "key": "e_1_2_9_26_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1365-2664.2007.01398.x"
+    },
+    {
+      "key": "e_1_2_9_27_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1038/srep39468"
+    },
+    {
+      "key": "e_1_2_9_28_1",
+      "first-page": "425",
+      "article-title": "Study on invasion risk of Hydrocotyle vulgaris as an alien species in wetlands (in Chinese)",
+      "volume": "37",
+      "author": "Miao L",
+      "year": "2011",
+      "journal-title": "Journal of Zhejiang University (Agriculture and Life Sciences)"
+    },
+    {
+      "key": "e_1_2_9_29_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/wre.12304"
+    },
+    {
+      "key": "e_1_2_9_30_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.3389/fpls.2018.00134"
+    },
+    {
+      "key": "e_1_2_9_31_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1526-100X.2005.00056.x"
+    },
+    {
+      "key": "e_1_2_9_32_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s40333-013-0164-0"
+    },
+    {
+      "key": "e_1_2_9_33_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/j.1365-3180.2009.00723.x"
+    },
+    {
+      "key": "e_1_2_9_34_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1177/0309133307087089"
+    },
+    {
+      "key": "e_1_2_9_35_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.20417/nzjecol.40.45"
+    },
+    {
+      "key": "e_1_2_9_36_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1890/0012-9658(2002)083[2575:BIRAME]2.0.CO;2"
+    },
+    {
+      "key": "e_1_2_9_37_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1002/ece3.940"
+    },
+    {
+      "key": "e_1_2_9_38_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s00442-016-3715-1"
+    },
+    {
+      "key": "e_1_2_9_39_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/jeb.13281"
+    },
+    {
+      "key": "e_1_2_9_40_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s10530-014-0657-6"
+    },
+    {
+      "key": "e_1_2_9_41_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1111/nph.13028"
+    },
+    {
+      "key": "e_1_2_9_42_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1086/697187"
+    },
+    {
+      "key": "e_1_2_9_43_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/s11104-008-9778-y"
+    },
+    {
+      "key": "e_1_2_9_44_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1002/jsfa.3793"
+    },
+    {
+      "key": "e_1_2_9_45_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1093/aobpla/plu081"
+    },
+    {
+      "key": "e_1_2_9_46_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.15835/nbha4219381"
+    },
+    {
+      "key": "e_1_2_9_47_1",
+      "first-page": "3032",
+      "article-title": "Genetic variation of white clover (Trifolium repens L.) collections from China detected by morphological traits, RAPD and SSR",
+      "volume": "9",
+      "author": "Zhang X",
+      "year": "2010",
+      "journal-title": "African Journal of Biotechnology"
+    },
+    {
+      "key": "e_1_2_9_48_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1371/journal.pone.0141559"
+    },
+    {
+      "key": "e_1_2_9_49_1",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1016/j.actao.2016.07.003"
+    }
+  ],
+  "container-title": [
+    "Weed Research"
+  ],
+  "original-title": [],
+  "language": "en",
+  "link": [
+    {
+      "URL": "https://onlinelibrary.wiley.com/doi/pdf/10.1111/wre.12373",
+      "content-type": "application/pdf",
+      "content-version": "vor",
+      "intended-application": "text-mining"
+    },
+    {
+      "URL": "https://onlinelibrary.wiley.com/doi/full-xml/10.1111/wre.12373",
+      "content-type": "application/xml",
+      "content-version": "vor",
+      "intended-application": "text-mining"
+    },
+    {
+      "URL": "https://onlinelibrary.wiley.com/doi/pdf/10.1111/wre.12373",
+      "content-type": "unspecified",
+      "content-version": "vor",
+      "intended-application": "similarity-checking"
+    }
+  ],
+  "deposited": {
+    "date-parts": [
+      [
+        2023,
+        9,
+        9
+      ]
+    ],
+    "date-time": "2023-09-09T16:18:48Z",
+    "timestamp": 1694276328000
+  },
+  "score": 1,
+  "resource": {
+    "primary": {
+      "URL": "https://onlinelibrary.wiley.com/doi/10.1111/wre.12373"
+    }
+  },
+  "subtitle": [],
+  "editor": [
+    {
+      "given": "Stephen",
+      "family": "Novak",
+      "sequence": "additional",
+      "affiliation": [],
+      "role": [
+        {
+          "role": "editor",
+          "vocabulary": "crossref"
+        }
+      ]
+    }
+  ],
+  "short-title": [],
+  "issued": {
+    "date-parts": [
+      [
+        2019,
+        7,
+        11
+      ]
+    ]
+  },
+  "references-count": 48,
+  "journal-issue": {
+    "issue": "5",
+    "published-print": {
+      "date-parts": [
+        [
+          2019,
+          10
+        ]
+      ]
+    }
+  },
+  "alternative-id": [
+    "10.1111/wre.12373"
+  ],
+  "URL": "https://doi.org/10.1111/wre.12373",
+  "archive": [
+    "Portico"
+  ],
+  "relation": {},
+  "ISSN": [
+    "0043-1737",
+    "1365-3180"
+  ],
+  "issn-type": [
+    {
+      "type": "print",
+      "value": "0043-1737"
+    },
+    {
+      "type": "electronic",
+      "value": "1365-3180"
+    }
+  ],
+  "subject": [],
+  "published": {
+    "date-parts": [
+      [
+        2019,
+        7,
+        11
+      ]
+    ]
+  },
+  "assertion": [
+    {
+      "value": "2018-12-18",
+      "order": 0,
+      "name": "received",
+      "label": "Received",
+      "group": {
+        "name": "publication_history",
+        "label": "Publication History"
+      }
+    },
+    {
+      "value": "2019-05-21",
+      "order": 1,
+      "name": "accepted",
+      "label": "Accepted",
+      "group": {
+        "name": "publication_history",
+        "label": "Publication History"
+      }
+    },
+    {
+      "value": "2019-07-11",
+      "order": 2,
+      "name": "published",
+      "label": "Published",
+      "group": {
+        "name": "publication_history",
+        "label": "Publication History"
+      }
+    }
+  ]
+}

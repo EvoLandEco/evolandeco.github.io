@@ -1,0 +1,414 @@
+
+                
+
+                <p class="lede mt-4">
+                    Diversification is easiest to misunderstand when we jump straight to the final tree. By that stage, a lot of the process has already been compressed away:
+                    event order, lingering progenitor lineages, extinct side branches, and the mismatch between what happened and what our summaries can still recover.
+                    That is the motivation for the simulator below. It keeps time in the foreground and lets the same run be viewed as lineage history, coarse-grained taxa, and trait-based reconstruction.
+                </p>
+
+                <p>
+                    Under the hood, each extant lineage can bud a clonal daughter, bud a mutating daughter, or die, with event times sampled in continuous time using a Gillespie-style
+                    stochastic simulation algorithm.<sup><a href="#ref1">[1]</a></sup> The simulator then coarse-grain those lineage-level events into “species” by requiring a user-defined
+                    number of mutational steps before promoting a daughter lineage to a new named taxon. It is essentially a 
+                    protracted speciation, and it is closer to a budding picture than to a perfectly symmetric split because the progenitor lineage can survive while
+                    throwing off daughters.<sup><a href="#ref4">[4]</a></sup><sup><a href="#ref5">[5]</a></sup><sup><a href="#ref15">[15]</a></sup>
+                </p>
+
+                <h3 class="mt-5 mb-3">TL;DR</h3>
+                <ul>
+                    <li>Diversification is an event-by-event process first, and only later a tree summary.</li>
+                    <li>Coarse-graining and extinction can make different fine-scale histories collapse into the same observed species-level pattern.</li>
+                    <li>A tree reconstructed from traits can disagree with a tree reconstructed from the event history for very ordinary reasons.</li>
+                    <li>The simulator makes those bottlenecks visible with time-resolved chronograms, a lineages-through-time panel, and a trait-space panel.</li>
+                </ul>
+
+                <div id="evonet-simulator" class="sim-shell">
+                    <div class="sim-topbar">
+                        <div class="sim-topbar-main">
+                            <div class="sim-kicker"><i class="fa-solid fa-microscope"></i> EvoLab</div>
+                            <h4>Interactive diversification lab</h4>
+                            <p class="sim-subheading mb-0">
+                                Continuous-time budding process + coarse-grained species labels + linked reconstructions.
+                            </p>
+                        </div>
+
+                        <div class="sim-topbar-side">
+                            <div class="sim-preset-box">
+                                <label for="presetSelect">Preset scenario</label>
+                                <select id="presetSelect" class="form-select form-select-sm mt-1">
+                                    <option value="balanced">Balanced exploration</option>
+                                    <option value="turnover">High turnover</option>
+                                    <option value="radiation">Rapid radiation</option>
+                                    <option value="constrained">Trait constraint (OU-like)</option>
+                                </select>
+                                <div id="presetDescription" class="small mt-1"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-grid">
+                        <div class="metric-card"><div class="metric-label">Extant</div><div class="metric-value" id="extantCount">1</div></div>
+                        <div class="metric-card"><div class="metric-label">Extinct</div><div class="metric-value" id="extinctCount">0</div></div>
+                        <div class="metric-card"><div class="metric-label">Observed</div><div class="metric-value" id="observedCount">1</div></div>
+                        <div class="metric-card"><div class="metric-label">Time</div><div class="metric-value" id="timeCount">0.00</div></div>
+                        <div class="metric-card"><div class="metric-label">Leaf-pair r</div><div class="metric-value" id="agreementCount">n/a</div></div>
+                    </div>
+
+                    <div class="sim-statusline" id="statusNote"></div>
+
+                    <div class="sim-toolbar-stack">
+                        <div class="sim-run-toolbar sim-run-card">
+                            <div class="sim-run-toolbar-main">
+                                <h5>Run controls</h5>
+                                <div class="sim-button-row">
+                                    <button class="btn btn-primary" id="startButton" type="button">Grow</button>
+                                    <button class="btn btn-primary" id="pauseButton" type="button" disabled="">Pause</button>
+                                    <button class="btn btn-outline-primary" id="stepButton" type="button">Step</button>
+                                    <button class="btn btn-outline-secondary" id="resetButton" type="button">Reset</button>
+                                </div>
+                            </div>
+                            <div class="sim-run-toolbar-advanced">
+                                <div class="widget-controls">
+                                    <label for="seedInput">Seed</label>
+                                    <input id="seedInput" type="number" class="form-control form-control-sm" value="182734">
+                                    <button class="btn btn-outline-primary btn-sm" id="randomSeedButton" type="button">Randomize</button>
+                                </div>
+                                <div class="sim-export-row">
+                                    <button class="btn btn-outline-secondary btn-sm sim-utility-button" id="eventDrawerButton" type="button" aria-expanded="false" aria-controls="eventDrawer">
+                                        <i class="fa-solid fa-clock-rotate-left me-1"></i> Recent events
+                                    </button>
+                                    <button class="btn btn-outline-primary btn-sm" id="exportJsonButton" type="button">Export JSON</button>
+                                    <button class="btn btn-outline-primary btn-sm" id="copyHistoryNewickButton" type="button">Copy history Newick</button>
+                                    <button class="btn btn-outline-primary btn-sm" id="copyTraitNewickButton" type="button">Copy trait Newick</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <details id="simSettingsDetails" class="sim-settings-details" open="">
+                            <summary class="sim-settings-summary">
+                                <div class="sim-settings-summary-body">
+                                    <div class="sim-settings-summary-copy">
+                                        <span class="sim-settings-summary-title">Parameters and display settings</span>
+                                        <span class="sim-settings-summary-sub">Rates, coarsening, pruning, and the trait process.</span>
+                                    </div>
+                                    <div class="sim-settings-summary-meta">
+                                        <span class="sim-summary-chip" id="summaryRatesChip">Rates 0.40 / 0.35 / 0.10</span>
+                                        <span class="sim-summary-chip" id="summaryCoarsenChip">Coarsen 2</span>
+                                        <span class="sim-summary-chip" id="summaryTraitChip">Brownian · 4D</span>
+                                    </div>
+                                </div>
+                                <span class="sim-settings-summary-icon"><i class="fa-solid fa-chevron-down"></i></span>
+                            </summary>
+                            <div class="sim-settings-content">
+                                <div class="sim-controls-grid">
+                                    <div class="sim-control-card">
+                                        <h5>Lineage process</h5>
+                                        <div class="slider-group">
+                                            <div class="slider-head"><label for="birthRate">Clonal birth rate</label><span class="slider-value" id="birthRateValue">0.40</span></div>
+                                            <input type="range" id="birthRate" min="0" max="1" step="0.05" value="0.40">
+                                        </div>
+                                        <div class="slider-group">
+                                            <div class="slider-head"><label for="mutateRate">Mutating birth rate</label><span class="slider-value" id="mutateRateValue">0.35</span></div>
+                                            <input type="range" id="mutateRate" min="0" max="1" step="0.05" value="0.35">
+                                        </div>
+                                        <div class="slider-group">
+                                            <div class="slider-head"><label for="deathRate">Death rate</label><span class="slider-value" id="deathRateValue">0.10</span></div>
+                                            <input type="range" id="deathRate" min="0" max="1" step="0.05" value="0.10">
+                                        </div>
+                                    </div>
+
+                                    <div class="sim-control-card">
+                                        <h5>Observation layer</h5>
+                                        <div class="slider-group">
+                                            <div class="slider-head"><label for="maxSteps">Simulation steps</label><span class="slider-value" id="maxStepsValue">40</span></div>
+                                            <input type="range" id="maxSteps" min="1" max="60" step="1" value="40">
+                                        </div>
+                                        <div class="slider-group">
+                                            <div class="slider-head"><label for="mstep">Coarsen level</label><span class="slider-value" id="mstepValue">2</span></div>
+                                            <input type="range" id="mstep" min="0" max="6" step="1" value="2">
+                                        </div>
+                                        <div class="sim-toggle-row">
+                                            <span>Prune extinct taxa</span>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="pruneExtinct" class="toggle-switch-input">
+                                                <span class="toggle-switch-slider"></span>
+                                            </label>
+                                        </div>
+                                        <div class="sim-toggle-row">
+                                            <span>Show branch lengths</span>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="showBranchLengths" class="toggle-switch-input">
+                                                <span class="toggle-switch-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="sim-control-card">
+                                        <h5>Trait model</h5>
+                                        <div class="slider-group">
+                                            <div class="slider-head"><label for="traitModel">Trait process</label></div>
+                                            <select id="traitModel" class="form-select form-select-sm">
+                                                <option value="brownian" selected="">Brownian steps</option>
+                                                <option value="ou">OU-like pull</option>
+                                            </select>
+                                        </div>
+                                        <div class="slider-group" id="ouAlphaWrapper">
+                                            <div class="slider-head"><label for="ouAlpha">Pull to optimum</label><span class="slider-value" id="ouAlphaValue">0.25</span></div>
+                                            <input type="range" id="ouAlpha" min="0" max="0.8" step="0.05" value="0.25">
+                                        </div>
+                                        <div class="slider-group">
+                                            <div class="slider-head"><label for="traitDimensions">Trait dimensions</label><span class="slider-value" id="traitDimensionsValue">4</span></div>
+                                            <input type="range" id="traitDimensions" min="1" max="10" step="1" value="4">
+                                        </div>
+                                        <div class="slider-group">
+                                            <div class="slider-head"><label for="traitSigma">Trait step size</label><span class="slider-value" id="traitSigmaValue">0.50</span></div>
+                                            <input type="range" id="traitSigma" min="0.10" max="1.50" step="0.05" value="0.50">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+
+                    <div class="legend-row">
+                        <span class="legend-chip"><span class="legend-swatch legend-blue"></span> Clonal lineage</span>
+                        <span class="legend-chip"><span class="legend-swatch legend-red"></span> Mutating lineage</span>
+                        <span class="legend-chip"><span class="legend-swatch legend-grey"></span> Extinct lineage</span>
+                        <span class="legend-chip"><span class="legend-swatch legend-yellow"></span> Highlighted taxon</span>
+                    </div>
+
+                    <div class="sim-panel-grid">
+                        <div class="sim-panel">
+                            <div class="sim-panel-header">1. Full lineage chronogram</div>
+                            <div id="graph-container" class="evonet-panel"></div>
+                        </div>
+                        <div class="sim-panel">
+                            <div class="sim-panel-header">2. Coarsened species chronogram</div>
+                            <div id="coarsened-graph-container" class="evonet-panel"></div>
+                        </div>
+                        <div class="sim-panel">
+                            <div class="sim-panel-header">3. History tree from the coarsened record</div>
+                            <div id="plot-container" class="evonet-panel"></div>
+                        </div>
+                        <div class="sim-panel">
+                            <div class="sim-panel-header">4. Distance tree from observed traits</div>
+                            <div id="trait-container" class="evonet-panel"></div>
+                        </div>
+                    </div>
+
+                    <div class="sim-panel-grid sim-panel-grid-secondary">
+                        <div class="sim-panel">
+                            <div class="sim-panel-header">5. Lineages through time</div>
+                            <div id="ltt-container" class="evonet-panel-compact"></div>
+                        </div>
+                        <div class="sim-panel">
+                            <div class="sim-panel-header">6. Trait space (first two axes or PCA)</div>
+                            <div id="trait-space-container" class="evonet-panel-compact"></div>
+                        </div>
+                    </div>
+
+                    <div id="eventDrawerBackdrop" class="sim-drawer-backdrop" hidden=""></div>
+                    <aside id="eventDrawer" class="sim-events-drawer" aria-hidden="true">
+                        <div class="sim-events-drawer-header">
+                            <div>
+                                <div class="sim-events-drawer-title">Recent events</div>
+                                <div class="sim-events-drawer-subtitle">Latest births, mutations, and extinctions in the current run.</div>
+                            </div>
+                            <button class="btn btn-outline-secondary btn-sm" id="eventDrawerCloseButton" type="button">Close</button>
+                        </div>
+                        <div id="eventFeed" class="event-feed"></div>
+                    </aside>
+                </div>
+
+                <script src="/notebook-assets/js/evolab.js"></script>
+
+                <h3 class="mt-5 mb-3">How to read the simulator</h3>
+                <p>
+                    The six panels are arranged to move from process to summary. The first two show what is happening through time at the lineage and coarse-grained taxon levels;
+                    the next two show two different tree summaries of the same run; the last two summarize tempo and geometry.
+                </p>
+                <ul>
+                    <li>The chronograms keep event order explicit, so budding, persistence, and extinction are visible instead of being absorbed into a generic node-link picture.</li>
+                    <li>Scenario presets and seeded runs make comparisons cleaner, because they separate parameter changes from a completely new random draw.</li>
+                    <li>The Brownian and OU-like options give two contrasting ways to think about continuous traits: wandering versus constrained spread.</li>
+                    <li>JSON and Newick export allows to pull a run into another workflow once an example becomes useful beyond the page itself.</li>
+                </ul>
+
+                <p class="inline-callout">
+                    Note: the <span class="readout-badge">Leaf-pair r</span> card is just a rough agreement score based on pairwise tip distances in the two trees.
+                    It is not a formal topology test.
+                </p>
+
+                <h3 class="mt-5 mb-3">What each panel is trying to tell you</h3>
+                <ol>
+                    <li><strong>Full lineage chronogram.</strong> The fine-grained event history, including extinct and still-incidental lineages.</li>
+                    <li><strong>Coarsened species chronogram.</strong> The same history after you decide how many mutational steps count as “enough” to name a new species.</li>
+                    <li><strong>History tree.</strong> A forced tree summary of the coarsened record. Useful, but already one step removed from the process.</li>
+                    <li><strong>Trait tree.</strong> A simple reconstruction from observed trait distances only. This is the panel most like real life, because we often observe character data, not the true event log.</li>
+                    <li><strong>Lineages through time.</strong> A quick sanity check on richness, extinction, and what survives into the observed layer.</li>
+                    <li><strong>Trait space.</strong> The geometry behind the trait tree. When panel 4 looks odd, this panel usually explains why.</li>
+                </ol>
+
+                <h3 class="mt-5 mb-3">Coarsening is the real knob here</h3>
+                <p>
+                    The <strong>Coarsen Level</strong> slider is not a decorative extra. It is the heart of the whole toy model. If it is set to 0, every new lineage is promoted immediately.
+                    If it is larger, several mutational steps must accumulate before we call the result a new species. In spirit that rhymes with protracted-speciation ideas,
+                    where there is a difference between an incipient lineage and a completed species.<sup><a href="#ref4">[4]</a></sup><sup><a href="#ref5">[5]</a></sup>
+                </p>
+
+                <div class="widget-shell">
+                    <div class="widget-title">What coarsening actually does</div>
+                    <div class="widget-note">This is a one-branch illustration. Red events are mutational steps, blue events are clonal births. Move the slider and watch which events get promoted to named species.</div>
+                    <div class="widget-controls mb-3">
+                        <label for="coarsenExplainerSlider">Record every</label>
+                        <input type="range" id="coarsenExplainerSlider" min="1" max="5" step="1" value="2">
+                        <span><strong><span id="coarsenExplainerValue">2</span></strong> mutational step(s)</span>
+                    </div>
+                    <div id="coarsen-explainer" class="widget-plot"></div>
+                    <div id="coarsenExplainerCaption" class="widget-note mt-2"></div>
+                </div>
+
+                <p>
+                    Once you see it that way, the disagreement between “lineage history” and “species history” becomes less surprising. You are not merely reducing visual complexity. You are changing the object
+                    you are willing to observe.
+                </p>
+
+                <h3 class="mt-5 mb-3">Extinction is a memory problem</h3>
+                <p>
+                    I think this is the easiest part to underestimate. Even if the generating process were strictly tree-like, the phylogeny you reconstruct from surviving taxa is a pruned object.
+                    It does not contain the extinct lineages that once helped define branching order, lineage durations, and the amount of hidden experimentation in the clade.<sup><a href="#ref2">[2]</a></sup><sup><a href="#ref3">[3]</a></sup>
+                    That is one of the reason that extant-only trees can be consistent with more than one diversification history.<sup><a href="#ref14">[14]</a></sup>
+                </p>
+
+                <div class="widget-shell">
+                    <div class="widget-title">Same extant pattern, different hidden baggage</div>
+                    <div class="widget-note">The pruned tree on the right stays fixed. The complete history on the left changes because extinct side branches are different in each scenario.</div>
+                    <div class="widget-controls mb-3">
+                        <label for="historyExplainerSlider">Hidden history</label>
+                        <input type="range" id="historyExplainerSlider" min="0" max="2" step="1" value="0">
+                        <span id="historyExplainerLabel"><strong>A</strong></span>
+                    </div>
+                    <div class="widget-grid">
+                        <div class="widget-panel">
+                            <h6>Complete history</h6>
+                            <div id="hidden-history-full" class="widget-plot widget-plot-tall"></div>
+                        </div>
+                        <div class="widget-panel">
+                            <h6>Extant-only view</h6>
+                            <div id="hidden-history-pruned" class="widget-plot widget-plot-tall"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <p>
+                    That is also why I left the <strong>Prune extinct taxa</strong> toggle in the simulator. Switching it on and off is a nice way to watch how much of the argument is really about biology,
+                    and how much is about observation.
+                </p>
+
+                <h3 class="mt-5 mb-3">Traits are proxies, not the event log</h3>
+                <p>
+                    The trait tree is the panel that most closely resembles the real inferential situation: you do not get handed the event history, you get handed characters. For continuous traits,
+                    Brownian motion is the standard reference model, and OU-type models are a common way to represent pull toward an optimum or constrained evolution.<sup><a href="#ref11">[11]</a></sup><sup><a href="#ref12">[12]</a></sup><sup><a href="#ref13">[13]</a></sup>
+                    I included both, not because one of them is “the truth,” but because the difference is really useful.
+                </p>
+
+                <div class="widget-shell">
+                    <div class="widget-title">Brownian spread versus OU-like pull</div>
+                    <div class="widget-note">These are just little 2D toy trajectories from a common starting point. Brownian paths wander; OU-like paths keep getting pulled back toward the center.</div>
+                    <div class="widget-controls mb-3">
+                        <label for="traitModelExplainer">Trait model</label>
+                        <select id="traitModelExplainer" class="form-select form-select-sm" style="max-width: 180px;">
+                            <option value="brownian">Brownian</option>
+                            <option value="ou">OU-like</option>
+                        </select>
+                        <label for="traitAlphaExplainer">Pull</label>
+                        <input type="range" id="traitAlphaExplainer" min="0.05" max="0.60" step="0.05" value="0.25">
+                        <span><strong><span id="traitAlphaExplainerValue">0.25</span></strong></span>
+                    </div>
+                    <div id="trait-model-explainer" class="widget-plot widget-plot-tall"></div>
+                </div>
+
+                <p>
+                    More generally, disagreement among trees is not just a failure mode of bad statistics. Gene trees need not equal species trees,<sup><a href="#ref9">[9]</a></sup><sup><a href="#ref10">[10]</a></sup>
+                    and sometimes the underlying history is reticulate enough that a network is the more honest presentation.<sup><a href="#ref6">[6]</a></sup><sup><a href="#ref7">[7]</a></sup><sup><a href="#ref8">[8]</a></sup>
+                    I am not simulating hybridization here, but I do want the post to keep that broader lesson in view: a clean bifurcating tree is a very useful summary, not a guarantee that the world was actually that clean.
+                </p>
+
+                <h3 class="mt-5 mb-3">A few things worth trying in the simulator</h3>
+                <ol>
+                    <li><strong>High turnover.</strong> Switch to the turnover preset and compare the history tree to the trait tree. The extant summary gets much thinner while the hidden history stays messy.</li>
+                    <li><strong>Radiation.</strong> Use rapid radiation with coarsen level 1, then 3. Watch how the same event stream starts to look much more or much less tree-like depending on what you are willing to call a species.</li>
+                    <li><strong>Trait constraint.</strong> Keep the diversification settings fixed, flip from Brownian to OU-like, and look at the trait cloud. The geometry in panel 6 usually explains the stability or instability of panel 4.</li>
+                    <li><strong>Step mode.</strong> Press <strong>Step</strong> a dozen times instead of letting the animation run. The logic of the chronograms is easier to grasp when you watch events accumulate one by one.</li>
+                </ol>
+
+                <h3 class="mt-5 mb-3">EvoLab: thesimulator project</h3>
+                <p class="mb-4">
+                    The simulator in this post is <strong>EvoLab</strong>.
+                </p>
+
+                <div class="single-col-max-width mx-auto my-4">
+                  <div class="card project-card">
+                    <div class="row">
+                      <div class="col-12 col-xl-5 card-img-holder">
+                        <img src="/art/evolutionary-inference-refined.webp" class="card-img" alt="EvoLabThumbnail">
+                      </div>
+                      <div class="col-12 col-xl-7">
+                        <div class="card-body">
+                          <h5 class="card-title">
+                            <a href="/blog/explore/evolab" class="theme-link" target="_top">EvoLab</a>
+                          </h5>
+                          <p class="card-text">
+                            A diversification lab for continuous-time budding lineages, coarsened species records,
+                            history versus trait trees, and exportable JSON or Newick summaries.
+                          </p>
+                          <p class="card-text">
+                            <i class="fa-brands fa-js me-2"></i>
+                            <i class="fa-solid fa-microscope me-2"></i>
+                            <i class="fa-solid fa-flask"></i>
+                          </p>
+                          <p class="card-text">
+                            <small class="text-muted">
+                                <i class="fab fa-github-alt fa-fw"></i>
+                                <a class="theme-link" href="https://github.com/EvoLandEco/hybrid-corop-farm-simulator" target="_blank" rel="noopener">GitHub Open Source</a>
+                            </small>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="link-mask">
+                      <a class="link-mask-link" href="/blog/explore/evolab" target="_top"></a>
+                      <div class="link-mask-text">
+                        <a class="btn btn-secondary" href="/blog/explore/evolab" target="_top">
+                          <i class="fas fa-eye me-2"></i>View Project
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <h3 class="mt-5 mb-3">References</h3>
+                <p class="mb-3">
+                                  Numbers in brackets link to the sources used for the conceptual framing of this post.
+                </p>
+
+                <ol class="small">
+                    <li id="ref1">Gillespie DT. 1977. Exact stochastic simulation of coupled chemical reactions. <em>J Phys Chem</em>. 81(25):2340–2361. <a href="https://doi.org/10.1021/j100540a008" target="_blank" rel="noopener">doi:10.1021/j100540a008</a></li>
+                    <li id="ref2">Nee S, May RM, Harvey PH. 1994. The reconstructed evolutionary process. <em>Philos Trans R Soc Lond B Biol Sci</em>. 344(1309):305–311. <a href="https://doi.org/10.1098/rstb.1994.0068" target="_blank" rel="noopener">doi:10.1098/rstb.1994.0068</a></li>
+                    <li id="ref3">Lambert A, Stadler T. 2013. Birth-death models and coalescent point processes: the shape and probability of reconstructed phylogenies. <em>Theor Popul Biol</em>. 90:113–128. <a href="https://doi.org/10.1016/j.tpb.2013.10.002" target="_blank" rel="noopener">doi:10.1016/j.tpb.2013.10.002</a></li>
+                    <li id="ref4">Rosindell J, Cornell SJ, Hubbell SP, Etienne RS. 2010. Protracted speciation revitalizes the neutral theory of biodiversity. <em>Ecol Lett</em>. 13(6):716–727. <a href="https://doi.org/10.1111/j.1461-0248.2010.01463.x" target="_blank" rel="noopener">doi:10.1111/j.1461-0248.2010.01463.x</a></li>
+                    <li id="ref5">Etienne RS, Rosindell J. 2012. Prolonging the past counteracts the pull of the present: protracted speciation can explain observed slowdowns in diversification. <em>Syst Biol</em>. 61(2):204–213. <a href="https://doi.org/10.1093/sysbio/syr091" target="_blank" rel="noopener">doi:10.1093/sysbio/syr091</a></li>
+                    <li id="ref6">Huson DH, Bryant D. 2006. Application of phylogenetic networks in evolutionary studies. <em>Mol Biol Evol</em>. 23(2):254–267. <a href="https://doi.org/10.1093/molbev/msj030" target="_blank" rel="noopener">doi:10.1093/molbev/msj030</a></li>
+                    <li id="ref7">Yu Y, Dong J, Liu KJ, Nakhleh L. 2014. Maximum likelihood inference of reticulate evolutionary histories. <em>Proc Natl Acad Sci USA</em>. 111(46):16448–16453. <a href="https://doi.org/10.1073/pnas.1407950111" target="_blank" rel="noopener">doi:10.1073/pnas.1407950111</a></li>
+                    <li id="ref8">Wen D, Yu Y, Nakhleh L. 2016. Bayesian inference of reticulate phylogenies under the multispecies network coalescent. <em>PLoS Genet</em>. 12(5):e1006006. <a href="https://doi.org/10.1371/journal.pgen.1006006" target="_blank" rel="noopener">doi:10.1371/journal.pgen.1006006</a></li>
+                    <li id="ref9">Maddison WP. 1997. Gene trees in species trees. <em>Syst Biol</em>. 46(3):523–536. <a href="https://doi.org/10.1093/sysbio/46.3.523" target="_blank" rel="noopener">doi:10.1093/sysbio/46.3.523</a></li>
+                    <li id="ref10">Degnan JH, Rosenberg NA. 2009. Gene tree discordance, phylogenetic inference and the multispecies coalescent. <em>Trends Ecol Evol</em>. 24(6):332–340. <a href="https://doi.org/10.1016/j.tree.2009.01.009" target="_blank" rel="noopener">doi:10.1016/j.tree.2009.01.009</a></li>
+                    <li id="ref11">Felsenstein J. 1973. Maximum-likelihood estimation of evolutionary trees from continuous characters. <em>Am J Hum Genet</em>. 25(5):471–492. <a href="https://pubmed.ncbi.nlm.nih.gov/4741844/" target="_blank" rel="noopener">PubMed: 4741844</a></li>
+                    <li id="ref12">Felsenstein J. 1985. Phylogenies and the comparative method. <em>Am Nat</em>. 125(1):1–15. <a href="https://doi.org/10.1086/284325" target="_blank" rel="noopener">doi:10.1086/284325</a></li>
+                    <li id="ref13">Butler MA, King AA. 2004. Phylogenetic comparative analysis: a modeling approach for adaptive evolution. <em>Am Nat</em>. 164(6):683–695. <a href="https://doi.org/10.1086/426002" target="_blank" rel="noopener">doi:10.1086/426002</a></li>
+                    <li id="ref14">Louca S, Pennell MW. 2020. Extant timetrees are consistent with a myriad of diversification histories. <em>Nature</em>. 580(7804):502–505. <a href="https://doi.org/10.1038/s41586-020-2176-1" target="_blank" rel="noopener">doi:10.1038/s41586-020-2176-1</a></li>
+                    <li id="ref15">Caetano DS, Quental TB. 2023. How important is budding speciation for comparative studies? <em>Syst Biol</em>. 72(6):1443–1453. <a href="https://doi.org/10.1093/sysbio/syad050" target="_blank" rel="noopener">doi:10.1093/sysbio/syad050</a></li>
+                    <li id="ref16">Felsenstein J. 1978. Cases in which parsimony or compatibility methods will be positively misleading. <em>Syst Zool</em>. 27(4):401–410. <a href="https://doi.org/10.1093/sysbio/27.4.401" target="_blank" rel="noopener">doi:10.1093/sysbio/27.4.401</a></li>
+                </ol>
+            

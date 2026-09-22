@@ -1,0 +1,1235 @@
+{
+  "indexed": {
+    "date-parts": [
+      [
+        2026,
+        2,
+        19
+      ]
+    ],
+    "date-time": "2026-02-19T01:51:56Z",
+    "timestamp": 1771465916683,
+    "version": "3.50.1"
+  },
+  "reference-count": 93,
+  "publisher": "CSIRO Publishing",
+  "issue": "5",
+  "license": [
+    {
+      "start": {
+        "date-parts": [
+          [
+            2025,
+            5,
+            28
+          ]
+        ],
+        "date-time": "2025-05-28T00:00:00Z",
+        "timestamp": 1748390400000
+      },
+      "content-version": "vor",
+      "delay-in-days": 2638,
+      "URL": "https://doi.org/10.1071/journalslicense"
+    }
+  ],
+  "content-domain": {
+    "domain": [],
+    "crossmark-restriction": false
+  },
+  "short-container-title": [],
+  "published-print": {
+    "date-parts": [
+      [
+        2018,
+        4,
+        18
+      ]
+    ]
+  },
+  "abstract": "<jats:p>Wetlands have been demonstrated to be susceptible to invasions. Nutrient availability of wetland sediment is strongly affected by both sediment type and nitrogen deposition. We performed a greenhouse experiment to investigate the main effects and interactions between the presence of Alternanthera philoxeroides, sediment type and nitrogen deposition on biomass and evenness of experimental wetland plant communities. We established two types of plant communities, specifically wetland plant communities without and with A. philoxeroides, in two different sediment types crossed with two nitrogen deposition treatments. Experimental wetland plant communities consisted of four native or naturalised wetland species. Sediment type and nitrogen deposition significantly promoted A. philoxeroides growth. At the community level, the presence of A. philoxeroides decreased the total biomass of wetland plant species and increased community evenness, whereas sediment type significantly decreased evenness. At the species level, the presence of A. philoxeroides significantly decreased total biomass of Iris wilsonii and increased total biomass of Pontederia cordata. However, the interaction between invasion and nitrogen deposition significantly increased total biomass of Butomus umbellatus. These findings suggest that both sediment type and nitrogen deposition promote A. philoxeroides growth and exacerbate A. philoxeroides invasion into wetland plant communities. However, the presence of A. philoxeroides can increase the evenness of the wetland plant communities at a small scale by suppressing dominant species. The findings of the present study provide insights into the management of A. philoxeroides in wetlands.</jats:p>",
+  "DOI": "10.1071/mf17335",
+  "type": "journal-article",
+  "created": {
+    "date-parts": [
+      [
+        2018,
+        3,
+        7
+      ]
+    ],
+    "date-time": "2018-03-07T20:55:19Z",
+    "timestamp": 1520456119000
+  },
+  "page": "811-822",
+  "source": "Crossref",
+  "is-referenced-by-count": 10,
+  "title": [
+    "Sediment type and nitrogen deposition affect the relationship between Alternanthera philoxeroides and experimental wetland plant communities"
+  ],
+  "prefix": "10.1071",
+  "volume": "69",
+  "author": [
+    {
+      "given": "Tian-Jian",
+      "family": "Qin",
+      "sequence": "first",
+      "affiliation": [
+        {
+          "name": "ASchool of Nature Conservation, Beijing Forestry University, Beijing, 100083, P.R. China."
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    },
+    {
+      "given": "Yu-Ting",
+      "family": "Guan",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "ASchool of Nature Conservation, Beijing Forestry University, Beijing, 100083, P.R. China."
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    },
+    {
+      "given": "Ming-Xiang",
+      "family": "Zhang",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "ASchool of Nature Conservation, Beijing Forestry University, Beijing, 100083, P.R. China."
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    },
+    {
+      "given": "Hong-Li",
+      "family": "Li",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "ASchool of Nature Conservation, Beijing Forestry University, Beijing, 100083, P.R. China."
+        },
+        {
+          "name": "BCorresponding author. Email: lihongli327@163.com"
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    },
+    {
+      "given": "Fei-Hai",
+      "family": "Yu",
+      "sequence": "additional",
+      "affiliation": [
+        {
+          "name": "ASchool of Nature Conservation, Beijing Forestry University, Beijing, 100083, P.R. China."
+        }
+      ],
+      "role": [
+        {
+          "role": "author",
+          "vocabulary": "crossref"
+        }
+      ]
+    }
+  ],
+  "member": "67",
+  "published-online": {
+    "date-parts": [
+      [
+        2018,
+        3,
+        8
+      ]
+    ]
+  },
+  "reference": [
+    {
+      "key": "2025120823534993800_R1",
+      "doi-asserted-by": "publisher",
+      "first-page": "359",
+      "DOI": "10.1146/ANNUREV.ES.14.110183.002043",
+      "article-title": "The theory of limiting similarity.",
+      "volume": "14",
+      "author": "Abrams",
+      "year": "1983",
+      "journal-title": "Annual Review of Ecology Evolution and Systematics"
+    },
+    {
+      "key": "2025120823534993800_R2",
+      "doi-asserted-by": "crossref",
+      "first-page": "63",
+      "DOI": "10.1007/BF00047389",
+      "article-title": "The effect of increased nutrient availability on vegetation dynamics in wet heathlands.",
+      "volume": "76",
+      "author": "Aerts",
+      "year": "1988",
+      "journal-title": "Plant Ecology"
+    },
+    {
+      "key": "2025120823534993800_R3",
+      "doi-asserted-by": "publisher",
+      "first-page": "581",
+      "DOI": "10.1080/02705060.2017.1361477",
+      "article-title": "Impact of an alien invasive plant Amaranthus retroflexus on wetland sediment properties under two growth stages.",
+      "volume": "32",
+      "author": "Bai",
+      "year": "2017",
+      "journal-title": "Journal of Freshwater Ecology"
+    },
+    {
+      "key": "2025120823534993800_R4",
+      "doi-asserted-by": "publisher",
+      "first-page": "921",
+      "DOI": "10.1081/CSS-100104098",
+      "article-title": "Nutrient use efficiency in plants.",
+      "volume": "32",
+      "author": "Baligar",
+      "year": "2001",
+      "journal-title": "Communications in Soil Science and Plant Analysis"
+    },
+    {
+      "key": "2025120823534993800_R5",
+      "first-page": "47",
+      "article-title": "Spatial distribution of mangrove species and their association with the substrate sediment types, estuarine sector Terraba-Sierpe National Wetlands, Costa Rica.",
+      "volume": "63",
+      "author": "Barrantes Leiva",
+      "year": "2015",
+      "journal-title": "Revista de Biolog\u00eda Tropical"
+    },
+    {
+      "key": "2025120823534993800_R6",
+      "doi-asserted-by": "publisher",
+      "first-page": "111",
+      "DOI": "10.1139/A02-004",
+      "article-title": "Carbon cycling in peatlands \u2013 a review of processes and controls.",
+      "volume": "10",
+      "author": "Blodau",
+      "year": "2002",
+      "journal-title": "Environmental Reviews"
+    },
+    {
+      "key": "2025120823534993800_R7",
+      "doi-asserted-by": "publisher",
+      "first-page": "30",
+      "DOI": "10.1890/08-1140.1",
+      "article-title": "Global assessment of nitrogen deposition effects on terrestrial plant diversity: a synthesis.",
+      "volume": "20",
+      "author": "Bobbink",
+      "year": "2010",
+      "journal-title": "Ecological Applications"
+    },
+    {
+      "key": "2025120823534993800_R8",
+      "doi-asserted-by": "publisher",
+      "first-page": "974",
+      "DOI": "10.1644/1545-1542(2001)082&lt;0974:DOAGRC&gt;2.0.CO;2",
+      "article-title": "Diversity of a grassland rodent community at varying temporal scales: the role of ecologically dominant species.",
+      "volume": "82",
+      "author": "Brady",
+      "year": "2001",
+      "journal-title": "Journal of Mammalogy"
+    },
+    {
+      "key": "2025120823534993800_R9",
+      "doi-asserted-by": "publisher",
+      "first-page": "521",
+      "DOI": "10.1126/SCIENCE.290.5491.521",
+      "article-title": "Invasive plants versus their new and old neighbors: a mechanism for exotic invasion.",
+      "volume": "290",
+      "author": "Callaway",
+      "year": "2000",
+      "journal-title": "Science"
+    },
+    {
+      "issue": "3",
+      "key": "2025120823534993800_R10",
+      "first-page": "69",
+      "article-title": "Relationship between wetland plant communities and water environment quality in Xixi Wetland Park.",
+      "volume": "27",
+      "author": "Cao",
+      "year": "2011",
+      "journal-title": "Journal of Ecology and Rural Environment"
+    },
+    {
+      "key": "2025120823534993800_R11",
+      "doi-asserted-by": "publisher",
+      "first-page": "295",
+      "DOI": "10.3354/AB00484",
+      "article-title": "Growth response of the submerged macrophyte Myriophyllum spicatum to sediment nutrient levels and water-level fluctuations.",
+      "volume": "17",
+      "author": "Cao",
+      "year": "2012",
+      "journal-title": "Aquatic Biology"
+    },
+    {
+      "key": "2025120823534993800_R12",
+      "doi-asserted-by": "publisher",
+      "first-page": "36",
+      "DOI": "10.1111/J.1061-2971.2004.00299.X",
+      "article-title": "Can carbon addition increase competitiveness of native grasses? A case study from California.",
+      "volume": "12",
+      "author": "Corbin",
+      "year": "2004",
+      "journal-title": "Restoration Ecology"
+    },
+    {
+      "key": "2025120823534993800_R13",
+      "doi-asserted-by": "publisher",
+      "first-page": "69",
+      "DOI": "10.1016/J.ECOLMODEL.2014.01.010",
+      "article-title": "Emergence of nutrient-cycling feedbacks related to plant size and invasion success in a wetland community-ecosystem model.",
+      "volume": "282",
+      "author": "Currie",
+      "year": "2014",
+      "journal-title": "Ecological Modelling"
+    },
+    {
+      "key": "2025120823534993800_R14",
+      "doi-asserted-by": "publisher",
+      "first-page": "528",
+      "DOI": "10.1046/J.1365-2745.2000.00473.X",
+      "article-title": "Fluctuating resources in plant communities: a general theory of invasibility.",
+      "volume": "88",
+      "author": "Davis",
+      "year": "2000",
+      "journal-title": "Journal of Ecology"
+    },
+    {
+      "key": "2025120823534993800_R15",
+      "doi-asserted-by": "publisher",
+      "first-page": "1562",
+      "DOI": "10.1126/SCIENCE.1150726",
+      "article-title": "How do roots interact?",
+      "volume": "318",
+      "author": "de Kroon",
+      "year": "2007",
+      "journal-title": "Science"
+    },
+    {
+      "key": "2025120823534993800_R16",
+      "doi-asserted-by": "publisher",
+      "first-page": "6",
+      "DOI": "10.1111/J.1365-2745.2011.01906.X",
+      "article-title": "Root responses to nutrients and soil biota: drivers of species coexistence and ecosystem productivity.",
+      "volume": "100",
+      "author": "de Kroon",
+      "year": "2012",
+      "journal-title": "Journal of Ecology"
+    },
+    {
+      "issue": "1",
+      "key": "2025120823534993800_R17",
+      "doi-asserted-by": "publisher",
+      "first-page": "172",
+      "DOI": "10.1111/JVS.12473",
+      "article-title": "Sediment type rules the response of aquatic plant communities to dewatering in wetlands.",
+      "volume": "28",
+      "author": "De Wilde",
+      "year": "2017",
+      "journal-title": "Journal of Vegetation Science"
+    },
+    {
+      "key": "2025120823534993800_R18",
+      "doi-asserted-by": "publisher",
+      "first-page": "1101",
+      "DOI": "10.1007/S10530-011-0141-5",
+      "article-title": "Effects of fragmentation on the survival and growth of the invasive, clonal plant Alternanthera philoxeroides.",
+      "volume": "14",
+      "author": "Dong",
+      "year": "2012",
+      "journal-title": "Biological Invasions"
+    },
+    {
+      "key": "2025120823534993800_R19",
+      "doi-asserted-by": "publisher",
+      "DOI": "10.1007/978-94-007-7939-6_6"
+    },
+    {
+      "key": "2025120823534993800_R20",
+      "doi-asserted-by": "publisher",
+      "first-page": "1027",
+      "DOI": "10.1111/J.1365-2745.2007.01274.X",
+      "article-title": "Limiting similarity between invaders and dominant species in herbaceous plant communities.",
+      "volume": "95",
+      "author": "Emery",
+      "year": "2007",
+      "journal-title": "Journal of Ecology"
+    },
+    {
+      "key": "2025120823534993800_R21",
+      "doi-asserted-by": "publisher",
+      "first-page": "954",
+      "DOI": "10.1890/06-0568",
+      "article-title": "Dominant species identity, not community evenness, regulates invasion in experimental grassland plant communities.",
+      "volume": "88",
+      "author": "Emery",
+      "year": "2007",
+      "journal-title": "Ecology"
+    },
+    {
+      "issue": "2",
+      "key": "2025120823534993800_R22",
+      "doi-asserted-by": "publisher",
+      "first-page": "109",
+      "DOI": "10.3159/TORREY-D-16-00018",
+      "article-title": "Invasion and succession change the functional traits of serpentine plant communities.",
+      "volume": "144",
+      "author": "Flinn",
+      "year": "2017",
+      "journal-title": "The Journal of the Torrey Botanical Society"
+    },
+    {
+      "key": "2025120823534993800_R23",
+      "doi-asserted-by": "crossref",
+      "first-page": "551",
+      "DOI": "10.1111/j.1365-2745.2010.01765.x",
+      "article-title": "Soil nutrient heterogeneity modulates ecosystem responses to changes in the identity and richness of plant functional groups.",
+      "volume": "99",
+      "author": "Garciapalacios",
+      "year": "2011",
+      "journal-title": "Journal of Ecology"
+    },
+    {
+      "key": "2025120823534993800_R24",
+      "doi-asserted-by": "publisher",
+      "first-page": "245",
+      "DOI": "10.1007/S10530-006-9029-1",
+      "article-title": "Phenotypic plasticity rather than locally adapted ecotypes allows the invasive alligator weed to colonize a wide range of habitats.",
+      "volume": "9",
+      "author": "Geng",
+      "year": "2007",
+      "journal-title": "Biological Invasions"
+    },
+    {
+      "issue": "11",
+      "key": "2025120823534993800_R25",
+      "doi-asserted-by": "publisher",
+      "first-page": "1105",
+      "DOI": "10.1080/15226514.2015.1045121",
+      "article-title": "Remediation of urban river water by Pontederia cordata combined with artificial aeration: organic matter and nutrients removal and root-adhered bacterial communities.",
+      "volume": "17",
+      "author": "Gu",
+      "year": "2015",
+      "journal-title": "International Journal of Phytoremediation"
+    },
+    {
+      "key": "2025120823534993800_R26",
+      "first-page": "17",
+      "article-title": "Alligator weed: tasty vegetable in Australian backyards.",
+      "volume": "39",
+      "author": "Gunasekera",
+      "year": "2001",
+      "journal-title": "Journal of Aquatic Plant Management"
+    },
+    {
+      "key": "2025120823534993800_R27",
+      "doi-asserted-by": "publisher",
+      "first-page": "470",
+      "DOI": "10.1016/J.TREE.2004.07.005",
+      "article-title": "Are invasive species a major cause of extinctions?",
+      "volume": "19",
+      "author": "Gurevitch",
+      "year": "2004",
+      "journal-title": "Trends in Ecology & Evolution"
+    },
+    {
+      "key": "2025120823534993800_R28",
+      "doi-asserted-by": "publisher",
+      "first-page": "99",
+      "DOI": "10.1007/S004420050910",
+      "article-title": "Native and alien species diversity at the local and regional scales in a grazed California grassland.",
+      "volume": "121",
+      "author": "Harrison",
+      "year": "1999",
+      "journal-title": "Oecologia"
+    },
+    {
+      "key": "2025120823534993800_R29",
+      "doi-asserted-by": "publisher",
+      "first-page": "1059",
+      "DOI": "10.1111/J.1600-0587.2011.06835.X",
+      "article-title": "Nitrogen deposition enhances Bromus tectorum invasion: biogeographic differences in growth and competitive ability between China and North America.",
+      "volume": "34",
+      "author": "He",
+      "year": "2011",
+      "journal-title": "Ecography"
+    },
+    {
+      "issue": "5",
+      "key": "2025120823534993800_R30",
+      "doi-asserted-by": "publisher",
+      "first-page": "1409",
+      "DOI": "10.1002/ECY.1796",
+      "article-title": "Effects of native diversity, soil nutrients, and natural enemies on exotic invasion in experimental plant communities.",
+      "volume": "98",
+      "author": "Heckman",
+      "year": "2017",
+      "journal-title": "Ecology"
+    },
+    {
+      "key": "2025120823534993800_R31",
+      "doi-asserted-by": "publisher",
+      "first-page": "9",
+      "DOI": "10.1111/J.1469-8137.2004.01015.X",
+      "article-title": "The plastic plant: root responses to heterogeneous supplies of nutrients.",
+      "volume": "162",
+      "author": "Hodge",
+      "year": "2004",
+      "journal-title": "New Phytologist"
+    },
+    {
+      "key": "2025120823534993800_R32",
+      "doi-asserted-by": "publisher",
+      "first-page": "27",
+      "DOI": "10.1007/BF00012730",
+      "article-title": "The biology of Butomus umbellatus in shallow waters with fluctuating water level.",
+      "volume": "340",
+      "author": "Hroudov\u00e1",
+      "year": "1996",
+      "journal-title": "Hydrobiologia"
+    },
+    {
+      "issue": "3",
+      "key": "2025120823534993800_R33",
+      "doi-asserted-by": "publisher",
+      "first-page": "360",
+      "DOI": "10.1016/S1002-0160(07)60043-5",
+      "article-title": "Contribution of atmospheric nitrogen compounds to N deposition in a broadleaf forest of southern China.",
+      "volume": "17",
+      "author": "Hu",
+      "year": "2007",
+      "journal-title": "Pedosphere"
+    },
+    {
+      "key": "2025120823534993800_R34",
+      "doi-asserted-by": "publisher",
+      "first-page": "478",
+      "DOI": "10.2307/1940302",
+      "article-title": "Effects of soil resources on plant invasion and community structure in Californian serpentine grassland.",
+      "volume": "71",
+      "author": "Huenneke",
+      "year": "1990",
+      "journal-title": "Ecology"
+    },
+    {
+      "key": "2025120823534993800_R35",
+      "doi-asserted-by": "publisher",
+      "first-page": "363",
+      "DOI": "10.1672/08-184.1",
+      "article-title": "Impacts of secondarily treated municipal effluent on a freshwater forested wetland after 60 years of discharge.",
+      "volume": "29",
+      "author": "Hunter",
+      "year": "2009",
+      "journal-title": "Wetlands"
+    },
+    {
+      "key": "2025120823534993800_R36",
+      "doi-asserted-by": "publisher",
+      "first-page": "313",
+      "DOI": "10.1007/S10682-007-9178-4",
+      "article-title": "Performance of a clonal species in patchy environments: effects of environmental context on yield at local and whole-plant scales.",
+      "volume": "22",
+      "author": "Hutchings",
+      "year": "2008",
+      "journal-title": "Evolutionary Ecology"
+    },
+    {
+      "key": "2025120823534993800_R37",
+      "doi-asserted-by": "publisher",
+      "first-page": "74",
+      "DOI": "10.1016/S0169-5347(96)20125-9",
+      "article-title": "The embarrassment of riches: atmospheric deposition of nitrogen and community and ecosystem processes.",
+      "volume": "12",
+      "author": "Jefferies",
+      "year": "1997",
+      "journal-title": "Trends in Ecology & Evolution"
+    },
+    {
+      "key": "2025120823534993800_R38",
+      "doi-asserted-by": "publisher",
+      "first-page": "491",
+      "DOI": "10.1080/10643389109388425",
+      "article-title": "Sediment and nutrient retention by freshwater wetlands: effects on surface water quality.",
+      "volume": "21",
+      "author": "Johnston",
+      "year": "1991",
+      "journal-title": "Critical Reviews in Environmental Control"
+    },
+    {
+      "key": "2025120823534993800_R39",
+      "first-page": "55",
+      "article-title": "Potential geographical distribution of alligator weed and its biological control by Agasicles hygrophila.",
+      "volume": "33",
+      "author": "Julien",
+      "year": "1995",
+      "journal-title": "Journal of Aquatic Plant Management"
+    },
+    {
+      "key": "2025120823534993800_R40",
+      "doi-asserted-by": "crossref",
+      "first-page": "371",
+      "DOI": "10.1086/303182",
+      "article-title": "Limiting similarity, species packing, and system stability for hierarchical competition colonization models.",
+      "volume": "153",
+      "author": "Kinzig",
+      "year": "2015",
+      "journal-title": "American Naturalist"
+    },
+    {
+      "key": "2025120823534993800_R41",
+      "doi-asserted-by": "publisher",
+      "first-page": "1343",
+      "DOI": "10.1007/S10530-005-0709-Z",
+      "article-title": "Can R*s predict invasion in semi-arid grasslands?",
+      "volume": "8",
+      "author": "Krueger-Mangold",
+      "year": "2006",
+      "journal-title": "Biological Invasions"
+    },
+    {
+      "key": "2025120823534993800_R42",
+      "doi-asserted-by": "publisher",
+      "first-page": "724",
+      "DOI": "10.1126/SCIENCE.AAO6371",
+      "article-title": "Plant invasions in the Anthropocene.",
+      "volume": "358",
+      "author": "Kueffer",
+      "year": "2017",
+      "journal-title": "Science"
+    },
+    {
+      "key": "2025120823534993800_R43",
+      "doi-asserted-by": "publisher",
+      "first-page": "55",
+      "DOI": "10.1093/BIOSCI/BIU193",
+      "article-title": "Ecological impacts of alien species: quantification, scope, caveats, and recommendations.",
+      "volume": "65",
+      "author": "Kumschick",
+      "year": "2015",
+      "journal-title": "Bioscience"
+    },
+    {
+      "key": "2025120823534993800_R44",
+      "doi-asserted-by": "publisher",
+      "first-page": "215",
+      "DOI": "10.1016/S0006-3207(03)00294-5",
+      "article-title": "Invasion success of exotic plants in natural ecosystems: the role of disturbance, plant attributes and freedom from herbivores.",
+      "volume": "117",
+      "author": "Lake",
+      "year": "2004",
+      "journal-title": "Biological Conservation"
+    },
+    {
+      "key": "2025120823534993800_R45",
+      "doi-asserted-by": "publisher",
+      "first-page": "98",
+      "DOI": "10.1016/J.APSOIL.2005.01.009",
+      "article-title": "Nutrient availability does not explain invasion and dominance of a mixed grass prairie by the exotic forb Centaurea diffusa Lam.",
+      "volume": "32",
+      "author": "LeJeune",
+      "year": "2006",
+      "journal-title": "Applied Soil Ecology"
+    },
+    {
+      "key": "2025120823534993800_R46",
+      "doi-asserted-by": "publisher",
+      "first-page": "15",
+      "DOI": "10.2307/3546992",
+      "article-title": "Elton revisited: a review of evidence linking diversity and invasibility.",
+      "volume": "87",
+      "author": "Levine",
+      "year": "1999",
+      "journal-title": "Oikos"
+    },
+    {
+      "key": "2025120823534993800_R47",
+      "doi-asserted-by": "publisher",
+      "first-page": "1483",
+      "DOI": "10.1007/S11258-014-0408-X",
+      "article-title": "Responses to simulated nitrogen deposition in invasive and native or non-invasive clonal plants in China.",
+      "volume": "215",
+      "author": "Li",
+      "year": "2014",
+      "journal-title": "Plant Ecology"
+    },
+    {
+      "key": "2025120823534993800_R48",
+      "doi-asserted-by": "publisher",
+      "first-page": "251",
+      "DOI": "10.1007/S10750-008-9693-5",
+      "article-title": "The bud and root sprouting capacity of Alternanthera philoxeroides after over-wintering on sediments of a drained canal.",
+      "volume": "623",
+      "author": "Liu",
+      "year": "2009",
+      "journal-title": "Hydrobiologia"
+    },
+    {
+      "key": "2025120823534993800_R49",
+      "doi-asserted-by": "publisher",
+      "first-page": "459",
+      "DOI": "10.1038/NATURE11917",
+      "article-title": "Enhanced nitrogen deposition over China.",
+      "volume": "494",
+      "author": "Liu",
+      "year": "2013",
+      "journal-title": "Nature"
+    },
+    {
+      "key": "2025120823534993800_R50",
+      "doi-asserted-by": "publisher",
+      "first-page": "167",
+      "DOI": "10.1007/S10452-016-9607-Y",
+      "article-title": "Impacts of sediment type on the performance and composition of submerged macrophyte communities.",
+      "volume": "51",
+      "author": "Liu",
+      "year": "2017",
+      "journal-title": "Aquatic Ecology"
+    },
+    {
+      "key": "2025120823534993800_R51",
+      "doi-asserted-by": "publisher",
+      "first-page": "311",
+      "DOI": "10.1007/S13762-012-0025-Y",
+      "article-title": "Correlation between water quality and the diurnal variation of Pontederia cordata\u2019s physiology.",
+      "volume": "9",
+      "author": "Lu",
+      "year": "2012",
+      "journal-title": "International Journal of Environmental Science and Technology"
+    },
+    {
+      "key": "2025120823534993800_R52",
+      "doi-asserted-by": "publisher",
+      "first-page": "63",
+      "DOI": "10.1007/S11104-014-2227-1",
+      "article-title": "Increased nitrogen deposition alleviated the competitive effects of the introduced invasive plant Robinia pseudoacacia on the native tree Quercus acutissima.",
+      "volume": "385",
+      "author": "Luo",
+      "year": "2014",
+      "journal-title": "Plant and Soil"
+    },
+    {
+      "key": "2025120823534993800_R53",
+      "doi-asserted-by": "publisher",
+      "first-page": "301",
+      "DOI": "10.1023/A:1004367000041",
+      "article-title": "Long-term effects of experimental nitrogen additions on foliar litter decay and humus formation in forest ecosystems.",
+      "volume": "203",
+      "author": "Magill",
+      "year": "1998",
+      "journal-title": "Plant and Soil"
+    },
+    {
+      "key": "2025120823534993800_R54",
+      "doi-asserted-by": "publisher",
+      "first-page": "35",
+      "DOI": "10.1111/J.1749-6632.2010.05704.X",
+      "article-title": "Global change and the evolution of phenotypic plasticity in plants.",
+      "volume": "1206",
+      "author": "Matesanz",
+      "year": "2010",
+      "journal-title": "Annals of the New York Academy of Sciences"
+    },
+    {
+      "key": "2025120823534993800_R55",
+      "doi-asserted-by": "publisher",
+      "first-page": "40",
+      "DOI": "10.1111/J.1526-100X.2010.00669.X",
+      "article-title": "Dominant grasses suppress local diversity in restored tallgrass prairie.",
+      "volume": "18",
+      "author": "McCain",
+      "year": "2010",
+      "journal-title": "Restoration Ecology"
+    },
+    {
+      "key": "2025120823534993800_R56",
+      "doi-asserted-by": "publisher",
+      "first-page": "609",
+      "DOI": "10.1080/02757540.2016.1182995",
+      "article-title": "Composition of stable carbon and nitrogen isotopes in five wetland plants and sediments from the Pearl River estuary, south China.",
+      "volume": "32",
+      "author": "Miao",
+      "year": "2016",
+      "journal-title": "Chemistry and Ecology"
+    },
+    {
+      "key": "2025120823534993800_R57",
+      "doi-asserted-by": "publisher",
+      "first-page": "975",
+      "DOI": "10.1007/S13157-013-0480-3",
+      "article-title": "Brinson review: perspectives on the influence of nutrients on the sustainability of coastal wetlands.",
+      "volume": "33",
+      "author": "Morris",
+      "year": "2013",
+      "journal-title": "Wetlands"
+    },
+    {
+      "key": "2025120823534993800_R58",
+      "doi-asserted-by": "publisher",
+      "first-page": "884",
+      "DOI": "10.1360/APS06134",
+      "article-title": "Invasive Alternanthera philoxeroides: biology, ecology and management.",
+      "volume": "45",
+      "author": "Pan",
+      "year": "2007",
+      "journal-title": "Zhiwu Fenlei Xuebao"
+    },
+    {
+      "issue": "3",
+      "key": "2025120823534993800_R59",
+      "doi-asserted-by": "publisher",
+      "first-page": "271",
+      "DOI": "10.1127/1863-9135/2012/0266",
+      "article-title": "Morphological and physiological responses to burial depth and sediment type in the wetland macrophyte Miscanthus sacchariflorus.",
+      "volume": "180",
+      "author": "Pan",
+      "year": "2012",
+      "journal-title": "Fundamental and Applied Limnology"
+    },
+    {
+      "key": "2025120823534993800_R60",
+      "doi-asserted-by": "publisher",
+      "first-page": "3049",
+      "DOI": "10.1890/10-2341.1",
+      "article-title": "Effects of nitrogen deposition and empirical nitrogen critical loads for ecoregions of the United States.",
+      "volume": "21",
+      "author": "Pardo",
+      "year": "2011",
+      "journal-title": "Ecological Applications"
+    },
+    {
+      "key": "2025120823534993800_R61"
+    },
+    {
+      "key": "2025120823534993800_R62",
+      "doi-asserted-by": "publisher",
+      "first-page": "2934",
+      "DOI": "10.1038/NCOMMS3934",
+      "article-title": "Human-induced nitrogen\u2013phosphorus imbalances alter natural and managed ecosystems across the globe.",
+      "volume": "4",
+      "author": "Pe\u00f1uelas",
+      "year": "2013",
+      "journal-title": "Nature Communications"
+    },
+    {
+      "key": "2025120823534993800_R63",
+      "doi-asserted-by": "publisher",
+      "first-page": "25",
+      "DOI": "10.1146/ANNUREV-ENVIRON-042911-093511",
+      "article-title": "Global biodiversity change: the bad, the good, and the unknown.",
+      "volume": "37",
+      "author": "Pereira",
+      "year": "2012",
+      "journal-title": "Annual Review of Environment and Resources"
+    },
+    {
+      "key": "2025120823534993800_R64",
+      "doi-asserted-by": "publisher",
+      "first-page": "93",
+      "DOI": "10.1046/J.1472-4642.2000.00083.X",
+      "article-title": "Naturalization and invasion of alien plants: concepts and definitions.",
+      "volume": "6",
+      "author": "Richardson",
+      "year": "2000",
+      "journal-title": "Diversity & Distributions"
+    },
+    {
+      "key": "2025120823534993800_R65",
+      "doi-asserted-by": "publisher",
+      "first-page": "305",
+      "DOI": "10.1146/ANNUREV.ECOLSYS.32.081501.114037",
+      "article-title": "The population biology of invasive species.",
+      "volume": "32",
+      "author": "Sakai",
+      "year": "2001",
+      "journal-title": "Annual Review of Ecology Evolution and Systematics"
+    },
+    {
+      "key": "2025120823534993800_R66"
+    },
+    {
+      "key": "2025120823534993800_R67",
+      "doi-asserted-by": "crossref",
+      "unstructured": "Shochat, E., and Ovadia, O. (2011). Invasion, evenness, and species diversity in human-dominated ecosystems. In \u2018The Importance of Biological Interactions in the Study of Biodiversity\u2019. (Eds J. Lopez Pujol.) (InTech: Rijeka, Croatia.) Available at https://www.intechopen.com/books/the-importance-of-biological-interactions-in-the-study-of-biodiversity/invasion-evenness-and-species-diversity-in-human-dominated-ecosystems [Verified 27 January 2018].",
+      "DOI": "10.5772/24385"
+    },
+    {
+      "key": "2025120823534993800_R68",
+      "doi-asserted-by": "publisher",
+      "first-page": "179",
+      "DOI": "10.1016/S0269-7491(99)00091-3",
+      "article-title": "Eutrophication: impacts of excess nutrient inputs on freshwater, marine, and terrestrial ecosystems.",
+      "volume": "100",
+      "author": "Smith",
+      "year": "1999",
+      "journal-title": "Environmental Pollution"
+    },
+    {
+      "key": "2025120823534993800_R69",
+      "doi-asserted-by": "publisher",
+      "first-page": "1876",
+      "DOI": "10.1126/SCIENCE.1094678",
+      "article-title": "Impact of nitrogen deposition on the species richness of grasslands.",
+      "volume": "303",
+      "author": "Stevens",
+      "year": "2004",
+      "journal-title": "Science"
+    },
+    {
+      "key": "2025120823534993800_R70",
+      "doi-asserted-by": "publisher",
+      "first-page": "152",
+      "DOI": "10.1111/J.1365-2427.2009.02380.X",
+      "article-title": "Alien species in fresh waters: ecological effects, interactions with other stressors, and prospects for the future.",
+      "volume": "55",
+      "author": "Strayer",
+      "year": "2010",
+      "journal-title": "Freshwater Biology"
+    },
+    {
+      "key": "2025120823534993800_R71",
+      "doi-asserted-by": "publisher",
+      "first-page": "1078",
+      "DOI": "10.1111/JVS.12157",
+      "article-title": "Invasibility of boreal wetland plant communities.",
+      "volume": "25",
+      "author": "Str\u00f6m",
+      "year": "2014",
+      "journal-title": "Journal of Vegetation Science"
+    },
+    {
+      "key": "2025120823534993800_R72"
+    },
+    {
+      "key": "2025120823534993800_R73",
+      "doi-asserted-by": "publisher",
+      "first-page": "10854",
+      "DOI": "10.1073/PNAS.0403458101",
+      "article-title": "Niche tradeoffs, neutrality, and community structure: a stochastic theory of resource competition, invasion, and community assembly.",
+      "volume": "101",
+      "author": "Tilman",
+      "year": "2004",
+      "journal-title": "Proceedings of the National Academy of Sciences of the United States of America"
+    },
+    {
+      "key": "2025120823534993800_R74",
+      "doi-asserted-by": "publisher",
+      "first-page": "175",
+      "DOI": "10.1016/J.AGEE.2003.08.002",
+      "article-title": "Forage productivity, species evenness and weed invasion in pasture communities.",
+      "volume": "102",
+      "author": "Tracy",
+      "year": "2004",
+      "journal-title": "Agriculture, Ecosystems & Environment"
+    },
+    {
+      "key": "2025120823534993800_R75",
+      "doi-asserted-by": "publisher",
+      "first-page": "435",
+      "DOI": "10.1139/B88-069",
+      "article-title": "Nitrogen cycling in a forested Minnesota bog.",
+      "volume": "66",
+      "author": "Urban",
+      "year": "1988",
+      "journal-title": "Canadian Journal of Botany"
+    },
+    {
+      "key": "2025120823534993800_R76",
+      "doi-asserted-by": "publisher",
+      "first-page": "2349",
+      "DOI": "10.1007/S10530-016-1166-6",
+      "article-title": "Nitrogen enrichment contributes to positive responses to soil microbial communities in three invasive plant species.",
+      "volume": "18",
+      "author": "Valliere",
+      "year": "2016",
+      "journal-title": "Biological Invasions"
+    },
+    {
+      "issue": "10",
+      "key": "2025120823534993800_R77",
+      "doi-asserted-by": "publisher",
+      "first-page": "4333",
+      "DOI": "10.1111/GCB.13694",
+      "article-title": "High N, dry: experimental nitrogen deposition exacerbates native shrub loss and nonnative plant invasion during extreme drought.",
+      "volume": "23",
+      "author": "Valliere",
+      "year": "2017",
+      "journal-title": "Global Change Biology"
+    },
+    {
+      "key": "2025120823534993800_R78",
+      "doi-asserted-by": "publisher",
+      "first-page": "265",
+      "DOI": "10.1111/1365-2745.12054",
+      "article-title": "Plant\u2013soil feedbacks: the past, the present and future challenges.",
+      "volume": "101",
+      "author": "van der Putten",
+      "year": "2013",
+      "journal-title": "Journal of Ecology"
+    },
+    {
+      "key": "2025120823534993800_R79",
+      "doi-asserted-by": "publisher",
+      "first-page": "9",
+      "DOI": "10.1023/B:HYDR.0000025052.81373.F3",
+      "article-title": "Growth and biomass allocation of sweet flag (Acorus calamus L.) under different nutrient conditions.",
+      "volume": "518",
+      "author": "Vojt\u00ed\u0161kov\u00e1",
+      "year": "2004",
+      "journal-title": "Hydrobiologia"
+    },
+    {
+      "key": "2025120823534993800_R80",
+      "doi-asserted-by": "publisher",
+      "first-page": "344",
+      "DOI": "10.1080/02827580310001742",
+      "article-title": "Effect of air-filled porosity and organic matter concentration of soil on growth of Picea abies seedlings after transplanting.",
+      "volume": "18",
+      "author": "Wall",
+      "year": "2003",
+      "journal-title": "Scandinavian Journal of Forest Research"
+    },
+    {
+      "key": "2025120823534993800_R81",
+      "doi-asserted-by": "publisher",
+      "first-page": "277",
+      "DOI": "10.1016/J.AQUABOT.2005.01.004",
+      "article-title": "Genetic diversity of Alternanthera philoxeroides in China.",
+      "volume": "81",
+      "author": "Wang",
+      "year": "2005",
+      "journal-title": "Aquatic Botany"
+    },
+    {
+      "key": "2025120823534993800_R82",
+      "doi-asserted-by": "publisher",
+      "first-page": "671",
+      "DOI": "10.1093/AOB/MCN005",
+      "article-title": "Clonal integration affects growth, photosynthetic efficiency and biomass allocation, but not the competitive ability, of the alien invasive Alternanthera philoxeroides under severe stress.",
+      "volume": "101",
+      "author": "Wang",
+      "year": "2008",
+      "journal-title": "Annals of Botany"
+    },
+    {
+      "issue": "3",
+      "key": "2025120823534993800_R83",
+      "doi-asserted-by": "publisher",
+      "first-page": "176",
+      "DOI": "10.1111/1442-1984.12048",
+      "article-title": "Nitrogen addition increases intraspecific competition in the invasive wetland plant Alternanthera philoxeroides, but not in its native congener Alternanthera sessilis.",
+      "volume": "30",
+      "author": "Wang",
+      "year": "2015",
+      "journal-title": "Plant Species Biology"
+    },
+    {
+      "key": "2025120823534993800_R84"
+    },
+    {
+      "key": "2025120823534993800_R85",
+      "doi-asserted-by": "publisher",
+      "first-page": "676",
+      "DOI": "10.1046/J.1461-0248.2002.00372.X",
+      "article-title": "Reductions in grassland species evenness increase dicot seedling invasion and spittle bug infestation.",
+      "volume": "5",
+      "author": "Wilsey",
+      "year": "2002",
+      "journal-title": "Ecology Letters"
+    },
+    {
+      "key": "2025120823534993800_R86",
+      "doi-asserted-by": "publisher",
+      "first-page": "391",
+      "DOI": "10.1111/J.1365-2427.2004.01327.X",
+      "article-title": "Resource allocation in the submerged plant Vallisneria natans related to sediment type, rather than water-column nutrients.",
+      "volume": "50",
+      "author": "Xie",
+      "year": "2005",
+      "journal-title": "Freshwater Biology"
+    },
+    {
+      "key": "2025120823534993800_R87",
+      "doi-asserted-by": "publisher",
+      "first-page": "1517",
+      "DOI": "10.1093/AOB/MCM236",
+      "article-title": "Morphological and physiological responses to sediment type and light availability in roots of the submerged plant Myriophyllum spicatum.",
+      "volume": "100",
+      "author": "Xie",
+      "year": "2007",
+      "journal-title": "Annals of Botany"
+    },
+    {
+      "key": "2025120823534993800_R88",
+      "doi-asserted-by": "publisher",
+      "first-page": "1",
+      "DOI": "10.1016/J.AQUABOT.2008.12.004",
+      "article-title": "Increased nutrient supply facilitates acclimation to high-water level in the marsh plant Deyeuxia angustifolia: the response of root morphology.",
+      "volume": "91",
+      "author": "Xie",
+      "year": "2009",
+      "journal-title": "Aquatic Botany"
+    },
+    {
+      "key": "2025120823534993800_R89",
+      "doi-asserted-by": "publisher",
+      "first-page": "833",
+      "DOI": "10.1111/J.1365-2745.2010.01668.X",
+      "article-title": "Effects of clonal integration and light availability on the growth and physiology of two invasive herbs.",
+      "volume": "98",
+      "author": "Xu",
+      "year": "2010",
+      "journal-title": "Journal of Ecology"
+    },
+    {
+      "key": "2025120823534993800_R90",
+      "doi-asserted-by": "publisher",
+      "first-page": "153",
+      "DOI": "10.1146/ANNUREV-ARPLANT-042811-105532",
+      "article-title": "Plant nitrogen assimilation and use efficiency.",
+      "volume": "63",
+      "author": "Xu",
+      "year": "2012",
+      "journal-title": "Annual Review of Plant Biology"
+    },
+    {
+      "key": "2025120823534993800_R91",
+      "doi-asserted-by": "publisher",
+      "first-page": "297",
+      "DOI": "10.1046/J.1365-3180.2003.00346.X",
+      "article-title": "Genetic uniformity of Alternanthera philoxeroides in South China.",
+      "volume": "43",
+      "author": "Ye",
+      "year": "2003",
+      "journal-title": "Weed Research"
+    },
+    {
+      "key": "2025120823534993800_R92",
+      "doi-asserted-by": "publisher",
+      "first-page": "431",
+      "DOI": "10.1080/07352680490514673",
+      "article-title": "Causes and consequences of invasive plants in wetlands: opportunities, opportunists, and outcomes.",
+      "volume": "23",
+      "author": "Zedler",
+      "year": "2004",
+      "journal-title": "Critical Reviews in Plant Sciences"
+    },
+    {
+      "key": "2025120823534993800_R93",
+      "doi-asserted-by": "publisher",
+      "first-page": "17",
+      "DOI": "10.1016/J.FLORA.2017.01.007",
+      "article-title": "Fragmentation of the invasive, clonal plant Alternanthera philoxeroides decreases its growth but not its competitive effect.",
+      "volume": "228",
+      "author": "Zhou",
+      "year": "2017",
+      "journal-title": "Flora"
+    }
+  ],
+  "container-title": [
+    "Marine and Freshwater Research"
+  ],
+  "original-title": [],
+  "language": "en",
+  "link": [
+    {
+      "URL": "https://connectsci.au/mf/article-pdf/69/5/811/385357/mf17335.pdf",
+      "content-type": "application/pdf",
+      "content-version": "vor",
+      "intended-application": "syndication"
+    },
+    {
+      "URL": "https://connectsci.au/mf/article-pdf/69/5/811/385357/mf17335.pdf",
+      "content-type": "unspecified",
+      "content-version": "vor",
+      "intended-application": "similarity-checking"
+    }
+  ],
+  "deposited": {
+    "date-parts": [
+      [
+        2025,
+        12,
+        9
+      ]
+    ],
+    "date-time": "2025-12-09T04:53:56Z",
+    "timestamp": 1765256036000
+  },
+  "score": 1,
+  "resource": {
+    "primary": {
+      "URL": "https://connectsci.au/mf/article/69/5/811/60286/Sediment-type-and-nitrogen-deposition-affect-the"
+    }
+  },
+  "subtitle": [],
+  "short-title": [],
+  "issued": {
+    "date-parts": [
+      [
+        2018,
+        3,
+        8
+      ]
+    ]
+  },
+  "references-count": 93,
+  "journal-issue": {
+    "issue": "5",
+    "published-print": {
+      "date-parts": [
+        [
+          2018,
+          4,
+          18
+        ]
+      ]
+    }
+  },
+  "URL": "https://doi.org/10.1071/mf17335",
+  "relation": {},
+  "ISSN": [
+    "1323-1650",
+    "1448-6059"
+  ],
+  "issn-type": [
+    {
+      "value": "1323-1650",
+      "type": "print"
+    },
+    {
+      "value": "1448-6059",
+      "type": "electronic"
+    }
+  ],
+  "subject": [],
+  "published": {
+    "date-parts": [
+      [
+        2018,
+        3,
+        8
+      ]
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "evolutionary-inference",
+    "prompt": "Minimalist clean project thumbnail for a computational biology portfolio. A single exquisite flat black branching phylogenetic tree, seven tips, one tiny cobalt blue node, arranged as a horizontal editorial scientific symbol. White background, extremely generous negative space, crisp vector-like editorial illustration, flat and precise, no 3D, no shadows, no gradients, no texture, no card or frame, no UI, no text, no letters, no numbers. Subject centered taking about 45% of the image. Landscape 3:2 composition. Restrained scientific visual identity.",
+    "path": "public/art/evolutionary-inference-minimal.webp",
+    "tool": "built-in image_gen"
+  },
+  {
+    "id": "netforge",
+    "prompt": "Minimalist clean project thumbnail for a computational biology portfolio. Three extremely fine black network layers stacked in a precise isometric composition, sparse black nodes linked by hairline edges, just two cobalt blue nodes. White background, extremely generous negative space, crisp vector-like editorial illustration, flat and precise, no 3D, no shadows, no gradients, no texture, no card or frame, no UI, no text, no letters, no numbers. Subject centered taking about 45% of the image. Landscape 3:2 composition. Restrained scientific visual identity.",
+    "path": "public/art/netforge-minimal.webp",
+    "tool": "built-in image_gen"
+  },
+  {
+    "id": "herdlink",
+    "prompt": "Minimalist clean project thumbnail for a computational biology portfolio. Three tiny geometric farm buildings connected by thin black curved network lines, one small cobalt blue circular node, beautifully spare spatial composition. White background, extremely generous negative space, crisp vector-like editorial illustration, flat and precise, no 3D, no shadows, no gradients, no texture, no card or frame, no UI, no text, no letters, no numbers. Subject centered taking about 45% of the image. Landscape 3:2 composition. Restrained scientific visual identity.",
+    "path": "public/art/herdlink-minimal.webp",
+    "tool": "built-in image_gen"
+  },
+  {
+    "id": "one-health",
+    "prompt": "Minimalist clean project thumbnail for a computational biology portfolio. Three thin interlocking circular outlines, with a tiny leaf, human silhouette and animal silhouette respectively, black line art and one cobalt blue accent. White background, extremely generous negative space, crisp vector-like editorial illustration, flat and precise, no 3D, no shadows, no gradients, no texture, no card or frame, no UI, no text, no letters, no numbers. Subject centered taking about 45% of the image. Landscape 3:2 composition. Restrained scientific visual identity.",
+    "path": "public/art/one-health-minimal.webp",
+    "tool": "built-in image_gen"
+  }
+]

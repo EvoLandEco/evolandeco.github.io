@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <title>A Protocol to Bridge Phylogeny and GCN - Blog - Tianjian Qin</title>
+
+    
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Blog Post">
+    <meta name="author" content="Tianjian Qin">
+    
+
+    
+    <style>@import url("https://fonts.googleapis.com/css?family=Roboto:300,400,500,700") layer(legacy);</style>
+
+    
+    <script defer="" src="/notebook-assets/fontawesome/js/all.js"></script>
+
+    
+    <style>@import url("/notebook-assets/plugins/highlight/styles/monokai-sublime.min.css") layer(legacy);</style>
+
+    
+    <style>@import url("/notebook-assets/css/theme-1.css") layer(legacy);</style>
+
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+    <style type="text/css">@layer legacy {
+        #container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .row-boarder {
+            display: flex;
+            width: 100%;
+            margin-bottom: 0px;
+            border: 2px dashed #ccc; /* Dashed border with light gray color */
+            border-radius: 10px; /* Rounded corners */
+            min-height: 100px;
+        }
+        .row-button {
+            display: flex;
+            width: 100%;
+            justify-content: left;
+        }
+        #mynetwork-legend {
+            flex: 1; /* 1/11 of the total width */
+            height: 400px;
+            margin-right: 0px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 10px;
+
+        }.legend-item {
+             display: flex;
+             align-items: center;
+             margin-bottom: 10px;
+         }
+        .legend-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid; /* Add a border with a slightly darker color */
+        }
+        .root-circle {
+            background-color: #8080ff; /* Light Blue */
+            border-color: #7070da; /* Slightly darker blue */
+        }
+        .internal-circle {
+            background-color: #ffbf80; /* Light Orange */
+            border-color: #daa46e; /* Slightly darker orange */
+        }
+        .tip-circle {
+            background-color: #dfff80; /* Light Lime Green */
+            border-color: #bfdc6f; /* Slightly darker lime green */
+        }
+        #mynetwork {
+            flex: 10; /* 10/11 of the total width */
+            height: 400px;
+        }
+        #adjacency-list {
+            flex: 1; /* Equal width for adjacency-list and node-features */
+            font-family: monospace;
+            font-size: 18px;
+            white-space: nowrap;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        #node-features {
+            flex: 1; /* Equal width for adjacency-list and node-features */
+            font-family: monospace;
+            font-size: 17px;
+            white-space: nowrap;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        #adjacency-list-title {
+            color: #767776;
+            flex: 1;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+            font-family: "Arial Math", Arial, sans-serif; /* Change the font to Arial Math */
+            background-color: #fbf5f7;
+            padding: 10px;
+            margin-left: 10px;
+            margin-right: 10px;
+            border-radius: 10px; /* Rounded corners */
+        }
+        #node-features-title {
+            color: #767776;
+            flex: 1;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+            font-family: "Arial Math", Arial, sans-serif; /* Change the font to Arial Math */
+            background-color: #fbf5f7;
+            padding: 10px;
+            margin-left: 10px;
+            margin-right: 10px;
+            border-radius: 10px; /* Rounded corners */
+        }
+        .highlight {
+            background-color: yellow;
+            /*border: 1px dashed #e35142; !* Dashed border with light red color *!*/
+            border-radius: 5px; /* Rounded corners */
+        }
+        .highlight-node-feature {
+            background-color: lightblue;
+            /*border: 1px dashed #ccc; !* Dashed border with light gray color *!*/
+            border-radius: 5px; /* Rounded corners */
+        }
+        #node-features .highlight-node-feature {
+            background-color: lightblue;
+            /*border: 1px dashed #ccc; !* Dashed border with light gray color *!*/
+            border-radius: 5px; /* Rounded corners */
+        }
+        .label-highlight {
+            background-color: lightblue;
+            /*border: 1px dashed #ccc; !* Dashed border with light gray color *!*/
+            border-radius: 5px; /* Rounded corners */
+        }
+        .row-container {
+            display: flex;
+            align-items: center;
+            padding: 1px 0;
+        }
+        .row-container:hover {
+            background-color: yellow;
+        }
+        .edge-label, .node-label {
+            min-width: 50px;
+            text-align: right;
+            padding-right: 10px;
+        }
+        .colon {
+            padding-right: 10px;
+        }
+        .node-container {
+            display: inline-block;
+            text-align: center;
+            margin-right: 5px;
+        }
+        .brackets {
+            margin: 0 5px;
+        }
+    }</style>
+
+<link rel="stylesheet" href="/reading/controls.css"><link rel="stylesheet" href="/reading/article.css"></head>
+
+<body>
+
+
+
+<div class="main-wrapper">
+
+    <article class="blog-post">
+        <div class="container single-col-max-width">
+            
+
+            <div class="blog-post-body">
+                
+
+                <h3 class="mt-5 mb-3">Phylogenies and Visualization</h3>
+                <p>
+                    A phylogenetic tree is a diagram that illustrates how species or groups have evolved from common ancestors over time. In a
+                    time-calibrated phylogenetic tree, the edges have lengths, which can be interpreted as the time taken to evolve from the ancestors to the descendants.
+                </p>
+
+                <p>Phylogenies can be visualized in many distinct layouts. While these layouts have difference appearances, they all maintain identical topological relationship between nodes and edges.</p>
+
+                <figure class="figure-container" style="text-align: center;">
+                    <img width="70%" src="/notebook-assets/images/blog/protocol-phylo-ape.svg" alt="ape-phylogeny-forms">
+                    <figcaption class="mt-2 text-center image-caption">A simple phylogeny in three distinct layouts</figcaption>
+                </figure>
+
+                <h3 class="mt-5 mb-3">Phylogeny Is Graph</h3>
+                <p>
+                    Phylogenetic trees are essentially graphs. In a phylogeny, each node represents a species or a common ancestor, and each edge represents the evolutionary connection between them.
+                </p>
+
+                <p>Below I provide you an interactive playground, in which you can explore the forms of a phylogeny/graph.</p>
+                <p>You can specify a tip number and click on the "Generate Tree" button below to simulate a phylogenetic tree under the Yule model.</p>
+                <p>Click on "Phlogeny Form" and "Graph Form" to switch between common layouts of phylogeny and graph. Click on the rotation buttons to display the tree in a different pose. If you like, you can also drag the nodes around.</p>
+                <p>Enter number of tips:</p><p>
+                </p><form id="treeForm">
+                    <div class="row my-3">
+                        <div class="col-md-6">
+                            <input type="number" class="form-control" id="tipCount" name="tipCount" min="2" max="10" value="5" required="">
+                        </div>
+                        <div class="col-md-6">
+                            <button class="btn btn-block btn-primary py-2" type="submit">Generate Tree</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="row col-12">
+                    <div class="col-md-auto">
+                        
+                        <button class="btn btn-block btn-outline-warning py-2" onclick="network.setOptions({layout: {hierarchical: {sortMethod: 'directed'}}})">Phylogeny Form</button>
+                    </div>
+
+                    <div class="col-md-auto">
+                        
+                        <button class="btn btn-block btn-outline-warning py-2" onclick="network.setOptions({layout: {hierarchical: false}, physics: true})">Graph Form</button>
+                    </div>
+
+                    <div class="col-md-auto">
+                        
+                        <button class="btn btn-block btn-outline-secondary py-2" onclick="rotateLayoutClockwise()">Rotate 90°</button>
+                    </div>
+
+                    <div class="col-md-auto">
+                        <button class="btn btn-block btn-outline-secondary py-2" onclick="rotateLayoutCounterClockwise()">Rotate -90°</button>
+                    </div>
+                </div>
+
+                
+                <div id="container">
+                    
+                    <div class="row-boarder my-3">
+                        <div id="mynetwork-legend">
+                            <div id="legend-content">
+                                <div class="legend-item">
+                                    <div class="legend-circle root-circle"></div>
+                                    <span>Root</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-circle internal-circle"></div>
+                                    <span>Internal</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-circle tip-circle"></div>
+                                    <span>Tip</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="mynetwork"></div>
+                    </div>
+                    
+                    <div class="row my-2">
+                        <div class="col-6" id="adjacency-list-title">Adjacency List</div>
+                        <div class="col-6" id="node-features-title">Node Features</div>
+                    </div>
+                    
+                    <div class="row-boarder my-2">
+                        <div id="adjacency-list">
+                            <div class="content">
+                                
+                            </div>
+                        </div>
+                        <div id="node-features">
+                            <div class="content">
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p id="selection"></p>
+
+                <script type="text/javascript">
+                    // Define colors for nodes, edges, and labels corresponding to LaTeX tikz colors
+                    const rootNodeColor = "#8080ff"; // Blue!50 -> Light Blue
+                    const internalNodeColor = "#ffbf80"; // Orange!50 -> Light Orange
+                    const tipNodeColor = "#dfff80"; // Lime!50 -> Light Lime Green
+                    const edgeColor = "black";
+                    const nodeLabelColor = "black";
+                    const edgeLabelColor = "gray";
+
+                    const nodeSize = 30; // Increase node size
+
+                    var network, nodesDataSet, edgesDataSet;
+
+                    document.getElementById('treeForm').addEventListener('submit', function(event) {
+                        event.preventDefault();
+                        var T = parseInt(document.getElementById('tipCount').value);
+                        generateYuleTree(T);
+                    });
+
+                    // Execute generateYuleTree with the default value when the page is loaded
+                    document.addEventListener('DOMContentLoaded', function() {
+                        var defaultT = parseInt(document.getElementById('tipCount').value);
+                        generateYuleTree(defaultT);
+                    });
+
+                    function generateYuleTree(T) {
+                        var nodes = [];
+                        var edges = [];
+                        var nextNodeId = 1;
+                        var nextEdgeId = 1;
+
+                        // Initialize tree with the root node
+                        nodes.push({ id: nextNodeId,
+                            label: `n${nextNodeId}`,
+                            shape: "circle",
+                            color: rootNodeColor,
+                            font: { color: nodeLabelColor },
+                            size: nodeSize,
+                        });
+
+                        var activeLineages = [nextNodeId];
+                        nextNodeId++;
+                        var currentTipCount = 1;
+
+                        while (currentTipCount < T) {
+                            // Randomly select a lineage to split
+                            var lineageIndex = Math.floor(Math.random() * activeLineages.length);
+                            var parent = activeLineages[lineageIndex];
+
+                            // Remove the selected lineage from active lineages
+                            activeLineages.splice(lineageIndex, 1);
+
+                            // Add two new nodes as children of the selected lineage
+                            var child1 = nextNodeId++;
+                            var child2 = nextNodeId++;
+
+                            nodes.push({ id: child1, label: `n${child1}`, shape: "circle", color: internalNodeColor, font: { color: nodeLabelColor }, size: nodeSize });
+                            nodes.push({ id: child2, label: `n${child2}`, shape: "circle", color: internalNodeColor, font: { color: nodeLabelColor }, size: nodeSize });
+
+                            edges.push({ from: parent, to: child1, label: `e${nextEdgeId++}`, font: { align: 'top', color: edgeLabelColor }, color: edgeColor });
+                            edges.push({ from: parent, to: child2, label: `e${nextEdgeId++}`, font: { align: 'top', color: edgeLabelColor }, color: edgeColor });
+
+                            // Add the new nodes to the active lineages
+                            activeLineages.push(child1, child2);
+
+                            // Increment the tip count
+                            currentTipCount += 1;
+                        }
+
+                        // Update tip nodes (those that are still in activeLineages)
+                        activeLineages.forEach(nodeId => {
+                            nodes = nodes.map(node =>
+                                node.id === nodeId
+                                    ? { ...node, shape: "circle", color: tipNodeColor }
+                                    : node
+                            );
+                        });
+
+                        // Set all edge colors to black
+                        edges.forEach((edge) => {
+                            edge.color = edgeColor;
+                        });
+
+                        // Relabel nodes starting with tip nodes, then root, then internal nodes
+                        var tipNodes = nodes.filter(node => node.color === tipNodeColor);
+                        var rootNode = nodes.find(node => node.color === rootNodeColor);
+                        var internalNodes = nodes.filter(node => node.color === internalNodeColor);
+
+                        var newLabelIndex = 1;
+
+                        tipNodes.forEach(node => {
+                            node.label = `n${newLabelIndex++}`;
+                        });
+
+                        if (rootNode) {
+                            rootNode.label = `n${newLabelIndex++}`;
+                        }
+
+                        internalNodes.forEach(node => {
+                            node.label = `n${newLabelIndex++}`;
+                        });
+
+                        // Update network data with sorted tip nodes
+                        nodesDataSet = new vis.DataSet([...tipNodes, rootNode, ...internalNodes]);
+                        edgesDataSet = new vis.DataSet(edges);
+
+                        var container = document.getElementById("mynetwork");
+                        var data = {
+                            nodes: nodesDataSet,
+                            edges: edgesDataSet,
+                        };
+                        var options = {
+                            layout: {
+                                hierarchical: {
+                                    direction: "UD",
+                                    sortMethod: "directed",
+                                    levelSeparation: 80,
+                                },
+                            },
+                            edges: {
+                                arrows: {
+                                    to: { enabled: true, scaleFactor: 1, type: "vee" },
+                                },
+                                chosen: {
+                                    edge: changeChosenEdge,
+                                },
+                            },
+                            nodes: {
+                                font: {
+                                    align: 'center',
+                                },
+                                chosen: {
+                                    node: changeChosenNode,
+                                },
+                            },
+                            interaction: {
+                                hover: true,
+                                zoomView: false,
+                            },
+                        };
+                        network = new vis.Network(container, data, options);
+
+                        // Update adjacency list
+                        updateAdjacencyList(edges, nodesDataSet);
+                        // Update node features list
+                        updateNodeFeaturesList(edges, nodesDataSet);
+
+                        // Set up hover event listeners for the network
+                        network.on('hoverEdge', function(params) {
+                            highlightEdgeInLists(params.edge, true);
+                            // Set the edge to a new group
+                            edgesDataSet.update({ id: params.edge, group: 'highlight-edges' });
+                            // Set the edge to a new color
+                            edgesDataSet.update({ id: params.edge, color: 'yellow' });
+                        });
+
+                        network.on('blurEdge', function(params) {
+                            highlightEdgeInLists(params.edge, false);
+                            // Reset the edge group
+                            edgesDataSet.update({ id: params.edge, group: undefined });
+                            // Reset the edge color
+                            edgesDataSet.update({ id: params.edge, color: edgeColor });
+                        });
+
+                        network.on('hoverNode', function(params) {
+                            highlightNodeInLists(params.node, true);
+                            highlightNodeInNetwork(params.node, true);
+                        });
+
+                        network.on('blurNode', function(params) {
+                            highlightNodeInLists(params.node, false);
+                            highlightNodeInNetwork(params.node, false);
+                        });
+                    }
+
+                    // Function to update the adjacency list
+                    function updateAdjacencyList(edges, nodesDataSet) {
+                        const adjacencyList = {};
+                        let maxWidth = 0;
+
+                        // Calculate the max width for node labels
+                        nodesDataSet.forEach(node => {
+                            const nodeWidth = getTextWidth(node.label, '18px monospace');
+                            if (nodeWidth > maxWidth) {
+                                maxWidth = nodeWidth;
+                            }
+                        });
+
+                        edges.forEach(edge => {
+                            const fromNode = nodesDataSet.get(edge.from);
+                            const toNode = nodesDataSet.get(edge.to);
+                            const edgeLabel = `<span class="edge-label">${edge.label}</span>`;
+                            const colon = `<span class="colon">:</span>`;
+                            const fromLabel = `<span id="node-${fromNode.id}" class="node-container node-label-${fromNode.id}" style="color:${fromNode.color}; width:${maxWidth}px">${fromNode.label}</span>`;
+                            const comma = `<span class="brackets">,</span>`;
+                            const toLabel = `<span id="node-${toNode.id}" class="node-container node-label-${toNode.id}" style="color:${toNode.color}; width:${maxWidth}px">${toNode.label}</span>`;
+                            const brackets = `<span class="brackets">[</span>${fromLabel}${comma}${toLabel}<span class="brackets">]</span>`;
+
+                            adjacencyList[edge.id] = `<div id="row-${edge.id}" class="row-container">${edgeLabel}${colon}${brackets}</div>`;
+                        });
+
+                        let listString = '';
+                        Object.keys(adjacencyList).forEach(key => {
+                            listString += adjacencyList[key];
+                        });
+
+                        document.getElementById('adjacency-list').innerHTML = listString;
+
+                        // Add hover listeners to the adjacency list containers
+                        addHoverListenersToAdjacencyList();
+                    }
+
+                    // Function to update the node features list
+                    function updateNodeFeaturesList(edges, nodesDataSet) {
+                        const nodeFeaturesList = {};
+                        let maxWidth = 0;
+
+                        // Calculate the max width for edge labels
+                        edges.forEach(edge => {
+                            const edgeWidth = getTextWidth(edge.label, '18px monospace');
+                            if (edgeWidth > maxWidth) {
+                                maxWidth = edgeWidth;
+                            }
+                        });
+
+                        nodesDataSet.forEach(node => {
+                            const incomingEdge = edges.find(edge => edge.to === node.id);
+                            const outgoingEdges = edges.filter(edge => edge.from === node.id);
+
+                            const ancestorEdge = incomingEdge ? incomingEdge.label : '0';
+                            const daughterEdge1 = outgoingEdges[0] ? outgoingEdges[0].label : '0';
+                            const daughterEdge2 = outgoingEdges[1] ? outgoingEdges[1].label : '0';
+
+                            // Get node and edge colors
+                            const nodeColor = node.color || node.color.background;
+                            const edgeColor1 = incomingEdge ? edgeColor : 'gray'; // default to gray if no edge
+                            const edgeColor2 = outgoingEdges[0] ? edgeColor : 'gray';
+                            const edgeColor3 = outgoingEdges[1] ? edgeColor : 'gray';
+
+                            // Generate HTML with appropriate colors
+                            const edgeLabel1 = `<span id="edge-${incomingEdge ? incomingEdge.id : '0'}" class="edge-container" style="width:${maxWidth}px; color:${edgeColor1}">${ancestorEdge}</span>`;
+                            const edgeLabel2 = `<span id="edge-${outgoingEdges[0] ? outgoingEdges[0].id : '0'}" class="edge-container" style="width:${maxWidth}px; color:${edgeColor2}">${daughterEdge1}</span>`;
+                            const edgeLabel3 = `<span id="edge-${outgoingEdges[1] ? outgoingEdges[1].id : '0'}" class="edge-container" style="width:${maxWidth}px; color:${edgeColor3}">${daughterEdge2}</span>`;
+                            const colon = `<span class="colon">:</span>`;
+                            const brackets = `<span class="brackets">[</span>${edgeLabel1}<span class="brackets">,</span>${edgeLabel2}<span class="brackets">,</span>${edgeLabel3}<span class="brackets">]</span>`;
+
+                            nodeFeaturesList[node.id] = `<div id="node-feature-${node.id}" class="row-container">
+            <span class="node-label" style="color:${nodeColor}">${node.label}</span>${colon}${brackets}</div>`;
+                        });
+
+                        let listString = '';
+                        Object.keys(nodeFeaturesList).forEach(key => {
+                            listString += nodeFeaturesList[key];
+                        });
+
+                        document.getElementById('node-features').innerHTML = listString;
+
+                        // Add hover listeners to the node features list containers
+                        addHoverListenersToNodeFeaturesList();
+                    }
+
+                    // Function to calculate text width
+                    function getTextWidth(text, font) {
+                        const canvas = document.createElement("canvas");
+                        const context = canvas.getContext("2d");
+                        context.font = font;
+                        const width = context.measureText(text).width;
+                        return width;
+                    }
+
+                    // Function to add hover listeners to the adjacency list containers
+                    function addHoverListenersToAdjacencyList() {
+                        // Hover listeners for rows (entire rows will highlight the corresponding edge)
+                        document.querySelectorAll('.row-container').forEach(container => {
+                            container.addEventListener('mouseenter', function() {
+                                const edgeId = container.id.replace('row-', '');
+                                highlightEdgeInNetwork(edgeId, true);
+                                highlightEdgeInLists(edgeId, true);
+                            });
+                            container.addEventListener('mouseleave', function() {
+                                const edgeId = container.id.replace('row-', '');
+                                highlightEdgeInNetwork(edgeId, false);
+                                highlightEdgeInLists(edgeId, false);
+                            });
+                        });
+
+                        // Hover listeners for nodes
+                        document.querySelectorAll('.node-container').forEach(container => {
+                            container.addEventListener('mouseenter', function() {
+                                const nodeId = container.id.replace('node-', '');
+                                // change node color to yellow
+                                highlightNodeInNetwork(nodeId, true);
+                                highlightNodeInLists(nodeId, true);
+                            });
+                            container.addEventListener('mouseleave', function() {
+                                const nodeId = container.id.replace('node-', '');
+                                highlightNodeInNetwork(nodeId, false);
+                                highlightNodeInLists(nodeId, false);
+                            });
+                        });
+                    }
+
+                    // Function to add hover listeners to the node features list containers
+                    function addHoverListenersToNodeFeaturesList() {
+                        // Hover listeners for rows (entire rows will highlight the corresponding node)
+                        document.querySelectorAll('.row-container').forEach(container => {
+                            container.addEventListener('mouseenter', function() {
+                                const nodeId = container.id.replace('node-feature-', '');
+                                highlightNodeInNetwork(nodeId, true);
+                                highlightNodeInLists(nodeId, true);
+                            });
+                            container.addEventListener('mouseleave', function() {
+                                const nodeId = container.id.replace('node-feature-', '');
+                                highlightNodeInNetwork(nodeId, false);
+                                highlightNodeInLists(nodeId, false);
+                            });
+                        });
+
+                        // Hover listeners for edges in node features
+                        document.querySelectorAll('.edge-container').forEach(container => {
+                            container.addEventListener('mouseenter', function() {
+                                const edgeId = container.id.replace('edge-', '');
+                                if (edgeId !== '0') {
+                                    highlightEdgeInNetwork(edgeId, true);
+                                    highlightEdgeInLists(edgeId, true);
+                                } else {
+                                    // Highlight the entire row if edge is 0 and disable row hover effect
+                                    const rowContainer = container.closest('.row-container');
+                                    rowContainer.classList.add('highlight-node-feature');
+                                    rowContainer.style.pointerEvents = 'none'; // Disable hover effect
+                                    highlightNodeInNetwork(rowContainer.id.replace('node-feature-', ''), true);
+                                    highlightNodeInLists(rowContainer.id.replace('node-feature-', ''), true);
+                                }
+                            });
+                            container.addEventListener('mouseleave', function() {
+                                const edgeId = container.id.replace('edge-', '');
+                                if (edgeId !== '0') {
+                                    highlightEdgeInNetwork(edgeId, false);
+                                    highlightEdgeInLists(edgeId, false);
+                                } else {
+                                    // Unhighlight the entire row if edge is 0 and re-enable row hover effect
+                                    const rowContainer = container.closest('.row-container');
+                                    rowContainer.classList.remove('highlight-node-feature');
+                                    rowContainer.style.pointerEvents = 'auto'; // Re-enable hover effect
+                                    highlightNodeInNetwork(rowContainer.id.replace('node-feature-', ''), false);
+                                    highlightNodeInLists(rowContainer.id.replace('node-feature-', ''), false);
+                                }
+                            });
+                        });
+                    }
+
+                    // Function to highlight or unhighlight an edge in both the adjacency list and node features list
+                    function highlightEdgeInLists(edgeId, highlight) {
+                        highlightEdgeInList(edgeId, highlight);
+                        highlightEdgeInNodeFeatures(edgeId, highlight);
+                    }
+
+                    // Function to highlight or unhighlight an edge in the adjacency list
+                    function highlightEdgeInList(edgeId, highlight) {
+                        const rowElement = document.getElementById(`row-${edgeId}`);
+                        if (rowElement) {
+                            if (highlight) {
+                                rowElement.classList.add('highlight');
+                            } else {
+                                rowElement.classList.remove('highlight');
+                            }
+                        }
+                    }
+
+                    // Function to highlight or unhighlight an edge in the node features list
+                    function highlightEdgeInNodeFeatures(edgeId, highlight) {
+                        const edgeElements = document.querySelectorAll(`.edge-container[id='edge-${edgeId}']`);
+                        edgeElements.forEach(element => {
+                            if (highlight) {
+                                element.classList.add('highlight');
+                            } else {
+                                element.classList.remove('highlight');
+                            }
+                        });
+                    }
+
+                    // Function to highlight or unhighlight node labels in both the adjacency list and node features list
+                    function highlightNodeInLists(nodeId, highlight) {
+                        highlightNodeInListLabels(nodeId, highlight);
+                        highlightNodeInNodeFeatures(nodeId, highlight);
+                    }
+
+                    // Function to highlight or unhighlight node labels in the adjacency list
+                    function highlightNodeInListLabels(nodeId, highlight) {
+                        const nodeElements = document.querySelectorAll(`.node-label-${nodeId}`);
+                        nodeElements.forEach(element => {
+                            if (highlight) {
+                                element.classList.add('label-highlight');
+                            } else {
+                                element.classList.remove('label-highlight');
+                            }
+                        });
+                    }
+
+                    // Function to highlight or unhighlight node labels in the node features list
+                    function highlightNodeInNodeFeatures(nodeId, highlight) {
+                        const rowElement = document.getElementById(`node-feature-${nodeId}`);
+                        if (rowElement) {
+                            if (highlight) {
+                                rowElement.classList.add('highlight-node-feature');
+                            } else {
+                                rowElement.classList.remove('highlight-node-feature');
+                                rowElement.classList.remove('highlight');
+                            }
+                        }
+                    }
+
+                    // Function to highlight or unhighlight an edge in the network
+                    function highlightEdgeInNetwork(edgeId, highlight) {
+                        const edgeOptions = highlight ? { color: { color: 'yellow' }, width: 3 } : { color: edgeColor, width: 1 };
+                        edgesDataSet.update({ id: edgeId, ...edgeOptions });
+                    }
+
+                    // Function to highlight or unhighlight a node in the network without altering the network structure
+                    function highlightNodeInNetwork(nodeId, highlight) {
+                        if (highlight) {
+                            network.selectNodes([nodeId], highlightEdges = false);
+                        } else {
+                            network.unselectAll();
+                        }
+                    }
+
+                    // Function to change the border dashes of a chosen node
+                    function changeChosenNode(values, id, selected, hovering) {
+                        values.borderDashes = [2, 2];
+                        values.borderColor = "blue";
+                        values.borderWidth = 2;
+                        values.shadowColor = "lightblue";
+                        values.shadowX = 0;
+                        values.shadowY = 0;
+                    }
+
+                    // Function to change the line dashes of a chosen edge
+                    function changeChosenEdge(values, id, selected, hovering) {
+                        values.dashes = [5, 5];
+                        values.edgeColor = "yellow";
+                    }
+
+                    // maintain a list of UD, LR, DU, RL,
+                    // create two functions for two rotation buttons (90 and -90) to change the layout by scrolling within the list
+                    var layoutList = ["UD", "LR", "DU", "RL"];
+                    var layoutIndex = 0;
+                    function rotateLayoutClockwise() {
+                        layoutIndex = (layoutIndex + 1) % layoutList.length;
+                        network.setOptions({
+                            layout: {
+                                hierarchical: {
+                                    direction: layoutList[layoutIndex],
+                                    sortMethod: "directed",
+                                },
+                            },
+                        });
+                    }
+
+                    function rotateLayoutCounterClockwise() {
+                        layoutIndex = (layoutIndex - 1 + layoutList.length) % layoutList.length;
+                        network.setOptions({
+                            layout: {
+                                hierarchical: {
+                                    direction: layoutList[layoutIndex],
+                                    sortMethod: "directed",
+                                },
+                            },
+                        });
+                    }
+                </script>
+
+                <p>You migh have noticed two things: first, the edges are directed and represented by arrows; second, below the interactive  graph there are an <b>Adjacency List</b> and a <b>Node Features</b> matrix.</p>
+                <p>In the context of phylogenies, edges are typically considered undirected, however, conventional phylogeny encoding contains only single-directional edges pointing from the ancestor nodes to their descendants. Popular deep learning frameworks recognize edges under such encoding as directed.</p>
+                <p>How exactly are phylogenies encoded conventionally? The core idea is to maintain an adjacency list. The list stores all the edges in the format <code>[ni, nj]</code>, where <code>ni</code> and <code>nj</code> are the starting and ending nodes of the edge.</p>
+
+                <p>When you hover over an edge or node in the graph, its associated entries in the adjacency list will be highlighted. Similarly, hovering over a row or element in the list will highlight the corresponding node or edge in the tree. This interactive highlighting helps to easily trace connections and understand how an adjacency list sufficiently encodes a phylogeny.</p>
+                <p>You can ignore the node feature matrix for now an go back later after you read the next section.</p>
+
+                <h3 class="mt-5 mb-3">Bridging Phylogenies and GCNs</h3>
+                <p>
+                    Graph Convolutional Networks (GCNs) are a type of neural network specifically designed to operate on graph-structured data.
+                    Unlike traditional convolutional networks that work on regular grid data like images, GCNs can process data represented as nodes and edges. The core idea of GCNs is to aggregate features from a node's neighbors
+                    to capture both local graph topology and feature information. This is achieved through convolutional operations that combine and transform
+                    node features based on their connections. Visit Thomas Kipf's <a href="https://tkipf.github.io/graph-convolutional-networks/">original blog</a> for more information.
+                </p>
+
+                <p>
+                    I proposed a protocol to directly embed the evolutionary relationships (lengths
+                    of adjacent edges) into the nodes as their features. This protocol does not require the involvement of edge features in computation.
+                </p>
+
+                <p>Each row of the node feature matrix stores features of a node in the format <code>[ei, ej, ek]</code>, where <code>ei</code> is the length of the edge connecting the node to its ancestor, <code>ej</code> and <code>ek</code> are the lengths of the edges connecting the node to its two descendants.</p>
+
+                <figure>
+                    <img class="img-fluid" src="/notebook-assets/images/blog/protocol.png" alt="node-features">
+                    <figcaption class="mt-2 text-center image-caption">An illustration of the protocol, <a class="theme-link" href="https://www.biorxiv.org/content/10.1101/2024.08.02.606350v3" target="_blank">Qin et.al (2024)</a></figcaption>
+                </figure>
+
+                <p><a class="btn btn-block btn-outline-primary" href="#treeForm">Click Here</a> to go back to the playground and revisit the node feature matrix.</p>
+
+            </div>
+
+            
+
+            
+
+        </div>
+    </article>
+
+    
+
+</div>
+
+
+
+<div id="config-panel" class="config-panel config-panel-hide d-none">
+    <div class="panel-inner">
+        <a id="config-trigger" class="config-trigger text-center" href="#"><i class="fas fa-cog mx-auto" data-fa-transform="down-6"></i></a>
+        <h5 class="panel-title">Choose Colour</h5>
+        <ul id="color-options" class="list-inline mb-0">
+            <li class="theme-1 active list-inline-item"><a data-style="/notebook-assets/css/theme-1.css" href="#"></a></li>
+            <li class="theme-2  list-inline-item"><a data-style="/notebook-assets/css/theme-2.css" href="#"></a></li>
+            <li class="theme-3  list-inline-item"><a data-style="/notebook-assets/css/theme-3.css" href="#"></a></li>
+            <li class="theme-4  list-inline-item"><a data-style="/notebook-assets/css/theme-4.css" href="#"></a></li>
+            <li class="theme-5  list-inline-item"><a data-style="/notebook-assets/css/theme-5.css" href="#"></a></li>
+            <li class="theme-6  list-inline-item"><a data-style="/notebook-assets/css/theme-6.css" href="#"></a></li>
+            <li class="theme-7  list-inline-item"><a data-style="/notebook-assets/css/theme-7.css" href="#"></a></li>
+            <li class="theme-8  list-inline-item"><a data-style="/notebook-assets/css/theme-8.css" href="#"></a></li>
+            <li class="theme-9  list-inline-item"><a data-style="/notebook-assets/css/theme-9.css" href="#"></a></li>
+            <li class="theme-10  list-inline-item"><a data-style="/notebook-assets/css/theme-10.css" href="#"></a></li>
+        </ul>
+        <a id="config-close" class="close" href="#"><i class="fa fa-times-circle"></i></a>
+    </div>
+</div>
+
+
+
+<script src="/notebook-assets/plugins/popper.min.js"></script>
+<script src="/notebook-assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+
+
+<style>@import url("https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.css") layer(legacy);</style>
+<script src="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+<script>hljs.addPlugin(new CopyButtonPlugin());</script>
+
+
+<script src="/notebook-assets/js/blog.js"></script>
+
+
+<script src="/notebook-assets/plugins/js-cookie.min.js"></script>
+
+
+
+
+
+
+
+
+<script src="/reading/theme.js"></script><script src="/reading/resize.js"></script>
+
+</body></html>
