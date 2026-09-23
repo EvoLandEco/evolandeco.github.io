@@ -1,0 +1,1584 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>From One Observed Network to Many Plausible Panels - Blog - Tianjian Qin</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Hybrid temporal SBM pipeline: contraction, layered nested SBM fitting, weight-family selection, posterior-predictive generation, higher-order diagnostics, and hybrid transmission reality-checking."
+    />
+    <meta name="author" content="Tianjian Qin" />
+    <link rel="shortcut icon" href="favicon.ico" />
+
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link href="assets/css/theme-1.css" id="theme-style" rel="stylesheet" />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <style>
+      .single-col-max-width.hybrid-wide {
+        max-width: 980px;
+      }
+
+      .concept-card {
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 12px;
+        background: #fff;
+        overflow: hidden;
+      }
+      .concept-card .toolbar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      }
+      .concept-card .toolbar .title {
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin: 0;
+      }
+      .concept-card .viz {
+        width: 100%;
+        height: 360px;
+      }
+      .concept-card .caption {
+        font-size: 0.9rem;
+        color: #6c757d;
+      }
+      .concept-card code {
+        font-size: 0.85em;
+      }
+
+      .detail-box {
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        background: rgba(0, 0, 0, 0.02);
+        border-radius: 10px;
+        padding: 12px 14px;
+      }
+      .detail-box .kicker {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #6c757d;
+      }
+      .detail-box .headline {
+        font-weight: 700;
+        margin-top: 2px;
+        margin-bottom: 6px;
+      }
+      .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .detail-chip {
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 0.82rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #fff;
+      }
+      .metric-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .metric-pill {
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 10px;
+        padding: 8px 10px;
+        min-width: 120px;
+        background: #fff;
+      }
+      .metric-pill .label {
+        font-size: 0.76rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .metric-pill .value {
+        font-weight: 700;
+        font-size: 0.95rem;
+      }
+
+      .workflow-note {
+        border-left: 4px solid rgba(47, 128, 237, 0.65);
+        background: rgba(47, 128, 237, 0.06);
+        padding: 12px 14px;
+        border-radius: 10px;
+      }
+
+      body.dark-mode .concept-card {
+        background: #0b0d10;
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+      body.dark-mode .concept-card .toolbar {
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+      }
+      body.dark-mode .concept-card .caption,
+      body.dark-mode .detail-box .kicker,
+      body.dark-mode .metric-pill .label {
+        color: rgba(255, 255, 255, 0.65);
+      }
+      body.dark-mode .detail-box,
+      body.dark-mode .metric-pill,
+      body.dark-mode .detail-chip {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+      body.dark-mode .workflow-note {
+        background: rgba(86, 204, 242, 0.08);
+        border-left-color: rgba(86, 204, 242, 0.75);
+      }
+
+      @media (max-width: 576px) {
+        .concept-card .viz {
+          height: 400px;
+        }
+      }
+    </style>
+
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [["$", "$"]],
+          displayMath: [["$$", "$$"]],
+        },
+        options: {
+          skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+        },
+      };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  </head>
+
+  <body>
+    <header class="header text-center">
+      <div class="force-overflow">
+        <h1 class="blog-name pt-lg-4 mb-0">
+          <a class="no-text-decoration" href="index.html">Tianjian Qin</a>
+        </h1>
+        <nav class="navbar navbar-expand-lg navbar-dark">
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navigation"
+            aria-controls="navigation"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div id="navigation" class="collapse navbar-collapse flex-column">
+            <div class="profile-section pt-3 pt-lg-0">
+              <img
+                src="assets/images/profile.png"
+                alt="image"
+                class="profile-image mb-3 rounded-circle mx-auto"
+              />
+              <div class="bio mb-3">
+                Hi, my name is Tianjian. I'm a computational biologist &amp; data scientist.
+              </div>
+              <ul class="social-list list-inline py-2 mx-auto">
+                <li class="list-inline-item"><a href="https://www.linkedin.com/in/tjqin/"><i class="fab fa-linkedin-in fa-fw"></i></a></li>
+                <li class="list-inline-item"><a href="https://github.com/EvoLandEco"><i class="fab fa-github-alt fa-fw"></i></a></li>
+                <li class="list-inline-item"><a href="https://www.researchgate.net/profile/Tianjian-Qin"><i class="fa-brands fa-researchgate"></i></a></li>
+                <li class="list-inline-item"><a href="https://qtj.me/gallery"><i class="fa-regular fa-lightbulb"></i></a></li>
+              </ul>
+              <hr />
+            </div>
+            <ul class="navbar-nav flex-column text-start">
+              <li class="nav-item"><a class="nav-link" href="index.html"><i class="fas fa-user fa-fw me-2"></i>About Me</a></li>
+              <li class="nav-item"><a class="nav-link" href="portfolio.html"><i class="fas fa-laptop-code fa-fw me-2"></i>Portfolio</a></li>
+              <li class="nav-item"><a class="nav-link" href="resume.html"><i class="fas fa-file-alt fa-fw me-2"></i>Resume</a></li>
+              <li class="nav-item"><a class="nav-link active" href="blog-home.html"><i class="fas fa-blog fa-fw me-2"></i>Blog</a></li>
+            </ul>
+            <div class="my-2">
+              <a class="btn btn-primary" href="mailto:tianjianqin@outlook.com" target="_blank"><i class="fas fa-paper-plane me-2"></i>Contact Me</a>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <div class="main-wrapper">
+      <article class="blog-post px-3 py-5 p-md-5">
+        <div class="container single-col-max-width hybrid-wide">
+          <header class="blog-post-header">
+            <h2 class="title mb-2">From One Observed Network to Many Plausible Panels</h2>
+            <div class="meta mb-3">
+              <span class="date"><i class="fa-solid fa-calendar-days me-2"></i>Published on 10 Mar 2026</span>
+              <span class="time"><i class="fa-solid fa-clock me-2"></i>18 min read</span>
+            </div>
+          </header>
+
+          <div class="blog-post-body">
+            <h3 class="mt-5 mb-3">TL;DR</h3>
+            <ul>
+              <li>
+                The paper does <b>not</b> treat one generated network as a replacement for the observed Dutch livestock movement panel. Instead, it treats the observed panel as one sparse empirical realization, fits a <b>layered nested stochastic block model</b>, and generates an <b>ensemble</b> of posterior-predictive replicas.<sup><a href="#ref1">[1]</a></sup><sup><a href="#ref5">[5]</a></sup><sup><a href="#ref6">[6]</a></sup><sup><a href="#ref8">[8]</a></sup><sup><a href="#ref10">[10]</a></sup>
+              </li>
+              <li>
+                The representation is <b>hybrid</b>: farms in one focal region remain explicit, while the rest of the country is contracted to <b>COROP supernodes</b>. That creates four interpretable movement channels: <b>F→F</b>, <b>F→R</b>, <b>R→F</b>, and <b>R→R</b>.<sup><a href="#ref4">[4]</a></sup><sup><a href="#ref14">[14]</a></sup>
+              </li>
+              <li>
+                Validation happens on two levels. First, the workflow compares observed and synthetic panels using structural and higher-order statistics such as <b>TEA/TNA</b>, <b>π-mass</b>, and <b>magnetic spectra</b>. Second, it runs a <b>farm-centred transmission stress test</b> to check whether the synthetic panels preserve spread-relevant structure.<sup><a href="#ref9">[9]</a></sup><sup><a href="#ref10">[10]</a></sup><sup><a href="#ref11">[11]</a></sup><sup><a href="#ref12">[12]</a></sup><sup><a href="#ref13">[13]</a></sup>
+              </li>
+            </ul>
+
+            <p>
+              Most network-generation stories skip directly from “here is the observed graph” to “here is a synthetic one”. This paper takes a more careful route. We start from a single observed Dutch livestock movement panel, build a hybrid temporal network around one focal region, fit a layered nested SBM, generate many plausible replicas, and ask whether those replicas preserve the structure that matters for downstream inference. That logic is deeply aligned with temporal-network theory, posterior-predictive model checking, and the way livestock movement data are actually used in epidemiology.<sup><a href="#ref1">[1]</a></sup><sup><a href="#ref2">[2]</a></sup><sup><a href="#ref3">[3]</a></sup><sup><a href="#ref8">[8]</a></sup><sup><a href="#ref10">[10]</a></sup>
+            </p>
+
+            <h3 class="mt-5 mb-3">The whole pipeline at a glance</h3>
+            <p>
+              The methodology is easiest to understand as a six-stage loop: observe one temporal panel, contract it into a hybrid graph, attach realized-edge annotations, fit a layered nested model, generate many synthetic panels, and then validate them with both network diagnostics and a propagation-based reality check.
+            </p>
+
+            <div class="concept-card my-4" id="pipelineConceptCard">
+              <div class="toolbar">
+                <p class="title mb-0">Concept sketch: end-to-end workflow</p>
+                <div class="d-flex gap-2 flex-wrap">
+                  <button class="btn btn-sm btn-secondary" id="pipelinePrev"><i class="fa-solid fa-arrow-left me-1"></i>Prev</button>
+                  <button class="btn btn-sm btn-secondary" id="pipelineNext">Next<i class="fa-solid fa-arrow-right ms-1"></i></button>
+                </div>
+              </div>
+              <div class="viz" id="pipelineViz"></div>
+              <div class="p-3">
+                <div class="detail-box" id="pipelineDetail"></div>
+                <div class="caption mt-2">
+                  This is a conceptual workflow figure rather than a results plot. The key message is that the pipeline is <em>posterior-predictive</em>: one observed temporal network goes in, an ensemble of plausible replicated panels comes out, and those replicas are evaluated rather than accepted by default.<sup><a href="#ref8">[8]</a></sup><sup><a href="#ref9">[9]</a></sup><sup><a href="#ref10">[10]</a></sup>
+                </div>
+              </div>
+            </div>
+
+            <div class="alert alert-info mt-3" role="alert">
+              <strong><i class="fa-solid fa-code-branch me-2"></i>Code map:</strong>
+              <code>pipeline.py</code> handles preprocessing, graph construction, model fitting, posterior refresh, and synthetic generation. <code>diagnostics.py</code> computes overlap, turnover, channel composition, π-mass, and magnetic diagnostics. <code>simulation.py</code> applies the hybrid-aware transmission stress test to the observed and generated panels.
+            </div>
+
+            <hr class="my-5" />
+
+            <h3 class="mt-5 mb-3">Start with one observed temporal network, not with a synthetic world</h3>
+            <p>
+              The paper’s framing is important. We usually observe a single administrative realization of a livestock movement system, not repeated copies of the same underlying process. But the questions we care about—imports into a region, edge turnover, directional flow structure, and outbreak behaviour—are all probabilistic. Temporal-network theory tells us why this matters: the ordering of edges changes causal reachability and can change downstream dynamics even when the time-aggregated graph looks similar.<sup><a href="#ref1">[1]</a></sup>
+            </p>
+            <p>
+              That is why the pipeline is built around <b>posterior-predictive augmentation</b>. The observed panel is treated as one sparse empirical realization; the fitted model is then asked to generate a family of plausible alternative panels; and the scientific question becomes whether the ensemble preserves the structures we care about. This is exactly the spirit of posterior-predictive model criticism in Bayesian workflow and of modern goodness-of-fit assessment for network models.<sup><a href="#ref8">[8]</a></sup><sup><a href="#ref9">[9]</a></sup><sup><a href="#ref10">[10]</a></sup>
+            </p>
+
+            <h3 class="mt-5 mb-3">1. Hybridize the network without throwing away context</h3>
+            <p>
+              A fully premise-level national network gives you detail everywhere, but often at the cost of interpretation and computational focus. This study cares about one focal Dutch region while still needing the national backdrop that drives imports, exports, and indirect connectivity. The solution is a <b>hybrid temporal graph</b>: keep focal farms explicit, contract every non-focal premise into a COROP-level regional supernode.<sup><a href="#ref4">[4]</a></sup><sup><a href="#ref14">[14]</a></sup>
+            </p>
+            <p>
+              Formally, if $c^*$ is the focal COROP, the contraction map is
+              $$
+              \phi(i)=
+              \begin{cases}
+              i, & i\in F,\\
+              c(i), & i\notin F,
+              \end{cases}
+              $$
+              where $F$ is the set of focal farms and $c(i)$ is the non-focal COROP containing premise $i$. That one choice gives the whole hybrid semantics of the paper: <b>F→F</b> for within-region movement, <b>F→R</b> for exports, <b>R→F</b> for imports, and <b>R→R</b> for external background flow.
+            </p>
+
+            <div class="concept-card my-4" id="hybridConceptCard">
+              <div class="toolbar">
+                <p class="title mb-0">Concept sketch: full premise graph vs hybrid contraction</p>
+                <div class="d-flex gap-2 flex-wrap">
+                  <button class="btn btn-sm btn-secondary" id="btnHybridToggle"><i class="fa-solid fa-shuffle me-1"></i><span id="btnHybridToggleLabel">Expand right panel</span></button>
+                </div>
+              </div>
+              <div class="viz" id="hybridViz"></div>
+              <div class="p-3">
+                <div class="caption">
+                  Left: a premise-level view. Right: the same system after applying the hybrid contraction map. Focal farms remain explicit, non-focal premises collapse into regional supernodes, parallel flows are aggregated, and within-region external traffic becomes a self-loop on the supernode. This is why the hybrid representation preserves boundary flux while shrinking the outside world.<sup><a href="#ref4">[4]</a></sup><sup><a href="#ref14">[14]</a></sup>
+                </div>
+              </div>
+            </div>
+
+            <div class="workflow-note my-4">
+              <strong>Interpretation note.</strong> The hybrid graph is not saying that a region supernode is “one giant farm”. It is saying that the outside world is represented at a coarser epidemiological and statistical resolution than the focal region.
+            </div>
+
+            <h3 class="mt-5 mb-3">2. Attach realized-edge annotations and fit one shared hierarchy across days</h3>
+            <p>
+              After date filtering and simplification, the code attaches deterministic <b>realized-edge annotations</b> such as centroid distance, gravity-like terms derived from farm and animal counts, optional feature cosine similarity, and calendar descriptors. The important methodological detail is that these variables are attached to edges that actually occurred. They are not evaluated over all possible dyads, so they should be read as observed edge annotations informing inference rather than as a standalone edge-formation regression.
+            </p>
+            <p>
+              The fitted model is a <b>degree-corrected layered nested SBM</b>. “Layered” means daily snapshots are treated as linked layers; “nested” means block structure is learned hierarchically rather than fixed at one resolution; and “shared hierarchy” means the model looks for persistent mesoscale organization across the whole panel rather than fitting each day in isolation.<sup><a href="#ref5">[5]</a></sup><sup><a href="#ref6">[6]</a></sup> In the implementation, farm and region node types are also constrained so the model does not merge those semantics into the same block.
+            </p>
+
+            <div class="concept-card my-4" id="hierarchyConceptCard">
+              <div class="toolbar">
+                <p class="title mb-0">Concept sketch: daily layers, one latent hierarchy, many draws</p>
+                <div class="d-flex gap-2 flex-wrap">
+                  <button class="btn btn-sm btn-secondary" id="hierarchyReseed"><i class="fa-solid fa-dice me-1"></i>Resample draws</button>
+                  <button class="btn btn-sm btn-secondary" id="hierarchyRefresh"><i class="fa-solid fa-rotate me-1"></i><span id="hierarchyRefreshLabel">Posterior refresh: off</span></button>
+                </div>
+              </div>
+              <div class="viz" id="hierarchyViz"></div>
+              <div class="p-3">
+                <div class="caption">
+                  The point is not that day 1, day 2, and day 3 are identical. The point is that they are interpreted through one shared latent hierarchy. Once that hierarchy is fitted, the workflow can optionally refresh the partition locally and generate multiple plausible panels from the same fitted model.<sup><a href="#ref5">[5]</a></sup><sup><a href="#ref6">[6]</a></sup><sup><a href="#ref10">[10]</a></sup>
+                </div>
+              </div>
+            </div>
+
+            <h3 class="mt-5 mb-3">3. Let the data choose a weight family</h3>
+            <p>
+              If weights are available, the pipeline does not silently assume one observation family. Instead it builds a support-compatible candidate set and chooses the best one by description length. Integer-valued weights can be compared under discrete Poisson and discrete geometric families. Non-negative continuous weights can be compared under a raw-scale exponential model or a transformed Gaussian model. Unrestricted continuous weights fall back to Gaussian.<sup><a href="#ref7">[7]</a></sup>
+            </p>
+            <p>
+              That choice matters because weight modelling is part of the generative story, not just a preprocessing afterthought. In other words, the model is not only learning <em>whether</em> an edge exists on a given day; it is also learning how movement intensity should be represented.
+            </p>
+
+            <h3 class="mt-5 mb-3">4. Regenerate weights with channel-aware backoff instead of one global fallback</h3>
+            <p>
+              Synthetic topology is sampled first. Then synthetic edge weights are drawn conditionally. Ideally, a new weight would be drawn from the exact day-and-block cell that matches the sampled edge. But exact cells are often sparse in real temporal panels. The elegant part of the implementation is the <b>channel-aware backoff hierarchy</b>:
+              $$
+              (t,r,s) \rightarrow (r,s) \rightarrow (t,\tau_u,\tau_v) \rightarrow (\tau_u,\tau_v) \rightarrow (t) \rightarrow \text{global}.
+              $$
+              Here $(r,s)$ is the sampled block pair and $(\tau_u,\tau_v)$ is the ordered hybrid edge channel.
+            </p>
+            <p>
+              This matters because an $F\to F$ edge and an $R\to F$ edge do not usually have the same typical intensity. If sparse cells were shrunk directly to one global mean, the synthetic panel would blur precisely the hybrid structure we care about.
+            </p>
+
+            <div class="concept-card my-4" id="backoffConceptCard">
+              <div class="toolbar">
+                <p class="title mb-0">Concept sketch: channel-aware weight backoff</p>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                  <span class="small text-muted">minimum support</span>
+                  <input type="range" id="backoffThreshold" min="1" max="18" step="1" value="3" />
+                  <span class="small fw-bold" id="backoffThresholdVal">3</span>
+                  <span class="small text-muted ms-2">exact-cell support</span>
+                  <input type="range" id="backoffExact" min="0" max="10" step="1" value="2" />
+                  <span class="small fw-bold" id="backoffExactVal">2</span>
+                </div>
+              </div>
+              <div class="viz" id="backoffViz"></div>
+              <div class="p-3">
+                <div class="detail-box" id="backoffDetail"></div>
+                <div class="caption mt-2">
+                  With the default threshold, sparse exact cells borrow strength from the next best supported level. The crucial middle levels preserve hybrid channel semantics, so the sampler can remain conservative without collapsing all movement intensities to the same network-wide baseline.
+                </div>
+              </div>
+            </div>
+
+            <h3 class="mt-5 mb-3">5. Generate an ensemble, not a single substitute network</h3>
+            <p>
+              Once the model is fitted, synthetic panels are sampled snapshot by snapshot on the same daily layer grid. The code can optionally refresh the partition by local MCMC sweeps before generation, which lets repeated synthetic panels explore partition uncertainty near the fitted optimum. In the main workflow, multiple topological samplers and rewiring-based sensitivity settings can then be crossed to form a grid of generated scenarios.
+            </p>
+            <p>
+              The important interpretive point is that setting-level summaries are <b>posterior summaries over repeated generated panels</b>, not claims about one internally privileged synthetic graph. That is exactly the right mindset for posterior-predictive checking: the question is whether the ensemble reproduces the observed descriptors, not whether one sample can mimic every edge perfectly.<sup><a href="#ref8">[8]</a></sup><sup><a href="#ref9">[9]</a></sup><sup><a href="#ref10">[10]</a></sup>
+            </p>
+
+            <h3 class="mt-5 mb-3">6. Validate on two levels: structure and spread</h3>
+            <p>
+              The validation stack is broader than a typical degree-distribution check. At the first layer, <code>diagnostics.py</code> compares observed and synthetic panels directly with per-snapshot overlap, activity, density, reciprocity, weight totals, and novelty. Then it moves to temporal turnover via <b>TEA</b> and <b>TNA</b>, which ask whether the model gets persistence, new activation, reactivation, and churn right.
+            </p>
+            <p>
+              After that come the higher-order checks: stationary mass under PageRank-like random walks and direction-sensitive <b>magnetic Laplacian</b> spectra. These help test whether the synthetic ensemble preserves flow concentration and directional organization, not only edge counts.<sup><a href="#ref11">[11]</a></sup><sup><a href="#ref12">[12]</a></sup><sup><a href="#ref13">[13]</a></sup>
+            </p>
+
+            <div class="concept-card my-4" id="validationConceptCard">
+              <div class="toolbar">
+                <p class="title mb-0">Concept sketch: the validation stack</p>
+                <div class="d-flex gap-2 flex-wrap">
+                  <button class="btn btn-sm btn-secondary validation-mode" data-mode="structural">Structural</button>
+                  <button class="btn btn-sm btn-secondary validation-mode" data-mode="higher">Higher-order</button>
+                  <button class="btn btn-sm btn-secondary validation-mode" data-mode="transmission">Transmission</button>
+                </div>
+              </div>
+              <div class="viz" id="validationViz"></div>
+              <div class="p-3">
+                <div class="metric-pills" id="validationMetrics"></div>
+                <div class="caption mt-2">
+                  This is an illustrative dashboard, not an empirical figure from the paper. It shows how the workflow stacks direct panel comparison, higher-order temporal diagnostics, and a spread-oriented stress test instead of relying on a single goodness-of-fit number.<sup><a href="#ref9">[9]</a></sup><sup><a href="#ref10">[10]</a></sup><sup><a href="#ref12">[12]</a></sup><sup><a href="#ref13">[13]</a></sup>
+                </div>
+              </div>
+            </div>
+
+            <h3 class="mt-5 mb-3">7. The transmission “reality check” is about spread-relevant structure, not forecasting</h3>
+            <p>
+              The final step is where the pipeline becomes more than a network-fitting exercise. In <code>simulation.py</code>, farms are the true epidemic units and region supernodes are treated as external pressure reservoirs. That distinction is crucial. A region node is not interpreted as an infected mega-premise. It is a coarse state summarizing import pressure from the contracted outside world.
+            </p>
+            <p>
+              The simulator assigns separate channel-specific multipliers to the four hybrid edge classes, supports SIR/SIS/SEIR-style farm dynamics, and applies matched seeding to observed and synthetic panels. The main reported endpoints are farm-based: attack rate, peak prevalence, peak timing, outbreak duration, and time to the first newly infected farm beyond the seed set. That makes the simulation a propagation-based validation layer, not a calibrated national forecast.<sup><a href="#ref2">[2]</a></sup><sup><a href="#ref3">[3]</a></sup>
+            </p>
+
+            <div class="workflow-note my-4">
+              <strong>Why this is a strong design choice.</strong> Structural agreement alone does not guarantee epidemiological agreement. The reality-check simulator asks a narrower and more defensible question: if two temporal panels are fed into the same channel-aware farm-centred transmission rule, do they induce similar farm-level outbreak behaviour?
+            </div>
+
+            <h3 class="mt-5 mb-3">Why this pipeline matters</h3>
+            <p>
+              What makes the methodology interesting is not any one component in isolation. Hybrid graph contraction, layered SBMs, weighted SBMs, posterior-predictive checks, and propagation models all exist separately in the literature. What this paper does is wire them together into one coherent workflow: compress the network without losing the focal question, fit a model that respects temporal and multiscale structure, generate an ensemble instead of a single replacement, and evaluate that ensemble with both network-science and epidemiological diagnostics.<sup><a href="#ref4">[4]</a></sup><sup><a href="#ref5">[5]</a></sup><sup><a href="#ref6">[6]</a></sup><sup><a href="#ref7">[7]</a></sup><sup><a href="#ref10">[10]</a></sup>
+            </p>
+            <p>
+              In plain language, the pipeline asks a better question than “does the synthetic graph look similar?”. It asks: <em>does the model preserve the structures that matter for the scientific question?</em> For a focal-region livestock movement network, that is exactly the question worth asking.
+            </p>
+
+            <h3 class="mt-5 mb-3">References</h3>
+            <ol class="small">
+              <li id="ref1">
+                Holme P, Saramäki J. 2012. <em>Temporal networks</em>. <em>Physics Reports</em>.
+                <a href="https://doi.org/10.1016/j.physrep.2012.03.001" target="_blank" rel="noopener">doi:10.1016/j.physrep.2012.03.001</a>
+              </li>
+              <li id="ref2">
+                Chaters GL et al. 2019. <em>Analysing livestock network data for infectious disease control: an argument for routine data collection in emerging economies</em>. <em>Philosophical Transactions of the Royal Society B</em>.
+                <a href="https://doi.org/10.1098/rstb.2018.0264" target="_blank" rel="noopener">doi:10.1098/rstb.2018.0264</a>
+              </li>
+              <li id="ref3">
+                Leung WTM, Rudge JW, Fournié G. 2023. <em>Simulating contact networks for livestock disease epidemiology: a systematic review</em>. <em>Journal of the Royal Society Interface</em>.
+                <a href="https://doi.org/10.1098/rsif.2022.0890" target="_blank" rel="noopener">doi:10.1098/rsif.2022.0890</a>
+              </li>
+              <li id="ref4">
+                Chen J, Saad Y, Zhang Z. 2022. <em>Graph coarsening: from scientific computing to machine learning</em>. <em>SeMA Journal</em>.
+                <a href="https://doi.org/10.1007/s40324-021-00282-x" target="_blank" rel="noopener">doi:10.1007/s40324-021-00282-x</a>
+              </li>
+              <li id="ref5">
+                Peixoto TP. 2014. <em>Hierarchical block structures and high-resolution model selection in large networks</em>. <em>Physical Review X</em>.
+                <a href="https://doi.org/10.1103/PhysRevX.4.011047" target="_blank" rel="noopener">doi:10.1103/PhysRevX.4.011047</a>
+              </li>
+              <li id="ref6">
+                Peixoto TP. 2015. <em>Inferring the mesoscale structure of layered, edge-valued, and time-varying networks</em>. <em>Physical Review E</em>.
+                <a href="https://doi.org/10.1103/PhysRevE.92.042807" target="_blank" rel="noopener">doi:10.1103/PhysRevE.92.042807</a>
+              </li>
+              <li id="ref7">
+                Peixoto TP. 2018. <em>Nonparametric weighted stochastic block models</em>. <em>Physical Review E</em>.
+                <a href="https://doi.org/10.1103/PhysRevE.97.012306" target="_blank" rel="noopener">doi:10.1103/PhysRevE.97.012306</a>
+              </li>
+              <li id="ref8">
+                Gelman A, Meng X-L, Stern H. 1996. <em>Posterior predictive assessment of model fitness via realized discrepancies</em>. <em>Statistica Sinica</em>.
+                <a href="https://www3.stat.sinica.edu.tw/statistica/j6n4/j6n41/j6n41.htm" target="_blank" rel="noopener">journal page</a>
+              </li>
+              <li id="ref9">
+                Hunter DR, Goodreau SM, Handcock MS. 2008. <em>Goodness of fit of social network models</em>. <em>Journal of the American Statistical Association</em>.
+                <a href="https://doi.org/10.1198/016214507000000446" target="_blank" rel="noopener">doi:10.1198/016214507000000446</a>
+              </li>
+              <li id="ref10">
+                Vaca-Ramírez F, Peixoto TP. 2022. <em>Systematic assessment of the quality of fit of the stochastic block model for empirical networks</em>. <em>Physical Review E</em>.
+                <a href="https://doi.org/10.1103/PhysRevE.105.054311" target="_blank" rel="noopener">doi:10.1103/PhysRevE.105.054311</a>
+              </li>
+              <li id="ref11">
+                Page L, Brin S, Motwani R, Winograd T. 1999. <em>The PageRank citation ranking: Bringing order to the web</em>. Stanford InfoLab Technical Report 1999-66.
+                <a href="https://ilpubs.stanford.edu/422/1/1999-66.pdf" target="_blank" rel="noopener">PDF</a>
+              </li>
+              <li id="ref12">
+                Fanuel M, Alaíz CM, Fernández Á, Suykens JAK. 2018. <em>Magnetic eigenmaps for the visualization of directed networks</em>. <em>Applied and Computational Harmonic Analysis</em>.
+                <a href="https://doi.org/10.1016/j.acha.2017.01.004" target="_blank" rel="noopener">doi:10.1016/j.acha.2017.01.004</a>
+              </li>
+              <li id="ref13">
+                de Resende BMF, Costa LdF. 2020. <em>Characterization and comparison of large directed networks through the spectra of the magnetic Laplacian</em>. <em>Chaos</em>.
+                <a href="https://doi.org/10.1063/5.0006891" target="_blank" rel="noopener">doi:10.1063/5.0006891</a>
+              </li>
+              <li id="ref14">
+                Statistics Netherlands (CBS). <em>COROP region</em>.
+                <a href="https://www.cbs.nl/en-gb/our-services/methods/definitions/corop-region" target="_blank" rel="noopener">official definition</a>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <footer class="footer text-center py-4">
+        <small class="copyright">Copyright © Tianjian Qin</small>
+      </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      (function () {
+        if (!window.d3) return;
+
+        // ------------------------------------------------------------
+        // Shared helpers
+        // ------------------------------------------------------------
+        function drawArrow(defs, id, color, opacity = 0.6) {
+          const marker = defs
+            .append("marker")
+            .attr("id", id)
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 9)
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto");
+          marker
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", color)
+            .attr("opacity", opacity);
+        }
+
+        // ------------------------------------------------------------
+        // Pipeline overview
+        // ------------------------------------------------------------
+        const pipelineHost = document.getElementById("pipelineViz");
+        const pipelineDetail = document.getElementById("pipelineDetail");
+        const pipelinePrev = document.getElementById("pipelinePrev");
+        const pipelineNext = document.getElementById("pipelineNext");
+        if (pipelineHost && pipelineDetail) {
+          const stages = [
+            {
+              short: "Observe",
+              title: "Start from one observed temporal panel",
+              file: "input movement records",
+              blurb:
+                "Daily directed livestock movements are the only empirical realization we directly observe. The pipeline treats that panel as one sparse draw from an underlying process, not as a fully exhaustive truth.",
+              outputs: ["filtered daily edge table", "ordered snapshot grid", "fixed node universe"],
+            },
+            {
+              short: "Hybridize",
+              title: "Contract the outside world, keep the focal farms",
+              file: "pipeline.py",
+              blurb:
+                "Focal farms stay explicit while non-focal premises are merged into COROP supernodes. This preserves local detail and boundary flux at the same time.",
+              outputs: ["Farm nodes", "Region supernodes", "F→F / F→R / R→F / R→R channels"],
+            },
+            {
+              short: "Annotate",
+              title: "Attach realized-edge annotations",
+              file: "pipeline.py",
+              blurb:
+                "Distance, gravity-like covariates, optional feature similarity, and calendar descriptors are attached to observed edges only. They inform inference without becoming a full dyad-space regression.",
+              outputs: ["edge covariates", "layer index", "weight transforms"],
+            },
+            {
+              short: "Fit",
+              title: "Infer a layered nested SBM",
+              file: "pipeline.py",
+              blurb:
+                "One shared hierarchy is learned across daily layers. The fit can be degree-corrected, type-constrained, and weight-aware, with automatic support-compatible weight-family comparison.",
+              outputs: ["fitted state", "selected weight family", "node-to-block map"],
+            },
+            {
+              short: "Generate",
+              title: "Sample many posterior-predictive panels",
+              file: "pipeline.py",
+              blurb:
+                "The fitted state can be locally refreshed by MCMC sweeps. Synthetic topology is then drawn snapshot by snapshot, and weights are regenerated using channel-aware backoff.",
+              outputs: ["synthetic panels", "posterior draws", "sensitivity settings"],
+            },
+            {
+              short: "Validate",
+              title: "Judge the ensemble, not one graph",
+              file: "diagnostics.py + simulation.py",
+              blurb:
+                "Observed and synthetic panels are compared with snapshot overlap, TEA/TNA, channel composition, π-mass, magnetic spectra, and a farm-centred transmission stress test.",
+              outputs: ["structural GOF", "higher-order GOF", "farm-level outcome comparison"],
+            },
+          ];
+
+          let activeStage = 0;
+
+          function renderPipeline() {
+            pipelineHost.innerHTML = "";
+            const W = pipelineHost.clientWidth || 800;
+            const H = pipelineHost.clientHeight || 360;
+            const svg = d3
+              .select(pipelineHost)
+              .append("svg")
+              .attr("width", "100%")
+              .attr("height", "100%")
+              .attr("viewBox", `0 0 ${W} ${H}`)
+              .style("display", "block");
+
+            const defs = svg.append("defs");
+            drawArrow(defs, "pipelineArrow", "currentColor", 0.45);
+
+            const g = svg.append("g").attr("transform", "translate(18,22)");
+            const iw = W - 36;
+            const ih = H - 44;
+            const vertical = iw < 620;
+            const boxW = vertical ? iw - 20 : Math.min(145, (iw - 20 - (stages.length - 1) * 10) / stages.length);
+            const boxH = 72;
+            const gap = 12;
+
+            const positions = stages.map((d, i) => {
+              if (vertical) {
+                return { x: 10, y: i * (boxH + gap) + 4 };
+              }
+              const totalW = stages.length * boxW + (stages.length - 1) * gap;
+              const x0 = (iw - totalW) / 2;
+              return { x: x0 + i * (boxW + gap), y: ih / 2 - boxH / 2 - 10 };
+            });
+
+            positions.forEach((p, i) => {
+              if (i === stages.length - 1) return;
+              const next = positions[i + 1];
+              const x1 = vertical ? p.x + boxW / 2 : p.x + boxW;
+              const y1 = vertical ? p.y + boxH : p.y + boxH / 2;
+              const x2 = vertical ? next.x + boxW / 2 : next.x;
+              const y2 = vertical ? next.y : next.y + boxH / 2;
+              g.append("line")
+                .attr("x1", x1)
+                .attr("y1", y1)
+                .attr("x2", x2)
+                .attr("y2", y2)
+                .attr("stroke", "currentColor")
+                .attr("stroke-opacity", 0.22)
+                .attr("stroke-width", 1.6)
+                .attr("marker-end", "url(#pipelineArrow)");
+            });
+
+            const stageG = g
+              .selectAll("g.stage")
+              .data(stages)
+              .enter()
+              .append("g")
+              .attr("class", "stage")
+              .attr("transform", (d, i) => `translate(${positions[i].x},${positions[i].y})`)
+              .style("cursor", "pointer")
+              .on("click", (event, d) => {
+                activeStage = stages.indexOf(d);
+                renderPipeline();
+              });
+
+            stageG
+              .append("rect")
+              .attr("width", boxW)
+              .attr("height", boxH)
+              .attr("rx", 12)
+              .attr("ry", 12)
+              .attr("fill", (d, i) => (i === activeStage ? "rgba(47,128,237,0.16)" : "rgba(0,0,0,0.03)"))
+              .attr("stroke", (d, i) => (i === activeStage ? "#2f80ed" : "rgba(0,0,0,0.12)"))
+              .attr("stroke-width", (d, i) => (i === activeStage ? 2.1 : 1.1));
+
+            stageG
+              .append("text")
+              .attr("x", 12)
+              .attr("y", 22)
+              .attr("font-size", 12)
+              .attr("font-weight", 700)
+              .attr("fill", "currentColor")
+              .text((d) => d.short);
+
+            stageG.each(function (d) {
+              const sel = d3.select(this);
+              const words = d.title.split(" ");
+              const lines = [];
+              let line = "";
+              words.forEach((word) => {
+                const test = line ? `${line} ${word}` : word;
+                if (test.length > 18 && line) {
+                  lines.push(line);
+                  line = word;
+                } else {
+                  line = test;
+                }
+              });
+              if (line) lines.push(line);
+              sel
+                .append("text")
+                .attr("x", 12)
+                .attr("y", 40)
+                .attr("font-size", 11)
+                .attr("fill", "currentColor")
+                .attr("opacity", 0.8)
+                .selectAll("tspan")
+                .data(lines.slice(0, 2))
+                .enter()
+                .append("tspan")
+                .attr("x", 12)
+                .attr("dy", (s, i) => (i === 0 ? 0 : 13))
+                .text((s) => s);
+            });
+
+            const current = stages[activeStage];
+            pipelineDetail.innerHTML = `
+              <div class="kicker">${current.file}</div>
+              <div class="headline">${current.title}</div>
+              <div>${current.blurb}</div>
+              <div class="detail-grid">
+                ${current.outputs
+                  .map(
+                    (d) => `<div class="detail-chip"><i class="fa-solid fa-check"></i><span>${d}</span></div>`,
+                  )
+                  .join("")}
+              </div>
+            `;
+          }
+
+          pipelinePrev?.addEventListener("click", () => {
+            activeStage = (activeStage - 1 + stages.length) % stages.length;
+            renderPipeline();
+          });
+          pipelineNext?.addEventListener("click", () => {
+            activeStage = (activeStage + 1) % stages.length;
+            renderPipeline();
+          });
+          window.addEventListener("resize", renderPipeline, { passive: true });
+          renderPipeline();
+        }
+
+        // ------------------------------------------------------------
+        // Hybrid contraction sketch
+        // ------------------------------------------------------------
+        const hybridHost = document.getElementById("hybridViz");
+        const hybridBtn = document.getElementById("btnHybridToggle");
+        const hybridBtnLabel = document.getElementById("btnHybridToggleLabel");
+        if (hybridHost) {
+          const colors = { focal: "#2f80ed", r1: "#f2994a", r2: "#eb5757" };
+          let contracted = true;
+
+          const fullNodes = [
+            { id: "F1", group: "focal", x: 0.24, y: 0.20 },
+            { id: "F2", group: "focal", x: 0.18, y: 0.38 },
+            { id: "F3", group: "focal", x: 0.30, y: 0.36 },
+            { id: "F4", group: "focal", x: 0.20, y: 0.60 },
+            { id: "F5", group: "focal", x: 0.32, y: 0.58 },
+            { id: "F6", group: "focal", x: 0.26, y: 0.78 },
+            { id: "A1", group: "r1", x: 0.72, y: 0.18 },
+            { id: "A2", group: "r1", x: 0.84, y: 0.24 },
+            { id: "A3", group: "r1", x: 0.74, y: 0.38 },
+            { id: "A4", group: "r1", x: 0.86, y: 0.42 },
+            { id: "B1", group: "r2", x: 0.72, y: 0.60 },
+            { id: "B2", group: "r2", x: 0.84, y: 0.64 },
+            { id: "B3", group: "r2", x: 0.74, y: 0.80 },
+            { id: "B4", group: "r2", x: 0.86, y: 0.84 },
+          ];
+
+          const edges = [
+            ["F1", "F2"], ["F2", "F3"], ["F3", "F5"], ["F5", "F6"], ["F4", "F6"], ["F2", "F4"], ["F1", "F3"],
+            ["A1", "A2"], ["A2", "A3"], ["A3", "A4"], ["A1", "A4"],
+            ["B1", "B2"], ["B2", "B3"], ["B3", "B4"], ["B1", "B4"],
+            ["F1", "A1"], ["F1", "A2"], ["F2", "A3"], ["F3", "A4"], ["F4", "B1"], ["F5", "B2"], ["F6", "B3"], ["F3", "B4"],
+            ["A2", "B1"], ["A3", "B2"], ["A4", "B3"], ["A1", "B4"],
+          ];
+
+          const byId = Object.fromEntries(fullNodes.map((d) => [d.id, d]));
+
+          function loopPath(x, y, r) {
+            return `M${x + r},${y} A${r},${r} 0 1,1 ${x - r},${y} A${r},${r} 0 1,1 ${x + r},${y}`;
+          }
+
+          function aggregateEdges() {
+            const supernodes = {
+              r1: { id: "R1", group: "r1", x: 0.78, y: 0.28, super: true },
+              r2: { id: "R2", group: "r2", x: 0.78, y: 0.72, super: true },
+            };
+            const mapped = (node) => (node.group === "focal" ? node : supernodes[node.group]);
+            const agg = new Map();
+            edges.forEach(([u, v]) => {
+              const a = mapped(byId[u]);
+              const b = mapped(byId[v]);
+              const key = `${a.id}->${b.id}`;
+              if (!agg.has(key)) agg.set(key, { a, b, count: 0 });
+              agg.get(key).count += 1;
+            });
+            return { nodes: [...fullNodes.filter((d) => d.group === "focal"), supernodes.r1, supernodes.r2], edges: Array.from(agg.values()) };
+          }
+
+          function drawHybrid() {
+            hybridHost.innerHTML = "";
+            const W = hybridHost.clientWidth || 800;
+            const H = hybridHost.clientHeight || 360;
+            const svg = d3
+              .select(hybridHost)
+              .append("svg")
+              .attr("width", "100%")
+              .attr("height", "100%")
+              .attr("viewBox", `0 0 ${W} ${H}`)
+              .style("display", "block");
+            const g = svg.append("g").attr("transform", "translate(14,16)");
+            const iw = W - 28;
+            const ih = H - 32;
+            const stacked = iw < 620;
+            const panelW = stacked ? iw : (iw - 20) / 2;
+            const panelH = stacked ? (ih - 16) / 2 : ih;
+
+            const panels = [
+              { x: 0, y: 0, title: "Full premise graph" },
+              { x: stacked ? 0 : panelW + 20, y: stacked ? panelH + 16 : 0, title: contracted ? "Hybrid contraction" : "Expanded comparison" },
+            ];
+
+            function scaleNode(node, panel) {
+              const x = panel.x + 16 + node.x * (panelW - 32);
+              const y = panel.y + 26 + node.y * (panelH - 52);
+              return { x, y };
+            }
+
+            panels.forEach((panel) => {
+              g.append("rect")
+                .attr("x", panel.x)
+                .attr("y", panel.y)
+                .attr("width", panelW)
+                .attr("height", panelH)
+                .attr("rx", 10)
+                .attr("ry", 10)
+                .attr("fill", "rgba(0,0,0,0.02)")
+                .attr("stroke", "rgba(0,0,0,0.12)");
+              g.append("text")
+                .attr("x", panel.x + 12)
+                .attr("y", panel.y + 18)
+                .attr("font-size", 12)
+                .attr("fill", "currentColor")
+                .attr("opacity", 0.75)
+                .text(panel.title);
+            });
+
+            // left panel full
+            const left = panels[0];
+            const haloData = [
+              { x: 0.24, y: 0.48, rx: 0.18, ry: 0.34, color: colors.focal, label: "focal farms" },
+              { x: 0.79, y: 0.30, rx: 0.14, ry: 0.20, color: colors.r1, label: "external COROP A" },
+              { x: 0.79, y: 0.72, rx: 0.14, ry: 0.20, color: colors.r2, label: "external COROP B" },
+            ];
+            haloData.forEach((d) => {
+              g.append("ellipse")
+                .attr("cx", left.x + 16 + d.x * (panelW - 32))
+                .attr("cy", left.y + 26 + d.y * (panelH - 52))
+                .attr("rx", d.rx * (panelW - 32))
+                .attr("ry", d.ry * (panelH - 52))
+                .attr("fill", d.color)
+                .attr("opacity", 0.07)
+                .attr("stroke", d.color)
+                .attr("stroke-opacity", 0.28)
+                .attr("stroke-dasharray", "4,4");
+              g.append("text")
+                .attr("x", left.x + 16 + d.x * (panelW - 32))
+                .attr("y", left.y + 22 + (d.y - d.ry) * (panelH - 52))
+                .attr("text-anchor", "middle")
+                .attr("font-size", 10.5)
+                .attr("fill", "currentColor")
+                .attr("opacity", 0.6)
+                .text(d.label);
+            });
+
+            edges.forEach(([u, v]) => {
+              const a = scaleNode(byId[u], left);
+              const b = scaleNode(byId[v], left);
+              g.append("line")
+                .attr("x1", a.x)
+                .attr("y1", a.y)
+                .attr("x2", b.x)
+                .attr("y2", b.y)
+                .attr("stroke", "currentColor")
+                .attr("stroke-opacity", 0.12)
+                .attr("stroke-width", 1.1);
+            });
+
+            fullNodes.forEach((d) => {
+              const p = scaleNode(d, left);
+              g.append("circle")
+                .attr("cx", p.x)
+                .attr("cy", p.y)
+                .attr("r", 4.2)
+                .attr("fill", colors[d.group])
+                .attr("opacity", 0.94);
+            });
+
+            // right panel contracted or expanded
+            const right = panels[1];
+            if (!contracted) {
+              haloData.forEach((d) => {
+                g.append("ellipse")
+                  .attr("cx", right.x + 16 + d.x * (panelW - 32))
+                  .attr("cy", right.y + 26 + d.y * (panelH - 52))
+                  .attr("rx", d.rx * (panelW - 32))
+                  .attr("ry", d.ry * (panelH - 52))
+                  .attr("fill", d.color)
+                  .attr("opacity", 0.07)
+                  .attr("stroke", d.color)
+                  .attr("stroke-opacity", 0.28)
+                  .attr("stroke-dasharray", "4,4");
+              });
+              edges.forEach(([u, v]) => {
+                const a = scaleNode(byId[u], right);
+                const b = scaleNode(byId[v], right);
+                g.append("line")
+                  .attr("x1", a.x)
+                  .attr("y1", a.y)
+                  .attr("x2", b.x)
+                  .attr("y2", b.y)
+                  .attr("stroke", "currentColor")
+                  .attr("stroke-opacity", 0.12)
+                  .attr("stroke-width", 1.1);
+              });
+              fullNodes.forEach((d) => {
+                const p = scaleNode(d, right);
+                g.append("circle")
+                  .attr("cx", p.x)
+                  .attr("cy", p.y)
+                  .attr("r", 4.2)
+                  .attr("fill", colors[d.group])
+                  .attr("opacity", 0.94);
+              });
+            } else {
+              const agg = aggregateEdges();
+              const maxCount = d3.max(agg.edges, (d) => d.count) || 1;
+              const width = d3.scaleSqrt().domain([1, maxCount]).range([1.4, 6.5]);
+
+              agg.edges.forEach((edge) => {
+                const a = scaleNode(edge.a, right);
+                const b = scaleNode(edge.b, right);
+                const same = edge.a.id === edge.b.id;
+                if (same) {
+                  g.append("path")
+                    .attr("d", loopPath(a.x + 8, a.y - 2, 10 + width(edge.count)))
+                    .attr("fill", "none")
+                    .attr("stroke", colors[edge.a.group])
+                    .attr("stroke-opacity", 0.42)
+                    .attr("stroke-width", width(edge.count));
+                } else {
+                  g.append("line")
+                    .attr("x1", a.x)
+                    .attr("y1", a.y)
+                    .attr("x2", b.x)
+                    .attr("y2", b.y)
+                    .attr("stroke", edge.a.group === edge.b.group ? colors[edge.a.group] : "currentColor")
+                    .attr("stroke-opacity", 0.26)
+                    .attr("stroke-width", width(edge.count))
+                    .attr("stroke-linecap", "round");
+                }
+              });
+
+              agg.nodes.forEach((d) => {
+                const p = scaleNode(d, right);
+                const r = d.super ? 14 : 4.2;
+                g.append("circle")
+                  .attr("cx", p.x)
+                  .attr("cy", p.y)
+                  .attr("r", r)
+                  .attr("fill", colors[d.group])
+                  .attr("opacity", 0.94)
+                  .attr("stroke", d.super ? "currentColor" : "none")
+                  .attr("stroke-opacity", d.super ? 0.2 : 0)
+                  .attr("stroke-width", d.super ? 1.2 : 0);
+                if (d.super) {
+                  g.append("text")
+                    .attr("x", p.x)
+                    .attr("y", p.y + 4)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", 11)
+                    .attr("font-weight", 700)
+                    .attr("fill", "#fff")
+                    .text(d.id);
+                }
+              });
+
+              g.append("text")
+                .attr("x", right.x + 12)
+                .attr("y", right.y + panelH - 16)
+                .attr("font-size", 10.5)
+                .attr("fill", "currentColor")
+                .attr("opacity", 0.62)
+                .text("supernode width / loops show merged external structure");
+            }
+          }
+
+          function updateHybridButton() {
+            if (!hybridBtnLabel) return;
+            hybridBtnLabel.textContent = contracted ? "Expand right panel" : "Contract right panel";
+          }
+
+          hybridBtn?.addEventListener("click", () => {
+            contracted = !contracted;
+            updateHybridButton();
+            drawHybrid();
+          });
+          window.addEventListener("resize", drawHybrid, { passive: true });
+          updateHybridButton();
+          drawHybrid();
+        }
+
+        // ------------------------------------------------------------
+        // Hierarchy / posterior predictive sketch
+        // ------------------------------------------------------------
+        const hierarchyHost = document.getElementById("hierarchyViz");
+        const hierarchyReseed = document.getElementById("hierarchyReseed");
+        const hierarchyRefresh = document.getElementById("hierarchyRefresh");
+        const hierarchyRefreshLabel = document.getElementById("hierarchyRefreshLabel");
+        if (hierarchyHost) {
+          let hierarchySeed = 1;
+          let refreshOn = false;
+
+          function mulberry32(a) {
+            return function () {
+              a |= 0;
+              a = (a + 0x6d2b79f5) | 0;
+              let t = Math.imul(a ^ (a >>> 15), 1 | a);
+              t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+              return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+          }
+
+          const miniNodes = [
+            { id: 0, block: 0, x: 0.23, y: 0.25 },
+            { id: 1, block: 0, x: 0.18, y: 0.52 },
+            { id: 2, block: 0, x: 0.26, y: 0.78 },
+            { id: 3, block: 1, x: 0.74, y: 0.24 },
+            { id: 4, block: 1, x: 0.82, y: 0.50 },
+            { id: 5, block: 1, x: 0.74, y: 0.78 },
+          ];
+
+          const observedLayers = [
+            { label: "day 1", edges: [[0,1],[1,2],[0,2],[3,4],[4,5],[0,3],[1,4]] },
+            { label: "day 2", edges: [[0,2],[2,1],[3,5],[4,5],[1,3],[2,4]] },
+            { label: "day 3", edges: [[0,1],[2,1],[3,4],[3,5],[0,4],[1,5]] },
+          ];
+
+          function sampleLayer(rng, pAA, pAB, pBB) {
+            const edges = [];
+            for (let i = 0; i < miniNodes.length; i++) {
+              for (let j = i + 1; j < miniNodes.length; j++) {
+                const a = miniNodes[i].block;
+                const b = miniNodes[j].block;
+                const p = a === 0 && b === 0 ? pAA : a === 1 && b === 1 ? pBB : pAB;
+                if (rng() < p) edges.push([i, j]);
+              }
+            }
+            return edges;
+          }
+
+          function drawMiniNetwork(g, x, y, w, h, title, edges, highlight = false) {
+            g.append("rect")
+              .attr("x", x)
+              .attr("y", y)
+              .attr("width", w)
+              .attr("height", h)
+              .attr("rx", 10)
+              .attr("ry", 10)
+              .attr("fill", "rgba(0,0,0,0.02)")
+              .attr("stroke", highlight ? "#2f80ed" : "rgba(0,0,0,0.12)")
+              .attr("stroke-width", highlight ? 1.8 : 1.0);
+            g.append("text")
+              .attr("x", x + 10)
+              .attr("y", y + 16)
+              .attr("font-size", 11)
+              .attr("fill", "currentColor")
+              .attr("opacity", 0.75)
+              .text(title);
+
+            function px(d) { return x + 12 + d.x * (w - 24); }
+            function py(d) { return y + 26 + d.y * (h - 34); }
+
+            edges.forEach(([u, v]) => {
+              g.append("line")
+                .attr("x1", px(miniNodes[u]))
+                .attr("y1", py(miniNodes[u]))
+                .attr("x2", px(miniNodes[v]))
+                .attr("y2", py(miniNodes[v]))
+                .attr("stroke", "currentColor")
+                .attr("stroke-opacity", 0.18)
+                .attr("stroke-width", 1.1);
+            });
+
+            miniNodes.forEach((d) => {
+              g.append("circle")
+                .attr("cx", px(d))
+                .attr("cy", py(d))
+                .attr("r", 5)
+                .attr("fill", d.block === 0 ? "#2f80ed" : "#f2994a")
+                .attr("opacity", 0.92);
+            });
+          }
+
+          function drawHierarchy() {
+            hierarchyHost.innerHTML = "";
+            const W = hierarchyHost.clientWidth || 800;
+            const H = hierarchyHost.clientHeight || 360;
+            const svg = d3
+              .select(hierarchyHost)
+              .append("svg")
+              .attr("width", "100%")
+              .attr("height", "100%")
+              .attr("viewBox", `0 0 ${W} ${H}`)
+              .style("display", "block");
+            const defs = svg.append("defs");
+            drawArrow(defs, "hierArrow", "currentColor", 0.42);
+
+            const g = svg.append("g").attr("transform", "translate(14,14)");
+            const iw = W - 28;
+            const ih = H - 28;
+            const stacked = iw < 680;
+
+            const leftX = stacked ? 0 : 0;
+            const centerX = stacked ? iw * 0.16 : iw * 0.34;
+            const rightX = stacked ? 0 : iw * 0.67;
+            const miniW = stacked ? iw * 0.28 : iw * 0.24;
+            const miniH = stacked ? ih * 0.22 : ih * 0.25;
+            const gapY = 10;
+            const topY = stacked ? 0 : 10;
+
+            // observed layers
+            observedLayers.forEach((layer, i) => {
+              drawMiniNetwork(g, leftX, topY + i * (miniH + gapY), miniW, miniH, layer.label, layer.edges, false);
+            });
+
+            // hierarchy core
+            const hx = centerX;
+            const hy = stacked ? ih * 0.08 : ih * 0.18;
+            const hw = stacked ? iw * 0.68 : iw * 0.24;
+            const hh = stacked ? ih * 0.30 : ih * 0.54;
+
+            g.append("rect")
+              .attr("x", hx)
+              .attr("y", hy)
+              .attr("width", hw)
+              .attr("height", hh)
+              .attr("rx", 14)
+              .attr("ry", 14)
+              .attr("fill", refreshOn ? "rgba(86,204,242,0.12)" : "rgba(0,0,0,0.03)")
+              .attr("stroke", refreshOn ? "#56ccf2" : "rgba(0,0,0,0.12)")
+              .attr("stroke-width", refreshOn ? 1.8 : 1.1);
+
+            g.append("text")
+              .attr("x", hx + 14)
+              .attr("y", hy + 22)
+              .attr("font-size", 12)
+              .attr("font-weight", 700)
+              .attr("fill", "currentColor")
+              .text("shared latent hierarchy");
+
+            const layerBoxes = [
+              { x: hx + 18, y: hy + hh - 58, w: hw - 36, h: 34, label: "level 1: blocks over nodes" },
+              { x: hx + 36, y: hy + hh - 106, w: hw - 72, h: 30, label: "level 2: coarser groups" },
+              { x: hx + 60, y: hy + hh - 148, w: hw - 120, h: 26, label: "level 3: top summary" },
+            ];
+            layerBoxes.forEach((d, i) => {
+              g.append("rect")
+                .attr("x", d.x)
+                .attr("y", d.y)
+                .attr("width", d.w)
+                .attr("height", d.h)
+                .attr("rx", 8)
+                .attr("ry", 8)
+                .attr("fill", i === 0 ? "rgba(47,128,237,0.18)" : i === 1 ? "rgba(242,153,74,0.18)" : "rgba(86,204,242,0.18)")
+                .attr("stroke", "rgba(0,0,0,0.10)");
+              g.append("text")
+                .attr("x", d.x + d.w / 2)
+                .attr("y", d.y + d.h / 2 + 4)
+                .attr("text-anchor", "middle")
+                .attr("font-size", 11)
+                .attr("fill", "currentColor")
+                .text(d.label);
+            });
+
+            g.append("text")
+              .attr("x", hx + 14)
+              .attr("y", hy + hh - 72)
+              .attr("font-size", 10.5)
+              .attr("fill", "currentColor")
+              .attr("opacity", 0.68)
+              .text(refreshOn ? "posterior refresh perturbs this state before drawing panels" : "synthetic panels can be drawn directly from the fitted state");
+
+            // synthetic draws
+            const rng = mulberry32(hierarchySeed + (refreshOn ? 100 : 0));
+            const pAA = refreshOn ? 0.72 : 0.68;
+            const pAB = refreshOn ? 0.24 : 0.20;
+            const pBB = refreshOn ? 0.66 : 0.62;
+            const drawPanels = [0, 1, 2].map((i) => ({
+              label: `draw ${i + 1}`,
+              edges: sampleLayer(rng, pAA, pAB, pBB),
+            }));
+
+            const drawY0 = stacked ? hy + hh + 20 : topY;
+            drawPanels.forEach((layer, i) => {
+              drawMiniNetwork(g, rightX, drawY0 + i * (miniH + gapY), miniW, miniH, layer.label, layer.edges, true);
+            });
+
+            // arrows
+            const obsAnchorX = leftX + miniW + (stacked ? 12 : 10);
+            const obsY = topY + miniH * 1.5 + gapY;
+            const cY = hy + hh / 2;
+            g.append("line")
+              .attr("x1", obsAnchorX)
+              .attr("y1", obsY)
+              .attr("x2", hx - 10)
+              .attr("y2", cY)
+              .attr("stroke", "currentColor")
+              .attr("stroke-opacity", 0.22)
+              .attr("stroke-width", 1.5)
+              .attr("marker-end", "url(#hierArrow)");
+
+            const outX1 = hx + hw + 10;
+            const outX2 = rightX - 10;
+            const outY = stacked ? drawY0 - 10 : topY + miniH * 1.5 + gapY;
+            if (outX2 > outX1) {
+              g.append("line")
+                .attr("x1", outX1)
+                .attr("y1", cY)
+                .attr("x2", outX2)
+                .attr("y2", outY)
+                .attr("stroke", "currentColor")
+                .attr("stroke-opacity", 0.22)
+                .attr("stroke-width", 1.5)
+                .attr("marker-end", "url(#hierArrow)");
+            }
+          }
+
+          function updateRefreshLabel() {
+            if (hierarchyRefreshLabel) hierarchyRefreshLabel.textContent = refreshOn ? "Posterior refresh: on" : "Posterior refresh: off";
+          }
+          hierarchyReseed?.addEventListener("click", () => {
+            hierarchySeed += 1;
+            drawHierarchy();
+          });
+          hierarchyRefresh?.addEventListener("click", () => {
+            refreshOn = !refreshOn;
+            updateRefreshLabel();
+            drawHierarchy();
+          });
+          window.addEventListener("resize", drawHierarchy, { passive: true });
+          updateRefreshLabel();
+          drawHierarchy();
+        }
+
+        // ------------------------------------------------------------
+        // Backoff hierarchy sketch
+        // ------------------------------------------------------------
+        const backoffHost = document.getElementById("backoffViz");
+        const backoffDetail = document.getElementById("backoffDetail");
+        const backoffThreshold = document.getElementById("backoffThreshold");
+        const backoffThresholdVal = document.getElementById("backoffThresholdVal");
+        const backoffExact = document.getElementById("backoffExact");
+        const backoffExactVal = document.getElementById("backoffExactVal");
+        if (backoffHost && backoffDetail && backoffThreshold && backoffExact) {
+          const fixedSupports = [null, 11, 5, 30, 40, 210];
+          const levels = [
+            { key: "exact", label: "(t,r,s)", note: "same day × sampled block pair" },
+            { key: "block_pair", label: "(r,s)", note: "same sampled block pair across days" },
+            { key: "layer_channel", label: "(t,τu,τv)", note: "same day × hybrid channel" },
+            { key: "channel", label: "(τu,τv)", note: "same F/R channel across days" },
+            { key: "layer", label: "(t)", note: "day-only margin" },
+            { key: "global", label: "global", note: "network-wide fallback" },
+          ];
+
+          function selectedIndex(threshold, exactN) {
+            const supports = [exactN, ...fixedSupports.slice(1)];
+            for (let i = 0; i < supports.length; i++) {
+              if (supports[i] >= threshold) return i;
+            }
+            return supports.length - 1;
+          }
+
+          function drawBackoff() {
+            const threshold = +backoffThreshold.value;
+            const exactN = +backoffExact.value;
+            backoffThresholdVal.textContent = `${threshold}`;
+            backoffExactVal.textContent = `${exactN}`;
+            backoffHost.innerHTML = "";
+            const W = backoffHost.clientWidth || 800;
+            const H = backoffHost.clientHeight || 360;
+            const svg = d3
+              .select(backoffHost)
+              .append("svg")
+              .attr("width", "100%")
+              .attr("height", "100%")
+              .attr("viewBox", `0 0 ${W} ${H}`)
+              .style("display", "block");
+            const defs = svg.append("defs");
+            drawArrow(defs, "backoffArrow", "currentColor", 0.42);
+            const g = svg.append("g").attr("transform", "translate(18,18)");
+            const iw = W - 36;
+            const ih = H - 36;
+            const vertical = iw < 660;
+            const boxW = vertical ? iw - 30 : 110;
+            const boxH = 56;
+            const gap = 12;
+            const supports = [exactN, ...fixedSupports.slice(1)];
+            const sel = selectedIndex(threshold, exactN);
+            const totalW = vertical ? boxW : levels.length * boxW + (levels.length - 1) * gap;
+            const x0 = vertical ? 10 : (iw - totalW) / 2;
+            const y0 = vertical ? 6 : ih * 0.34;
+
+            levels.forEach((level, i) => {
+              const x = vertical ? x0 : x0 + i * (boxW + gap);
+              const y = vertical ? y0 + i * (boxH + gap) : y0;
+
+              g.append("rect")
+                .attr("x", x)
+                .attr("y", y)
+                .attr("width", boxW)
+                .attr("height", boxH)
+                .attr("rx", 10)
+                .attr("ry", 10)
+                .attr("fill", i === sel ? "rgba(47,128,237,0.16)" : "rgba(0,0,0,0.03)")
+                .attr("stroke", i === sel ? "#2f80ed" : "rgba(0,0,0,0.12)")
+                .attr("stroke-width", i === sel ? 2 : 1.1);
+
+              g.append("text")
+                .attr("x", x + 10)
+                .attr("y", y + 18)
+                .attr("font-size", 12)
+                .attr("font-weight", 700)
+                .attr("fill", "currentColor")
+                .text(level.label);
+              g.append("text")
+                .attr("x", x + 10)
+                .attr("y", y + 34)
+                .attr("font-size", 10.5)
+                .attr("fill", "currentColor")
+                .attr("opacity", 0.76)
+                .text(`support = ${supports[i]}`);
+              g.append("text")
+                .attr("x", x + 10)
+                .attr("y", y + 48)
+                .attr("font-size", 9.8)
+                .attr("fill", "currentColor")
+                .attr("opacity", 0.62)
+                .text(level.note);
+
+              if (i < levels.length - 1) {
+                const x1 = vertical ? x + boxW / 2 : x + boxW;
+                const y1 = vertical ? y + boxH : y + boxH / 2;
+                const x2 = vertical ? x + boxW / 2 : x + boxW + gap;
+                const y2 = vertical ? y + boxH + gap : y + boxH / 2;
+                g.append("line")
+                  .attr("x1", x1)
+                  .attr("y1", y1)
+                  .attr("x2", x2)
+                  .attr("y2", y2)
+                  .attr("stroke", "currentColor")
+                  .attr("stroke-opacity", 0.22)
+                  .attr("stroke-width", 1.4)
+                  .attr("marker-end", "url(#backoffArrow)");
+              }
+            });
+
+            backoffDetail.innerHTML = `
+              <div class="kicker">selected fallback level</div>
+              <div class="headline">${levels[sel].label}</div>
+              <div>
+                With <b>minimum support = ${threshold}</b> and <b>exact-cell support = ${exactN}</b>, the sampler would use the
+                <b>${levels[sel].key.replaceAll("_", " ")}</b> level first. The channel-aware middle levels are what prevent sparse cells from collapsing immediately to a single global weight distribution.
+              </div>
+            `;
+          }
+
+          [backoffThreshold, backoffExact].forEach((el) => {
+            el.addEventListener("input", drawBackoff);
+            el.addEventListener("change", drawBackoff);
+          });
+          window.addEventListener("resize", drawBackoff, { passive: true });
+          drawBackoff();
+        }
+
+        // ------------------------------------------------------------
+        // Validation stack sketch
+        // ------------------------------------------------------------
+        const validationHost = document.getElementById("validationViz");
+        const validationMetrics = document.getElementById("validationMetrics");
+        const validationButtons = Array.from(document.querySelectorAll(".validation-mode"));
+        if (validationHost && validationMetrics && validationButtons.length) {
+          let activeMode = "structural";
+          const validationData = {
+            structural: {
+              title: "direct panel comparison + turnover",
+              blurb: "Snapshot overlap, activity, novelty, TEA, TNA, and channel composition.",
+              metrics: [
+                ["edge Jaccard", "0.71"],
+                ["TEA persist corr.", "0.83"],
+                ["edge-share MAE", "0.06"],
+              ],
+              observed: [0.52, 0.60, 0.58, 0.67, 0.74, 0.69, 0.78, 0.72, 0.70, 0.76],
+              synthetic: [0.48, 0.57, 0.56, 0.63, 0.70, 0.66, 0.74, 0.69, 0.68, 0.72],
+            },
+            higher: {
+              title: "π-mass + magnetic fingerprints",
+              blurb: "Random-walk mass split and direction-sensitive spectral summaries.",
+              metrics: [
+                ["π_F corr.", "0.79"],
+                ["spectral W₁", "0.11"],
+                ["mode RMSE", "0.08"],
+              ],
+              observed: [0.58, 0.55, 0.53, 0.57, 0.61, 0.59, 0.56, 0.54, 0.52, 0.55],
+              synthetic: [0.56, 0.53, 0.52, 0.55, 0.58, 0.57, 0.55, 0.53, 0.51, 0.53],
+            },
+            transmission: {
+              title: "farm-level outbreak stress test",
+              blurb: "Matched seeding and channel-aware transmission compare spread-relevant structure.",
+              metrics: [
+                ["attack-rate W₁", "0.07"],
+                ["prevalence corr.", "0.88"],
+                ["peak-day MAE", "1.4 d"],
+              ],
+              observed: [0.02, 0.06, 0.12, 0.20, 0.28, 0.25, 0.19, 0.13, 0.08, 0.04],
+              synthetic: [0.01, 0.05, 0.10, 0.17, 0.24, 0.22, 0.18, 0.12, 0.07, 0.03],
+              bandLo: [0.00, 0.03, 0.07, 0.14, 0.20, 0.19, 0.15, 0.10, 0.05, 0.02],
+              bandHi: [0.03, 0.08, 0.14, 0.22, 0.30, 0.28, 0.22, 0.16, 0.10, 0.05],
+            },
+          };
+
+          function updateValidationButtons() {
+            validationButtons.forEach((btn) => {
+              const mode = btn.getAttribute("data-mode");
+              btn.classList.toggle("btn-primary", mode === activeMode);
+              btn.classList.toggle("btn-secondary", mode !== activeMode);
+            });
+          }
+
+          function drawValidation() {
+            updateValidationButtons();
+            validationHost.innerHTML = "";
+            const datum = validationData[activeMode];
+            validationMetrics.innerHTML = datum.metrics
+              .map(
+                ([label, value]) => `
+                  <div class="metric-pill">
+                    <div class="label">${label}</div>
+                    <div class="value">${value}</div>
+                  </div>`,
+              )
+              .join("");
+
+            const W = validationHost.clientWidth || 800;
+            const H = validationHost.clientHeight || 360;
+            const svg = d3
+              .select(validationHost)
+              .append("svg")
+              .attr("width", "100%")
+              .attr("height", "100%")
+              .attr("viewBox", `0 0 ${W} ${H}`)
+              .style("display", "block");
+            const g = svg.append("g").attr("transform", "translate(18,18)");
+            const iw = W - 36;
+            const ih = H - 36;
+            const laneH = 70;
+            const chartY = 110;
+            const chartH = ih - chartY - 18;
+
+            const modes = ["structural", "higher", "transmission"];
+            const laneW = iw < 640 ? iw : (iw - 20) / 3;
+            const stacked = iw < 640;
+
+            modes.forEach((mode, i) => {
+              const x = stacked ? 0 : i * (laneW + 10);
+              const y = stacked ? i * (laneH + 8) : 0;
+              const panelW = stacked ? iw : laneW;
+              const isActive = mode === activeMode;
+              g.append("rect")
+                .attr("x", x)
+                .attr("y", y)
+                .attr("width", panelW)
+                .attr("height", laneH)
+                .attr("rx", 10)
+                .attr("ry", 10)
+                .attr("fill", isActive ? "rgba(47,128,237,0.16)" : "rgba(0,0,0,0.03)")
+                .attr("stroke", isActive ? "#2f80ed" : "rgba(0,0,0,0.12)")
+                .attr("stroke-width", isActive ? 1.9 : 1.0);
+              g.append("text")
+                .attr("x", x + 12)
+                .attr("y", y + 20)
+                .attr("font-size", 12)
+                .attr("font-weight", 700)
+                .attr("fill", "currentColor")
+                .text(validationData[mode].title);
+              g.append("text")
+                .attr("x", x + 12)
+                .attr("y", y + 40)
+                .attr("font-size", 10.5)
+                .attr("fill", "currentColor")
+                .attr("opacity", 0.75)
+                .text(validationData[mode].blurb);
+            });
+
+            const x = d3.scaleLinear().domain([0, datum.observed.length - 1]).range([0, iw]);
+            const y = d3.scaleLinear().domain([0, d3.max([datum.observed, datum.synthetic, datum.bandHi || []].flat()) * 1.15 || 1]).range([chartY + chartH, chartY]);
+            const line = d3
+              .line()
+              .x((d, i) => x(i))
+              .y((d) => y(d));
+
+            g.append("text")
+              .attr("x", 0)
+              .attr("y", chartY - 10)
+              .attr("font-size", 12)
+              .attr("fill", "currentColor")
+              .attr("opacity", 0.78)
+              .text(datum.title);
+
+            g.append("g")
+              .attr("transform", `translate(0,${chartY + chartH})`)
+              .call(d3.axisBottom(x).ticks(datum.observed.length - 1).tickFormat((d) => `t${+d + 1}`))
+              .selectAll("text")
+              .attr("font-size", 11)
+              .attr("opacity", 0.8);
+            g.append("g")
+              .attr("transform", `translate(0,0)`)
+              .call(d3.axisLeft(y).ticks(5))
+              .selectAll("text")
+              .attr("font-size", 11)
+              .attr("opacity", 0.8);
+
+            if (datum.bandLo && datum.bandHi) {
+              const area = d3
+                .area()
+                .x((d, i) => x(i))
+                .y0((d, i) => y(datum.bandLo[i]))
+                .y1((d, i) => y(datum.bandHi[i]));
+              g.append("path")
+                .datum(datum.bandHi)
+                .attr("d", area)
+                .attr("fill", "#56ccf2")
+                .attr("opacity", 0.18);
+            }
+
+            g.append("path")
+              .datum(datum.observed)
+              .attr("d", line)
+              .attr("fill", "none")
+              .attr("stroke", "#2f80ed")
+              .attr("stroke-width", 2.2)
+              .attr("stroke-linecap", "round")
+              .attr("stroke-linejoin", "round");
+            g.append("path")
+              .datum(datum.synthetic)
+              .attr("d", line)
+              .attr("fill", "none")
+              .attr("stroke", "#f2994a")
+              .attr("stroke-width", 2.2)
+              .attr("stroke-linecap", "round")
+              .attr("stroke-linejoin", "round")
+              .attr("stroke-dasharray", activeMode === "higher" ? "4,3" : "0");
+
+            const legend = g.append("g").attr("transform", `translate(${iw - 170},${chartY - 10})`);
+            [
+              { label: "observed", color: "#2f80ed" },
+              { label: activeMode === "transmission" ? "synthetic median" : "synthetic", color: "#f2994a" },
+            ].forEach((d, i) => {
+              const row = legend.append("g").attr("transform", `translate(0,${i * 16})`);
+              row.append("line").attr("x1", 0).attr("x2", 14).attr("y1", 0).attr("y2", 0).attr("stroke", d.color).attr("stroke-width", 2.2);
+              row.append("text").attr("x", 20).attr("y", 4).attr("font-size", 11).attr("fill", "currentColor").attr("opacity", 0.76).text(d.label);
+            });
+          }
+
+          validationButtons.forEach((btn) => {
+            btn.addEventListener("click", () => {
+              activeMode = btn.getAttribute("data-mode") || "structural";
+              drawValidation();
+            });
+          });
+          window.addEventListener("resize", drawValidation, { passive: true });
+          drawValidation();
+        }
+      })();
+    </script>
+  </body>
+</html>
