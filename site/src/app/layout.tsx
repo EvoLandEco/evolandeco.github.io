@@ -8,6 +8,7 @@ import Navbar from "@/components/navbar";
 import data from "@/content-data/portfolio.json";
 import "./globals.css";
 const p = data.profile;
+const analyticsToken = process.env.CLOUDFLARE_WEB_ANALYTICS_TOKEN;
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_ORIGIN || p.siteUrl),
   title: {
@@ -63,6 +64,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {process.env.NEXT_PUBLIC_SHOW_APPEARANCE !== "false" && <aside aria-label="Appearance"><Settings /></aside>}
           </MotionPolicy>
         </ThemeProvider>
+        {analyticsToken && (
+          <script defer src="/analytics.js"
+            data-token={analyticsToken}
+            data-hostname={new URL(process.env.SITE_ORIGIN || p.siteUrl).hostname} />
+        )}
       </body>
     </html>
   );

@@ -28,7 +28,16 @@ export function IconCloud({
         phi = i * Math.PI * (3 - Math.sqrt(5));
       return { x: Math.cos(phi) * r, y, z: Math.sin(phi) * r };
     });
-    let assets: HTMLImageElement[] = [];
+    let sources: HTMLImageElement[] = [];
+    let assets: HTMLCanvasElement[] = [];
+    const rasterize = () => {
+      assets = sources.map(image => {
+        const sprite = document.createElement("canvas");
+        sprite.width = sprite.height = Math.ceil(width * 0.14 * dpr);
+        sprite.getContext("2d")?.drawImage(image, 0, 0, sprite.width, sprite.height);
+        return sprite;
+      });
+    };
     const draw = (t: number) => {
       if (cancelled) return;
       if (playing && last) rotation.current.y += ((t - last) / 1000) * 0.16;
@@ -69,7 +78,8 @@ export function IconCloud({
       width = el.clientWidth;
       el.width = Math.round(width * dpr);
       el.height = Math.round(width * dpr);
-      if (assets.length) {
+      if (sources.length) {
+        rasterize();
         cancelAnimationFrame(frame);
         last = 0;
         draw(performance.now());
@@ -91,7 +101,8 @@ export function IconCloud({
     Promise.all(loaded)
       .then((result) => {
         if (cancelled) return;
-        assets = result;
+        sources = result;
+        rasterize();
         draw(performance.now());
       })
       .catch((e) => {
