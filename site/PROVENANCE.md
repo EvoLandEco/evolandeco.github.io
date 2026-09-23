@@ -6,7 +6,7 @@ The base is [Magic UI Portfolio](https://github.com/magicuidesign/portfolio) at 
 
 Globe, Icon Cloud, Terminal, Animated Beam, Dotted Map, Bento Grid, Magic Card, Grid Pattern and Scroll Progress originate in [Magic UI](https://github.com/magicuidesign/magicui) at `d7207e5692d14c00dceafa8488d6d01f197fa0e4`. Its MIT notice is retained in `LICENSE-MAGICUI.md`. Blur Fade and Dock come from the portfolio base.
 
-Local component integrations add controlled motion, responsive rendering, resource cleanup, full HTML content and the site palette. Globe uses COBE 2.0.1 with its native markers and arcs. Nine decorative points and connections suggest a global research network without claiming travel or specific collaborations. Leaving the viewport destroys the renderer. Icon Cloud retains the upstream Fibonacci sphere construction with responsive projection and depth sorting, renders local Font Awesome icons, and cancels its frame callback when stopped. It has no canvas-only links. Beam paths retain their static geometry when moving gradients unmount. Terminal uses direct sequence children and offers complete output immediately.
+Local component integrations add controlled motion, responsive rendering, resource cleanup, full HTML content and the site palette. Globe uses COBE 2.0.1 with its native markers and arcs. Nine decorative points and connections suggest a global research network without claiming travel or specific collaborations. Leaving the viewport destroys the renderer. Icon Cloud retains the upstream Fibonacci sphere construction with responsive projection and depth sorting, renders local Font Awesome icons from sprites prepared at the full display resolution, and cancels its frame callback when stopped. It has no canvas-only links. Beam paths retain their static geometry when moving gradients unmount. Terminal uses direct sequence children and offers complete output immediately.
 
 Dotted Map uses `svg-dotted-map` 2.1.0. The dependency has been renamed upstream, but this pinned API is the one used by the supplied component. It renders static SVG with pulse disabled. No Pro templates or paid components are included.
 
@@ -60,3 +60,7 @@ The navigation follows the portfolio Dock composition: a translucent rounded con
 `public/art/thesis-cover.webp` is a web rendering of the user-supplied `Front Cover.pdf`, the approved doctoral thesis cover. The full thesis link comes from the CV education record.
 
 Publication identity assets and bibliographic verification are documented in [the citation audit](evidence/citation-audit/REPORT.md).
+
+## Globe renderer patch
+
+`patches/cobe@2.0.1.patch` retains COBE's rendering and shaders. It writes the anchor stylesheet only when its contents change and restores the canvas to its parent when destroying the renderer. The lockfile applies this patch during installation.

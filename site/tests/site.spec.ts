@@ -495,3 +495,31 @@ test("Pointer focus does not hold the globe callout open", async ({ page }) => {
   await page.locator('.globe-frame').focus();
   await expect(page.locator('.globe-herdlink')).toHaveCSS('opacity', '1');
 });
+
+test("Globe animation avoids stylesheet churn and cleans up renderer wrappers", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto('/');
+  const globe = page.getByTestId('signature-globe');
+  await expect(globe).toHaveAttribute('data-motion-state', 'running');
+  const canvas = globe.locator('canvas[data-markers]');
+  const angle = await canvas.getAttribute('data-angle');
+  const writes = await page.evaluate(async () => {
+    const style = [...document.head.querySelectorAll('style')].find(el => el.textContent === ':root{}');
+    if (!style) throw new Error('Globe anchor stylesheet missing');
+    let writes = 0;
+    const observer = new MutationObserver(records => { writes += records.length; });
+    observer.observe(style, { childList: true, characterData: true, subtree: true });
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    observer.disconnect();
+    return writes;
+  });
+  expect(writes).toBe(0);
+  expect(await canvas.getAttribute('data-angle')).not.toBe(angle);
+  for (let i = 0; i < 3; i++) {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect(globe).toHaveAttribute('data-motion-state', 'paused');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await expect(globe).toHaveAttribute('data-motion-state', 'running');
+  }
+  await expect(page.locator('.globe-frame > div > canvas[data-markers]')).toHaveCount(1);
+});

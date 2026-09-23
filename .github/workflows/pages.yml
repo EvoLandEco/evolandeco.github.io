@@ -34,6 +34,7 @@ jobs:
         env:
           SITE_ORIGIN: https://qtj.me
           SITE_INDEXABLE: 'true'
+          CLOUDFLARE_WEB_ANALYTICS_TOKEN: '76e320f6acc9462092ef35a80a12408e'
       - run: pnpm typecheck
       - run: pnpm check:export
       - uses: actions/upload-pages-artifact@v4
