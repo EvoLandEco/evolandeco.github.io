@@ -1,0 +1,1644 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <title>
+      SBMs for Hybrid Livestock Networks and Metadata Tag Nodes - Blog - Tianjian Qin
+    </title>
+    <!-- Meta -->
+    <meta charset="utf-8" />
+    <meta content="IE=edge" http-equiv="X-UA-Compatible" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta
+      content="SBM design for hybrid livestock trade networks, sparse layered inference, and a joint data–metadata model with generic tag nodes."
+      name="description"
+    />
+    <meta content="Tianjian Qin" name="author" />
+    <link href="favicon.ico" rel="shortcut icon" />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700"
+      rel="stylesheet"
+    />
+    <!-- FontAwesome JS -->
+    <script defer="" src="assets/fontawesome/js/all.js"></script>
+    <!-- Plugin CSS -->
+    <link
+      href="assets/plugins/highlight/styles/monokai-sublime.min.css"
+      rel="stylesheet"
+    />
+    <!-- Theme CSS -->
+    <link href="assets/css/theme-1.css" id="theme-style" rel="stylesheet" />
+    <link
+      href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
+
+    <style>
+      .hybrid-sim-iframe {
+        width: 100%;
+        height: 100vh;
+        min-height: 1180px;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 12px;
+        background: #fff;
+        overflow: hidden;
+      }
+
+      /* Small concept figures (D3) */
+      .concept-card {
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 12px;
+        background: #fff;
+        overflow: hidden;
+      }
+      .concept-card .caption {
+        font-size: 0.9rem;
+        color: #6c757d;
+      }
+      .concept-card .toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+        justify-content: flex-start;
+        padding: 12px 14px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      }
+      .concept-card .toolbar .title {
+        font-weight: 600;
+        font-size: 0.97rem;
+        line-height: 1.35;
+        margin: 0;
+        width: 100%;
+      }
+      .concept-card .toolbar .d-flex {
+        width: 100%;
+        justify-content: flex-start;
+        align-items: center;
+        row-gap: 8px;
+      }
+      .concept-card .viz {
+        width: 100%;
+        min-height: 420px;
+        overflow: hidden;
+      }
+      .concept-card .viz svg {
+        display: block;
+      }
+      #conceptVizSparse {
+        height: 420px;
+      }
+      #conceptVizJoint {
+        height: 400px;
+      }
+      #conceptVizTokens {
+        height: 1070px;
+      }
+      #conceptVizWeights {
+        height: 540px;
+      }
+
+      /* Dark-mode harmonization (blog's dark-mode.js toggles a 'dark-mode' class on body) */
+      body.dark-mode .hybrid-sim-iframe,
+      body.dark-mode .concept-card {
+        background: #0b0d10;
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+      body.dark-mode .concept-card .toolbar {
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+      }
+      body.dark-mode .concept-card .caption {
+        color: rgba(255, 255, 255, 0.65);
+      }
+
+      /* Page-specific: widen ONLY containers that opt in */
+      @media (min-width: 692px) {
+        .single-col-max-width.hybrid-wide {
+          max-width: 880px;
+        }
+      }
+      @media (min-width: 1100px) {
+        .single-col-max-width.hybrid-wide {
+          max-width: 980px;
+        }
+      }
+
+      /* Concept toolbars: compact controls */
+      .concept-card .toolbar input[type="range"] {
+        width: 140px;
+      }
+      .concept-card .toolbar .stat {
+        font-variant-numeric: tabular-nums;
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        opacity: 0.85;
+        min-width: 44px;
+        text-align: right;
+        display: inline-block;
+      }
+      body.dark-mode .concept-card .toolbar input[type="range"] {
+        filter: brightness(1.05) contrast(1.05);
+      }
+
+      /* Concept figures: responsive toolbars (mobile-friendly) */
+      .concept-card .toolbar .d-flex {
+        flex-wrap: wrap;
+      }
+      .concept-card .toolbar .btn {
+        white-space: normal;
+      }
+
+      @media (max-width: 768px) {
+        #conceptVizSparse {
+          height: 460px;
+        }
+        #conceptVizJoint {
+          height: 460px;
+        }
+        #conceptVizTokens {
+          height: 1090px;
+        }
+        #conceptVizWeights {
+          height: 620px;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .concept-card .toolbar {
+          gap: 8px;
+        }
+        .concept-card .toolbar input[type="range"] {
+          width: 100%;
+          max-width: none;
+        }
+        .concept-card .toolbar .stat {
+          min-width: unset;
+          text-align: left;
+        }
+        .concept-card .toolbar .btn {
+          width: 100%;
+        }
+      }
+    </style>
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [["$", "$"]],
+          displayMath: [["$$", "$$"]],
+        },
+        options: {
+          skipHtmlTags: [
+            "script",
+            "noscript",
+            "style",
+            "textarea",
+            "pre",
+            "code",
+          ],
+        },
+      };
+    </script>
+    <script
+      async=""
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
+    ></script>
+  </head>
+  <body>
+    <header class="header text-center">
+      <div class="force-overflow">
+        <h1 class="blog-name pt-lg-4 mb-0">
+          <a class="no-text-decoration" href="index.html">Tianjian Qin</a>
+        </h1>
+        <nav class="navbar navbar-expand-lg navbar-dark">
+          <button
+            aria-controls="navigation"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+            class="navbar-toggler"
+            data-bs-target="#navigation"
+            data-bs-toggle="collapse"
+            type="button"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse flex-column" id="navigation">
+            <div class="profile-section pt-3 pt-lg-0">
+              <img
+                alt="image"
+                class="profile-image mb-3 rounded-circle mx-auto"
+                src="assets/images/profile.png"
+              />
+              <div class="bio mb-3">
+                Hi, my name is Tianjian. I'm a computational biologist &amp;
+                data scientist.
+              </div>
+              <!--//bio-->
+              <ul class="social-list list-inline py-2 mx-auto">
+                <li class="list-inline-item">
+                  <a href="https://www.linkedin.com/in/tjqin/"
+                    ><i class="fab fa-linkedin-in fa-fw"></i
+                  ></a>
+                </li>
+                <li class="list-inline-item">
+                  <a href="https://github.com/EvoLandEco"
+                    ><i class="fab fa-github-alt fa-fw"></i
+                  ></a>
+                </li>
+                <li class="list-inline-item">
+                  <a href="https://www.researchgate.net/profile/Tianjian-Qin"
+                    ><i class="fa-brands fa-researchgate"></i
+                  ></a>
+                </li>
+                <li class="list-inline-item">
+                  <a href="https://qtj.me/gallery"
+                    ><i class="fa-regular fa-lightbulb fa-beat"></i
+                  ></a>
+                </li>
+              </ul>
+              <!--//social-list-->
+              <hr />
+            </div>
+            <!--//profile-section-->
+            <ul class="navbar-nav flex-column text-start">
+              <li class="nav-item">
+                <a class="nav-link" href="index.html"
+                  ><i class="fas fa-user fa-fw me-2"></i>About Me</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="portfolio.html"
+                  ><i class="fas fa-laptop-code fa-fw me-2"></i>Portfolio</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="resume.html"
+                  ><i class="fas fa-file-alt fa-fw me-2"></i>Resume</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="blog-home.html"
+                  ><i class="fas fa-blog fa-fw me-2"></i>Blog</a
+                >
+              </li>
+            </ul>
+            <div class="my-2">
+              <a
+                class="btn btn-primary"
+                href="mailto:tianjianqin@outlook.com"
+                target="_blank"
+                ><i class="fas fa-paper-plane me-2"></i>Contact Me</a
+              >
+            </div>
+            <div class="dark-mode-toggle text-center w-100">
+              <hr class="mb-4" />
+              <h4 class="toggle-name mb-3">
+                <i class="fas fa-adjust me-1"></i>Dark Mode
+              </h4>
+              <input class="toggle" id="darkmode" type="checkbox" />
+              <label class="toggle-btn mx-auto mb-0" for="darkmode"></label>
+            </div>
+            <!--//dark-mode-toggle-->
+          </div>
+        </nav>
+      </div>
+      <!--//force-overflow-->
+    </header>
+    <div class="main-wrapper">
+      
+      <article class="blog-post px-3 py-5 p-md-5">
+        <div class="container single-col-max-width hybrid-wide">
+          <header class="blog-post-header">
+            <h2 class="title mb-2">
+              SBMs for Hybrid Livestock Networks: Why Metadata Tag Nodes Help
+            </h2>
+            <div class="meta mb-3">
+              <span class="date"
+                ><i class="fa-solid fa-calendar-days me-2"></i>Published on 22
+                Mar 2026</span
+              ><span class="time"
+                ><i class="fa-solid fa-clock me-2"></i>22 min read</span
+              ><span class="comment"
+                ><i class="fa-solid fa-comment me-2"></i
+                ><a
+                  data-disqus-identifier="BLOG_POST_SBM_METADATA_TAGS_REFINED"
+                  href="https://qtj.me/blog-SBM-Metadata-Tags-refined.html#disqus_thread"
+                  >Link</a
+                ></span
+              >
+            </div>
+          </header>
+
+          <div class="blog-post-body">
+            <p>
+              We often want a network that is detailed enough to preserve farm-level behavior
+              in the focal area, but still broad enough to represent the wider trading system.
+              A natural compromise is a <b>hybrid network</b>: farms are kept as individual nodes,
+              while the outside world is summarized through larger regional nodes. Once time is
+              added, the result is a <b>layered hybrid network</b> in which edges appear in discrete
+              snapshots but node activity is uneven and often sparse.
+            </p>
+            <p>
+              That is exactly the kind of setting where a nested, layered stochastic block model
+              (SBM) should be useful. The SBM can discover repeated mesoscale roles:
+              groups of farms and regions that interact in similar ways over time. In practice,
+              however, the fit can be frustratingly coarse. When many nodes are inactive in many
+              snapshots, the evidence for fine within-type subdivision becomes weak, and a
+              nonparametric minimum-description-length SBM often decides that only a very small
+              number of blocks are justified.<sup><a href="#ref2">[2]</a></sup><sup><a href="#ref3">[3]</a></sup>
+            </p>
+            <p>
+              The motivation for metadata tag nodes is to change that balance of evidence without
+              pretending that metadata are ground truth. The key idea, following Hric, Peixoto,
+              and Fortunato (2016), is to represent metadata as <b>another network layer</b>. 
+              A node can then carry information even when it
+              is quiet in the trade layer, because it is still connected to metadata tags such as a
+              broad region category, a size band, a spatial tile, or a profile token.
+              <sup><a href="#ref1">[1]</a></sup>
+            </p>
+
+            <h3 class="mt-5 mb-3">Why trade-only layered inference can stay coarse</h3>
+            <p>
+              A nonparametric SBM is designed to trade fit against complexity. Extra blocks are not
+              free: they cost description length and are only retained when the data provide enough
+              evidence to support them. In sparse layered networks, especially when many nodes are
+              inactive in many snapshots, the model can rationally prefer a very coarse partition.
+              In a hybrid setting this often means something close to “a small number of farm-side
+              groups plus one single group at the region-side”, because that is the cheapest
+              admissible explanation of the observed traffic.<sup><a href="#ref2">[2]</a></sup><sup><a href="#ref3">[3]</a></sup>
+            </p>
+            <p>
+              This is not an algorithmic error. It is the direct consequence of the SBM doing model
+              selection under uncertainty. If the daily or weekly layers are sparse, if many farms
+              are silent, and if the only reliable information about some nodes is their broad role
+              in the system, the posterior can favor only 2 or 3 stable blocks. The right
+              response is to provide the model with more
+              informative and better structured evidence.
+            </p>
+
+            <div class="concept-card my-4" id="sparseBlocksCard">
+              <div class="toolbar">
+                <p class="title mb-0">Concept sketch: sparse snapshots push the fit toward coarse blocks</p>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                  <span class="small text-muted">inactive share</span>
+                  <input type="range" id="sparseInactive" min="0" max="0.9" step="0.01" value="0.55" />
+                  <span class="small stat" id="sparseInactiveVal">0.55</span>
+
+                  <span class="small text-muted ms-2">per-day edge density</span>
+                  <input type="range" id="sparseDensity" min="0.05" max="1" step="0.01" value="0.28" />
+                  <span class="small stat" id="sparseDensityVal">0.28</span>
+                </div>
+              </div>
+              <div class="viz" id="conceptVizSparse"></div>
+              <div class="p-3">
+                <div class="caption">
+                  <b>Left:</b> a node-by-snapshot activity matrix. Gray cells carry no trade evidence in that layer.
+                  <b>Right:</b> a conceptual block diagram under a description-length penalty. As inactivity rises and
+                  each layer becomes sparser, the amount of evidence available for finer subdivision drops,
+                  so a coarse partition becomes easier to justify. The block count shown here is illustrative,
+                  not the output of a real fit.
+                </div>
+              </div>
+            </div>
+
+            <h3 class="mt-5 mb-3">Treating metadata as another network</h3>
+            <p>
+              The conceptual move in Hric, Peixoto, and Fortunato (2016) is both simple and powerful.
+              Instead of asking the SBM to explain the trade network alone, we ask it to explain
+              two coupled objects: the observed network <em>A</em> and a metadata graph <em>T</em>.
+              The metadata graph is bipartite: data nodes connect to metadata-tag nodes. Importantly,
+              the same partition of data nodes is shared across both layers. Metadata therefore act
+              as an additional source of evidence about block structure without being treated as the
+              “correct answer”.<sup><a href="#ref1">[1]</a></sup>
+            </p>
+            <p>
+              In compact form, the joint model can be written as
+            </p>
+            <p>
+              $$P(A,T\mid b,c,\theta,\gamma)=P(A\mid b,\theta)\,P(T\mid b,c,\gamma),$$
+            </p>
+            <p>
+              where <em>b</em> is the partition of the data nodes and <em>c</em> is the partition of the
+              metadata-tag nodes. The coupling happens because the trade edges and the metadata edges
+              are both informative about the same latent structure of the data nodes. This is the
+              part of the theory that matters most for sparse hybrid systems. Metadata can help even
+              when they do not coincide one-to-one with communities, because they still carry useful
+              information about which nodes should be statistically similar.<sup><a href="#ref1">[1]</a></sup>
+            </p>
+
+            <div class="concept-card my-4" id="jointModelCard">
+              <div class="toolbar">
+                <p class="title mb-0">Concept sketch: trade layer only vs joint data–metadata model</p>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                  <button class="btn btn-sm btn-secondary" id="jointToggleBtn">
+                    <i class="fa-solid fa-layer-group me-1"></i><span id="jointToggleLabel">Show metadata layer</span>
+                  </button>
+                  <span class="small text-muted ms-2">metadata informativeness</span>
+                  <input type="range" id="jointInfo" min="0" max="1" step="0.01" value="0.72" />
+                  <span class="small stat" id="jointInfoVal">0.72</span>
+                </div>
+              </div>
+              <div class="viz" id="conceptVizJoint"></div>
+              <div class="p-3">
+                <div class="caption">
+                  Blue/orange circles are data nodes (F: farm; R: region); green squares are metadata tags. Without the metadata layer,
+                  inactive farms contribute little beyond broad role information. With the metadata layer, those same
+                  farms still connect to generic tags such as a region category, a size band, a spatial tile, or a
+                  production/profile token.
+                </div>
+              </div>
+            </div>
+
+            <h3 class="mt-5 mb-3">From attributes to metadata tag nodes</h3>
+            <p>
+              The idea is formulated for <b>discrete metadata tokens</b>. It means that we need to turn stable node-side information into a
+              small vocabulary of reusable tags. For example, we can tokenize geographic category, size band, operational
+              class, spatial tile, production profile, management profile, and similar descriptors that can be shared
+              by many farms or regions.
+            </p>
+
+            <div class="concept-card my-4" id="tokenFlowCard">
+              <div class="toolbar">
+                <p class="title mb-0">Concept sketch: from node attributes to metadata tag nodes</p>
+              </div>
+              <div class="viz" id="conceptVizTokens"></div>
+              <div class="p-3">
+                <div class="caption">
+                  The implementation discretizes stable node-side information into reusable metadata tokens.
+                  Those tokens become tag nodes, and node–tag edges form an extra layer that couples back to the
+                  same data-node partition used by the trade layer.
+                </div>
+              </div>
+            </div>
+
+            <h3 class="mt-5 mb-3">Why this can reveal more and better blocks</h3>
+            <p>
+              The improvement is easiest to understand as a <b>borrowing-strength argument</b>. In the trade-only model,
+              a node that is inactive in many layers contributes little direct evidence. In the joint model, that same
+              node can still connect to a small metadata neighborhood. The metadata layer therefore adds observations
+              that are not synchronized with daily trade activity.
+            </p>
+            <p>
+              This helps in at least three ways.
+            </p>
+            <ul>
+              <li>
+                <b>Inactive nodes stop looking empty.</b> Even when a node has no trade edge in a particular layer,
+                it can still carry evidence through generic metadata-tag edges.
+              </li>
+              <li>
+                <b>Stable information is pooled across time.</b> Metadata categories often change much more slowly than
+                daily trade patterns. That gives the fit a stable second layer of evidence.
+              </li>
+              <li>
+                <b>Within-type separation becomes easier.</b> Nodes that looked exchangeable under trade-only evidence
+                can become distinguishable once they attach to different tag combinations.
+              </li>
+            </ul>
+            <p>
+              This is also consistent with the broader literature. Hric et al. show that metadata can improve the
+              prediction of missing nodes and annotations without having to coincide perfectly with communities.
+              Newman and Clauset likewise argue that metadata can aid structural inference when their relevance is
+              learned rather than assumed. Peel, Larremore, and Clauset provide the complementary warning: metadata
+              are not ground truth communities and should be treated as evidence, not as the answer itself.
+              <sup><a href="#ref1">[1]</a></sup><sup><a href="#ref4">[4]</a></sup><sup><a href="#ref5">[5]</a></sup>
+            </p>
+            <p>
+              In a sparse hybrid network, that is exactly the right way to read the effect. The metadata layer does not
+              magically create structure. It makes better use of information that was already available but not yet represented
+              in a network-compatible way. The result can be a partition with more blocks, but more importantly, a partition
+              with blocks that are more stable and more interpretable.
+            </p>
+
+            <h3 class="mt-5 mb-3">Why richer blocks can also help the edge-weight model</h3>
+            <p>
+              In our pipeline, better block inference matters for more than adjacency alone. The synthetic generator uses a
+              <b>per-block-pair generative edge-weight model</b> with a hierarchy of backoff levels: an exact cell is indexed by
+              time and source/target block pair, and if that cell is too sparse the generator backs off to broader parents such
+              as block-pair, channel, layer, or global summaries. This means the quality of the weight model depends directly
+              on whether the inferred blocks produce <b>homogeneous and sufficiently supported block-pair cells</b>.
+              <sup><a href="#ref8">[8]</a></sup><sup><a href="#ref9">[9]</a></sup>
+            </p>
+            <p>
+              A partition that is too coarse mixes multiple behavioral regimes into the same weight cell, so the fitted weight
+              distribution becomes broad and hard to interpret. A more informative partition can separate those regimes and give
+              the weight generator narrower, more meaningful cells — but only if the extra cells are still populated enough.
+              If block refinement creates many nearly empty cells, the generator simply falls back to broader parents and the
+              gain disappears. So the benefit of more blocks is real, but it depends on balancing <em>specificity</em> and
+              <em>support</em>.
+            </p>
+
+            <div class="concept-card my-4" id="weightModelCard">
+              <div class="toolbar">
+                <p class="title mb-0">Concept sketch: why a richer partition can help the block-pair weight model</p>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                  <span class="small text-muted ms-2">usable cell support</span>
+                  <input type="range" id="weightSupport" min="0" max="1" step="0.01" value="0.68" />
+                  <span class="small stat" id="weightSupportVal">0.68</span>
+                </div>
+              </div>
+              <div class="viz" id="conceptVizWeights"></div>
+              <div class="p-3">
+                <div class="caption">
+                  Left: with only a few coarse blocks, many weight regimes are blended into the same block-pair cell. Right:
+                  when metadata-supported blocks separate those regimes, block-pair weight cells can become narrower and easier to model.
+                  The caveat is visible at the bottom: if refined cells are too sparse, the sampler must back off to broader parents.
+                </div>
+              </div>
+            </div>
+
+            <div class="alert alert-info mt-4" role="alert">
+              <strong><i class="fa-solid fa-lightbulb me-2"></i>Important caveat:</strong>
+              more blocks are not automatically better. Metadata should not be treated as ground-truth communities.
+              The real test is whether the joint model gives a better predictive and posterior-predictive account of the
+              observed network, while still yielding blocks that are stable and substantively interpretable.
+              <sup><a href="#ref5">[5]</a></sup><sup><a href="#ref6">[6]</a></sup>
+            </div>
+
+            <h3 class="mt-5 mb-3">What the pipeline is doing conceptually</h3>
+            <p>
+              The current implementation follows a deliberately conservative version of the joint data–metadata idea.
+              It tokenizes broad, stable node-side information into generic metadata tags; appends tag nodes to the graph;
+              adds a dedicated metadata layer of node–tag edges; and fits the layered SBM on the combined object. The exact
+              private fields need not be exposed in the blog. What matters is the design pattern: private node attributes are
+              translated into a small, interpretable, privacy-aware vocabulary of tags, and the model is allowed to use those
+              tags as evidence for latent block structure.
+            </p>
+            <p>
+              For a sparse hybrid livestock network, that is a very natural extension. It does not replace the trade layer;
+              it complements it. And in precisely the situations where trade-only inference is most brittle — many inactive
+              nodes, thin daily layers, weak within-type evidence — that complementary layer can make the difference between
+              a very coarse partition and a much richer one.
+            </p>
+
+            <h3 class="mt-5 mb-3">References</h3>
+            <p class="mb-3">
+              The references below support the conceptual claims in this post. The implementation details correspond to our current
+              <code>pipeline.py</code>, which turns privacy-sensitive node metadata into generic tag nodes and adds them as a dedicated
+              metadata layer in the graph.
+            </p>
+            <ol class="small">
+              <li id="ref1">
+                Hric D, Peixoto TP, Fortunato S. 2016. Network Structure, Metadata, and the Prediction of Missing Nodes and Annotations.
+                <em>Physical Review X</em> 6(3):031038.
+                <a href="https://doi.org/10.1103/PhysRevX.6.031038" target="_blank" rel="noopener">doi:10.1103/PhysRevX.6.031038</a>
+              </li>
+              <li id="ref2">
+                Peixoto TP. 2015. Inferring the mesoscale structure of layered, edge-valued, and time-varying networks.
+                <em>Physical Review E</em> 92:042807.
+                <a href="https://doi.org/10.1103/PhysRevE.92.042807" target="_blank" rel="noopener">doi:10.1103/PhysRevE.92.042807</a>
+              </li>
+              <li id="ref3">
+                Peixoto TP. 2013. Parsimonious module inference in large networks.
+                <em>Physical Review Letters</em> 110:148701.
+                <a href="https://doi.org/10.1103/PhysRevLett.110.148701" target="_blank" rel="noopener">doi:10.1103/PhysRevLett.110.148701</a>
+              </li>
+              <li id="ref4">
+                Newman MEJ, Clauset A. 2016. Structure and inference in annotated networks.
+                <em>Nature Communications</em> 7:11863.
+                <a href="https://doi.org/10.1038/ncomms11863" target="_blank" rel="noopener">doi:10.1038/ncomms11863</a>
+              </li>
+              <li id="ref5">
+                Peel L, Larremore DB, Clauset A. 2017. The ground truth about metadata and community detection in networks.
+                <em>Science Advances</em> 3(5):e1602548.
+                <a href="https://doi.org/10.1126/sciadv.1602548" target="_blank" rel="noopener">doi:10.1126/sciadv.1602548</a>
+              </li>
+              <li id="ref6">
+                Vaca-Ramírez F, Peixoto TP. 2022. Systematic assessment of the quality of fit of the stochastic block model for empirical networks.
+                <em>Physical Review E</em> 105:054311.
+                <a href="https://doi.org/10.1103/PhysRevE.105.054311" target="_blank" rel="noopener">doi:10.1103/PhysRevE.105.054311</a>
+              </li>
+              <li id="ref7">
+                Chaters GL, et al. 2019. Analysing livestock network data for infectious disease control: an argument for routine data collection in emerging economies.
+                <em>Philosophical Transactions of the Royal Society B</em> 374:20180264.
+                <a href="https://doi.org/10.1098/rstb.2018.0264" target="_blank" rel="noopener">doi:10.1098/rstb.2018.0264</a>
+              </li>
+              <li id="ref8">
+                Peixoto TP. 2018. Nonparametric weighted stochastic block models.
+                <em>Physical Review E</em> 97:012306.
+                <a href="https://doi.org/10.1103/PhysRevE.97.012306" target="_blank" rel="noopener">doi:10.1103/PhysRevE.97.012306</a>
+              </li>
+              <li id="ref9">
+                Aicher C, Jacobs AZ, Clauset A. 2013. Adapting the Stochastic Block Model to Edge-Weighted Networks.
+                <em>arXiv</em>:1305.5782.
+                <a href="https://doi.org/10.48550/arXiv.1305.5782" target="_blank" rel="noopener">doi:10.48550/arXiv.1305.5782</a>
+              </li>
+            </ol>
+
+            <script>
+              (function () {
+                if (!window.d3) return;
+
+                const sparseHost = document.getElementById("conceptVizSparse");
+                if (sparseHost) {
+                  const inactiveEl = document.getElementById("sparseInactive");
+                  const inactiveValEl = document.getElementById("sparseInactiveVal");
+                  const densityEl = document.getElementById("sparseDensity");
+                  const densityValEl = document.getElementById("sparseDensityVal");
+                  function drawSparse() {
+                    sparseHost.innerHTML = "";
+                    const w = sparseHost.clientWidth || 860;
+                    const h = sparseHost.clientHeight || 420;
+                    const svg = d3.select(sparseHost).append("svg").attr("width", "100%").attr("height", h).attr("viewBox", `0 0 ${w} ${h}`);
+                    const inactive = inactiveEl ? +inactiveEl.value : 0.55;
+                    const density = densityEl ? +densityEl.value : 0.28;
+                    if (inactiveValEl) inactiveValEl.textContent = inactive.toFixed(2);
+                    if (densityValEl) densityValEl.textContent = density.toFixed(2);
+                    const margin = { top: 32, right: 18, bottom: 18, left: 18 };
+                    const innerW = w - margin.left - margin.right;
+                    const innerH = h - margin.top - margin.bottom;
+                    const gap = 56;
+                    const leftW = innerW * 0.56;
+                    const rightW = innerW - leftW - gap;
+                    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+                    const left = g.append("g");
+                    const right = g.append("g").attr("transform", `translate(${leftW + gap},0)`);
+                    const nF = 18, nR = 6, T = 12;
+                    const nodes = d3.range(nF + nR).map(i => ({ idx: i, kind: i < nF ? "farm" : "region", label: i < nF ? `F${i + 1}` : `R${i - nF + 1}` }));
+                    const days = d3.range(T).map(i => `t${i + 1}`);
+                    const rng = d3.randomLcg(0.41);
+                    const cells = [];
+                    nodes.forEach((node, row) => {
+                      days.forEach((day, col) => {
+                        const baseActive = node.kind === "region" ? 0.88 : (1 - inactive);
+                        const active = rng() < baseActive;
+                        const observed = active && rng() < density;
+                        cells.push({ row, col, active, observed, kind: node.kind });
+                      });
+                    });
+                    const x = d3.scaleBand().domain(days).range([0, leftW]).padding(0.05);
+                    const y = d3.scaleBand().domain(nodes.map(d => d.label)).range([0, innerH]).padding(0.08);
+                    const heatmapLeftMargin = 18;
+                    const gapToTopText = 15;
+                    const nodeTextOffsetY = 3;
+                    left.append("text").attr("x", 0).attr("y", -6).attr("font-size", 15).attr("font-weight", 600).text("Observed activity by node and snapshot");
+                    left.selectAll("text.day").data(days).enter().append("text").attr("class", "day").attr("x", d => x(d) + heatmapLeftMargin + x.bandwidth() / 2).attr("y", -2 + gapToTopText).attr("text-anchor", "middle").attr("font-size", 10).attr("opacity", 0.75).text(d => d);
+                    left.selectAll("text.node").data(nodes).enter().append("text").attr("x", heatmapLeftMargin - 6).attr("y", d => y(d.label) + y.bandwidth() / 2 + gapToTopText + nodeTextOffsetY).attr("text-anchor", "end").attr("font-size", 10).attr("opacity", 0.75).text(d => d.label);
+                    left.selectAll("rect.cell").data(cells).enter().append("rect").attr("x", d => x(days[d.col]) + heatmapLeftMargin).attr("y", d => y(nodes[d.row].label) + gapToTopText).attr("width", x.bandwidth()).attr("height", y.bandwidth()).attr("rx", 2).attr("fill", d => { if (!d.active) return "#e9ecef"; if (!d.observed) return d.kind === "farm" ? "#cfe2ff" : "#fde6d0"; return d.kind === "farm" ? "#2f80ed" : "#f2994a"; }).attr("opacity", d => d.observed ? 0.95 : 0.75);
+                    left.append("line").attr("x1", heatmapLeftMargin).attr("x2", leftW + heatmapLeftMargin).attr("y1", y(nodes[nF].label) + gapToTopText - 0.5).attr("y2", y(nodes[nF].label) + gapToTopText - 0.5).attr("stroke", "currentColor").attr("stroke-opacity", 0.78).attr("stroke-dasharray", "3,4");
+                    left.append("text").attr("transform", `rotate(-90, ${leftW + 32 + heatmapLeftMargin}, ${y(nodes[0].label) + 30 + gapToTopText})`).attr("x", leftW + 2 + heatmapLeftMargin).attr("y", y(nodes[0].label) + 10 + gapToTopText).attr("font-size", 12).attr("opacity", 0.65).attr("font-weight", 600).text("farms");
+                    left.append("text").attr("transform", `rotate(-90, ${leftW + 32 + heatmapLeftMargin}, ${y(nodes[nF].label) + 30 + gapToTopText})`).attr("x", leftW + 2 + heatmapLeftMargin).attr("y", y(nodes[nF].label) + 10 + gapToTopText).attr("font-size", 12).attr("opacity", 0.65).attr("font-weight", 600).text("regions");
+                    const effectiveEvidence = (1 - inactive) * density;
+                    const blockCount = Math.max(2, Math.min(10, 2 + Math.round(8 * effectiveEvidence)));
+                    const farmBlocks = Math.max(1, Math.round((blockCount - 1) * 0.7));
+                    const regionBlocks = Math.max(1, blockCount - farmBlocks);
+                    right.append("text").attr("x", 0).attr("y", -6).attr("font-size", 15).attr("font-weight", 600).text("Conceptual stable partition under MDL");
+                    right.append("text").attr("x", 0).attr("y", 47).attr("font-size", 40).attr("font-weight", 700).attr("fill", "currentColor").text(blockCount);
+                    right.append("text").attr("x", 64).attr("y", 47).attr("font-size", 17).attr("font-weight", 600).attr("opacity", 0.72).text("conceptual blocks");
+                    const meterW = rightW - 24;
+                    right.append("text").attr("x", 0).attr("y", 79).attr("font-size", 15).attr("font-weight", 400).attr("opacity", 0.78).text("effective edge evidence ");
+                    right.append("rect").attr("x", 0).attr("y", 89).attr("width", meterW).attr("height", 12).attr("rx", 6).attr("fill", "rgba(0,0,0,0.08)");
+                    right.append("rect").attr("x", 0).attr("y", 89).attr("width", meterW * effectiveEvidence).attr("height", 12).attr("rx", 6).attr("fill", "#2f80ed");
+                    const boxTop = 151, boxH = 92, farmY = boxTop, regionY = boxTop + 140;
+                    const drawPartitionBox = (y0, label, nBoxes, color) => {
+                      right.append("text").attr("x", 0).attr("y", y0 - 8).attr("font-size", 15).attr("font-weight", 400).attr("opacity", 0.75).text(label);
+                      const gapInner = 6, totalW = rightW - 12, bw = (totalW - gapInner * (nBoxes - 1)) / nBoxes;
+                      for (let i = 0; i < nBoxes; i++) {
+                        right.append("rect").attr("x", i * (bw + gapInner)).attr("y", y0).attr("width", bw).attr("height", boxH).attr("rx", 8).attr("fill", color).attr("opacity", 0.18 + 0.72 * Math.min(1, effectiveEvidence + 0.08 * i));
+                        right.append("text").attr("x", i * (bw + gapInner) + bw / 2).attr("y", y0 + boxH / 2 + 4).attr("text-anchor", "middle").attr("font-size", 11).attr("font-weight", 600).attr("opacity", 0.9).text(`${label === 'farm side' ? 'F' : 'R'}${i + 1}`);
+                      }
+                    };
+                    drawPartitionBox(farmY, "farm side", farmBlocks, "#2f80ed");
+                    drawPartitionBox(regionY, "region side", regionBlocks, "#f2994a");
+                  }
+                  drawSparse();
+                  [inactiveEl, densityEl].forEach(el => el && el.addEventListener("input", drawSparse));
+                }
+
+                const jointHost = document.getElementById("conceptVizJoint");
+                if (jointHost) {
+                  const toggleBtn = document.getElementById("jointToggleBtn");
+                  const toggleLabel = document.getElementById("jointToggleLabel");
+                  const infoEl = document.getElementById("jointInfo");
+                  const infoValEl = document.getElementById("jointInfoVal");
+                  let showMetadata = true;
+                  function drawJoint() {
+                    jointHost.innerHTML = "";
+                    const w = jointHost.clientWidth || 860;
+                    const h = jointHost.clientHeight || 400;
+                    const svg = d3.select(jointHost).append("svg").attr("width", "100%").attr("height", h).attr("viewBox", `0 0 ${w} ${h}`);
+                    const info = infoEl ? +infoEl.value : 0.72;
+                    if (infoValEl) infoValEl.textContent = info.toFixed(2);
+                    if (toggleLabel) toggleLabel.textContent = showMetadata ? "Hide metadata layer" : "Show metadata layer";
+                    const margin = { top: 34, right: 16, bottom: 18, left: 16 };
+                    const innerW = w - margin.left - margin.right;
+                    const innerH = h - margin.top - margin.bottom;
+                    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+                    const farmY0 = 160;
+                    const farmDY = 40;
+                    const regionY = Math.max(305, h * 0.43);
+                    const tagY = Math.max(30);
+                    const farms = d3.range(10).map(i => ({ id: `F${i+1}`, kind: "farm", x: 200 + i*56, y: farmY0 + (i%2)*farmDY, inactive: i===2 || i===7 }));
+                    const regions = d3.range(3).map(i => ({ id: `R${i+1}`, kind: "region", x: 220 + i*180, y: regionY, inactive: false }));
+                    const nodes = [...farms, ...regions];
+                    const tags = [
+                      { id: "region::north", x: 70, y: tagY, kind: "tag" },
+                      { id: "size::large", x: 190, y: tagY, kind: "tag" },
+                      { id: "activity::high", x: 310, y: tagY, kind: "tag" },
+                      { id: "tile::A3", x: 430, y: tagY, kind: "tag" },
+                      { id: "profile::specialized", x: 550, y: tagY, kind: "tag" },
+                      { id: "role::supplier", x: 670, y: tagY, kind: "tag" }
+                    ];
+                    const tradeEdges = [[0,1],[1,3],[3,4],[4,10],[10,0],[2,11],[6,12],[8,9],[9,10],[5,12],[7,11]].map(([a,b]) => ({ a: nodes[a], b: nodes[b] }));
+                    const tagMap = {F1:[0,1,3],F2:[0,1,3],F3:[0,2,4],F4:[0,2,4],F5:[0,1,5],F6:[0,1,5],F7:[0,2,4],F8:[0,2,4],F9:[0,1,5],F10:[0,1,5],R1:[0],R2:[2],R3:[5]};
+                    const metaEdges = [];
+                    nodes.forEach(n => {(tagMap[n.id] || []).forEach(ti => metaEdges.push({ a: n, b: tags[ti] }));});
+                    g.append("text").attr("x", 0).attr("y", -4).attr("font-size", 17).attr("font-weight", 600).text(showMetadata ? "Joint data–metadata graph" : "Trade layer only");
+                    g.append("text").attr("x", 0).attr("y", 22).attr("font-size", 14).attr("opacity", 0.72).text(showMetadata ? "Data nodes share a partition across the trade layer and the metadata layer." : "Inactive farms contribute little beyond broad role information when only trade edges are used.");
+                    const farmBoxes = showMetadata ? Math.max(2, 2 + Math.round(4 * info)) : 1;
+                    const regionBoxes = showMetadata ? Math.max(1, 1 + Math.round(2 * info)) : 1;
+                    const drawGroupBoxes = (y, startX, totalW, nBoxes, color) => {
+                      const gap = 6, bw = (totalW - gap*(nBoxes-1)) / nBoxes;
+                      for (let i=0;i<nBoxes;i++) {
+                        g.append("rect").attr("x", startX + i*(bw+gap)).attr("y", y).attr("width", bw).attr("height", 88).attr("rx", 10).attr("fill", color).attr("opacity", 0.14 + 0.1*i + (showMetadata ? 0.12*info : 0));
+                      }
+                    };
+                    drawGroupBoxes(134, 154, 600, farmBoxes, "#2f80ed");
+                    drawGroupBoxes(260, 184, 540, regionBoxes, "#f2994a");
+                    g.append("g").selectAll("path.trade").data(tradeEdges).enter().append("path").attr("class", "trade").attr("d", d => `M${d.a.x},${d.a.y} L${d.b.x},${d.b.y}`).attr("stroke", "currentColor").attr("stroke-opacity", 0.26).attr("stroke-width", 1.6).attr("fill", "none");
+                    if (showMetadata) {
+                      g.append("line").attr("x1", 0).attr("x2", innerW).attr("y1", 108).attr("y2", 108).attr("stroke", "currentColor").attr("stroke-opacity", 0.36).attr("stroke-dasharray", "4,5");
+                      g.append("text").attr("x", 0).attr("y", 88).attr("font-size", 14).attr("font-weight", 700).attr("opacity", 0.72).text("metadata layer");
+                      g.append("text").attr("x", 0).attr("y", 138).attr("font-size", 14).attr("font-weight", 700).attr("opacity", 0.72).text("farm/region layer");
+                      g.append("g").selectAll("path.meta").data(metaEdges).enter().append("path").attr("class", "meta").attr("d", d => `M${d.a.x},${d.a.y+8} L${d.b.x + 85},${d.b.y+50}`).attr("stroke", "#27ae60").attr("stroke-opacity", d => d.a.inactive ? 0.7 : 0.4).attr("stroke-width", d => d.a.inactive ? 2.2 : 1.6).attr("stroke-dasharray", "3,4").attr("fill", "none");
+                    }
+                    const nodeG = g.append("g");
+                    nodeG.selectAll("circle.data").data(nodes).enter().append("circle").attr("cx", d => d.x).attr("cy", d => d.y).attr("r", d => d.kind === "farm" ? 10 : 14).attr("fill", d => d.kind === "farm" ? "#2f80ed" : "#f2994a").attr("opacity", d => d.inactive ? 0.48 : 0.95).attr("stroke", d => d.inactive ? "currentColor" : "none").attr("stroke-opacity", d => d.inactive ? 0.45 : 0).attr("stroke-dasharray", d => d.inactive ? "3,3" : null);
+                    nodeG.selectAll("text.label").data(nodes).enter().append("text").attr("x", d => d.x).attr("y", d => d.y + 4).attr("text-anchor", "middle").attr("font-size", 10).attr("font-weight", 700).attr("fill", "#fff").text(d => d.id);
+                    if (showMetadata) {
+                      const tagG = g.append("g");
+                      tagG.selectAll("rect.tag").data(tags).enter().append("rect").attr("x", d => d.x + 50).attr("y", d => d.y + 20).attr("width", 70).attr("height", 28).attr("rx", 6).attr("fill", "#27ae60").attr("opacity", 0.92);
+                      tagG.selectAll("text.tlabel").data(tags).enter().append("text").attr("x", d => d.x + 85).attr("y", d => d.y + 39).attr("text-anchor", "middle").attr("font-size", 15).attr("font-weight", 700).attr("fill", "#fff").text(d => d.id.split("::")[0].replace("::", ""));
+                    }
+                  }
+                  drawJoint();
+                  toggleBtn && toggleBtn.addEventListener("click", () => { showMetadata = !showMetadata; drawJoint(); });
+                  infoEl && infoEl.addEventListener("input", drawJoint);
+                }
+
+              const tokenHost = document.getElementById("conceptVizTokens");
+                if (tokenHost) {
+                  const w = tokenHost.clientWidth || 860;
+                  const h = tokenHost.clientHeight || 1130;
+                  const svg = d3.select(tokenHost).append("svg").attr("width", "100%").attr("height", h).attr("viewBox", `0 0 ${w} ${h}`);
+                  const g = svg.append("g").attr("transform", `translate(16,20)`);
+                  const innerW = w - 32;
+                  const outerPad = 8;
+
+                  const defs = svg.append("defs");
+                  defs.append("marker")
+                    .attr("id", "arrowhead")
+                    .attr("viewBox", "0 -5 10 10")
+                    .attr("refX", 9)
+                    .attr("refY", 0)
+                    .attr("markerWidth", 6)
+                    .attr("markerHeight", 6)
+                    .attr("orient", "auto")
+                    .append("path")
+                    .attr("d", "M0,-5L10,0L0,5")
+                    .attr("fill", "currentColor")
+                    .attr("opacity", 0.45);
+
+                  const drawRoundedBox = (x, y, width, height, fill, stroke, dash, title, subtitle) => {
+                    const grp = g.append("g").attr("transform", `translate(${x},${y})`);
+                    grp.append("rect")
+                      .attr("width", width)
+                      .attr("height", height)
+                      .attr("rx", 16)
+                      .attr("fill", fill)
+                      .attr("fill-opacity", 0.06)
+                      .attr("stroke", stroke)
+                      .attr("stroke-opacity", 0.5)
+                      .attr("stroke-width", 1.8)
+                      .attr("stroke-dasharray", dash || null);
+                    if (title) {
+                      grp.append("text")
+                        .attr("x", 20)
+                        .attr("y", 32)
+                        .attr("font-size", 16)
+                        .attr("font-weight", 700)
+                        .text(title);
+                    }
+                    if (subtitle) {
+                      grp.append("text")
+                        .attr("x", 20)
+                        .attr("y", 55)
+                        .attr("font-size", 14)
+                        .attr("opacity", 0.72)
+                        .text(subtitle);
+                    }
+                    return grp;
+                  };
+
+                  const drawMiniCard = (parent, x, y, width, height, title, lines, fill, icon) => {
+                    const grp = parent.append("g").attr("transform", `translate(${x},${y})`);
+                    grp.append("rect")
+                      .attr("width", width)
+                      .attr("height", height)
+                      .attr("rx", 12)
+                      .attr("fill", fill)
+                      .attr("fill-opacity", 0.16)
+                      .attr("stroke", fill)
+                      .attr("stroke-opacity", 0.25);
+                    grp.append("text")
+                      .attr("x", 14)
+                      .attr("y", 24)
+                      .attr("font-size", 14)
+                      .attr("font-weight", 700)
+                      .text(title);
+                    if (icon) {
+                      grp.append("text")
+                        .attr("x", width - 14)
+                        .attr("y", 24)
+                        .attr("text-anchor", "end")
+                        .attr("font-size", 15)
+                        .attr("opacity", 0.68)
+                        .text(icon);
+                    }
+                    lines.forEach((line, i) => {
+                      grp.append("text")
+                        .attr("x", 14)
+                        .attr("y", 50 + i * 18)
+                        .attr("font-size", 12)
+                        .attr("opacity", 0.84)
+                        .text(line);
+                    });
+                    return grp;
+                  };
+
+                  const arrow = (parent, x1, y1, x2, y2, label) => {
+                    parent.append("line")
+                      .attr("x1", x1)
+                      .attr("y1", y1)
+                      .attr("x2", x2)
+                      .attr("y2", y2)
+                      .attr("stroke", "currentColor")
+                      .attr("stroke-opacity", 0.30)
+                      .attr("stroke-width", 2.2)
+                      .attr("marker-end", "url(#arrowhead)");
+                    if (label) {
+                      parent.append("text")
+                        .attr("x", (x1 + x2) / 2)
+                        .attr("y", (y1 + y2) / 2 - 8)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", 12)
+                        .attr("font-weight", 600)
+                        .attr("opacity", 0.74)
+                        .text(label);
+                    }
+                  };
+
+                  const metadataBox = drawRoundedBox(
+                    outerPad,
+                    outerPad - 10,
+                    innerW - 2 * outerPad,
+                    430,
+                    "#27ae60",
+                    "#27ae60",
+                    "6,8",
+                    "Metadata layer construction",
+                    "Raw node-side attributes are discretized into shared metadata tags and encoded as a bipartite node–tag layer."
+                  );
+
+                  drawMiniCard(
+                    metadataBox,
+                    18,
+                    74,
+                    220,
+                    136,
+                    "Raw node attributes",
+                    [
+                      "broad region category",
+                      "size indicator",
+                      "capacity band",
+                      "x,y position",
+                      "profile vector"
+                    ],
+                    "#2f80ed",
+                    "①"
+                  );
+                  drawMiniCard(
+                    metadataBox,
+                    322,
+                    74,
+                    220,
+                    136,
+                    "Discrete tag tokens",
+                    [
+                      "region::north",
+                      "size::large",
+                      "capacity::high",
+                      "tile::A3",
+                      "profile::specialized"
+                    ],
+                    "#27ae60",
+                    "②"
+                  );
+                  drawMiniCard(
+                    metadataBox,
+                    626,
+                    74,
+                    220,
+                    136,
+                    "Shared tag nodes",
+                    [
+                      "one node per token",
+                      "reused across many farms",
+                      "bipartite node–tag incidence",
+                      "dedicated metadata layer"
+                    ],
+                    "#6fcf97",
+                    "③"
+                  );
+                  arrow(metadataBox, 238, 142, 322, 142, "tokenize");
+                  arrow(metadataBox, 542, 142, 626, 142, "instantiate");
+
+                  metadataBox.append("text")
+                    .attr("x", 20)
+                    .attr("y", 240)
+                    .attr("font-size", 16)
+                    .attr("font-weight", 700)
+                    .attr("opacity", 0.84)
+                    .text("Bipartite metadata layer");
+
+                  const bipY = 280;
+                  const farmNodes = [
+                    { id: "F1", x: 70, y: bipY + 26 },
+                    { id: "F2", x: 70, y: bipY + 70 },
+                    { id: "F3", x: 70, y: bipY + 114 }
+                  ];
+                  const tagNodes = [
+                    { id: "region::north", x: 310, y: bipY + 20 },
+                    { id: "size::large", x: 310, y: bipY + 66 },
+                    { id: "profile::specialized", x: 310, y: bipY + 112 },
+                    { id: "tile::A3", x: 540, y: bipY + 43 },
+                    { id: "capacity::high", x: 540, y: bipY + 97 }
+                  ];
+                  const links = [
+                    ["F1", "region::north"], ["F1", "size::large"], ["F1", "profile::specialized"],
+                    ["F2", "region::north"], ["F2", "tile::A3"],
+                    ["F3", "size::large"], ["F3", "capacity::high"], ["F3", "tile::A3"]
+                  ];
+                  const farmById = new Map(farmNodes.map(d => [d.id, d]));
+                  const tagById = new Map(tagNodes.map(d => [d.id, d]));
+                  const bipartiteOffsetX = 110;
+                  metadataBox.append("g")
+                    .selectAll("path.metaLink")
+                    .data(links)
+                    .enter()
+                    .append("path")
+                    .attr("d", d => {
+                      const a = farmById.get(d[0]);
+                      const b = tagById.get(d[1]);
+                      const mx = (a.x + b.x) / 2 + bipartiteOffsetX;
+                      return `M${a.x + 28 + bipartiteOffsetX},${a.y} C${mx - 10},${a.y} ${mx + 10},${b.y} ${b.x - 34 + bipartiteOffsetX},${b.y}`;
+                    })
+                    .attr("fill", "none")
+                    .attr("stroke", "#27ae60")
+                    .attr("stroke-opacity", 0.55)
+                    .attr("stroke-width", 2);
+                  metadataBox.selectAll("circle.farmMeta")
+                    .data(farmNodes)
+                    .enter()
+                    .append("circle")
+                    .attr("cx", d => d.x + bipartiteOffsetX)
+                    .attr("cy", d => d.y)
+                    .attr("r", 12)
+                    .attr("fill", "#2f80ed")
+                    .attr("opacity", 0.94);
+                  metadataBox.selectAll("text.farmMetaLabel")
+                    .data(farmNodes)
+                    .enter()
+                    .append("text")
+                    .attr("x", d => d.x + bipartiteOffsetX)
+                    .attr("y", d => d.y + 4)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", 11)
+                    .attr("font-weight", 700)
+                    .attr("fill", "#fff")
+                    .text(d => d.id);
+                  metadataBox.selectAll("rect.tagMeta")
+                    .data(tagNodes)
+                    .enter()
+                    .append("rect")
+                    .attr("x", d => d.x - 34 + bipartiteOffsetX)
+                    .attr("y", d => d.y - 13)
+                    .attr("width", d => d.id.length > 14 ? 132 : 110)
+                    .attr("height", 26)
+                    .attr("rx", 8)
+                    .attr("fill", "#27ae60")
+                    .attr("opacity", 0.90);
+                  metadataBox.selectAll("text.tagMetaLabel")
+                    .data(tagNodes)
+                    .enter()
+                    .append("text")
+                    .attr("x", d => d.x + (d.id.length > 14 ? 30 : 20) + bipartiteOffsetX)
+                    .attr("y", d => d.y + 4)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", 10.5)
+                    .attr("font-weight", 700)
+                    .attr("fill", "#fff")
+                    .text(d => d.id);
+                  metadataBox.append("text")
+                    .attr("x", 20)
+                    .attr("y", 262)
+                    .attr("font-size", 14)
+                    .attr("opacity", 0.72)
+                    .text("Shared bipartite incidence layer: many data nodes can attach to the same metadata tag node.");
+
+                  const tradeBoxY = 490;
+                  const tradeBox = drawRoundedBox(
+                    outerPad,
+                    tradeBoxY,
+                    innerW - 2 * outerPad,
+                    235,
+                    "#f2994a",
+                    "#f2994a",
+                    "6,8",
+                    "Original hybrid trade layer",
+                    "Farm nodes and regional supernodes remain the observed network layer used for trade-edge inference."
+                  );
+
+                  const layerSplitY = 146;
+                  tradeBox.append("line")
+                    .attr("x1", 18)
+                    .attr("x2", innerW - 2 * outerPad - 18)
+                    .attr("y1", layerSplitY)
+                    .attr("y2", layerSplitY)
+                    .attr("stroke", "currentColor")
+                    .attr("stroke-opacity", 0.24)
+                    .attr("stroke-dasharray", "4,5");
+                  tradeBox.append("text")
+                    .attr("x", 18)
+                    .attr("y", 131)
+                    .attr("font-size", 11)
+                    .attr("font-weight", 700)
+                    .attr("opacity", 0.70)
+                    .text("farm nodes");
+                  tradeBox.append("text")
+                    .attr("x", 18)
+                    .attr("y", 171)
+                    .attr("font-size", 11)
+                    .attr("font-weight", 700)
+                    .attr("opacity", 0.70)
+                    .text("regional supernodes");
+                  
+                  const tradeLayerNodeOffsetXs = { farm: 60, region: 68 };
+                  const tradeLayerNodeOffsetY = 18;
+                  const tradeFarms = [
+                    { id: "F1", x: 90 + tradeLayerNodeOffsetXs.farm, y: 88 + tradeLayerNodeOffsetY }, { id: "F2", x: 175 + tradeLayerNodeOffsetXs.farm, y: 70 + tradeLayerNodeOffsetY }, { id: "F3", x: 260 + tradeLayerNodeOffsetXs.farm, y: 100 + tradeLayerNodeOffsetY },
+                    { id: "F4", x: 345 + tradeLayerNodeOffsetXs.farm, y: 70 + tradeLayerNodeOffsetY }, { id: "F5", x: 430 + tradeLayerNodeOffsetXs.farm, y: 102 + tradeLayerNodeOffsetY }, { id: "F6", x: 515 + tradeLayerNodeOffsetXs.farm, y: 75 + tradeLayerNodeOffsetY },
+                    { id: "F7", x: 600 + tradeLayerNodeOffsetXs.farm, y: 102 + tradeLayerNodeOffsetY }, { id: "F8", x: 685 + tradeLayerNodeOffsetXs.farm, y: 72 + tradeLayerNodeOffsetY }
+                  ];
+                  const tradeRegions = [
+                    { id: "R1", x: 200 + tradeLayerNodeOffsetXs.region, y: 182 + tradeLayerNodeOffsetY }, { id: "R2", x: 420 + tradeLayerNodeOffsetXs.region, y: 180 + tradeLayerNodeOffsetY }, { id: "R3", x: 640 + tradeLayerNodeOffsetXs.region, y: 184 + tradeLayerNodeOffsetY }
+                  ];
+                  const tradeById = new Map([...tradeFarms, ...tradeRegions].map(d => [d.id, d]));
+                  const tradeEdges = [
+                    ["F1", "F3"], ["F2", "F4"], ["F3", "R1"], ["F4", "R2"], ["F5", "R2"],
+                    ["F6", "R3"], ["F7", "R3"], ["F8", "R2"], ["R1", "F2"], ["R2", "F6"],
+                    ["R1", "R2"]
+                  ];
+                  tradeBox.append("g")
+                    .selectAll("path.tradeLayer")
+                    .data(tradeEdges)
+                    .enter()
+                    .append("path")
+                    .attr("d", d => {
+                      const a = tradeById.get(d[0]);
+                      const b = tradeById.get(d[1]);
+                      const dx = (b.x - a.x) * 0.24;
+                      return `M${a.x},${a.y} C${a.x + dx},${a.y} ${b.x - dx},${b.y} ${b.x},${b.y}`;
+                    })
+                    .attr("fill", "none")
+                    .attr("stroke", "currentColor")
+                    .attr("stroke-opacity", 0.30)
+                    .attr("stroke-width", 1.8);
+                  tradeBox.selectAll("circle.tradeFarm")
+                    .data(tradeFarms)
+                    .enter()
+                    .append("circle")
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y)
+                    .attr("r", 11)
+                    .attr("fill", "#2f80ed")
+                    .attr("opacity", 0.94);
+                  tradeBox.selectAll("text.tradeFarmLabel")
+                    .data(tradeFarms)
+                    .enter()
+                    .append("text")
+                    .attr("x", d => d.x)
+                    .attr("y", d => d.y + 4)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", 10.5)
+                    .attr("font-weight", 700)
+                    .attr("fill", "#fff")
+                    .text(d => d.id);
+                  tradeBox.selectAll("circle.tradeRegion")
+                    .data(tradeRegions)
+                    .enter()
+                    .append("circle")
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y)
+                    .attr("r", 15)
+                    .attr("fill", "#f2994a")
+                    .attr("opacity", 0.96);
+                  tradeBox.selectAll("text.tradeRegionLabel")
+                    .data(tradeRegions)
+                    .enter()
+                    .append("text")
+                    .attr("x", d => d.x)
+                    .attr("y", d => d.y + 4)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", 11)
+                    .attr("font-weight", 700)
+                    .attr("fill", "#fff")
+                    .text(d => d.id);
+
+                  const jointOuterY = 790;
+                  const jointOuterH = 250;
+
+                  const jointOuterOffsetX = 110;
+                  const jointOuterOffsetY = 13;
+
+                  const jointOuterWrap = g.append("g")
+                    .attr("transform", `translate(${jointOuterOffsetX},${jointOuterOffsetY})`);
+
+                  const jointOuter = (() => {
+                    const grp = jointOuterWrap.append("g")
+                      .attr("transform", `translate(${outerPad},${jointOuterY})`);
+
+                    const panelW = innerW - 2 * outerPad;
+                    const panelH = jointOuterH;
+
+                    grp.append("rect")
+                      .attr("transform", `translate(-${jointOuterOffsetX},-${jointOuterOffsetY})`)
+                      .attr("width", panelW)
+                      .attr("height", panelH)
+                      .attr("rx", 16)
+                      .attr("fill", "#6c63ff")
+                      .attr("fill-opacity", 0.06)
+                      .attr("stroke", "#6c63ff")
+                      .attr("stroke-opacity", 0.50)
+                      .attr("stroke-dasharray", "6,8")
+                      .attr("stroke-width", 1.8);
+
+                    grp.append("text")
+                      .attr("transform", `translate(-${jointOuterOffsetX},-${jointOuterOffsetY})`)
+                      .attr("x", 20)
+                      .attr("y", 32)
+                      .attr("font-size", 16)
+                      .attr("font-weight", 700)
+                      .text("Joint layered SBM");
+
+                    grp.append("text")
+                      .attr("transform", `translate(-${jointOuterOffsetX},-${jointOuterOffsetY})`)
+                      .attr("x", 20)
+                      .attr("y", 55)
+                      .attr("font-size", 14)
+                      .attr("opacity", 0.72)
+                      .text("One layered graph, shared data-node partition, role-separated block families.");
+
+                    const innerArrow = (parent, x1, y1, x2, y2) => {
+                      parent.append("line")
+                        .attr("x1", x1)
+                        .attr("y1", y1)
+                        .attr("x2", x2)
+                        .attr("y2", y2)
+                        .attr("stroke", "currentColor")
+                        .attr("stroke-opacity", 0.28)
+                        .attr("stroke-width", 2.2)
+                        .attr("marker-end", "url(#arrowhead)");
+                    };
+
+                    // section headings
+                    grp.append("text")
+                      .attr("x", 42)
+                      .attr("y", 74)
+                      .attr("font-size", 12)
+                      .attr("font-weight", 700)
+                      .attr("opacity", 0.72)
+                      .text("input structure");
+
+                    grp.append("text")
+                      .attr("x", 297)
+                      .attr("y", 74)
+                      .attr("font-size", 12)
+                      .attr("font-weight", 700)
+                      .attr("opacity", 0.72)
+                      .text("model");
+
+                    grp.append("text")
+                      .attr("x", 515)
+                      .attr("y", 74)
+                      .attr("font-size", 12)
+                      .attr("font-weight", 700)
+                      .attr("opacity", 0.72)
+                      .text("inferred blocks");
+
+                    // left: two input-layer thumbnails
+                    const inputX = 18;
+                    const inputY = 84;
+
+                    const tradeMini = grp.append("g").attr("transform", `translate(${inputX},${inputY})`);
+                    tradeMini.append("rect")
+                      .attr("width", 145)
+                      .attr("height", 30)
+                      .attr("rx", 8)
+                      .attr("fill", "#f2994a")
+                      .attr("fill-opacity", 0.12)
+                      .attr("stroke", "#f2994a")
+                      .attr("stroke-opacity", 0.28);
+                    tradeMini.append("text")
+                      .attr("x", 12)
+                      .attr("y", 19)
+                      .attr("font-size", 11.5)
+                      .attr("font-weight", 700)
+                      .text("trade layer(s)");
+
+                    tradeMini.append("circle").attr("cx", 24).attr("cy", 52).attr("r", 6).attr("fill", "#2f80ed");
+                    tradeMini.append("circle").attr("cx", 56).attr("cy", 44).attr("r", 6).attr("fill", "#2f80ed");
+                    tradeMini.append("circle").attr("cx", 88).attr("cy", 54).attr("r", 9).attr("fill", "#f2994a");
+                    tradeMini.append("line").attr("x1", 29).attr("y1", 51).attr("x2", 51).attr("y2", 44).attr("stroke", "currentColor").attr("stroke-opacity", 0.34).attr("stroke-width", 1.6);
+                    tradeMini.append("line").attr("x1", 61).attr("y1", 45).attr("x2", 80).attr("y2", 53).attr("stroke", "currentColor").attr("stroke-opacity", 0.34).attr("stroke-width", 1.6);
+
+                    const metaMini = grp.append("g").attr("transform", `translate(${inputX},${inputY + 98})`);
+                    metaMini.append("rect")
+                      .attr("width", 145)
+                      .attr("height", 30)
+                      .attr("rx", 8)
+                      .attr("fill", "#27ae60")
+                      .attr("fill-opacity", 0.12)
+                      .attr("stroke", "#27ae60")
+                      .attr("stroke-opacity", 0.28);
+                    metaMini.append("text")
+                      .attr("x", 12)
+                      .attr("y", 19)
+                      .attr("font-size", 11.5)
+                      .attr("font-weight", 700)
+                      .text("metadata layer");
+
+                    metaMini.append("rect").attr("x", 24).attr("y", -22).attr("width", 16).attr("height", 11).attr("rx", 3).attr("fill", "#27ae60");
+                    metaMini.append("rect").attr("x", 52).attr("y", -17).attr("width", 16).attr("height", 11).attr("rx", 3).attr("fill", "#27ae60");
+                    metaMini.append("rect").attr("x", 84).attr("y", -22).attr("width", 16).attr("height", 11).attr("rx", 3).attr("fill", "#27ae60");
+                    metaMini.append("line").attr("x1", 33).attr("y1", -22).attr("x2", 24).attr("y2", -40).attr("stroke", "#27ae60").attr("stroke-opacity", 0.55).attr("stroke-width", 1.6);
+                    metaMini.append("line").attr("x1", 33).attr("y1", -22).attr("x2", 56).attr("y2", -49).attr("stroke", "#27ae60").attr("stroke-opacity", 0.55).attr("stroke-width", 1.6);
+                    metaMini.append("line").attr("x1", 60).attr("y1", -17).attr("x2", 56).attr("y2", -48).attr("stroke", "#27ae60").attr("stroke-opacity", 0.55).attr("stroke-width", 1.6);
+                    metaMini.append("line").attr("x1", 60).attr("y1", -17).attr("x2", 27).attr("y2", -42).attr("stroke", "#27ae60").attr("stroke-opacity", 0.55).attr("stroke-width", 1.6);
+                    metaMini.append("line").attr("x1", 92).attr("y1", -22).attr("x2", 89).attr("y2", -35).attr("stroke", "#27ae60").attr("stroke-opacity", 0.55).attr("stroke-width", 1.6);
+
+                    // middle: model box
+                    const modelX = 222;
+                    const modelY = 105;
+                    const modelW = 190;
+                    const modelH = 84;
+
+                    grp.append("rect")
+                      .attr("x", modelX)
+                      .attr("y", modelY)
+                      .attr("width", modelW)
+                      .attr("height", modelH)
+                      .attr("rx", 14)
+                      .attr("fill", "#6c63ff")
+                      .attr("fill-opacity", 0.10)
+                      .attr("stroke", "#6c63ff")
+                      .attr("stroke-opacity", 0.34)
+                      .attr("stroke-width", 2);
+
+                    grp.append("text")
+                      .attr("x", modelX + modelW / 2)
+                      .attr("y", modelY + 28)
+                      .attr("text-anchor", "middle")
+                      .attr("font-size", 13)
+                      .attr("font-weight", 700)
+                      .text("nested layered");
+
+                    grp.append("text")
+                      .attr("x", modelX + modelW / 2)
+                      .attr("y", modelY + 47)
+                      .attr("text-anchor", "middle")
+                      .attr("font-size", 13)
+                      .attr("font-weight", 700)
+                      .text("SBM");
+
+                    grp.append("text")
+                      .attr("x", modelX + modelW / 2)
+                      .attr("y", modelY + 68)
+                      .attr("text-anchor", "middle")
+                      .attr("font-size", 10.5)
+                      .attr("opacity", 0.74)
+                      .text("shared partition + role constraint");
+
+                    innerArrow(grp, 163, 100, modelX, modelY + 22);
+                    innerArrow(grp, 163, 198, modelX, modelY + 60);
+
+                    // right: output families
+                    const outX = 472;
+                    const outY = 90;
+
+                    grp.append("rect")
+                      .attr("x", outX)
+                      .attr("y", outY)
+                      .attr("width", 190)
+                      .attr("height", 115)
+                      .attr("rx", 12)
+                      .attr("fill", "#6c63ff")
+                      .attr("fill-opacity", 0.05)
+                      .attr("stroke", "#6c63ff")
+                      .attr("stroke-opacity", 0.18);
+
+                    grp.append("text")
+                      .attr("x", outX + 12)
+                      .attr("y", outY + 18)
+                      .attr("font-size", 11.5)
+                      .attr("font-weight", 700)
+                      .attr("opacity", 0.84)
+                      .text("partition-role families");
+
+                    // farm blocks
+                    grp.append("text")
+                      .attr("x", outX + 12)
+                      .attr("y", outY + 38)
+                      .attr("font-size", 10.5)
+                      .attr("opacity", 0.72)
+                      .text("farm blocks");
+                    grp.append("rect").attr("x", outX + 88).attr("y", outY + 26).attr("width", 42).attr("height", 24).attr("rx", 7).attr("fill", "#2f80ed").attr("fill-opacity", 0.14);
+                    grp.append("circle").attr("cx", outX + 101).attr("cy", outY + 38).attr("r", 5).attr("fill", "#2f80ed");
+                    grp.append("circle").attr("cx", outX + 118).attr("cy", outY + 38).attr("r", 5).attr("fill", "#2f80ed");
+
+                    // region blocks
+                    grp.append("text")
+                      .attr("x", outX + 12)
+                      .attr("y", outY + 66)
+                      .attr("font-size", 10.5)
+                      .attr("opacity", 0.72)
+                      .text("region blocks");
+                    grp.append("rect").attr("x", outX + 88).attr("y", outY + 54).attr("width", 30).attr("height", 24).attr("rx", 7).attr("fill", "#f2994a").attr("fill-opacity", 0.16);
+                    grp.append("circle").attr("cx", outX + 103).attr("cy", outY + 66).attr("r", 6).attr("fill", "#f2994a");
+
+                    // tag blocks
+                    grp.append("text")
+                      .attr("x", outX + 12)
+                      .attr("y", outY + 94)
+                      .attr("font-size", 10.5)
+                      .attr("opacity", 0.72)
+                      .text("tag blocks");
+                    grp.append("rect").attr("x", outX + 88).attr("y", outY + 82).attr("width", 65).attr("height", 24).attr("rx", 7).attr("fill", "#27ae60").attr("fill-opacity", 0.12);
+                    grp.append("rect").attr("x", outX + 98).attr("y", outY + 89).attr("width", 10).attr("height", 8).attr("rx", 2).attr("fill", "#27ae60");
+                    grp.append("rect").attr("x", outX + 115).attr("y", outY + 89).attr("width", 10).attr("height", 8).attr("rx", 2).attr("fill", "#27ae60");
+                    grp.append("rect").attr("x", outX + 132).attr("y", outY + 89).attr("width", 10).attr("height", 8).attr("rx", 2).attr("fill", "#27ae60");
+
+                    innerArrow(grp, modelX + modelW, modelY + 42, outX, outY + 57);
+
+                    return grp;
+                  })();
+
+                  const flowSymbol = (parent, x, y, symbol, angle, opts = {}) => {
+                    const size = opts.size ?? 54;
+                    const color = opts.color ?? "currentColor";
+                    const opacity = opts.opacity ?? 0.38;
+                    const weight = opts.weight ?? 700;
+                    const label = opts.label ?? null;
+                    const labelDy = opts.labelDy ?? 2;
+                    const labelDx = opts.labelDx ?? 32;
+
+                    const grp = parent.append("g")
+                      .attr("class", "flow-symbol")
+                      .attr("transform", `translate(${x},${y})`);
+
+                    grp.append("text")
+                      .attr("x", 0)
+                      .attr("y", 0)
+                      .attr("transform", `rotate(${angle})`)
+                      .attr("text-anchor", "middle")
+                      .attr("dominant-baseline", "middle")
+                      .attr("font-size", size)
+                      .attr("font-weight", weight)
+                      .attr("fill", color)
+                      .attr("fill-opacity", opacity)
+                      .text(symbol);
+
+                    if (label) {
+                      grp.append("text")
+                        .attr("x", labelDx)
+                        .attr("y", labelDy)
+                        .attr("text-anchor", "left")
+                        .attr("font-size", 14)
+                        .attr("font-weight", 700)
+                        .attr("fill", color)
+                        .attr("fill-opacity", Math.min(opacity + 0.18, 0.9))
+                        .text(label);
+                    }
+
+                    return grp;
+                  };
+
+                  // metadata layer + trade layer
+                  flowSymbol(
+                    g,
+                    innerW / 2,
+                    460,
+                    "+",
+                    0,
+                    {
+                      size: 66,
+                      opacity: 0.42,
+                      label: "combine as one layered graph",
+                      labelDy: 2,
+                      labelDx: 32
+                    }
+                  );
+
+                  // combined layered graph = joint layered SBM inference
+                  flowSymbol(
+                    g,
+                    innerW / 2,
+                    757,
+                    "=",
+                    90,
+                    {
+                      size: 72,
+                      opacity: 0.42,
+                      label: "fit jointly",
+                      labelDy: 2,
+                      labelDx: 32
+                    }
+                  );
+                }
+
+                const weightHost = document.getElementById("conceptVizWeights");
+                if (weightHost) {
+                  const supportEl = document.getElementById("weightSupport");
+                  const supportValEl = document.getElementById("weightSupportVal");
+                  function drawWeights() {
+                    weightHost.innerHTML = "";
+                    const w = weightHost.clientWidth || 860;
+                    const h = weightHost.clientHeight || 540;
+                    const svg = d3.select(weightHost).append("svg").attr("width", "100%").attr("height", h).attr("viewBox", `0 0 ${w} ${h}`);
+                    const support = supportEl ? +supportEl.value : 0.68;
+                    if (supportValEl) supportValEl.textContent = support.toFixed(2);
+                    const margin = { top: 24, right: 18, bottom: 24, left: 18 };
+                    const innerW = w - margin.left - margin.right;
+                    const innerH = h - margin.top - margin.bottom;
+                    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+                    const defs = svg.append("defs");
+                    defs.append("marker").attr("id", "weightArrow").attr("viewBox", "0 -5 10 10").attr("refX", 9).attr("refY", 0).attr("markerWidth", 6).attr("markerHeight", 6).attr("orient", "auto").append("path").attr("d", "M0,-5L10,0L0,5").attr("fill", "currentColor").attr("opacity", 0.4);
+                    const panelGap = 28;
+                    const panelW = (innerW - panelGap) / 2;
+                    const panelH = Math.max(260, innerH - 118);
+
+                    function drawPanel(x0, title, blocks, widths, color) {
+                      const panel = g.append("g").attr("transform", `translate(${x0},0)`);
+                      panel.append("rect").attr("width", panelW).attr("height", panelH).attr("rx", 12).attr("fill", color).attr("opacity", 0.08);
+                      panel.append("text").attr("x", 14).attr("y", 24).attr("font-size", 12).attr("font-weight", 700).text(title);
+                      panel.append("text").attr("x", 14).attr("y", 42).attr("font-size", 10.5).attr("opacity", 0.72).text("Illustrative block-pair weight cells");
+                      const baseX = 160;
+                      const cellY0 = 74;
+                      const cellGap = 56;
+                      blocks.forEach((b, i) => {
+                        const y = cellY0 + i * cellGap;
+                        panel.append("text").attr("x", 14).attr("y", y + 4).attr("font-size", 11).attr("font-weight", 600).text(b.label);
+                        panel.append("line").attr("x1", baseX - 56).attr("x2", panelW - 18).attr("y1", y).attr("y2", y).attr("stroke", "currentColor").attr("stroke-opacity", 0.14).attr("stroke-width", 2);
+                        const half = widths[i];
+                        panel.append("line").attr("x1", baseX + b.mean - half).attr("x2", baseX + b.mean + half).attr("y1", y).attr("y2", y).attr("stroke", color).attr("stroke-opacity", 0.9).attr("stroke-width", 8).attr("stroke-linecap", "round");
+                        panel.append("circle").attr("cx", baseX + b.mean).attr("cy", y).attr("r", 5.5).attr("fill", color).attr("stroke", "#fff").attr("stroke-width", 1.2);
+                        panel.append("text").attr("x", panelW - 18).attr("y", y + 4).attr("text-anchor", "end").attr("font-size", 10.5).attr("opacity", 0.72).text(b.note);
+                      });
+                    }
+
+                    const coarseBlocks = [
+                      { label: "R→F coarse cell", mean: 128, note: "wide mixture" },
+                      { label: "F→R coarse cell", mean: 150, note: "wide mixture" },
+                      { label: "F→F coarse cell", mean: 96, note: "pooled" },
+                      { label: "R→R coarse cell", mean: 74, note: "pooled" }
+                    ];
+                    const refinedBlocks = [
+                      { label: "R₁→F₁", mean: 76, note: support > 0.45 ? "usable exact cell" : "sparse" },
+                      { label: "R₁→F₂", mean: 136, note: support > 0.55 ? "usable exact cell" : "sparse" },
+                      { label: "R₂→F₁", mean: 108, note: support > 0.40 ? "usable exact cell" : "sparse" },
+                      { label: "R₂→F₂", mean: 176, note: support > 0.62 ? "usable exact cell" : "sparse" }
+                    ];
+                    const coarseWidths = coarseBlocks.map(() => 46 + (1 - support) * 10);
+                    const refinedThresholds = [0.45, 0.55, 0.40, 0.62];
+                    const refinedWidths = refinedBlocks.map((_, i) => support >= refinedThresholds[i] ? 18 + (1 - support) * 10 : 42);
+
+                    drawPanel(0, "Coarse blocks", coarseBlocks, coarseWidths, "#2f80ed");
+                    drawPanel(panelW + panelGap, "Metadata-informed blocks", refinedBlocks, refinedWidths, "#27ae60");
+
+                    const chainY = panelH + 38;
+                    const levels = ["exact", "block_pair", "layer_channel", "channel", "layer", "global"];
+                    const xScale = d3.scalePoint().domain(levels).range([42, innerW - 42]);
+                    g.append("text").attr("x", 0).attr("y", chainY - 18).attr("font-size", 11.5).attr("font-weight", 600).text("Backoff hierarchy in the current generator");
+                    g.append("text").attr("x", 0).attr("y", chainY).attr("font-size", 10.5).attr("opacity", 0.72).text("When refined cells are well supported, the generator can stay near exact or block-pair levels.");
+                    g.append("text").attr("x", 0).attr("y", chainY + 14).attr("font-size", 10.5).attr("opacity", 0.72).text("When support is weak, it falls back toward broader parents.");
+                    levels.forEach((lvl, i) => {
+                      const x = xScale(lvl);
+                      const active = support > 0.52 ? i <= 1 : i >= 2;
+                      const fill = active ? (support > 0.52 && i <= 1 ? "#27ae60" : "#f2994a") : "currentColor";
+                      g.append("rect").attr("x", x - 42).attr("y", chainY + 18).attr("width", 84).attr("height", 28).attr("rx", 7).attr("fill", fill).attr("fill-opacity", active ? 0.16 : 0.06).attr("stroke", fill).attr("stroke-opacity", active ? 0.45 : 0.18);
+                      g.append("text").attr("x", x).attr("y", chainY + 36).attr("text-anchor", "middle").attr("font-size", 10.5).attr("font-weight", active ? 700 : 500).text(lvl);
+                      if (i < levels.length - 1) {
+                        g.append("line").attr("x1", x + 42).attr("x2", xScale(levels[i + 1]) - 42).attr("y1", chainY + 32).attr("y2", chainY + 32).attr("stroke", "currentColor").attr("stroke-opacity", 0.22).attr("stroke-width", 2).attr("marker-end", "url(#weightArrow)");
+                      }
+                    });
+                  }
+                  drawWeights();
+                  supportEl && supportEl.addEventListener("input", drawWeights);
+                }
+              })();
+            </script>
+          </div></div>
+        </div>
+      </article>
+
+      <footer class="footer text-center py-4">
+        <small class="copyright">Copyright © Tianjian Qin</small>
+      </footer>
+    </div>
+    <!--//main-wrapper-->
+    <!-- *****CONFIGURE STYLE (REMOVE ON YOUR PRODUCTION SITE)****** -->
+    <div
+      class="config-panel config-panel-hide d-none"
+      id="config-panel"
+    >
+      <div class="panel-inner">
+        <a class="config-trigger text-center" href="#" id="config-trigger"
+          ><i class="fas fa-cog mx-auto" data-fa-transform="down-6"></i
+        ></a>
+        <h5 class="panel-title">Choose Colour</h5>
+        <ul class="list-inline mb-0" id="color-options">
+          <li class="theme-1 active list-inline-item">
+            <a data-style="assets/css/theme-1.css" href="#"></a>
+          </li>
+          <li class="theme-2 list-inline-item">
+            <a data-style="assets/css/theme-2.css" href="#"></a>
+          </li>
+          <li class="theme-3 list-inline-item">
+            <a data-style="assets/css/theme-3.css" href="#"></a>
+          </li>
+          <li class="theme-4 list-inline-item">
+            <a data-style="assets/css/theme-4.css" href="#"></a>
+          </li>
+          <li class="theme-5 list-inline-item">
+            <a data-style="assets/css/theme-5.css" href="#"></a>
+          </li>
+          <li class="theme-6 list-inline-item">
+            <a data-style="assets/css/theme-6.css" href="#"></a>
+          </li>
+          <li class="theme-7 list-inline-item">
+            <a data-style="assets/css/theme-7.css" href="#"></a>
+          </li>
+          <li class="theme-8 list-inline-item">
+            <a data-style="assets/css/theme-8.css" href="#"></a>
+          </li>
+          <li class="theme-9 list-inline-item">
+            <a data-style="assets/css/theme-9.css" href="#"></a>
+          </li>
+          <li class="theme-10 list-inline-item">
+            <a data-style="assets/css/theme-10.css" href="#"></a>
+          </li>
+        </ul>
+        <a class="close" href="#" id="config-close"
+          ><i class="fa fa-times-circle"></i
+        ></a>
+      </div>
+      <!--//panel-inner-->
+    </div>
+    <!--//configure-panel-->
+
+    <!-- Javascript -->
+    <script src="assets/plugins/popper.min.js"></script>
+    <script src="assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+    <!-- Page Specific JS -->
+    <link
+      href="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+    <script>
+      hljs.highlightAll();
+    </script>
+    <script>
+      hljs.addPlugin(new CopyButtonPlugin());
+    </script>
+    <!-- Custom JS -->
+    <script src="assets/js/blog.js"></script>
+    <!-- Dark Mode -->
+    <script src="assets/plugins/js-cookie.min.js"></script>
+    <script src="assets/js/dark-mode.js"></script>
+    <!-- Style Switcher (REMOVE ON YOUR PRODUCTION SITE) -->
+    <script src="assets/js/demo/style-switcher.js"></script>
+    <!-- Disqus Counter -->
+    <script
+      async=""
+      id="dsq-count-scr"
+      src="//qtj-me.disqus.com/count.js"
+    ></script>
+  </body>
+</html>

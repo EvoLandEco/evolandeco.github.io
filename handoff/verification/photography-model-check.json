@@ -1,0 +1,179 @@
+{
+  "scope": "Executable photography reference model; no website, image pipeline or browser tests",
+  "passed": true,
+  "checks": [
+    {
+      "name": "Empty owner seed has no numerical travel claim",
+      "passed": true
+    },
+    {
+      "name": "Production rejects synthetic fixture content",
+      "passed": true
+    },
+    {
+      "name": "Fixture has three documented countries, two albums and three photos",
+      "passed": true
+    },
+    {
+      "name": "Missing marker coordinates never lower the country total",
+      "passed": true
+    },
+    {
+      "name": "Visited country without published album is represented without a dead link",
+      "passed": true
+    },
+    {
+      "name": "Private and unconfirmed countries are absent from public selectors",
+      "passed": true
+    },
+    {
+      "name": "Private fields are not spread into public records",
+      "passed": true
+    },
+    {
+      "name": "Photo order and full-photo URLs match the country album",
+      "passed": true
+    },
+    {
+      "name": "Portrait and panorama dimensions are preserved",
+      "passed": true
+    },
+    {
+      "name": "Adding photos from another visit does not increase the country total",
+      "passed": true
+    },
+    {
+      "name": "Hiding an album leaves its confirmed country in the total",
+      "passed": true
+    },
+    {
+      "name": "Hiding a country also removes its albums and images",
+      "passed": true
+    },
+    {
+      "name": "A confirmed complete empty list can represent zero visits",
+      "passed": true
+    },
+    {
+      "name": "A complete public list uses countries visited",
+      "passed": true
+    },
+    {
+      "name": "Selectors do not mutate source data",
+      "passed": true
+    },
+    {
+      "name": "Valid leap-day dates are accepted",
+      "passed": true
+    },
+    {
+      "name": "Complete list cannot conceal confirmed private visits",
+      "passed": true
+    },
+    {
+      "name": "Duplicate country codes are rejected",
+      "passed": true
+    },
+    {
+      "name": "Duplicate country slugs are rejected",
+      "passed": true
+    },
+    {
+      "name": "More than one album for a country is rejected",
+      "passed": true
+    },
+    {
+      "name": "Duplicate photo IDs are rejected",
+      "passed": true
+    },
+    {
+      "name": "Unknown country relations are rejected",
+      "passed": true
+    },
+    {
+      "name": "Unknown album relations are rejected",
+      "passed": true
+    },
+    {
+      "name": "Incomplete photo order is rejected",
+      "passed": true
+    },
+    {
+      "name": "Duplicate photo order is rejected",
+      "passed": true
+    },
+    {
+      "name": "Foreign cover photo is rejected",
+      "passed": true
+    },
+    {
+      "name": "Draft cover cannot represent a published album",
+      "passed": true
+    },
+    {
+      "name": "Empty draft cannot be published without a cover",
+      "passed": true
+    },
+    {
+      "name": "Unconfirmed country cannot have a published album",
+      "passed": true
+    },
+    {
+      "name": "Published photograph requires approval",
+      "passed": true
+    },
+    {
+      "name": "Published photograph requires permission",
+      "passed": true
+    },
+    {
+      "name": "Published photograph requires alt text",
+      "passed": true
+    },
+    {
+      "name": "Published photograph requires a derivative",
+      "passed": true
+    },
+    {
+      "name": "Invalid map latitude is rejected",
+      "passed": true
+    },
+    {
+      "name": "NaN map longitude is rejected",
+      "passed": true
+    },
+    {
+      "name": "Nonpositive image dimensions are rejected",
+      "passed": true
+    },
+    {
+      "name": "Fractional image dimensions are rejected",
+      "passed": true
+    },
+    {
+      "name": "External image paths are rejected",
+      "passed": true
+    },
+    {
+      "name": "Source path traversal is rejected",
+      "passed": true
+    },
+    {
+      "name": "Invalid calendar date is rejected",
+      "passed": true
+    },
+    {
+      "name": "Unknown root fields are rejected",
+      "passed": true
+    },
+    {
+      "name": "Wrong schema version is rejected",
+      "passed": true
+    }
+  ],
+  "typecheck": {
+    "passed": true,
+    "strict": true,
+    "target": "ES2022"
+  }
+}

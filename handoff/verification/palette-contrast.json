@@ -1,0 +1,132 @@
+{
+  "method": "sRGB relative luminance and contrast ratio",
+  "scope": "Specified flat-colour token pairs only; not a website accessibility audit",
+  "checks": [
+    {
+      "theme": "light",
+      "foreground": "#182230",
+      "background": "#FFFFFF",
+      "role": "ink on surface",
+      "ratio": 16.027,
+      "target": 4.5,
+      "passed": true
+    },
+    {
+      "theme": "light",
+      "foreground": "#566273",
+      "background": "#FFFFFF",
+      "role": "mutedInk on surface",
+      "ratio": 6.194,
+      "target": 4.5,
+      "passed": true
+    },
+    {
+      "theme": "light",
+      "foreground": "#315BA6",
+      "background": "#FFFFFF",
+      "role": "accent on surface",
+      "ratio": 6.609,
+      "target": 4.5,
+      "passed": true
+    },
+    {
+      "theme": "light",
+      "foreground": "#FFFFFF",
+      "background": "#315BA6",
+      "role": "accentInk on accent",
+      "ratio": 6.609,
+      "target": 4.5,
+      "passed": true
+    },
+    {
+      "theme": "light",
+      "foreground": "#182230",
+      "background": "#F5F6F8",
+      "role": "ink on bg",
+      "ratio": 14.821,
+      "target": 4.5,
+      "passed": true
+    },
+    {
+      "theme": "light",
+      "foreground": "#566273",
+      "background": "#EEF2F7",
+      "role": "mutedInk on mutedSurface",
+      "ratio": 5.51,
+      "target": 4.5,
+      "passed": true
+    },
+    {
+      "theme": "light",
+      "foreground": "#738097",
+      "background": "#FFFFFF",
+      "role": "control on surface",
+      "ratio": 3.99,
+      "target": 3.0,
+      "passed": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "#E8EDF5",
+      "background": "#171F2B",
+      "role": "ink on surface",
+      "ratio": 14.095,
+      "target": 4.5,
+      "passed": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "#B4C0D1",
+      "background": "#171F2B",
+      "role": "mutedInk on surface",
+      "ratio": 8.996,
+      "target": 4.5,
+      "passed": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "#93B7FF",
+      "background": "#171F2B",
+      "role": "accent on surface",
+      "ratio": 8.252,
+      "target": 4.5,
+      "passed": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "#10151D",
+      "background": "#93B7FF",
+      "role": "accentInk on accent",
+      "ratio": 9.117,
+      "target": 4.5,
+      "passed": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "#E8EDF5",
+      "background": "#10151D",
+      "role": "ink on bg",
+      "ratio": 15.573,
+      "target": 4.5,
+      "passed": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "#B4C0D1",
+      "background": "#202B3A",
+      "role": "mutedInk on mutedSurface",
+      "ratio": 7.766,
+      "target": 4.5,
+      "passed": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "#738097",
+      "background": "#171F2B",
+      "role": "control on surface",
+      "ratio": 4.153,
+      "target": 3.0,
+      "passed": true
+    }
+  ]
+}

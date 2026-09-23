@@ -1,0 +1,1332 @@
+{
+  "schemaVersion": 1,
+  "contentAsOf": "2026-09",
+  "sources": [
+    {
+      "id": "cv-2026-09",
+      "path": "sources/Tianjian_Qin_CV.tex",
+      "sha256": "5d34270262983f64935a7c8398d9d4191272ae8e491e96c9a75bb777279f6f43",
+      "description": "User-supplied September 2026 CV. Public professional facts are transcribed or paraphrased from this source."
+    }
+  ],
+  "profile": {
+    "name": "Tianjian Qin",
+    "credentials": "PhD",
+    "initials": "TQ",
+    "title": "Computational Biologist & AI/ML Researcher",
+    "role": "Postdoctoral Researcher",
+    "affiliation": "Wageningen University & Research",
+    "group": "Infectious Disease Epidemiology Group",
+    "country": "Netherlands",
+    "email": "tianjian.qin@wur.nl",
+    "siteUrl": "https://qtj.me",
+    "portrait": null,
+    "headline": "Computational biology, AI and research software.",
+    "intro": "I develop machine learning methods, stochastic models and software to understand biological systems.",
+    "bio": "My research spans neural inference from phylogenies, dynamic livestock networks and infectious disease modelling. I connect empirical data and scientific questions with transparent models, reproducible computing and interactive tools.",
+    "links": [
+      {
+        "label": "Email",
+        "url": "mailto:tianjian.qin@wur.nl"
+      },
+      {
+        "label": "GitHub",
+        "url": "https://github.com/EvoLandEco"
+      },
+      {
+        "label": "ORCID",
+        "url": "https://orcid.org/0000-0003-2540-1778"
+      },
+      {
+        "label": "LinkedIn",
+        "url": "https://www.linkedin.com/in/tjqin"
+      }
+    ],
+    "cvUrl": "/Tianjian-Qin-CV.pdf",
+    "evidence": {
+      "sourceId": "cv-2026-09",
+      "section": "Profile and research experience"
+    }
+  },
+  "navigation": [
+    {
+      "label": "Home",
+      "path": "/",
+      "icon": "House"
+    },
+    {
+      "label": "Research",
+      "path": "/research",
+      "icon": "Network"
+    },
+    {
+      "label": "Papers",
+      "path": "/publications",
+      "icon": "BookOpen"
+    },
+    {
+      "label": "Software",
+      "path": "/software",
+      "icon": "Code2"
+    },
+    {
+      "label": "About",
+      "path": "/about",
+      "icon": "UserRound"
+    },
+    {
+      "label": "Photography",
+      "path": "/photography",
+      "icon": "Camera"
+    }
+  ],
+  "projects": [
+    {
+      "id": "evolutionary-inference",
+      "title": "EvoNN & EVE",
+      "subtitle": "Neural inference for evolutionary biology",
+      "summary": "Learning from phylogenetic trees with ensemble neural networks, stochastic diversification models and fast simulators.",
+      "contribution": "Designed neural inference methods and developed stochastic models and research software.",
+      "themes": [
+        "Evolution",
+        "Machine learning",
+        "Stochastic modelling"
+      ],
+      "status": "Published research",
+      "publicationIds": [
+        "evonn-2026",
+        "eve-2025",
+        "relatedness-2026"
+      ],
+      "softwareIds": [
+        "evonn",
+        "evesim"
+      ],
+      "primaryUrl": "/research/evolutionary-inference",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Selected research & software"
+      }
+    },
+    {
+      "id": "netforge",
+      "title": "NetForge",
+      "subtitle": "Synthetic temporal contact networks",
+      "summary": "Generating livestock contact networks with stochastic block models and contact history selection, evaluated through temporal reachability and infection dynamics.",
+      "contribution": "Developed the network generator and its scientific evaluation within IMBIT.",
+      "themes": [
+        "Temporal networks",
+        "Epidemiology",
+        "Generative modelling"
+      ],
+      "status": "Preprint",
+      "publicationIds": [
+        "netforge-2026"
+      ],
+      "softwareIds": [
+        "netforge"
+      ],
+      "primaryUrl": "/research/netforge",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Selected research & software"
+      }
+    },
+    {
+      "id": "herdlink",
+      "title": "HerdLink",
+      "subtitle": "Interactive intervention modelling",
+      "summary": "A public web application connecting Dutch livestock networks, geographic views and paired intervention scenarios.",
+      "contribution": "Developed the web platform, intervention controls, scenario comparisons, tests and deployment workflows.",
+      "themes": [
+        "Research software",
+        "Networks",
+        "Simulation"
+      ],
+      "status": "Public application",
+      "publicationIds": [],
+      "softwareIds": [
+        "herdlink"
+      ],
+      "primaryUrl": "/research/herdlink",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Featured application"
+      }
+    },
+    {
+      "id": "one-health",
+      "title": "One Health & outbreak intelligence",
+      "subtitle": "Networks, inference and surveillance",
+      "summary": "Research across hepatitis E, respiratory outbreak preparedness and AI architecture for early detection.",
+      "contribution": "Develops computational analyses and software workflows; co-develops the NextdAI architecture.",
+      "themes": [
+        "One Health",
+        "Phylodynamics",
+        "AI"
+      ],
+      "status": "Programme-specific status",
+      "publicationIds": [],
+      "softwareIds": [],
+      "primaryUrl": "/research/one-health",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Research programmes & funding"
+      }
+    }
+  ],
+  "programmes": [
+    {
+      "id": "nextdai",
+      "name": "NextdAI: Integrated AI-Driven Early Detection System",
+      "status": "In development",
+      "year": 2026,
+      "context": "NWO KIC: Early Detection of (Emerging) Infectious Disease Outbreaks",
+      "contribution": "Co-develop AI architecture and data infrastructure for heterogeneous surveillance, anomaly detection, neurosymbolic characterisation, forecasting and decision support.",
+      "awardStatus": "Not established by the CV",
+      "url": null,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Research programmes & funding"
+      }
+    },
+    {
+      "id": "eupahw",
+      "name": "EUPAHW: hepatitis E across pigs, wild boar and humans",
+      "status": "Ongoing",
+      "year": 2026,
+      "context": "European Partnership on Animal Health and Welfare · SOA26",
+      "contribution": "Develop phylodynamic and network analyses linking livestock movements, wildlife and landscape data to investigate transmission pathways and inform One Health surveillance.",
+      "awardStatus": null,
+      "url": null,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Research programmes & funding"
+      }
+    },
+    {
+      "id": "sss-mod",
+      "name": "SSS-mod: Preparedness Package for Future Respiratory Outbreaks",
+      "status": "Ongoing",
+      "year": 2026,
+      "context": "ZonMw Implementatie-impuls COVID-19 programma",
+      "contribution": "Develop data preparation, recalibration, model output and interface workflows supporting reuse of a setting-specific respiratory transmission model.",
+      "awardStatus": null,
+      "url": null,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Research programmes & funding"
+      }
+    },
+    {
+      "id": "imbit",
+      "name": "IMBIT: Intervention Modeling & Bayesian Inference of Transmission Routes for Early Pandemic Response",
+      "status": "Completed",
+      "year": 2025,
+      "context": "ZonMw Kennisprogramma Pandemische Paraatheid",
+      "contribution": "Developed NetForge and HerdLink.nl. Contributed to a One Health programme coupling multi-route simulation with Bayesian inference of transmission routes across human, livestock, wildlife and environmental systems.",
+      "awardStatus": null,
+      "url": null,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Research programmes & funding"
+      }
+    }
+  ],
+  "software": [
+    {
+      "id": "evonn",
+      "name": "EvoNN",
+      "role": "Developer",
+      "description": "Neural inference from phylogenies.",
+      "url": "https://github.com/EvoLandEco/EvoNN",
+      "linkKind": "source",
+      "group": null,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Selected research & software; Research software"
+      }
+    },
+    {
+      "id": "evesim",
+      "name": "evesim",
+      "role": "Developer",
+      "description": "Simulation of evolutionary relatedness dependent birth–death processes.",
+      "url": "https://github.com/EvoLandEco/evesim",
+      "linkKind": "source",
+      "group": null,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Selected research & software; Research software"
+      }
+    },
+    {
+      "id": "netforge",
+      "name": "NetForge",
+      "role": "Developer",
+      "description": "Synthetic livestock contact networks informed by stochastic block models and contact history.",
+      "url": "https://qtj.me/NetForge",
+      "linkKind": "documentation",
+      "group": null,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Selected research & software; Research software"
+      }
+    },
+    {
+      "id": "herdlink",
+      "name": "HerdLink",
+      "role": "Developer",
+      "description": "Interactive livestock network exploration and intervention scenario comparison.",
+      "url": "https://herdlink.nl",
+      "linkKind": "application",
+      "group": null,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Selected research & software; Research software"
+      }
+    },
+    {
+      "id": "netspectra",
+      "name": "NetSpectra",
+      "role": "Developer",
+      "description": null,
+      "url": "https://github.com/EvoLandEco/NetSpectra",
+      "linkKind": "source",
+      "group": "interactive-tools",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Selected research & software; Research software"
+      }
+    },
+    {
+      "id": "evolab",
+      "name": "EvoLab",
+      "role": "Developer",
+      "description": null,
+      "url": "https://github.com/EvoLandEco/EvoLab",
+      "linkKind": "source",
+      "group": "interactive-tools",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Selected research & software; Research software"
+      }
+    },
+    {
+      "id": "miniape",
+      "name": "miniape",
+      "role": "Developer",
+      "description": null,
+      "url": "https://github.com/EvoLandEco/miniape",
+      "linkKind": "source",
+      "group": "interactive-tools",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Selected research & software; Research software"
+      }
+    },
+    {
+      "id": "treestats",
+      "name": "treestats",
+      "role": "Collaborator",
+      "description": null,
+      "url": "https://github.com/thijsjanzen/treestats",
+      "linkKind": "source",
+      "group": "collaborative-packages",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Selected research & software; Research software"
+      }
+    },
+    {
+      "id": "ddd",
+      "name": "DDD",
+      "role": "Collaborator",
+      "description": null,
+      "url": "https://github.com/rsetienne/DDD",
+      "linkKind": "source",
+      "group": "collaborative-packages",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Selected research & software; Research software"
+      }
+    },
+    {
+      "id": "daisie",
+      "name": "DAISIE",
+      "role": "Collaborator",
+      "description": null,
+      "url": "https://github.com/rsetienne/DAISIE",
+      "linkKind": "source",
+      "group": "collaborative-packages",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Selected research & software; Research software"
+      }
+    }
+  ],
+  "softwareGroups": [
+    {
+      "id": "interactive-tools",
+      "label": "Interactive scientific tools",
+      "description": "Interactive network dynamics, lineage simulation, tree reconstruction and browser-based phylogenetic data handling.",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Research software"
+      }
+    },
+    {
+      "id": "collaborative-packages",
+      "label": "Collaborative research software",
+      "description": "Phylogenetic statistics, data structures, simulation and inference for diversification and island biogeography.",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Research software"
+      }
+    }
+  ],
+  "publications": [
+    {
+      "id": "evonn-2026",
+      "year": 2026,
+      "title": "Parameter estimation from phylogenetic trees using neural networks and ensemble learning.",
+      "venue": "Systematic Biology",
+      "volume": "75",
+      "issue": "2",
+      "pages": "344–365",
+      "doi": "10.1093/sysbio/syaf060",
+      "url": "https://doi.org/10.1093/sysbio/syaf060",
+      "authors": [
+        {
+          "displayName": "Qin, T.",
+          "isOwner": true,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "van Benthem, K. J.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Valente, L.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": true
+        },
+        {
+          "displayName": "Etienne, R. S.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": true
+        }
+      ],
+      "status": "peer-reviewed",
+      "selected": true,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Peer-reviewed articles"
+      }
+    },
+    {
+      "id": "eve-2025",
+      "year": 2025,
+      "title": "Impact of evolutionary relatedness on species diversification and tree shape.",
+      "venue": "Journal of Theoretical Biology",
+      "volume": "598",
+      "issue": null,
+      "pages": "111992",
+      "doi": "10.1016/j.jtbi.2024.111992",
+      "url": "https://doi.org/10.1016/j.jtbi.2024.111992",
+      "authors": [
+        {
+          "displayName": "Qin, T.",
+          "isOwner": true,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Valente, L.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": true
+        },
+        {
+          "displayName": "Etienne, R. S.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": true
+        }
+      ],
+      "status": "peer-reviewed",
+      "selected": true,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Peer-reviewed articles"
+      }
+    },
+    {
+      "id": "wetlands-2022",
+      "year": 2022,
+      "title": "Relative abundance of invasive plants more effectively explains the response of wetland communities to different invasion degrees than phylogenetic evenness.",
+      "venue": "Journal of Plant Ecology",
+      "volume": "15",
+      "issue": "3",
+      "pages": "625–638",
+      "doi": "10.1093/jpe/rtab074",
+      "url": "https://doi.org/10.1093/jpe/rtab074",
+      "authors": [
+        {
+          "displayName": "Sun, K.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Liu, X.-S.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Qin, T.-J.",
+          "isOwner": true,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Jiang, F.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Cai, J.-F.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Shen, Y.-L.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "A, S.-H.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Li, H.-L.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        }
+      ],
+      "status": "peer-reviewed",
+      "selected": false,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Peer-reviewed articles"
+      }
+    },
+    {
+      "id": "resistance-2020",
+      "year": 2020,
+      "title": "Phylogenetic diversity is a better predictor of wetland community resistance to Alternanthera philoxeroides invasion than species richness.",
+      "venue": "Plant Biology",
+      "volume": "22",
+      "issue": "4",
+      "pages": "591–599",
+      "doi": "10.1111/plb.13101",
+      "url": "https://doi.org/10.1111/plb.13101",
+      "authors": [
+        {
+          "displayName": "Qin, T.",
+          "isOwner": true,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Zhou, J.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Sun, Y.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Müller-Schärer, H.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Luo, F.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Dong, B.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Li, H.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Yu, F.-H.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        }
+      ],
+      "status": "peer-reviewed",
+      "selected": false,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Peer-reviewed articles"
+      }
+    },
+    {
+      "id": "traits-2019",
+      "year": 2019,
+      "title": "Spatial environmental heterogeneity may drive functional trait variation in Hydrocotyle vulgaris (Araliaceae), an invasive aquatic plant.",
+      "venue": "Aquatic Biology",
+      "volume": "28",
+      "issue": null,
+      "pages": "149–158",
+      "doi": "10.3354/ab00716",
+      "url": "https://doi.org/10.3354/ab00716",
+      "authors": [
+        {
+          "displayName": "Wan, J.-Z.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Wang, M.-Z.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Qin, T.-J.",
+          "isOwner": true,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Bu, X.-Q.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Li, H.-L.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Yu, F.-H.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        }
+      ],
+      "status": "peer-reviewed",
+      "selected": false,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Peer-reviewed articles"
+      }
+    },
+    {
+      "id": "growth-2019",
+      "year": 2019,
+      "title": "Growth traits of the exotic plant Hydrocotyle vulgaris and the evenness of resident plant communities are mediated by community age, not species diversity.",
+      "venue": "Weed Research",
+      "volume": "59",
+      "issue": "5",
+      "pages": "377–386",
+      "doi": "10.1111/wre.12373",
+      "url": "https://doi.org/10.1111/wre.12373",
+      "authors": [
+        {
+          "displayName": "Qin, T.-J.",
+          "isOwner": true,
+          "equalContribution": true,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Guan, Y.-T.",
+          "isOwner": false,
+          "equalContribution": true,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Quan, H.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Dong, B.-C.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Luo, F.-L.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Zhang, M.-X.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Li, H.-L.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Yu, F.-H.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        }
+      ],
+      "status": "peer-reviewed",
+      "selected": false,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Peer-reviewed articles"
+      }
+    },
+    {
+      "id": "sediment-2018",
+      "year": 2018,
+      "title": "Sediment type and nitrogen deposition affect the relationship between Alternanthera philoxeroides and experimental wetland plant communities.",
+      "venue": "Marine and Freshwater Research",
+      "volume": "69",
+      "issue": "5",
+      "pages": "811–822",
+      "doi": "10.1071/MF17335",
+      "url": "https://doi.org/10.1071/MF17335",
+      "authors": [
+        {
+          "displayName": "Qin, T.-J.",
+          "isOwner": true,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Guan, Y.-T.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Zhang, M.-X.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Li, H.-L.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Yu, F.-H.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        }
+      ],
+      "status": "peer-reviewed",
+      "selected": false,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Peer-reviewed articles"
+      }
+    },
+    {
+      "id": "water-2018",
+      "year": 2018,
+      "title": "Effects of water regime on the growth of the submerged macrophyte Ceratophyllum demersum at different densities.",
+      "venue": "Journal of Freshwater Ecology",
+      "volume": "33",
+      "issue": "1",
+      "pages": "45–56",
+      "doi": "10.1080/02705060.2017.1422043",
+      "url": "https://doi.org/10.1080/02705060.2017.1422043",
+      "authors": [
+        {
+          "displayName": "Liu, L.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Guan, Y.-T.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Qin, T.-J.",
+          "isOwner": true,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Wang, Y.-Y.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Li, H.-L.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Zhi, Y.-B.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        }
+      ],
+      "status": "peer-reviewed",
+      "selected": false,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Peer-reviewed articles"
+      }
+    },
+    {
+      "id": "netforge-2026",
+      "year": 2026,
+      "title": "From Movement to Spread: Generating Livestock Contact Networks that Preserve Infection Dynamics.",
+      "venue": "bioRxiv",
+      "volume": null,
+      "issue": null,
+      "pages": null,
+      "doi": "10.64898/2026.09.15.751711",
+      "url": "https://doi.org/10.64898/2026.09.15.751711",
+      "authors": [
+        {
+          "displayName": "Qin, T.",
+          "isOwner": true,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Atamer Balkan, B.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Schmid, B. V.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "ten Bosch, Q. A.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        }
+      ],
+      "status": "preprint",
+      "selected": true,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Preprints"
+      }
+    },
+    {
+      "id": "relatedness-2026",
+      "year": 2026,
+      "title": "Identifying evolutionary relatedness effects on diversification from phylogenies using neural networks.",
+      "venue": "bioRxiv",
+      "volume": null,
+      "issue": null,
+      "pages": null,
+      "doi": "10.64898/2026.01.12.699140",
+      "url": "https://doi.org/10.64898/2026.01.12.699140",
+      "authors": [
+        {
+          "displayName": "Qin, T.",
+          "isOwner": true,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "van Benthem, K.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": false
+        },
+        {
+          "displayName": "Valente, L.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": true
+        },
+        {
+          "displayName": "Etienne, R. S.",
+          "isOwner": false,
+          "equalContribution": false,
+          "jointSenior": true
+        }
+      ],
+      "status": "preprint",
+      "selected": false,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Preprints"
+      }
+    }
+  ],
+  "experience": [
+    {
+      "id": "wur",
+      "start": "2025",
+      "end": null,
+      "title": "Postdoctoral Researcher",
+      "institution": "Wageningen University & Research",
+      "unit": "Infectious Disease Epidemiology Group",
+      "description": "Develop AI and computational methods for One Health and pandemic preparedness, including temporal networks, network-phylodynamic inference, spatiotemporal epidemic modelling and neural/hybrid AI for detection and projection. Build reproducible HPC pipelines and interactive web tools.",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Research experience"
+      }
+    },
+    {
+      "id": "rug",
+      "start": "2019",
+      "end": "2026",
+      "title": "Doctoral Researcher in Theoretical & Computational Biology",
+      "institution": "University of Groningen",
+      "unit": "Groningen Institute for Evolutionary Life Sciences",
+      "description": "Developed simulation and inference methods for evolutionary diversification and research packages in R, C++ and Python, with CPU/GPU computing, testing, documentation and open releases.",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Research experience"
+      }
+    }
+  ],
+  "education": [
+    {
+      "id": "phd",
+      "start": "2019",
+      "end": "2026",
+      "degree": "PhD in Theoretical Biology",
+      "institution": "University of Groningen",
+      "city": "Groningen",
+      "country": "Netherlands",
+      "supervisors": [
+        "Rampal Etienne",
+        "Luis Valente",
+        "Koen van Benthem"
+      ],
+      "description": "Diversification Models and Neural Inference",
+      "thesisUrl": "https://research.rug.nl/files/1515277445/Complete_thesis.pdf",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Education"
+      }
+    },
+    {
+      "id": "msc",
+      "start": "2016",
+      "end": "2019",
+      "degree": "MSc in Wetland Ecology",
+      "institution": "Beijing Forestry University",
+      "city": "Beijing",
+      "country": "China",
+      "supervisors": [
+        "Hongli Li",
+        "Feihai Yu"
+      ],
+      "description": "Wetland invasion resistance and community assembly, field surveys across 18 Chinese provinces, controlled experiments, image analysis and phylogenetic workflows.",
+      "thesisUrl": null,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Education"
+      }
+    },
+    {
+      "id": "bsc",
+      "start": "2012",
+      "end": "2016",
+      "degree": "BSc in Marine Biology",
+      "institution": "Nanjing Normal University",
+      "city": "Nanjing",
+      "country": "China",
+      "supervisors": [],
+      "description": null,
+      "thesisUrl": null,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Education"
+      }
+    }
+  ],
+  "skills": [
+    {
+      "id": "ai",
+      "label": "AI & machine learning",
+      "items": [
+        "Graph neural networks",
+        "Recurrent neural networks",
+        "Dense neural networks",
+        "Transformers",
+        "Ensemble modelling",
+        "Generative modelling",
+        "PyTorch",
+        "PyTorch Geometric",
+        "Model benchmarking"
+      ],
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Technical expertise"
+      }
+    },
+    {
+      "id": "modelling",
+      "label": "Modelling & inference",
+      "items": [
+        "Stochastic processes",
+        "Simulation-based inference",
+        "Likelihood methods",
+        "Temporal networks",
+        "Transmission simulation",
+        "Phylodynamics",
+        "Phylogenetic analysis"
+      ],
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Technical expertise"
+      }
+    },
+    {
+      "id": "programming",
+      "label": "Programming & data",
+      "items": [
+        "Python",
+        "R",
+        "C/C++",
+        "JavaScript",
+        "SQL",
+        "Package development",
+        "Spatiotemporal data integration",
+        "GIS"
+      ],
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Technical expertise"
+      }
+    },
+    {
+      "id": "computing",
+      "label": "Research computing",
+      "items": [
+        "Linux",
+        "Bash",
+        "CPU/GPU HPC",
+        "Docker",
+        "Git",
+        "GitHub workflows",
+        "CI/CD",
+        "Automated testing",
+        "Reproducible environments",
+        "AI-assisted software development"
+      ],
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Technical expertise"
+      }
+    },
+    {
+      "id": "web",
+      "label": "Web & visualisation",
+      "items": [
+        "React",
+        "D3.js",
+        "Three.js",
+        "Vite",
+        "Interactive scientific interfaces",
+        "Geospatial visualisation",
+        "LaTeX",
+        "TikZ",
+        "PGFPlots"
+      ],
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Technical expertise"
+      }
+    }
+  ],
+  "iconCloudItems": [
+    {
+      "id": "python",
+      "label": "Python",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/python.svg"
+    },
+    {
+      "id": "r",
+      "label": "R",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/r.svg"
+    },
+    {
+      "id": "cpp",
+      "label": "C++",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/cpp.svg"
+    },
+    {
+      "id": "javascript",
+      "label": "JavaScript",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/javascript.svg"
+    },
+    {
+      "id": "pytorch",
+      "label": "PyTorch",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/pytorch.svg"
+    },
+    {
+      "id": "react",
+      "label": "React",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/react.svg"
+    },
+    {
+      "id": "d3",
+      "label": "D3.js",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/d3.svg"
+    },
+    {
+      "id": "docker",
+      "label": "Docker",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/docker.svg"
+    },
+    {
+      "id": "git",
+      "label": "Git",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/git.svg"
+    },
+    {
+      "id": "linux",
+      "label": "Linux",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/linux.svg"
+    },
+    {
+      "id": "sql",
+      "label": "SQL",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/sql.svg"
+    },
+    {
+      "id": "threejs",
+      "label": "Three.js",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/threejs.svg"
+    },
+    {
+      "id": "vite",
+      "label": "Vite",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/vite.svg"
+    },
+    {
+      "id": "bash",
+      "label": "Bash",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/bash.svg"
+    },
+    {
+      "id": "latex",
+      "label": "LaTeX",
+      "sourceSection": "Technical expertise",
+      "assetPath": "/icons/toolkit/latex.svg"
+    }
+  ],
+  "talks": [
+    {
+      "id": "modah-2026",
+      "title": "From Livestock Movements to Infection Dynamics: Mechanism-Informed Learning for Synthetic Contact Networks",
+      "authors": [
+        "Qin, T.",
+        "Atamer Balkan, B.",
+        "Schmid, B.",
+        "ten Bosch, Q."
+      ],
+      "kind": "Oral presentation",
+      "event": "ModAH Conference 2026",
+      "date": "2026-08-26",
+      "location": "Nantes, France",
+      "url": "https://modahconf2026.sciencesconf.org/program?lang=en",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Conference presentation"
+      }
+    }
+  ],
+  "awards": [
+    {
+      "id": "kirschner-2025",
+      "title": "Denise Kirschner Best Student Paper Prize",
+      "year": 2025,
+      "institution": "Journal of Theoretical Biology",
+      "url": "https://www.sciencedirect.com/journal/journal-of-theoretical-biology/about/news/the-winner-of-the-denise-kirschner-best-student-paper-prize",
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Profile and research experience"
+      }
+    },
+    {
+      "id": "academic-performance",
+      "title": "First-Class Academic Performance Award",
+      "year": "2017–2019",
+      "institution": "Beijing Forestry University",
+      "url": null,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Seminars, workshops, mentoring & service"
+      }
+    },
+    {
+      "id": "academic-innovation",
+      "title": "Graduate Academic Innovation Award",
+      "year": 2018,
+      "institution": "Beijing Forestry University",
+      "url": null,
+      "evidence": {
+        "sourceId": "cv-2026-09",
+        "section": "Seminars, workshops, mentoring & service"
+      }
+    }
+  ],
+  "service": {
+    "seminars": "Seminars and workshops at Groningen, WUR and Wageningen Bioveterinary Research on island biogeography, stochastic modelling, phylodynamics, neural networks and network statistics.",
+    "mentoring": "Mentoring BSc/MSc students and junior PhD researchers, including pair programming on test-driven development and scientific software design.",
+    "reviewing": [
+      "Systematic Biology",
+      "PLOS Computational Biology",
+      "Epidemics",
+      "BMC Public Health",
+      "BMC Plant Biology"
+    ],
+    "leadership": [
+      "Vice President, Graduate Student Council (2017–2018)",
+      "Student representative, Wetland Ecology Group (2016–2019)"
+    ],
+    "evidence": {
+      "sourceId": "cv-2026-09",
+      "section": "Seminars, workshops, mentoring & service"
+    }
+  },
+  "languages": [
+    {
+      "name": "Chinese",
+      "level": "Native"
+    },
+    {
+      "name": "English",
+      "level": "Proficient"
+    },
+    {
+      "name": "Dutch",
+      "level": "A2 certified; strong reading"
+    },
+    {
+      "name": "German",
+      "level": "A2"
+    }
+  ],
+  "relatedLinks": [
+    {
+      "label": "HerdLink source",
+      "url": "https://github.com/EvoLandEco/herdlink-web"
+    },
+    {
+      "label": "NetForge preprint version 1",
+      "url": "https://www.biorxiv.org/content/10.64898/2026.09.15.751711v1"
+    }
+  ],
+  "globe": {
+    "title": "Academic path",
+    "caption": "Academic institutions in China and the Netherlands.",
+    "markerMeaning": "City-level schematic markers for institutions listed in the CV, not residence or live location.",
+    "markerCities": [
+      {
+        "city": "Nanjing",
+        "country": "China",
+        "institutionId": "bsc",
+        "coordinates": null
+      },
+      {
+        "city": "Beijing",
+        "country": "China",
+        "institutionId": "msc",
+        "coordinates": null
+      },
+      {
+        "city": "Groningen",
+        "country": "Netherlands",
+        "institutionId": "phd",
+        "coordinates": null
+      },
+      {
+        "city": "Wageningen",
+        "country": "Netherlands",
+        "institutionId": "wur",
+        "coordinates": null
+      }
+    ]
+  },
+  "editorial": {
+    "unknown": [
+      "Portrait",
+      "Final hosting configuration",
+      "Ownership and hosting of the existing /NetForge route",
+      "Permission-cleared application screenshots",
+      "Google Scholar profile URL"
+    ],
+    "attribution": "University and project names describe affiliations and contributions, not endorsements."
+  }
+}

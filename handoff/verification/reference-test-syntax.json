@@ -1,0 +1,17 @@
+{
+  "scope": "TypeScript syntax transpilation of browser-test contracts; no application typecheck or browser execution",
+  "typescriptVersion": "5.8.3",
+  "passed": true,
+  "checks": [
+    {
+      "path": "reference/portfolio.acceptance.spec.ts",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "path": "reference/photography.acceptance.spec.ts",
+      "passed": true,
+      "errors": []
+    }
+  ]
+}

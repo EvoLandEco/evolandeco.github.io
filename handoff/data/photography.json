@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "fixtureOnly": false,
+  "title": "Photography",
+  "intro": "Photographs, collected by country.",
+  "travelLogStatus": "unconfirmed",
+  "countries": [],
+  "albums": [],
+  "photos": []
+}

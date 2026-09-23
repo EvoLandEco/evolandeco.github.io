@@ -1,0 +1,536 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[margin=1.6cm,top=1.35cm,bottom=1.45cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[default]{sourcesanspro}
+\usepackage[scaled=0.88]{inconsolata}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{xurl}
+\usepackage{fontawesome5}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{needspace}
+\usepackage{ragged2e}
+\usepackage[most]{tcolorbox}
+
+\definecolor{Ink}{HTML}{132534}
+\definecolor{Navy}{HTML}{173D55}
+\definecolor{Teal}{HTML}{087E8B}
+\definecolor{Muted}{HTML}{5D6B75}
+\definecolor{Line}{HTML}{D8E2E7}
+\definecolor{Pale}{HTML}{EEF7F8}
+\definecolor{Warm}{HTML}{F5F1E8}
+
+\hypersetup{
+  colorlinks=true,
+  urlcolor=Teal,
+  linkcolor=Teal,
+  pdfauthor={Tianjian Qin},
+  pdftitle={Curriculum Vitae - Tianjian Qin},
+  pdfsubject={Data science, computational biology, and health research}
+}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\tabcolsep}{0pt}
+\setlength{\footskip}{0.72cm}
+\renewcommand{\familydefault}{\sfdefault}
+\emergencystretch=2em
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[L]{\scriptsize\color{Muted} Tianjian Qin \enspace\textcolor{Line}{|}\enspace Curriculum Vitae}
+\fancyfoot[R]{\scriptsize\color{Muted} \thepage\ /\ \pageref*{LastPage}}
+
+\newlist{cvlist}{itemize}{1}
+\setlist[cvlist]{
+  label=\raisebox{0.2ex}{\scriptsize\color{Teal}\faIcon{angle-right}},
+  leftmargin=1.15em,
+  rightmargin=0pt,
+  topsep=0.25em,
+  itemsep=0.12em,
+  parsep=0pt,
+  partopsep=0pt
+}
+
+\newlist{publist}{enumerate}{1}
+\setlist[publist]{
+  label=\textcolor{Teal}{\scriptsize\bfseries\arabic*.},
+  leftmargin=1.55em,
+  labelsep=0.45em,
+  topsep=0.2em,
+  itemsep=0.36em,
+  parsep=0pt,
+  partopsep=0pt
+}
+
+\newcommand{\cvsection}[1]{%
+  \Needspace{4\baselineskip}%
+  \vspace{0.72em}%
+  \noindent
+  \begin{tabularx}{\textwidth}{@{}l@{\hspace{0.58em}}X@{}}
+    {\color{Teal}\ttfamily\bfseries //} &
+    {\large\bfseries\color{Teal} #1}
+  \end{tabularx}
+  \vspace{0.16em}\par
+  {\color{Line}\hrule height 0.7pt}
+  \vspace{0.42em}
+}
+
+\newcommand{\cvsubhead}[1]{%
+  \Needspace{2.5\baselineskip}%
+  \vspace{0.45em}%
+  {\small\bfseries\color{Teal}\MakeUppercase{#1}}\par
+  \vspace{0.18em}
+}
+
+\newcommand{\cventry}[4]{%
+  \Needspace{9\baselineskip}%
+  \begin{tabularx}{\textwidth}{@{}X>{\raggedleft\arraybackslash}p{3.05cm}@{}}
+    {\bfseries\color{Ink} #1} & {\bfseries\color{Teal} #2} \\
+    {\small\color{Muted} #3} & {}
+  \end{tabularx}
+  \vspace{0.12em}
+  #4
+  \vspace{0.48em}
+}
+
+\newcommand{\statusbadge}[2]{%
+  \begingroup
+  \setlength{\fboxsep}{3.2pt}%
+  \colorbox{#1}{\textcolor{Teal}{\scriptsize\bfseries\strut #2}}%
+  \endgroup
+}
+
+\newcommand{\fundingentry}[5]{%
+  \Needspace{5\baselineskip}%
+  \begin{tabularx}{\textwidth}{@{}X>{\raggedleft\arraybackslash}p{3.2cm}@{}}
+    {\bfseries\color{Ink} #1} & #2 \\
+    {\small\color{Muted} #3} & {\small\color{Muted} #4}
+  \end{tabularx}
+  \vspace{0.12em}
+  #5
+  \vspace{0.48em}
+}
+
+\newcommand{\projectentry}[4]{%
+  \Needspace{5\baselineskip}%
+  \begin{tabularx}{\textwidth}{@{}X@{\hspace{0.3cm}}>{\raggedleft\arraybackslash}p{3.05cm}@{}}
+    {\bfseries\color{Ink} #1} & {\small\bfseries\color{Teal} #2} \\
+    {\small\color{Muted} #3} & {}
+  \end{tabularx}
+  \vspace{0.12em}
+  #4
+  \vspace{0.48em}
+}
+
+\newtcolorbox{featurebox}{
+  colback=Pale,
+  colframe=Pale,
+  boxrule=0pt,
+  sharp corners,
+  left=2.4mm,
+  right=2.4mm,
+  top=1.8mm,
+  bottom=1.8mm,
+  before skip=0.15em,
+  after skip=0.55em
+}
+
+\newcommand{\theme}[2]{%
+  {\scriptsize\bfseries\color{Teal}\MakeUppercase{#1}}\par
+  \vspace{0.05em}
+  {\small\color{Ink}#2}
+}
+
+\newcommand{\tool}[1]{\texttt{\color{Navy}#1}}
+\newcommand{\sep}{\enspace\textcolor{Line}{|}\enspace}
+
+\begin{document}
+\RaggedRight
+
+\begin{minipage}[t]{0.54\textwidth}
+  \vspace{0pt}
+  {\fontsize{28}{30}\selectfont\bfseries\color{Navy} Tianjian Qin, PhD}\par
+  \vspace{0.24em}
+  {\large\color{Teal} Computational Biologist \& Data Scientist}\par
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.42\textwidth}
+  \vspace{0.15em}
+  \raggedleft\small\color{Muted}
+  \faIcon{envelope}\enspace
+  \href{mailto:tianjian.qin@wur.nl}{tianjian.qin@wur.nl}
+  \sep
+  \faIcon{map-marker-alt}\enspace Netherlands\par
+  \vspace{0.22em}
+  \faIcon{globe}\enspace\href{https://qtj.me}{qtj.me}
+  \sep
+  \faIcon{orcid}\enspace\href{https://orcid.org/0000-0003-2540-1778}{0000-0003-2540-1778}\par
+  \vspace{0.22em}
+  \faIcon{project-diagram}\enspace\href{https://herdlink.nl}{HerdLink.nl}
+  \sep
+  \faIcon{github}\enspace\href{https://github.com/EvoLandEco}{EvoLandEco}
+  \sep
+  \faIcon{linkedin}\enspace\href{https://www.linkedin.com/in/tjqin}{tjqin}
+\end{minipage}
+
+\vspace{0.75em}
+{\color{Teal}\hrule height 1.3pt}
+
+\cvsection{Research Profile}
+
+\begin{cvlist}
+    \item I develop machine learning and deep learning methods, statistical models, simulation
+    frameworks, and research software for complex biological systems. My work spans evolutionary
+    biology, ecology, infectious disease epidemiology, and One Health research. I work with domain
+    experts to turn scientific questions into transparent models, scalable pipelines, and usable tools.
+\end{cvlist}
+
+\cvsection{Research Experience}
+
+\cventry
+  {Postdoctoral Researcher}
+  {2025--present}
+  {Wageningen University \& Research, Infectious Disease Epidemiology Group}
+  {%
+    \begin{cvlist}
+      \item Develop generative and predictive models for dynamic livestock movement networks,
+      including neural models for spatial point patterns, Transformer models for link forecasting,
+      stochastic block models, and transmission simulations.
+      \item Build reproducible HPC pipelines that integrate movement records, farm metadata,
+      spatial information, temporal covariates, and epidemiological context.
+      \item Translate empirical data and stakeholder questions into modelling workflows, open software,
+      visual analysis, and decision support outputs across animal and public health domains.
+    \end{cvlist}
+  }
+
+\cventry
+  {Doctoral Researcher in Theoretical \& Computational Biology}
+  {2019--2026}
+  {University of Groningen, Groningen Institute for Evolutionary Life Sciences}
+  {%
+    \begin{cvlist}
+      \item Developed the EVE stochastic birth-death model and high-performance simulation and
+      inference methods for diversification dependent on evolutionary relatedness.
+      \item Designed EvoNN, an ensemble learning framework combining graph, recurrent, and dense
+      neural networks for parameter inference from phylogenetic trees.
+      \item Built and maintained reproducible research software in \tool{R}, \tool{C++}, and
+      \tool{Python}, with extensive CPU and GPU computing, testing, documentation, and open releases.
+    \end{cvlist}
+  }
+
+\cventry
+  {MSc Researcher in Wetland Ecology \& Invasion Biology}
+  {2016--2019}
+  {Beijing Forestry University, School of Nature Conservation}
+  {%
+    \begin{cvlist}
+      \item Conducted field surveys across 18 Chinese provinces and received training in controlled
+      experiments, GIS, phylogenetic metrics, community and trait analyses, spatial analysis, and
+      environmental data analysis.
+      \item Built automated image analysis and phylogenetic reconstruction workflows and published
+      quantitative studies of invasion resistance and community assembly.
+    \end{cvlist}
+  }
+
+\cvsection{Research Funding \& Proposal Development}
+
+\fundingentry
+  {NextdAI: Integrated AI-Driven Early Detection System}
+  {\statusbadge{Warm}{IN DEVELOPMENT}}
+  {NWO KIC Early Detection of (Emerging) Infectious Disease Outbreaks}
+  {2026}
+  {\begin{cvlist}
+    \item Co-developing a novel AI architecture and a data infrastructure plan for heterogeneous
+      surveillance streams, anomaly detection, neuro-symbolic characterisation,
+      forecasting, and knowledge-based decision support.
+  \end{cvlist}}
+
+\fundingentry
+  {SSS-mod: Preparedness Package for Future Respiratory Outbreaks}
+  {\statusbadge{Pale}{AWARDED}}
+  {ZonMw Implementatie-impuls COVID-19 programma}
+  {Mar--Dec 2026}
+  {\begin{cvlist}
+    \item Project team member. Responsible for programming for data preparation,
+      recalibration, model output generation, and interface development, supporting the reuse of a
+      setting-specific transmission model during future respiratory outbreaks.
+  \end{cvlist}}
+
+\fundingentry
+  {Small Compute Applications}
+  {\statusbadge{Pale}{AWARDED}}
+  {NWO \& SURF}
+  {2025}
+  {\begin{cvlist}
+    \item Compute allocation supporting data-intensive simulation, neural inference, and model
+      evaluation on high-performance computing systems.
+  \end{cvlist}}
+
+\cvsection{Selected Research Projects}
+
+\begin{featurebox}
+  \begin{tabularx}{\linewidth}{@{}X>{\raggedleft\arraybackslash}p{3.4cm}@{}}
+    {\large\bfseries\color{Navy} HerdLink.nl} &
+    {\statusbadge{white}{LIVE PLATFORM}} \\
+    {\small\color{Muted} Developer \sep \tool{JavaScript} \sep \tool{D3.js}} &
+    {\small\href{https://herdlink.nl}{https://herdlink.nl}}
+  \end{tabularx}
+  \vspace{0.25em}
+
+  Developed and deployed a public web platform for exploring anonymised and aggregated Dutch
+  livestock trade networks. HerdLink links graph and map views with node focus, temporal replay,
+  network summaries, and transmission simulation for research exploration, communication, and education.
+\end{featurebox}
+
+\projectentry
+  {EUPAHW HEV: transmission pathways across pigs, wild boar, and humans}
+  {Researcher}
+  {European Partnership on Animal Health and Welfare}
+  {\begin{cvlist}
+    \item Developing research questions and analysis strategies that join phylodynamics,
+      animal movement networks, wildlife and landscape information, and intervention timing. The work
+      targets transmission direction, spillover between species, long-range lineage movement, and
+      generalisable One Health surveillance design.
+  \end{cvlist}}
+
+\projectentry
+  {NetForge: dynamic livestock network modelling}
+  {Developer}
+  {\tool{Python} \sep network science \sep epidemic simulation}
+  {\begin{cvlist}
+    \item Developing a research toolkit for movement network synthesis, statistical evaluation, metadata
+      generation, and transmission experiments. Current work includes physics-informed network
+      generators and models for spatial and temporal link prediction.
+  \end{cvlist}}
+
+\projectentry
+  {EVE \& EvoNN: simulation and neural inference from phylogenies}
+  {Researcher}
+  {\tool{R} \sep \tool{C++} \sep \tool{Python} \sep GPU computing}
+  {\begin{cvlist}
+    \item Created stochastic models, simulators, and ensemble neural networks that learn jointly from graph
+      structure, branching times, and summary statistics. The work supports peer-reviewed publications,
+      reusable packages, and a completed doctoral thesis.
+  \end{cvlist}}
+
+\cvsection{Teaching \& Mentoring}
+
+\begin{cvlist}
+  \item Teaching assistant for annual coding assignments and computer practicals in island
+  biogeography at the University of Groningen.
+  \item Guest lectures, tutorials, and seminars on stochastic processes, diversification models,
+  deep learning, neural networks, and network statistics.
+  \item Lectures and workshops at Wageningen University \& Research and Wageningen Bioveterinary
+  Research on phylodynamics, birth-death models, and network modelling.
+  \Needspace{4\baselineskip}
+  \item Pair programming sessions on test-driven development and collaborative software design.
+  \item Informal mentoring of BSc and MSc students in biostatistics, data visualisation, and
+  scientific writing, and of junior PhD researchers in planning and day-to-day research practice.
+\end{cvlist}
+
+\Needspace{15\baselineskip}
+
+\cvsection{Education}
+
+\cventry
+  {PhD in Theoretical Biology}
+  {2019--2026}
+  {University of Groningen, Netherlands}
+  {\begin{cvlist}
+      \item Thesis: \emph{Diversification Models and Neural Inference}. \sep
+      \href{https://research.rug.nl/files/1515277445/Complete_thesis.pdf}
+      {\faIcon{download}\enspace Thesis PDF}
+      \item Supervisors: Prof. Dr.\ Rampal Etienne, Prof. Dr.\ Luis Valente, and Dr.\ Koen van Benthem.
+  \end{cvlist}}
+
+\cventry
+  {MSc in Wetland Ecology}
+  {2016--2019}
+  {Beijing Forestry University, China}
+  {\begin{cvlist}
+      \item Supervisors: Prof. Dr.\ Hongli Li and Prof. Dr.\ Feihai Yu.
+  \end{cvlist}}
+
+\cventry
+  {BSc in Marine Biology}
+  {2012--2016}
+  {Nanjing Normal University, China}
+  {}
+
+\cvsection{Publications}
+
+\cvsubhead{Peer-reviewed articles}
+
+\begin{publist}
+  \item \textbf{Qin, T.}, van Benthem, K., Valente, L.\textsuperscript{\dag},
+  \& Etienne, R. S.\textsuperscript{\dag} (2026).
+  Parameter estimation from phylogenetic trees using neural networks and ensemble learning.
+  \emph{Systematic Biology}, 75(2), 344--365.
+
+  \item \textbf{Qin, T.}, Valente, L.\textsuperscript{\dag},
+  \& Etienne, R. S.\textsuperscript{\dag} (2025).
+  Impact of evolutionary relatedness on species diversification and tree shape.
+  \emph{Journal of Theoretical Biology}, 598, 111992.
+
+  \item Sun, K., Liu, X.-S., \textbf{Qin, T.-J.}, Jiang, F., Cai, J.-F.,
+  Shen, Y.-L., A, S.-H., \& Li, H.-L. (2021).
+  Relative abundance of invasive plants more effectively explains the response of wetland
+  communities to different invasion degrees than phylogenetic evenness.
+  \emph{Journal of Plant Ecology}.
+
+  \item \textbf{Qin, T.}, Zhou, J., Sun, Y., M\"uller-Sch\"arer, H., Luo, F.,
+  Dong, B., Li, H., \& Yu, F.-H. (2020).
+  Phylogenetic diversity is a better predictor of wetland community resistance to
+  \emph{Alternanthera philoxeroides} invasion than species richness.
+  \emph{Plant Biology}.
+
+  \item Wan, J.-Z., Wang, M.-Z., \textbf{Qin, T.}, Bu, X.-Q., Li, H.-L.,
+  \& Yu, F.-H. (2019).
+  Spatial environmental heterogeneity may be the driver of functional trait variation in
+  \emph{Hydrocotyle vulgaris}, an aquatic plant invader.
+  \emph{Aquatic Biology}.
+
+  \item \textbf{Qin, T.-J.}*, Guan, Y.-T.*, Quan, H., Dong, B.-C., Luo, F.-L.,
+  Zhang, M.-X., Li, H.-L., \& Yu, F.-H. (2019).
+  Growth traits of the exotic plant \emph{Hydrocotyle vulgaris} and the evenness of resident
+  plant communities are mediated by community age, not species diversity.
+  \emph{Weed Research}.
+
+  \item \textbf{Qin, T.-J.}, Guan, Y.-T., Zhang, M.-X., Li, H.-L.,
+  \& Yu, F.-H. (2018).
+  Sediment type and nitrogen deposition affect the relationship between
+  \emph{Alternanthera philoxeroides} and experimental wetland plant communities.
+  \emph{Marine and Freshwater Research}.
+
+  \item Liu, L., Guan, Y.-T., \textbf{Qin, T.-J.}, Wang, Y.-Y., Li, H.-L.,
+  \& Zhi, Y.-B. (2018).
+  Effects of water regime on the growth of the submerged macrophyte
+  \emph{Ceratophyllum demersum} at different densities.
+  \emph{Journal of Freshwater Ecology}.
+\end{publist}
+
+\cvsubhead{Preprint}
+
+\begin{publist}
+    \item \textbf{Qin, T.}, van Benthem, K., Valente, L.\textsuperscript{\dag},
+    \& Etienne, R. S.\textsuperscript{\dag} (2026).
+    Identifying evolutionary relatedness effects on diversification from phylogenies using neural
+    networks. \emph{bioRxiv}.
+\end{publist}
+
+\cvsubhead{Conference}
+
+\begin{publist}
+    \item \textbf{Qin, T.}, Atamer Balkan, B., Schmid, B., \& ten Bosch, Q.
+    Generating livestock movement networks that preserve epidemic behaviour with physics informed
+    machine learning. \emph{ModAH Conference 2026, Nantes, France}.
+\end{publist}
+
+\vspace{0.35em}
+{\small\color{Muted}* Equal contribution. \textsuperscript{\dag} Joint senior authors.}
+
+\cvsection{Honours \& Awards}
+
+\begin{cvlist}
+  \item \textbf{\href{https://www.sciencedirect.com/journal/journal-of-theoretical-biology/about/news/the-winner-of-the-denise-kirschner-best-student-paper-prize}
+  {Denise Kirschner Best Student Paper Prize \faIcon{external-link-alt}}}, \emph{Journal of Theoretical Biology}
+  (2025). Inaugural prize for graduate student research.
+  \item \textbf{First-Class Academic Performance Award}, Beijing Forestry University
+  (2017--2018 and 2018--2019).
+  \item \textbf{Graduate Academic Innovation Award}, Beijing Forestry University (2018).
+\end{cvlist}
+
+\cvsection{Academic \& Community Service}
+
+\begin{cvlist}
+  \item \textbf{Peer reviewer} for \emph{Systematic Biology}, \emph{PLOS Computational Biology},
+  \emph{Epidemics}, \emph{BMC Public Health}, and \emph{BMC Plant Biology}.
+  \item \textbf{Contributor} to various GitHub open-source repositories.
+  \item \textbf{Vice President}, Graduate Student Council, School of Nature Conservation, Beijing Forestry
+  University (2017--2018).
+  \item \textbf{Student representative}, Wetland Ecology Group, Beijing Forestry University (2016--2019).
+\end{cvlist}
+
+\Needspace{8\baselineskip}
+\cvsection{Research Software}
+
+\projectentry
+  {\href{https://qtj.me/NetForge}{NetForge}}
+  {Developer}
+  {Movement network modelling and transmission simulation \sep \tool{Python}}
+  {\begin{cvlist}
+      \item Command-line tools for network synthesis, metadata generation, evaluation, and epidemic
+      experiments.
+  \end{cvlist}}
+
+\projectentry
+  {\href{https://github.com/EvoLandEco/EvoNN}{EvoNN} \&
+  \href{https://github.com/EvoLandEco/evesim}{evesim}}
+  {Developer}
+  {Neural inference and stochastic simulation \sep \tool{R}/\tool{Python}/\tool{C++}}
+  {\begin{cvlist}
+      \item Pretrained neural inference from phylogenies and fast simulation of evolutionary relatedness
+      dependent birth-death processes.
+  \end{cvlist}}
+
+\projectentry
+  {\href{https://github.com/EvoLandEco/NetSpectra}{NetSpectra},
+  \href{https://github.com/EvoLandEco/EvoLab}{EvoLab}, \&
+  \href{https://github.com/EvoLandEco/miniape}{miniape}}
+  {Developer}
+  {Interactive scientific tools \sep \tool{JavaScript}}
+  {\begin{cvlist}
+      \item Network dynamics, lineage simulation, tree reconstruction, and browser-based phylogenetic data
+      handling.
+  \end{cvlist}}
+
+\projectentry
+  {\href{https://github.com/thijsjanzen/treestats}{treestats},
+  \href{https://github.com/rsetienne/DDD}{DDD}, \&
+  \href{https://github.com/rsetienne/DAISIE}{DAISIE}}
+  {Collaborator}
+  {High-performance research packages \sep \tool{R}/\tool{C++}}
+  {\begin{cvlist}
+      \item Contributions to data structures, phylogenetic summary statistics, and simulation and
+      inference for diversification and island biogeography models.
+  \end{cvlist}}
+
+\cvsection{Technical Expertise}
+
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.45cm}@{\hspace{0.42cm}}X@{}}
+  \textbf{\color{Navy}Machine learning} &
+  Neural networks, transformer models, ensemble learning, and benchmarking. \\[0.34em]
+
+  \textbf{\color{Navy}Statistics \& inference} &
+  Stochastic processes, simulation-based inference, and likelihood methods. \\[0.34em]
+
+  \textbf{\color{Navy}Programming} &
+  \tool{Python}, \tool{R}, \tool{C/C++}, \tool{JavaScript}, \tool{SQL}; package design, analysis pipelines, and interactive visualisation. \\[0.34em]
+
+  \textbf{\color{Navy}Research computing} &
+  Linux, Bash, HPC, data infrastructure, Docker, Git, GitHub workflows, agentic coding, and CI/CD. \\[0.34em]
+
+  \textbf{\color{Navy}Communication} &
+  Scientific writing, \LaTeX, TikZ, PGFPlots, D3.js, and interface design for domain experts and students.
+\end{tabularx}
+
+\cvsection{Languages}
+
+{\small
+\textbf{\color{Navy}Chinese} Native \sep
+\textbf{\color{Navy}English} Proficient \sep
+\textbf{\color{Navy}Dutch} Basic \sep
+\textbf{\color{Navy}German} Basic}
+
+\end{document}

@@ -1,0 +1,10 @@
+{
+  "source": "sources/Tianjian_Qin_CV.tex",
+  "pdf": "public/Tianjian-Qin-CV.pdf",
+  "compileCommand": "latexmk -pdf -interaction=nonstopmode -halt-on-error Tianjian-Qin-CV.tex",
+  "pages": 3,
+  "sourceEdited": false,
+  "renderMethod": "pdftoppm to PNG, all three pages visually inspected",
+  "visualFindings": "No observed clipping, overlap or missing glyphs",
+  "taggedPdf": false
+}

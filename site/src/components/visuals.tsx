@@ -64,7 +64,7 @@ export function ProfileSocialLinks() {
 }
 export function ToolkitCloud() {
   const panel = useRef<HTMLDivElement>(null);
-  const m = usePanelMotion(panel);
+  const m = usePanelMotion(panel, true);
   return (
     <div
       ref={panel}

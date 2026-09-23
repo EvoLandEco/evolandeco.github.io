@@ -32,7 +32,7 @@ Toolkit icons use Font Awesome Free 6.4.2 SVGs from the repository's `assets/fon
 
 Project cards follow the pinned portfolio's `project-card.tsx` composition. Timelines use its `timeline.tsx` and the layout of `section/hackathons-section.tsx`: circular icons, a connecting rule, dates above titles, compact links and a 40-pixel content gap. Institution emblems identify education and research appointments.
 
-The toolkit animates for 4.5 seconds on entering view, then settles. The research diagram animates while visible. Reduced-motion preferences and document visibility remain respected. Appearance is the only display setting.
+The toolkit and research diagram animate while visible. Reduced-motion preferences and document visibility remain respected. Appearance is the only display setting.
 
 The globe uses the shared Magic UI Animated Beam component with projected spherical paths. Deep red pulses have two translucent glow layers and no persistent connecting line. Ten fixed routes use raised quadratic arcs and staggered 2.5-second animation cycles. Blue nodes combine bright cores, breathing halos, expanding pulses and rotating segmented rings. Each ring follows the globe surface and foreshortens with its orientation. Animation runs while visible, stops for reduced motion and hidden documents, and releases both renderers on unmount.
 

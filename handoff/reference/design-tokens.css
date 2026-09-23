@@ -1,0 +1,79 @@
+/* Merge these tokens with the application's existing Tailwind v4 theme. */
+:root {
+  color-scheme: light;
+  --site-bg: #f5f6f8;
+  --site-surface: #ffffff;
+  --site-surface-muted: #eef2f7;
+  --site-ink: #182230;
+  --site-ink-muted: #566273;
+  --site-accent: #315ba6;
+  --site-accent-ink: #ffffff;
+  --site-border: #dde3ea;
+  --site-control-border: #738097;
+  --site-focus: #315ba6;
+  --site-radius-shell: 1.5rem;
+  --site-radius-card: 1.125rem;
+  --site-radius-control: 0.75rem;
+  --site-max-width: 74rem;
+  --site-rail-width: 14.5rem;
+  --site-column-gap: 1.5rem;
+  --site-shadow: 0 8px 32px rgb(24 34 48 / 0.045);
+  --site-map-dot: #738097;
+  --site-photo-gap: 1rem;
+  --site-photo-cover-ratio: 3 / 2;
+  --site-map-ratio: 2 / 1;
+  --site-duration-brief: 160ms;
+  --site-duration-enter: 280ms;
+  --site-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dark {
+  color-scheme: dark;
+  --site-bg: #10151d;
+  --site-surface: #171f2b;
+  --site-surface-muted: #202b3a;
+  --site-ink: #e8edf5;
+  --site-ink-muted: #b4c0d1;
+  --site-accent: #93b7ff;
+  --site-accent-ink: #10151d;
+  --site-border: #354255;
+  --site-control-border: #738097;
+  --site-focus: #93b7ff;
+  --site-shadow: 0 8px 32px rgb(0 0 0 / 0.12);
+  --site-map-dot: #738097;
+}
+
+/* Keep the starter's semantic colour tokens connected to one source. */
+:root, .dark {
+  --background: var(--site-bg);
+  --foreground: var(--site-ink);
+  --card: var(--site-surface);
+  --card-foreground: var(--site-ink);
+  --muted: var(--site-surface-muted);
+  --muted-foreground: var(--site-ink-muted);
+  --primary: var(--site-accent);
+  --primary-foreground: var(--site-accent-ink);
+  --border: var(--site-border);
+  --ring: var(--site-focus);
+}
+
+/* Preserve existing registry animations when merging this theme mapping. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+}
+
+/* Component-owned JavaScript motion uses the shared motion policy as well. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .site-entrance { animation: none; opacity: 1; transform: none; }
+  .site-interaction { transition: none; }
+}

@@ -1,0 +1,7 @@
+{
+  "tool": "bibtex8 --8bit",
+  "style": "plain.bst",
+  "result": "passed",
+  "scope": "Parsed all 10 BibTeX entries and generated a bibliography without reported warnings or errors. This is not an independent metadata or name-identity audit.",
+  "stdout": "The top-level auxiliary file: check.aux\nThe style file: plain.bst\nDatabase file #1: publications.bib\n"
+}

@@ -1,0 +1,98 @@
+{
+  "asOf": "2026-09-21",
+  "available": [
+    {
+      "id": "cv-pdf",
+      "path": "public/Tianjian-Qin-CV.pdf",
+      "origin": "Compiled from the supplied TeX without source edits",
+      "status": "Ready",
+      "public": true
+    },
+    {
+      "id": "citations",
+      "path": "public/publications.bib",
+      "origin": "Generated from the supplied CV records",
+      "status": "Ready",
+      "public": true
+    }
+  ],
+  "createDuringImplementation": [
+    {
+      "id": "identity-mark",
+      "path": "public/identity/tq-mark.svg",
+      "brief": "An original, restrained TQ monogram; never a fabricated portrait.",
+      "requiresExternalAsset": false
+    },
+    {
+      "id": "project-identifiers",
+      "path": "public/projects/",
+      "brief": "Small original schematic tree/network identifiers, labelled as illustration where meaning could be confused. No fabricated scientific data.",
+      "requiresExternalAsset": false
+    },
+    {
+      "id": "toolkit-icons",
+      "path": "public/icons/toolkit/",
+      "brief": "15 local SVGs matching iconCloudItems; permitted monochrome brands or neutral labelled symbols. Record licence and origin for every file.",
+      "requiresExternalAsset": true
+    },
+    {
+      "id": "social-card",
+      "path": "app/opengraph-image or equivalent",
+      "brief": "An original typography-based social image with name and research title; use the actual framework route convention.",
+      "requiresExternalAsset": false
+    },
+    {
+      "id": "photography-media",
+      "path": "public/photography/media/",
+      "brief": "Build-generated derivatives of approved owner photographs. Preserve visual colour and orientation, remove private metadata, reserve dimensions and publish only selected records.",
+      "requiresExternalAsset": true
+    }
+  ],
+  "notSupplied": [
+    {
+      "id": "portrait",
+      "rule": "Use the TQ monogram as the deliberate identity design until an authentic portrait is supplied."
+    },
+    {
+      "id": "herdlink-screenshot",
+      "rule": "Capture the public application only when access and displayed data are appropriate, or request a supplied screenshot. Record capture date, URL and permission context. Do not invent it."
+    },
+    {
+      "id": "recorded-demo",
+      "rule": "Do not show a video dialog until a real recording exists."
+    },
+    {
+      "id": "institution-logos",
+      "rule": "Use institution names as text; logos require a suitable source and usage rights."
+    },
+    {
+      "id": "globe-coordinates",
+      "rule": "Verify city-level reference coordinates; do not use private or precise residence coordinates."
+    },
+    {
+      "id": "photography-country-list",
+      "rule": "No travel inventory is supplied. Fill data/photography.json from owner confirmation. Do not infer visited countries from the CV, Globe, residence, language or conference plans."
+    },
+    {
+      "id": "photography-originals",
+      "rule": "No photographs are supplied. Keep originals outside public/ and the tracked app repository. Publish only owner-approved, metadata-stripped derivatives."
+    },
+    {
+      "id": "photography-country-markers",
+      "rule": "Use reviewed country-level representative coordinates in the photography manifest. They locate albums, not camera GPS or exact travel routes."
+    }
+  ],
+  "assetRecordFields": [
+    "id",
+    "localPath",
+    "sourceUrlOrOwner",
+    "licenceOrPermission",
+    "attribution",
+    "captureOrRetrievalDate",
+    "dimensions",
+    "altText",
+    "sha256"
+  ],
+  "publicDirectoryRule": "Only approved website assets enter public/. The handoff, original TeX, evidence index and internal notes do not.",
+  "photographyPublicationRule": "Draft, private, unconfirmed and test-fixture assets must not enter public/, generated routes, metadata, search indexes, client bundles or deployment archives."
+}

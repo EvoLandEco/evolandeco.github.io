@@ -468,3 +468,30 @@ test("Migrating destinations cannot navigate from the dock", async ({ page }) =>
     await expect(page).toHaveURL(/\/$/);
   }
 });
+
+
+test("Icon cloud keeps running while visible", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto('/software/');
+  const cloud = page.getByTestId('signature-icon-cloud');
+  await expect(cloud).toHaveAttribute('data-motion-state', 'running');
+  await page.waitForTimeout(5000);
+  await expect(cloud).toHaveAttribute('data-motion-state', 'running');
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(cloud).toHaveAttribute('data-motion-state', 'paused');
+});
+
+test("Pointer focus does not hold the globe callout open", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto('/');
+  for (const selector of ['.globe-frame', '.globe-herdlink']) {
+    await page.locator('.globe-frame').hover();
+    await page.locator(selector).evaluate(link => link.addEventListener('click', event => event.preventDefault(), { once: true }));
+    await page.locator(selector).click();
+    await page.mouse.move(0, 0);
+    await expect(page.locator('.globe-herdlink')).toHaveCSS('opacity', '0');
+  }
+  await page.keyboard.press('Tab');
+  await page.locator('.globe-frame').focus();
+  await expect(page.locator('.globe-herdlink')).toHaveCSS('opacity', '1');
+});

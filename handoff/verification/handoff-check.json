@@ -1,0 +1,221 @@
+{
+  "scope": "Local handoff integrity; no website build, browser tests or external URL checks",
+  "passed": true,
+  "checks": [
+    {
+      "name": "Source CV SHA-256",
+      "passed": true,
+      "detail": "5d34270262983f64935a7c8398d9d4191272ae8e491e96c9a75bb777279f6f43"
+    },
+    {
+      "name": "Identity",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Completed Groningen PhD",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "WUR postdoc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Eight peer-reviewed publications",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Two preprints",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Unique publication IDs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Unique DOIs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Valid DOI shapes",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Owner appears once per publication",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Equal contribution markers",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "NetForge author form and status",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "NextdAI in development",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "IMBIT completed in 2025",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Three collaborator packages",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Fifteen toolkit icons",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "No invented portrait",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Globe coordinates unsupplied",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Six primary destinations in order",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Photography production seed is not a fixture",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Travel log is unconfirmed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "No invented countries or photographs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Synthetic fixture is explicitly marked",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Fixture totals are 3 countries, 2 albums and 3 photos",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Photography reference model check report",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Dotted Map source review is pinned",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Photography specification and guide exist",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "All six routes appear in the browser contract",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Project relations resolve",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Four article relations resolve",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "77 unique documented components",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Five required core components",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "All catalogue entries have decisions and references",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Extra source entries separate",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "BibTeX has ten records",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "BibTeX contains every DOI",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "CV PDF signature",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Supplied asset paths resolve",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Internal Markdown links",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "JSON input files parse",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "File manifest hashes",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "No font binaries distributed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "All 14 token contrast pairs pass their targets",
+      "passed": true,
+      "detail": ""
+    }
+  ]
+}

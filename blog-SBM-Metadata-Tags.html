@@ -1,0 +1,934 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <title>
+      SBMs for Hybrid Livestock Networks and Metadata Tag Nodes - Blog - Tianjian Qin
+    </title>
+    <!-- Meta -->
+    <meta charset="utf-8" />
+    <meta content="IE=edge" http-equiv="X-UA-Compatible" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta
+      content="SBM design for hybrid livestock trade networks, sparse layered inference, and a joint data–metadata model with tag nodes."
+      name="description"
+    />
+    <meta content="Tianjian Qin" name="author" />
+    <link href="favicon.ico" rel="shortcut icon" />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700"
+      rel="stylesheet"
+    />
+    <!-- FontAwesome JS -->
+    <script defer="" src="assets/fontawesome/js/all.js"></script>
+    <!-- Plugin CSS -->
+    <link
+      href="assets/plugins/highlight/styles/monokai-sublime.min.css"
+      rel="stylesheet"
+    />
+    <!-- Theme CSS -->
+    <link href="assets/css/theme-1.css" id="theme-style" rel="stylesheet" />
+    <link
+      href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
+
+    <style>
+      .hybrid-sim-iframe {
+        width: 100%;
+        height: 100vh;
+        min-height: 1180px;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 12px;
+        background: #fff;
+        overflow: hidden;
+      }
+
+      /* Small concept figures (D3) */
+      .concept-card {
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 12px;
+        background: #fff;
+        overflow: hidden;
+      }
+      .concept-card .caption {
+        font-size: 0.9rem;
+        color: #6c757d;
+      }
+      .concept-card .toolbar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      }
+      .concept-card .toolbar .title {
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin: 0;
+      }
+      .concept-card .viz {
+        width: 100%;
+        height: 360px;
+      }
+
+      /* Dark-mode harmonization (blog's dark-mode.js toggles a 'dark-mode' class on body) */
+      body.dark-mode .hybrid-sim-iframe,
+      body.dark-mode .concept-card {
+        background: #0b0d10;
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+      body.dark-mode .concept-card .toolbar {
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+      }
+      body.dark-mode .concept-card .caption {
+        color: rgba(255, 255, 255, 0.65);
+      }
+
+      /* Page-specific: widen ONLY containers that opt in */
+      @media (min-width: 692px) {
+        .single-col-max-width.hybrid-wide {
+          max-width: 880px;
+        }
+      }
+      @media (min-width: 1100px) {
+        .single-col-max-width.hybrid-wide {
+          max-width: 980px;
+        }
+      }
+
+      /* Concept toolbars: compact controls */
+      .concept-card .toolbar input[type="range"] {
+        width: 140px;
+      }
+      .concept-card .toolbar .stat {
+        font-variant-numeric: tabular-nums;
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        opacity: 0.85;
+        min-width: 44px;
+        text-align: right;
+        display: inline-block;
+      }
+      body.dark-mode .concept-card .toolbar input[type="range"] {
+        filter: brightness(1.05) contrast(1.05);
+      }
+
+      /* Concept figures: responsive toolbars (mobile-friendly) */
+      .concept-card .toolbar {
+        flex-wrap: wrap;
+      }
+      .concept-card .toolbar .d-flex {
+        flex-wrap: wrap;
+      }
+      .concept-card .toolbar .btn {
+        white-space: normal;
+      }
+
+      @media (max-width: 576px) {
+        .concept-card .toolbar {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+        .concept-card .toolbar .title {
+          width: 100%;
+        }
+        .concept-card .toolbar .d-flex {
+          width: 100%;
+        }
+        .concept-card .toolbar input[type="range"] {
+          width: 100%;
+          max-width: none;
+        }
+        .concept-card .toolbar .stat {
+          min-width: unset;
+          text-align: left;
+        }
+        .concept-card .toolbar .btn {
+          width: 100%;
+        }
+        /* Give the more complex sketches a bit more vertical space */
+        #piMassConceptCard .viz {
+          height: 400px;
+        }
+        #magneticConceptCard .viz {
+          height: 440px;
+        }
+
+        #piWalkConceptCard .viz {
+          height: 360px;
+        }
+        #piClassConceptCard .viz {
+          height: 380px;
+        }
+
+        @media (max-width: 576px) {
+          #piWalkConceptCard .viz {
+            height: 440px;
+          }
+          #piClassConceptCard .viz {
+            height: 460px;
+          }
+        }
+      }
+    </style>
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [["$", "$"]],
+          displayMath: [["$$", "$$"]],
+        },
+        options: {
+          skipHtmlTags: [
+            "script",
+            "noscript",
+            "style",
+            "textarea",
+            "pre",
+            "code",
+          ],
+        },
+      };
+    </script>
+    <script
+      async=""
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
+    ></script>
+  </head>
+  <body>
+    <header class="header text-center">
+      <div class="force-overflow">
+        <h1 class="blog-name pt-lg-4 mb-0">
+          <a class="no-text-decoration" href="index.html">Tianjian Qin</a>
+        </h1>
+        <nav class="navbar navbar-expand-lg navbar-dark">
+          <button
+            aria-controls="navigation"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+            class="navbar-toggler"
+            data-bs-target="#navigation"
+            data-bs-toggle="collapse"
+            type="button"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse flex-column" id="navigation">
+            <div class="profile-section pt-3 pt-lg-0">
+              <img
+                alt="image"
+                class="profile-image mb-3 rounded-circle mx-auto"
+                src="assets/images/profile.png"
+              />
+              <div class="bio mb-3">
+                Hi, my name is Tianjian. I'm a computational biologist &amp;
+                data scientist.
+              </div>
+              <!--//bio-->
+              <ul class="social-list list-inline py-2 mx-auto">
+                <li class="list-inline-item">
+                  <a href="https://www.linkedin.com/in/tjqin/"
+                    ><i class="fab fa-linkedin-in fa-fw"></i
+                  ></a>
+                </li>
+                <li class="list-inline-item">
+                  <a href="https://github.com/EvoLandEco"
+                    ><i class="fab fa-github-alt fa-fw"></i
+                  ></a>
+                </li>
+                <li class="list-inline-item">
+                  <a href="https://www.researchgate.net/profile/Tianjian-Qin"
+                    ><i class="fa-brands fa-researchgate"></i
+                  ></a>
+                </li>
+                <li class="list-inline-item">
+                  <a href="https://qtj.me/gallery"
+                    ><i class="fa-regular fa-lightbulb fa-beat"></i
+                  ></a>
+                </li>
+              </ul>
+              <!--//social-list-->
+              <hr />
+            </div>
+            <!--//profile-section-->
+            <ul class="navbar-nav flex-column text-start">
+              <li class="nav-item">
+                <a class="nav-link" href="index.html"
+                  ><i class="fas fa-user fa-fw me-2"></i>About Me</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="portfolio.html"
+                  ><i class="fas fa-laptop-code fa-fw me-2"></i>Portfolio</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="resume.html"
+                  ><i class="fas fa-file-alt fa-fw me-2"></i>Resume</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="blog-home.html"
+                  ><i class="fas fa-blog fa-fw me-2"></i>Blog</a
+                >
+              </li>
+            </ul>
+            <div class="my-2">
+              <a
+                class="btn btn-primary"
+                href="mailto:tianjianqin@outlook.com"
+                target="_blank"
+                ><i class="fas fa-paper-plane me-2"></i>Contact Me</a
+              >
+            </div>
+            <div class="dark-mode-toggle text-center w-100">
+              <hr class="mb-4" />
+              <h4 class="toggle-name mb-3">
+                <i class="fas fa-adjust me-1"></i>Dark Mode
+              </h4>
+              <input class="toggle" id="darkmode" type="checkbox" />
+              <label class="toggle-btn mx-auto mb-0" for="darkmode"></label>
+            </div>
+            <!--//dark-mode-toggle-->
+          </div>
+        </nav>
+      </div>
+      <!--//force-overflow-->
+    </header>
+    <div class="main-wrapper">
+      
+      <article class="blog-post px-3 py-5 p-md-5">
+        <div class="container single-col-max-width hybrid-wide">
+          <header class="blog-post-header">
+            <h2 class="title mb-2">
+              SBMs for Hybrid Livestock Networks: Why Metadata Tag Nodes Help
+            </h2>
+            <div class="meta mb-3">
+              <span class="date"
+                ><i class="fa-solid fa-calendar-days me-2"></i>Published on 22
+                Mar 2026</span
+              ><span class="time"
+                ><i class="fa-solid fa-clock me-2"></i>22 min read</span
+              ><span class="comment"
+                ><i class="fa-solid fa-comment me-2"></i
+                ><a
+                  data-disqus-identifier="BLOG_POST_SBM_METADATA_TAGS"
+                  href="https://qtj.me/blog-SBM-Metadata-Tags.html#disqus_thread"
+                  >Link</a
+                ></span
+              >
+            </div>
+          </header>
+
+          <div class="blog-post-body">
+            <h3 class="mt-5 mb-3">TL;DR</h3>
+            <ul>
+              <li>
+                In our <b>hybrid livestock trade network</b>, nodes come in two main kinds:
+                <b>farm nodes</b> inside the focal area and <b>regional supernodes</b>
+                outside it. A nested, layered SBM is a natural tool for inferring the
+                mesoscopic structure of this multiscale network.
+              </li>
+              <li>
+                In practice, however, <b>many nodes are inactive in many snapshots</b> and
+                the daily layers are often sparse. Under a nonparametric minimum-description-length
+                criterion, that means the model often prefers a very coarse explanation —
+                sometimes only <b>2 or 3 stable blocks</b> — because extra blocks are not supported
+                by enough evidence.<sup><a href="#ref2">[2]</a></sup><sup><a href="#ref3">[3]</a></sup>
+              </li>
+              <li>
+                The key idea from Hric, Peixoto, and Fortunato (2016) is to treat
+                <b>metadata as another network layer</b>: data nodes connect to <b>tag nodes</b>
+                representing discrete metadata tokens. The trade layer and the metadata layer
+                are fitted jointly, while the <b>same partition of data nodes</b> is shared across
+                both layers.<sup><a href="#ref1">[1]</a></sup>
+              </li>
+              <li>
+                In our pipeline, this means turning node-side information such as
+                <code>corop</code>, <code>num_farms</code>, <code>total_animals</code>,
+                spatial location, and dominant FT counts into tag nodes. This gives inactive
+                or weakly observed nodes extra evidence channels and often yields a partition
+                with <b>more numerous, more interpretable, and more stable blocks</b> than
+                trade edges alone.
+              </li>
+            </ul>
+
+            <h3 class="mt-5 mb-3">The problem: why a plain layered SBM can be too coarse</h3>
+            <p>
+              A hybrid trade graph is a useful compromise: we keep the focal region at farm
+              resolution, but represent the rest of the country with regional supernodes.
+              That gives us a directed, temporal, multiscale network that is much easier to fit
+              than the full premise-level system. In our case, the natural model family is a
+              <b>nested</b> and <b>layered</b> stochastic block model, because we want hierarchical
+              blocks and we want the fit to acknowledge time slices explicitly.
+            </p>
+            <p>
+              The practical difficulty is that the data are not uniformly informative.
+              On many days, many farms are <em>inactive</em>; many daily snapshots are sparse; and
+              if we keep the full node universe, a large share of vertices contribute little or no
+              direct trade evidence in a given layer. In a nonparametric SBM, every extra block has
+              to pay for itself in description length. When evidence for within-type subdivision is
+              weak, the most economical explanation is often a coarse partition — for example,
+              “one large farm block plus one region block”. This is not a software bug; it is the
+              model doing exactly what a parsimonious Bayesian/MDL formulation is designed to do.
+              <sup><a href="#ref2">[2]</a></sup><sup><a href="#ref3">[3]</a></sup>
+            </p>
+            <p>
+              This is especially strong in our setting because the farm/region distinction is
+              scientifically meaningful and often enforced as a hard partition constraint.
+              Once that split is fixed, the model still has to decide whether the data justify
+              additional <em>within-farm</em> or <em>within-region</em> blocks. If many nodes are silent across
+              many layers, the answer is frequently “not enough evidence”.
+            </p>
+
+            <div class="concept-card my-4" id="sparseBlocksCard">
+              <div class="toolbar">
+                <p class="title mb-0">Concept sketch: sparse snapshots push the fit toward coarse blocks</p>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                  <span class="small text-muted">inactive share</span>
+                  <input type="range" id="sparseInactive" min="0" max="0.9" step="0.01" value="0.55" />
+                  <span class="small stat" id="sparseInactiveVal">0.55</span>
+
+                  <span class="small text-muted ms-2">per-day edge density</span>
+                  <input type="range" id="sparseDensity" min="0.05" max="1" step="0.01" value="0.28" />
+                  <span class="small stat" id="sparseDensityVal">0.28</span>
+                </div>
+              </div>
+              <div class="viz" id="conceptVizSparse"></div>
+              <div class="p-3">
+                <div class="caption">
+                  Left: a node-by-snapshot activity matrix. Gray cells carry no trade evidence in that day.
+                  Right: a conceptual block diagram under a description-length penalty. As inactivity rises and
+                  each layer becomes sparser, the amount of evidence available for finer within-type subdivision drops,
+                  so a coarse partition becomes easier to justify. The block count shown here is illustrative,
+                  not an output of the real fit.
+                </div>
+              </div>
+            </div>
+
+            <h3 class="mt-5 mb-3">The core idea from Hric, Peixoto, and Fortunato (2016)</h3>
+            <p>
+              The 2016 PRX paper takes a very elegant position: <b>node metadata are not merely labels attached to
+              a network</b>. They can be represented as another graph. In the paper’s construction, the observed
+              network is one layer, the metadata are a second, bipartite layer connecting data nodes to metadata-tag
+              nodes, and both layers are fitted jointly under a single probabilistic model.<sup><a href="#ref1">[1]</a></sup>
+            </p>
+            <p>
+              Conceptually, the model factorizes as
+            </p>
+            <p>
+              $$P(A,T\mid b,c,\theta,\gamma)=P(A\mid b,\theta)\,P(T\mid b,c,\gamma),$$
+            </p>
+            <p>
+              where $A$ is the trade network, $T$ is the node–tag bipartite metadata network, $b$ are the block
+              memberships of the data nodes, $c$ are the block memberships of the tag nodes, and the same data-node
+              partition $b$ is shared across the two layers. That shared partition is the coupling that lets metadata
+              help resolve structure when the trade layer alone is weak.<sup><a href="#ref1">[1]</a></sup>
+            </p>
+            <p>
+              This is a subtle but important shift in perspective. Metadata are <b>not</b> treated as ground truth.
+              They are treated as <b>another source of evidence</b> whose usefulness can be assessed by how much they improve
+              the predictive description of the network. Hric et al. explicitly emphasize that metadata need not match
+              the inferred communities one-to-one; they can still be informative and can improve the prediction of
+              missing nodes and annotations.<sup><a href="#ref1">[1]</a></sup>
+            </p>
+
+            <div class="concept-card my-4" id="jointModelCard">
+              <div class="toolbar">
+                <p class="title mb-0">Concept sketch: trade layer only vs joint data–metadata model</p>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                  <button class="btn btn-sm btn-secondary" id="jointToggleBtn">
+                    <i class="fa-solid fa-layer-group me-1"></i><span id="jointToggleLabel">Show metadata layer</span>
+                  </button>
+                  <span class="small text-muted ms-2">metadata informativeness</span>
+                  <input type="range" id="jointInfo" min="0" max="1" step="0.01" value="0.72" />
+                  <span class="small stat" id="jointInfoVal">0.72</span>
+                </div>
+              </div>
+              <div class="viz" id="conceptVizJoint"></div>
+              <div class="p-3">
+                <div class="caption">
+                  Blue/orange circles are data nodes; green squares are metadata tags. Without the metadata layer,
+                  inactive farms contribute little beyond type. With the metadata layer, those same farms still
+                  connect to tag nodes such as COROP, size bin, spatial bin, and FT tokens. The shared partition
+                  of data nodes is then supported by both layers together.
+                </div>
+              </div>
+            </div>
+
+            <h3 class="mt-5 mb-3">How we translate that idea into our pipeline</h3>
+            <p>
+              The paper is formulated for <b>discrete metadata tokens</b>, so the first engineering step is to convert
+              our node-side information into discrete tags. In the current implementation, node metadata are tokenized
+              into a small, interpretable vocabulary: a node can connect to tag nodes such as
+              <code>corop::Eindhoven</code>, <code>num_farms_bin::q3</code>,
+              <code>total_animals_bin::q4</code>, <code>centroid_grid::23_17</code>, or one of a few dominant
+              <code>ft::...</code> tokens. The pipeline does this deliberately instead of treating raw continuous
+              features as if they were already part of the SBM likelihood.
+            </p>
+            <p>
+              Once those tokens are created, the graph is expanded in a very explicit way:
+            </p>
+            <ol>
+              <li>the original trade nodes remain the first block of vertices;</li>
+              <li>new <b>tag vertices</b> are appended after them;</li>
+              <li>trade edges stay in their ordinary temporal layers;</li>
+              <li>a new dedicated <b>metadata layer</b> is added for node–tag edges;</li>
+              <li>partition roles keep farms, regions, and metadata tags from collapsing into the same partition family.</li>
+            </ol>
+            <p>
+              This is exactly the conceptual move proposed in the paper, but implemented in a form that is natural for a
+              layered graph-tool workflow: the data layer and metadata layer live in the same layered graph, and the data
+              nodes share a common block assignment across both.<sup><a href="#ref1">[1]</a></sup>
+            </p>
+
+            <div class="concept-card my-4" id="tokenFlowCard">
+              <div class="toolbar">
+                <p class="title mb-0">Concept sketch: from raw node attributes to metadata tag nodes</p>
+              </div>
+              <div class="viz" id="conceptVizTokens"></div>
+              <div class="p-3">
+                <div class="caption">
+                  Our implementation discretizes stable node-side information into reusable metadata tokens.
+                  The tokens become tag nodes, and node–tag edges form an extra layer that couples back to the
+                  same data-node partition.
+                </div>
+              </div>
+            </div>
+
+            <h3 class="mt-5 mb-3">Why metadata tag nodes help in this hybrid setting</h3>
+            <p>
+              The explanation is not mystical. Metadata tag nodes help because they add <b>new observations that are not
+              synchronized with trade activity</b>. A farm can be absent from many daily trade layers and still possess a
+              COROP code, a size bin, a spatial grid cell, and one or more FT tokens. In the trade-only model, that farm
+              may contribute almost no evidence to within-type subdivision. In the joint model, it still contributes a
+              small metadata neighborhood.
+            </p>
+            <p>
+              There are at least four reasons this matters.
+            </p>
+            <ul>
+              <li>
+                <b>Inactive nodes are no longer nearly empty.</b> The metadata layer makes silent nodes observable as
+                vertices with tag edges, instead of vertices that are “present in the node universe but absent from most layers”.
+              </li>
+              <li>
+                <b>Stable information is pooled across time.</b> Trade edges change daily; tags such as geography, herd-size bin,
+                or dominant feature-type token are relatively stable. This gives the model cross-snapshot regularization without
+                having to guess a separate block system for every day.
+              </li>
+              <li>
+                <b>Within-type separation becomes easier.</b> If farms are split only by trade data, many pairs may look
+                exchangeable. Once some farms attach to different tag combinations, they are no longer statistically identical.
+              </li>
+              <li>
+                <b>The model still remains honest.</b> Metadata are treated as evidence, not as truth. The literature is very clear
+                that metadata should not automatically be read as the “correct” community labels. What matters is whether they carry
+                predictive information about the network structure.<sup><a href="#ref4">[4]</a></sup><sup><a href="#ref5">[5]</a></sup>
+              </li>
+            </ul>
+            <p>
+              This is exactly why the improvement is plausible in our application. The joint model does not magically create blocks;
+              it <em>borrows strength</em> from a second layer of evidence. When the trade layer by itself is too sparse to support many
+              blocks, the metadata layer can tip the balance toward a richer but still parsimonious explanation.
+            </p>
+
+            <h3 class="mt-5 mb-3">A robust way to interpret the improvement</h3>
+            <p>
+              There are two complementary theoretical stories here.
+            </p>
+            <p>
+              <b>First</b>, the nonparametric SBM is a model-selection device: it trades fit against complexity and chooses the level
+              of granularity that is supported by the data. Peixoto’s layered and time-varying SBM work makes exactly this point:
+              the appropriate granularity with respect to additional dimensions should be selected by statistical evidence, not fixed
+              a priori.<sup><a href="#ref2">[2]</a></sup> If your daily hybrid layers are sparse and your node universe contains many inactive
+              farms, then the evidence for fine subdivision can simply be too weak, so a coarse solution is the rational outcome.
+            </p>
+            <p>
+              <b>Second</b>, the joint data–metadata model changes the evidence budget. Hric et al. show that metadata often remain
+              informative of network structure even when there is no perfect one-to-one agreement between metadata tokens and inferred
+              groups, and that this extra information can improve the prediction of missing nodes.<sup><a href="#ref1">[1]</a></sup>
+              Newman and Clauset make a similar point from a different modeling angle: metadata can improve structural inference, but
+              the model should learn whether the metadata are useful instead of assuming that usefulness in advance.<sup><a href="#ref4">[4]</a></sup>
+            </p>
+            <p>
+              Put differently: in our hybrid network, the trade layer alone often says “I only trust 2–3 blocks”.
+              The metadata layer says “some of these farms are not interchangeable after all”. Once the two are fitted jointly,
+              a larger number of stable blocks becomes statistically defensible.
+            </p>
+
+            <div class="alert alert-info mt-4" role="alert">
+              <strong><i class="fa-solid fa-lightbulb me-2"></i>Important caveat:</strong>
+              more blocks are not automatically better. Peel, Larremore, and Clauset argue that metadata should not be treated as
+              ground truth communities.<sup><a href="#ref5">[5]</a></sup> In practice, the right test is whether the resulting model gives
+              a better predictive and posterior-predictive description of the observed network, not whether it merely agrees more closely
+              with a preferred metadata field.
+            </div>
+
+            <h3 class="mt-5 mb-3">What our implementation does in practice</h3>
+            <p>
+              In the current <code>pipeline.py</code> implementation, the metadata mode follows a few pragmatic rules:
+            </p>
+            <ul>
+              <li>metadata tags are built from a controlled token set rather than from raw continuous features;</li>
+              <li>metadata tag vertices are appended to the graph and linked in a dedicated metadata layer;</li>
+              <li>partition roles keep farms, regions, and tag nodes from collapsing into the same group family;</li>
+              <li>
+                when the joint model is active, the default SBM fit becomes <b>topology-first</b>, and trade weights are excluded from the
+                block fit because metadata edges do not carry trade weights.
+              </li>
+            </ul>
+            <p>
+              That design is intentionally conservative. It keeps the conceptual meaning of the PRX model clear: one layer describes
+              the observed trade network, another layer describes the metadata network, and the shared partition of data nodes is what
+              couples them.
+            </p>
+
+            <h3 class="mt-5 mb-3">Take-home message</h3>
+            <p>
+              The metadata-tag construction is not a cosmetic add-on. In a sparse hybrid temporal network, it changes the geometry of the
+              inference problem. Without metadata, many nodes are almost uninformative in the trade layer, so the MDL-optimal solution can be
+              extremely coarse. With metadata tag nodes, those same nodes become connected to a second, stable layer of information.
+            </p>
+            <p>
+              For our application, that means the question changes from
+              “Can the trade edges alone support many stable blocks?”
+              to
+              “Can the combined trade-and-metadata evidence support many stable blocks?”
+              That is why the metadata model is such a natural extension for the hybrid network setting — and why it can reveal a much richer,
+              more stable mesoscopic structure than the trade layer alone.
+            </p>
+
+            <h3 class="mt-5 mb-3">References</h3>
+            <p class="mb-3">
+              The references below support the conceptual claims in this post. The implementation details correspond to our current
+              <code>pipeline.py</code>, which tokenizes metadata into tag nodes and adds them as a dedicated metadata layer in the graph.
+            </p>
+            <ol class="small">
+              <li id="ref1">
+                Hric D, Peixoto TP, Fortunato S. 2016. Network Structure, Metadata, and the Prediction of Missing Nodes and Annotations.
+                <em>Physical Review X</em> 6(3):031038.
+                <a href="https://doi.org/10.1103/PhysRevX.6.031038" target="_blank" rel="noopener">doi:10.1103/PhysRevX.6.031038</a>
+              </li>
+              <li id="ref2">
+                Peixoto TP. 2015. Inferring the mesoscale structure of layered, edge-valued, and time-varying networks.
+                <em>Physical Review E</em> 92:042807.
+                <a href="https://doi.org/10.1103/PhysRevE.92.042807" target="_blank" rel="noopener">doi:10.1103/PhysRevE.92.042807</a>
+              </li>
+              <li id="ref3">
+                Peixoto TP. 2013. Parsimonious module inference in large networks.
+                <em>Physical Review Letters</em> 110:148701.
+                <a href="https://doi.org/10.1103/PhysRevLett.110.148701" target="_blank" rel="noopener">doi:10.1103/PhysRevLett.110.148701</a>
+              </li>
+              <li id="ref4">
+                Newman MEJ, Clauset A. 2016. Structure and inference in annotated networks.
+                <em>Nature Communications</em> 7:11863.
+                <a href="https://doi.org/10.1038/ncomms11863" target="_blank" rel="noopener">doi:10.1038/ncomms11863</a>
+              </li>
+              <li id="ref5">
+                Peel L, Larremore DB, Clauset A. 2017. The ground truth about metadata and community detection in networks.
+                <em>Science Advances</em> 3(5):e1602548.
+                <a href="https://doi.org/10.1126/sciadv.1602548" target="_blank" rel="noopener">doi:10.1126/sciadv.1602548</a>
+              </li>
+              <li id="ref6">
+                Vaca-Ramírez F, Peixoto TP. 2022. Systematic assessment of the quality of fit of the stochastic block model for empirical networks.
+                <em>Physical Review E</em> 105:054311.
+                <a href="https://doi.org/10.1103/PhysRevE.105.054311" target="_blank" rel="noopener">doi:10.1103/PhysRevE.105.054311</a>
+              </li>
+              <li id="ref7">
+                Chaters GL, et al. 2019. Analysing livestock network data for infectious disease control: an argument for routine data collection in emerging economies.
+                <em>Philosophical Transactions of the Royal Society B</em> 374:20180264.
+                <a href="https://doi.org/10.1098/rstb.2018.0264" target="_blank" rel="noopener">doi:10.1098/rstb.2018.0264</a>
+              </li>
+            </ol>
+
+            <script>
+              (function () {
+                if (!window.d3) return;
+
+                const sparseHost = document.getElementById("conceptVizSparse");
+                if (sparseHost) {
+                  const inactiveEl = document.getElementById("sparseInactive");
+                  const inactiveValEl = document.getElementById("sparseInactiveVal");
+                  const densityEl = document.getElementById("sparseDensity");
+                  const densityValEl = document.getElementById("sparseDensityVal");
+                  function drawSparse() {
+                    sparseHost.innerHTML = "";
+                    const w = sparseHost.clientWidth || 860;
+                    const h = 360;
+                    const svg = d3.select(sparseHost).append("svg").attr("width", "100%").attr("height", h).attr("viewBox", `0 0 ${w} ${h}`);
+                    const inactive = inactiveEl ? +inactiveEl.value : 0.55;
+                    const density = densityEl ? +densityEl.value : 0.28;
+                    if (inactiveValEl) inactiveValEl.textContent = inactive.toFixed(2);
+                    if (densityValEl) densityValEl.textContent = density.toFixed(2);
+                    const margin = { top: 22, right: 18, bottom: 18, left: 18 };
+                    const innerW = w - margin.left - margin.right;
+                    const innerH = h - margin.top - margin.bottom;
+                    const gap = 26;
+                    const leftW = innerW * 0.56;
+                    const rightW = innerW - leftW - gap;
+                    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+                    const left = g.append("g");
+                    const right = g.append("g").attr("transform", `translate(${leftW + gap},0)`);
+                    const nF = 18, nR = 6, T = 12;
+                    const nodes = d3.range(nF + nR).map(i => ({ idx: i, kind: i < nF ? "farm" : "region", label: i < nF ? `F${i + 1}` : `R${i - nF + 1}` }));
+                    const days = d3.range(T).map(i => `t${i + 1}`);
+                    const rng = d3.randomLcg(0.41);
+                    const cells = [];
+                    nodes.forEach((node, row) => {
+                      days.forEach((day, col) => {
+                        const baseActive = node.kind === "region" ? 0.88 : (1 - inactive);
+                        const active = rng() < baseActive;
+                        const observed = active && rng() < density;
+                        cells.push({ row, col, active, observed, kind: node.kind });
+                      });
+                    });
+                    const x = d3.scaleBand().domain(days).range([0, leftW]).padding(0.05);
+                    const y = d3.scaleBand().domain(nodes.map(d => d.label)).range([0, innerH]).padding(0.08);
+                    left.append("text").attr("x", 0).attr("y", -6).attr("font-size", 12).attr("font-weight", 600).text("Observed activity by node and snapshot");
+                    left.selectAll("text.day").data(days).enter().append("text").attr("class", "day").attr("x", d => x(d) + x.bandwidth() / 2).attr("y", -2).attr("text-anchor", "middle").attr("font-size", 10).attr("opacity", 0.75).text(d => d);
+                    left.selectAll("text.node").data(nodes).enter().append("text").attr("x", -6).attr("y", d => y(d.label) + y.bandwidth() / 2 + 3).attr("text-anchor", "end").attr("font-size", 10).attr("opacity", 0.75).text(d => d.label);
+                    left.selectAll("rect.cell").data(cells).enter().append("rect").attr("x", d => x(days[d.col])).attr("y", d => y(nodes[d.row].label)).attr("width", x.bandwidth()).attr("height", y.bandwidth()).attr("rx", 2).attr("fill", d => { if (!d.active) return "#e9ecef"; if (!d.observed) return d.kind === "farm" ? "#cfe2ff" : "#fde6d0"; return d.kind === "farm" ? "#2f80ed" : "#f2994a"; }).attr("opacity", d => d.observed ? 0.95 : 0.75);
+                    left.append("line").attr("x1", 0).attr("x2", leftW).attr("y1", y(nodes[nF].label) - y.bandwidth() * 0.45).attr("y2", y(nodes[nF].label) - y.bandwidth() * 0.45).attr("stroke", "currentColor").attr("stroke-opacity", 0.18).attr("stroke-dasharray", "3,4");
+                    left.append("text").attr("x", leftW + 2).attr("y", y(nodes[0].label) + 10).attr("font-size", 10).attr("opacity", 0.65).text("farms");
+                    left.append("text").attr("x", leftW + 2).attr("y", y(nodes[nF].label) + 10).attr("font-size", 10).attr("opacity", 0.65).text("regions");
+                    const effectiveEvidence = (1 - inactive) * density;
+                    const blockCount = Math.max(2, Math.min(10, 2 + Math.round(8 * effectiveEvidence)));
+                    const farmBlocks = Math.max(1, Math.round((blockCount - 1) * 0.7));
+                    const regionBlocks = Math.max(1, blockCount - farmBlocks);
+                    right.append("text").attr("x", 0).attr("y", -6).attr("font-size", 12).attr("font-weight", 600).text("Conceptual stable partition under MDL");
+                    right.append("text").attr("x", 0).attr("y", 22).attr("font-size", 40).attr("font-weight", 700).attr("fill", "currentColor").text(blockCount);
+                    right.append("text").attr("x", 64).attr("y", 22).attr("font-size", 12).attr("opacity", 0.72).text("conceptual blocks");
+                    const meterW = rightW - 24;
+                    right.append("text").attr("x", 0).attr("y", 54).attr("font-size", 11).attr("opacity", 0.78).text("effective edge evidence for within-type subdivision");
+                    right.append("rect").attr("x", 0).attr("y", 64).attr("width", meterW).attr("height", 12).attr("rx", 6).attr("fill", "rgba(0,0,0,0.08)");
+                    right.append("rect").attr("x", 0).attr("y", 64).attr("width", meterW * effectiveEvidence).attr("height", 12).attr("rx", 6).attr("fill", "#2f80ed");
+                    const boxTop = 96, boxH = 92, farmY = boxTop, regionY = boxTop + 120;
+                    const drawPartitionBox = (y0, label, nBoxes, color) => {
+                      right.append("text").attr("x", 0).attr("y", y0 - 8).attr("font-size", 11).attr("opacity", 0.75).text(label);
+                      const gapInner = 6, totalW = rightW - 12, bw = (totalW - gapInner * (nBoxes - 1)) / nBoxes;
+                      for (let i = 0; i < nBoxes; i++) {
+                        right.append("rect").attr("x", i * (bw + gapInner)).attr("y", y0).attr("width", bw).attr("height", boxH).attr("rx", 8).attr("fill", color).attr("opacity", 0.18 + 0.72 * Math.min(1, effectiveEvidence + 0.08 * i));
+                        right.append("text").attr("x", i * (bw + gapInner) + bw / 2).attr("y", y0 + boxH / 2 + 4).attr("text-anchor", "middle").attr("font-size", 11).attr("font-weight", 600).attr("opacity", 0.9).text(`${label === 'farm side' ? 'F' : 'R'}${i + 1}`);
+                      }
+                    };
+                    drawPartitionBox(farmY, "farm side", farmBlocks, "#2f80ed");
+                    drawPartitionBox(regionY, "region side", regionBlocks, "#f2994a");
+                    right.append("text").attr("x", 0).attr("y", innerH - 22).attr("font-size", 11).attr("opacity", 0.7).text("More inactive nodes + sparser layers ⇒ less evidence ⇒ coarser blocks.");
+                    right.append("text").attr("x", 0).attr("y", innerH - 8).attr("font-size", 11).attr("opacity", 0.7).text("The hard farm/region split still remains, so 2 blocks is a natural floor.");
+                  }
+                  drawSparse();
+                  [inactiveEl, densityEl].forEach(el => el && el.addEventListener("input", drawSparse));
+                }
+
+                const jointHost = document.getElementById("conceptVizJoint");
+                if (jointHost) {
+                  const toggleBtn = document.getElementById("jointToggleBtn");
+                  const toggleLabel = document.getElementById("jointToggleLabel");
+                  const infoEl = document.getElementById("jointInfo");
+                  const infoValEl = document.getElementById("jointInfoVal");
+                  let showMetadata = false;
+                  function drawJoint() {
+                    jointHost.innerHTML = "";
+                    const w = jointHost.clientWidth || 860;
+                    const h = 360;
+                    const svg = d3.select(jointHost).append("svg").attr("width", "100%").attr("height", h).attr("viewBox", `0 0 ${w} ${h}`);
+                    const info = infoEl ? +infoEl.value : 0.72;
+                    if (infoValEl) infoValEl.textContent = info.toFixed(2);
+                    if (toggleLabel) toggleLabel.textContent = showMetadata ? "Hide metadata layer" : "Show metadata layer";
+                    const margin = { top: 24, right: 16, bottom: 18, left: 16 };
+                    const innerW = w - margin.left - margin.right;
+                    const innerH = h - margin.top - margin.bottom;
+                    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+                    const farms = d3.range(10).map(i => ({ id: `F${i+1}`, kind: "farm", x: 70 + i*56, y: 82 + (i%2)*34, inactive: i===2 || i===7 }));
+                    const regions = d3.range(3).map(i => ({ id: `R${i+1}`, kind: "region", x: 120 + i*180, y: 168, inactive: false }));
+                    const nodes = [...farms, ...regions];
+                    const tags = [
+                      { id: "corop::A", x: 70, y: 278, kind: "tag" },
+                      { id: "size::q4", x: 190, y: 278, kind: "tag" },
+                      { id: "animals::q3", x: 310, y: 278, kind: "tag" },
+                      { id: "grid::23_17", x: 430, y: 278, kind: "tag" },
+                      { id: "ft::finishers", x: 550, y: 278, kind: "tag" },
+                      { id: "ft::breeders", x: 670, y: 278, kind: "tag" }
+                    ];
+                    const tradeEdges = [[0,1],[1,3],[3,4],[4,10],[10,0],[2,11],[6,12],[8,9],[9,10],[5,12],[7,11]].map(([a,b]) => ({ a: nodes[a], b: nodes[b] }));
+                    const tagMap = {F1:[0,1,3],F2:[0,1,3],F3:[0,2,4],F4:[0,2,4],F5:[0,1,5],F6:[0,1,5],F7:[0,2,4],F8:[0,2,4],F9:[0,1,5],F10:[0,1,5],R1:[0],R2:[2],R3:[5]};
+                    const metaEdges = [];
+                    nodes.forEach(n => {(tagMap[n.id] || []).forEach(ti => metaEdges.push({ a: n, b: tags[ti] }));});
+                    g.append("text").attr("x", 0).attr("y", -4).attr("font-size", 12).attr("font-weight", 600).text(showMetadata ? "Joint data–metadata graph" : "Trade layer only");
+                    g.append("text").attr("x", 0).attr("y", 22).attr("font-size", 11).attr("opacity", 0.72).text(showMetadata ? "Data nodes share a partition across the trade layer and the metadata layer." : "Inactive farms contribute little beyond type when only trade edges are used.");
+                    const farmBoxes = showMetadata ? Math.max(2, 2 + Math.round(4 * info)) : 1;
+                    const regionBoxes = showMetadata ? Math.max(1, 1 + Math.round(2 * info)) : 1;
+                    const drawGroupBoxes = (y, startX, totalW, nBoxes, color) => {
+                      const gap = 6, bw = (totalW - gap*(nBoxes-1)) / nBoxes;
+                      for (let i=0;i<nBoxes;i++) {
+                        g.append("rect").attr("x", startX + i*(bw+gap)).attr("y", y).attr("width", bw).attr("height", 88).attr("rx", 10).attr("fill", color).attr("opacity", 0.14 + 0.1*i + (showMetadata ? 0.12*info : 0));
+                      }
+                    };
+                    drawGroupBoxes(44, 24, 600, farmBoxes, "#2f80ed");
+                    drawGroupBoxes(140, 84, 540, regionBoxes, "#f2994a");
+                    g.append("g").selectAll("path.trade").data(tradeEdges).enter().append("path").attr("class", "trade").attr("d", d => `M${d.a.x},${d.a.y} L${d.b.x},${d.b.y}`).attr("stroke", "currentColor").attr("stroke-opacity", 0.26).attr("stroke-width", 1.6).attr("fill", "none");
+                    if (showMetadata) {
+                      g.append("line").attr("x1", 0).attr("x2", innerW).attr("y1", 228).attr("y2", 228).attr("stroke", "currentColor").attr("stroke-opacity", 0.16).attr("stroke-dasharray", "4,5");
+                      g.append("text").attr("x", 0).attr("y", 244).attr("font-size", 11).attr("opacity", 0.72).text("metadata layer");
+                      g.append("g").selectAll("path.meta").data(metaEdges).enter().append("path").attr("class", "meta").attr("d", d => `M${d.a.x},${d.a.y+8} L${d.b.x},${d.b.y-10}`).attr("stroke", "#27ae60").attr("stroke-opacity", d => d.a.inactive ? 0.7 : 0.4).attr("stroke-width", d => d.a.inactive ? 2.2 : 1.6).attr("stroke-dasharray", "3,4").attr("fill", "none");
+                    }
+                    const nodeG = g.append("g");
+                    nodeG.selectAll("circle.data").data(nodes).enter().append("circle").attr("cx", d => d.x).attr("cy", d => d.y).attr("r", d => d.kind === "farm" ? 10 : 14).attr("fill", d => d.kind === "farm" ? "#2f80ed" : "#f2994a").attr("opacity", d => d.inactive ? 0.48 : 0.95).attr("stroke", d => d.inactive ? "currentColor" : "none").attr("stroke-opacity", d => d.inactive ? 0.45 : 0).attr("stroke-dasharray", d => d.inactive ? "3,3" : null);
+                    nodeG.selectAll("text.label").data(nodes).enter().append("text").attr("x", d => d.x).attr("y", d => d.y + 4).attr("text-anchor", "middle").attr("font-size", 10).attr("font-weight", 700).attr("fill", "#fff").text(d => d.id);
+                    if (showMetadata) {
+                      const tagG = g.append("g");
+                      tagG.selectAll("rect.tag").data(tags).enter().append("rect").attr("x", d => d.x - 28).attr("y", d => d.y - 12).attr("width", 56).attr("height", 24).attr("rx", 6).attr("fill", "#27ae60").attr("opacity", 0.92);
+                      tagG.selectAll("text.tlabel").data(tags).enter().append("text").attr("x", d => d.x).attr("y", d => d.y + 4).attr("text-anchor", "middle").attr("font-size", 9).attr("font-weight", 700).attr("fill", "#fff").text(d => d.id.replace("::", "\n").split("\n")[0]);
+                    }
+                    g.append("text").attr("x", 0).attr("y", innerH - 18).attr("font-size", 11).attr("opacity", 0.72).text(showMetadata ? "Inactive farms still connect to tag nodes, so they are no longer nearly empty." : "Trade-only evidence often leaves silent farms weakly identified.");
+                    g.append("text").attr("x", 0).attr("y", innerH - 4).attr("font-size", 11).attr("opacity", 0.72).text(showMetadata ? `Conceptual result: more support for within-type blocks (${2 + farmBoxes + regionBoxes} visible groups here).` : "Conceptual result: coarse partition remains the cheapest explanation.");
+                  }
+                  drawJoint();
+                  toggleBtn && toggleBtn.addEventListener("click", () => { showMetadata = !showMetadata; drawJoint(); });
+                  infoEl && infoEl.addEventListener("input", drawJoint);
+                }
+
+                const tokenHost = document.getElementById("conceptVizTokens");
+                if (tokenHost) {
+                  const w = tokenHost.clientWidth || 860;
+                  const h = 360;
+                  const svg = d3.select(tokenHost).append("svg").attr("width", "100%").attr("height", h).attr("viewBox", `0 0 ${w} ${h}`);
+                  const g = svg.append("g").attr("transform", `translate(18,22)`);
+                  const box = (x, y, width, height, title, lines, fill, icon) => {
+                    const grp = g.append("g").attr("transform", `translate(${x},${y})`);
+                    grp.append("rect").attr("width", width).attr("height", height).attr("rx", 12).attr("fill", fill).attr("opacity", 0.16);
+                    grp.append("text").attr("x", 12).attr("y", 22).attr("font-size", 12).attr("font-weight", 700).text(title);
+                    if (icon) grp.append("text").attr("x", width - 18).attr("y", 22).attr("text-anchor", "end").attr("font-size", 13).attr("opacity", 0.65).text(icon);
+                    lines.forEach((line, i) => grp.append("text").attr("x", 12).attr("y", 48 + i*18).attr("font-size", 11).attr("opacity", 0.82).text(line));
+                    return grp;
+                  };
+                  const defs = svg.append("defs");
+                  defs.append("marker").attr("id", "arrowhead").attr("viewBox", "0 -5 10 10").attr("refX", 9).attr("refY", 0).attr("markerWidth", 6).attr("markerHeight", 6).attr("orient", "auto").append("path").attr("d", "M0,-5L10,0L0,5").attr("fill", "currentColor").attr("opacity", 0.45);
+                  const arrow = (x1,y1,x2,y2,label) => {
+                    g.append("line").attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2).attr("stroke", "currentColor").attr("stroke-opacity", 0.28).attr("stroke-width", 2).attr("marker-end", "url(#arrowhead)");
+                    if (label) g.append("text").attr("x", (x1+x2)/2).attr("y", (y1+y2)/2 - 6).attr("text-anchor", "middle").attr("font-size", 10.5).attr("opacity", 0.68).text(label);
+                  };
+                  box(0, 16, 220, 134, "Raw node attributes", ["corop = Eindhoven","num_farms = 7","total_animals = 4200","x,y = (115 km, 478 km)","count_ft_* vector"], "#2f80ed", "①");
+                  box(270, 16, 220, 134, "Discrete tag tokens", ["corop::Eindhoven","num_farms_bin::q3","total_animals_bin::q4","centroid_grid::23_17","ft::finishers"], "#27ae60", "②");
+                  box(540, 16, 220, 134, "Metadata tag nodes", ["one node per token","shared across many farms","bipartite node–tag edges","separate metadata layer"], "#6fcf97", "③");
+                  box(140, 192, 520, 118, "Joint layered SBM", ["trade layer: node–node movement edges","metadata layer: node–tag edges","same data-node partition in both layers","metadata help identify blocks for sparse or inactive nodes"], "#f2994a", "④");
+                  arrow(220, 84, 270, 84, "bin / tokenize");
+                  arrow(490, 84, 540, 84, "create tag vertices");
+                  arrow(380, 150, 380, 192, "append metadata layer");
+                  const demoY = 332;
+                  g.append("text").attr("x", 0).attr("y", demoY - 8).attr("font-size", 11).attr("opacity", 0.72).text("Example node → tag edges in the metadata layer:");
+                  const chips = [
+                    {x: 16, label: "Farm F42", fill: "#2f80ed", w: 110},
+                    {x: 148, label: "corop::Eindhoven", fill: "#27ae60", w: 154},
+                    {x: 338, label: "total_animals_bin::q4", fill: "#27ae60", w: 188},
+                    {x: 570, label: "ft::finishers", fill: "#27ae60", w: 120}
+                  ];
+                  chips.forEach(d => {
+                    g.append("rect").attr("x", d.x).attr("y", demoY).attr("width", d.w).attr("height", 24).attr("rx", 7).attr("fill", d.fill).attr("opacity", 0.9);
+                    g.append("text").attr("x", d.x + d.w/2).attr("y", demoY + 16).attr("text-anchor", "middle").attr("font-size", 10.5).attr("font-weight", 700).attr("fill", "#fff").text(d.label);
+                  });
+                  arrow(126, demoY + 12, 148, demoY + 12, null);
+                  arrow(302, demoY + 12, 338, demoY + 12, null);
+                  arrow(526, demoY + 12, 570, demoY + 12, null);
+                }
+              })();
+            </script>
+          </div>
+        </div>
+      </article>
+
+      <footer class="footer text-center py-4">
+        <small class="copyright">Copyright © Tianjian Qin</small>
+      </footer>
+    </div>
+    <!--//main-wrapper-->
+    <!-- *****CONFIGURE STYLE (REMOVE ON YOUR PRODUCTION SITE)****** -->
+    <div
+      class="config-panel config-panel-hide d-none"
+      id="config-panel"
+    >
+      <div class="panel-inner">
+        <a class="config-trigger text-center" href="#" id="config-trigger"
+          ><i class="fas fa-cog mx-auto" data-fa-transform="down-6"></i
+        ></a>
+        <h5 class="panel-title">Choose Colour</h5>
+        <ul class="list-inline mb-0" id="color-options">
+          <li class="theme-1 active list-inline-item">
+            <a data-style="assets/css/theme-1.css" href="#"></a>
+          </li>
+          <li class="theme-2 list-inline-item">
+            <a data-style="assets/css/theme-2.css" href="#"></a>
+          </li>
+          <li class="theme-3 list-inline-item">
+            <a data-style="assets/css/theme-3.css" href="#"></a>
+          </li>
+          <li class="theme-4 list-inline-item">
+            <a data-style="assets/css/theme-4.css" href="#"></a>
+          </li>
+          <li class="theme-5 list-inline-item">
+            <a data-style="assets/css/theme-5.css" href="#"></a>
+          </li>
+          <li class="theme-6 list-inline-item">
+            <a data-style="assets/css/theme-6.css" href="#"></a>
+          </li>
+          <li class="theme-7 list-inline-item">
+            <a data-style="assets/css/theme-7.css" href="#"></a>
+          </li>
+          <li class="theme-8 list-inline-item">
+            <a data-style="assets/css/theme-8.css" href="#"></a>
+          </li>
+          <li class="theme-9 list-inline-item">
+            <a data-style="assets/css/theme-9.css" href="#"></a>
+          </li>
+          <li class="theme-10 list-inline-item">
+            <a data-style="assets/css/theme-10.css" href="#"></a>
+          </li>
+        </ul>
+        <a class="close" href="#" id="config-close"
+          ><i class="fa fa-times-circle"></i
+        ></a>
+      </div>
+      <!--//panel-inner-->
+    </div>
+    <!--//configure-panel-->
+
+    <!-- Javascript -->
+    <script src="assets/plugins/popper.min.js"></script>
+    <script src="assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+    <!-- Page Specific JS -->
+    <link
+      href="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/highlightjs-copy/dist/highlightjs-copy.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+    <script>
+      hljs.highlightAll();
+    </script>
+    <script>
+      hljs.addPlugin(new CopyButtonPlugin());
+    </script>
+    <!-- Custom JS -->
+    <script src="assets/js/blog.js"></script>
+    <!-- Dark Mode -->
+    <script src="assets/plugins/js-cookie.min.js"></script>
+    <script src="assets/js/dark-mode.js"></script>
+    <!-- Style Switcher (REMOVE ON YOUR PRODUCTION SITE) -->
+    <script src="assets/js/demo/style-switcher.js"></script>
+    <!-- Disqus Counter -->
+    <script
+      async=""
+      id="dsq-count-scr"
+      src="//qtj-me.disqus.com/count.js"
+    ></script>
+  </body>
+</html>

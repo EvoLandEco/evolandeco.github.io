@@ -1,0 +1,17 @@
+{
+  "sha256": "5d34270262983f64935a7c8398d9d4191272ae8e491e96c9a75bb777279f6f43",
+  "source": "sources/Tianjian_Qin_CV.tex",
+  "sections": {
+    "profile": 142,
+    "selected-research": 168,
+    "experience": 197,
+    "peer-reviewed": 218,
+    "preprints": 261,
+    "talk": 275,
+    "education": 283,
+    "programmes": 298,
+    "software": 320,
+    "expertise": 332,
+    "service": 348
+  }
+}

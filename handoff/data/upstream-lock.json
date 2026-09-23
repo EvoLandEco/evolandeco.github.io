@@ -1,0 +1,56 @@
+{
+  "auditDate": "2026-09-21",
+  "base": {
+    "repository": "https://github.com/magicuidesign/portfolio",
+    "ref": "5ef12e4c8bd0de3e22e89c2181ee77a35925ec8b",
+    "license": "MIT",
+    "sourceOfTruth": "package.json and lockfile, not README version labels",
+    "observedVersions": {
+      "next": "16.1.1",
+      "react": "^19.2.3",
+      "tailwindcss": "^4.1.18",
+      "motion": "^12.23.27",
+      "typescript": "^5.9.3"
+    },
+    "productionRule": "Verify maintained, patched compatible versions before release. Record the final lockfile and runtime."
+  },
+  "components": {
+    "repository": "https://github.com/magicuidesign/magicui",
+    "ref": "d7207e5692d14c00dceafa8488d6d01f197fa0e4",
+    "license": "MIT",
+    "registry": "https://magicui.design/r/{name}.json",
+    "sourceDirectory": "apps/www/registry/magicui",
+    "catalogueSource": "apps/www/config/docs.ts",
+    "registrySource": "apps/www/registry/registry-ui.ts"
+  },
+  "scope": {
+    "documentedComponents": 77,
+    "extraSourceEntries": [
+      "client-tweet-card",
+      "animated-subscribe-button"
+    ],
+    "freeTemplates": [
+      "Portfolio",
+      "Blog",
+      "Changelog"
+    ],
+    "deepSourceReview": [
+      "Portfolio base",
+      "Globe",
+      "Icon Cloud",
+      "Terminal",
+      "Animated Beam",
+      "Dotted Map"
+    ],
+    "browserImplementationTestsRun": false
+  },
+  "photographySourceReview": {
+    "auditDate": "2026-09-21",
+    "sourcePath": "apps/www/registry/magicui/dotted-map.tsx",
+    "ref": "d7207e5692d14c00dceafa8488d6d01f197fa0e4",
+    "blobSha": "fbb85928fc721dd89230dce4b374ee7aedf9bc85",
+    "docs": "https://magicui.design/docs/components/dotted-map",
+    "dependency": "svg-dotted-map",
+    "websiteTestsRun": false
+  }
+}
