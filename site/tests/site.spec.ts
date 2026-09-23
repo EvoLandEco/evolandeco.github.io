@@ -387,10 +387,23 @@ test("Globe callout reveals an accessible HerdLink link", async ({ page, browser
   await page.mouse.move(0, 0);
   await link.focus();
   await expect(link).toHaveCSS('opacity', '1');
-  const touch = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+  const touch = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 768, height: 1024 }, reducedMotion: 'reduce' });
   const phone = await touch.newPage();
   await phone.goto('/');
-  await expect(phone.locator('.globe-herdlink')).toHaveCSS('opacity', '1');
+  const callout = phone.locator('.globe-herdlink');
+  await expect(callout).toHaveCSS('opacity', '0');
+  await phone.locator('.globe-frame').tap();
+  await expect(callout).toHaveCSS('opacity', '1');
+  await expect(phone).toHaveURL(/\/$/);
+  await phone.locator('h1').tap();
+  await expect(callout).toHaveCSS('opacity', '0');
+  await phone.locator('.globe-frame').tap();
+  await expect(callout).toHaveCSS('opacity', '1');
+  await phone.route('https://herdlink.nl/**', route => route.fulfill({ body: 'HerdLink' }));
+  const popup = phone.waitForEvent('popup');
+  await callout.tap();
+  await (await popup).close();
+  await expect(callout).toHaveCSS('opacity', '0');
   await touch.close();
 });
 
@@ -522,4 +535,25 @@ test("Globe animation avoids stylesheet churn and cleans up renderer wrappers", 
     await expect(globe).toHaveAttribute('data-motion-state', 'running');
   }
   await expect(page.locator('.globe-frame > div > canvas[data-markers]')).toHaveCount(1);
+});
+
+
+test("Phone globe taps enlarge without a callout or external navigation", async ({ browser }) => {
+  const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+  const page = await context.newPage();
+  await page.goto('/');
+  const globe = page.getByRole('button', { name: 'Enlarge globe' });
+  await expect(globe).not.toHaveAttribute('href');
+  await expect(page.locator('.globe-herdlink')).toBeHidden();
+  await globe.tap();
+  await expect(globe).toHaveAttribute('aria-pressed', 'true');
+  await expect(globe).toHaveCSS('transform', 'matrix(1.08, 0, 0, 1.08, 0, 0)');
+  await expect(page.locator('.globe-herdlink')).toBeHidden();
+  await globe.tap();
+  await expect(globe).toHaveAttribute('aria-pressed', 'false');
+  await globe.tap();
+  await page.locator('h1').tap();
+  await expect(globe).toHaveAttribute('aria-pressed', 'false');
+  expect(context.pages()).toHaveLength(1);
+  await context.close();
 });
