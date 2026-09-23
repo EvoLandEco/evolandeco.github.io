@@ -64,3 +64,7 @@ Publication identity assets and bibliographic verification are documented in [th
 ## Globe renderer patch
 
 `patches/cobe@2.0.1.patch` retains COBE's rendering and shaders. It writes the anchor stylesheet only when its contents change and restores the canvas to its parent when destroying the renderer. The lockfile applies this patch during installation.
+
+## Site icon
+
+The favicon uses the owner’s network-and-chip mark from `assets/icons/icon-high.png`, embedded unchanged in an SVG with a tighter square viewport. The artwork occupies 96% of the icon width.
