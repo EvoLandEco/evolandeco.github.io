@@ -28,13 +28,13 @@
       "label": "Blog",
       "path": "/blog",
       "icon": "NotebookPen",
-      "migrating": true
+      "migrating": false
     },
     {
       "label": "Footprint",
       "path": "/photography",
       "icon": "Camera",
-      "migrating": true
+      "migrating": false
     }
   ],
   "iconCloudItems": [

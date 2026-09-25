@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import sharp from "sharp";
 import {
+  type PublicPhotography,
   getPublicPhotography,
   validatePhotography,
 } from "../scripts/photography-model";
@@ -61,17 +62,28 @@ test("Duplicate countries, unapproved photos and invalid covers fail", () => {
   d.albums[0].coverPhotoId = "missing";
   assert.throws(() => validatePhotography(d, "test"), /cover/);
 });
-test("Empty seed has no numeric travel claim", () => {
-  const p = JSON.parse(fs.readFileSync("src/content-data/photography-public.json", "utf8"));
-  assert.equal(p.summary.countryCount, null);
-  assert.equal(p.albums.length, 0);
-});
-test("Published sample derivatives carry no private image metadata", async () => {
-  for (const file of fs.readdirSync("public/photography/samples")) {
-    const m = await sharp("public/photography/samples/" + file).metadata();
-    assert(!m.exif && !m.xmp && !m.iptc);
-    assert(m.width && m.height);
+test("Published albums use hosted thumbnails and consistent country counts", () => {
+  const p: PublicPhotography = JSON.parse(fs.readFileSync("src/content-data/photography-public.json", "utf8"));
+  assert.equal(p.summary.countryCount, p.countries.length);
+  assert.deepEqual(p.countries.filter(c => !c.albumHref).map(c => c.code).sort(), ["AD", "CN", "GB", "IE", "IS", "JP", "KE", "KR", "LI", "MV"]);
+  assert.equal(p.summary.countryLabel, "countries documented");
+  assert.equal(p.summary.photoCount, p.albums.reduce((sum: number, album: { photos: unknown[] }) => sum + album.photos.length, 0));
+  assert.equal(p.summary.photoCount, 383);
+  assert(!JSON.stringify(p).includes("sourcePath"));
+  for (const album of p.albums) {
+    assert(album.photos.some((photo: { id: string }) => photo.id === album.cover.id));
+    for (const photo of album.photos) {
+      assert.match(photo.image.src, /^https:\/\/qtj-photos\.evolandeco-github-io\.workers\.dev\/web\/photo-[a-f0-9]{16}\.webp$/);
+      assert(photo.image.thumbnail);
+      assert(photo.image.thumbnail.width <= 640 && photo.image.thumbnail.height <= 640);
+      assert(photo.alt && photo.caption);
+    }
   }
+});
+test("Photo validation rejects untrusted external hosts", () => {
+  const data = structuredClone(fixture);
+  data.photos.find((photo: { image: unknown }) => photo.image).image.src = "https://untrusted.example/photo.webp";
+  assert.throws(() => validatePhotography(data, "test"), /photography image path/);
 });
 test("Media prepare, publish and hide preserve originals and remove public derivatives", async () => {
   const os = await import("node:os"),

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { albums, isSample } from "@/lib/photography";
+import { albums } from "@/lib/photography";
 export function generateStaticParams() {
   return albums.flatMap((a) =>
     a.photos.map((p) => ({ country: a.countrySlug, photo: p.id })),
@@ -17,7 +17,6 @@ export async function generateMetadata({
   return {
     title: p?.caption || a?.title,
     alternates: { canonical: p?.href },
-    ...(a && isSample(a) ? { robots: { index: false, follow: true } } : {}),
   };
 }
 export default async function Photo({
@@ -47,7 +46,6 @@ export default async function Photo({
       />
       <p className="caption" style={{ marginTop: 15 }}>
         Photograph: {p.creator}
-        {isSample(a) ? " · Sample image" : ""}
         {p.takenOn && ` · ${p.takenOn}`}
         {p.locationLabel && ` · ${p.locationLabel}`}
       </p>

@@ -42,7 +42,7 @@ export function PhotoGallery({ album }: { album: PublicAlbum }) {
   }
   return (
     <>
-      <div className="photo-grid">
+      <div className="photo-masonry">
         {album.photos.map((p, i) => (
           <figure className="photo-tile" key={p.id}>
             <a
@@ -69,20 +69,13 @@ export function PhotoGallery({ album }: { album: PublicAlbum }) {
               }}
             >
               <Image
-                src={p.image.src}
+                src={p.image.thumbnail?.src ?? p.image.src}
                 width={p.image.width}
                 height={p.image.height}
                 sizes="(max-width: 639px) 90vw, 400px"
                 alt={p.alt}
               />
             </a>
-            <figcaption>
-              <p>
-                {p.caption}
-                <br />
-                Photograph: {p.creator}
-              </p>
-            </figcaption>
           </figure>
         ))}
       </div>
@@ -130,7 +123,7 @@ export function PhotoGallery({ album }: { album: PublicAlbum }) {
                 ← Previous photo
               </button>
               <p aria-live="polite">
-                {(index ?? 0) + 1} of {album.photos.length} · {photo.caption}
+                {(index ?? 0) + 1} of {album.photos.length}
                 <br />
                 Photograph: {photo.creator}
               </p>

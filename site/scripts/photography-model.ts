@@ -25,6 +25,7 @@ export interface PublicImage {
   src: string;
   width: number;
   height: number;
+  thumbnail?: { src: string; width: number; height: number };
 }
 
 export interface PhotoRecord {
@@ -273,20 +274,29 @@ function assertShape(value: unknown): asserts value is PhotographyData {
     date(row.takenOn, `${path}.takenOn`);
     if (row.image !== null) {
       const image = object(row.image, `${path}.image`);
-      fields(image, ["src", "width", "height"], `${path}.image`);
+      fields(image, ["src", "width", "height", ...(image.thumbnail === undefined ? [] : ["thumbnail"])], `${path}.image`);
       text(image.src, `${path}.image.src`);
       if (
-        !/^\/photography\/media\/[a-z0-9/-]+\.(webp|avif|jpg|png)$/.test(
+        !/^(?:\/photography\/media\/|https:\/\/qtj-photos\.evolandeco-github-io\.workers\.dev\/(?:web|thumbnails)\/)[a-z0-9/-]+\.(webp|avif|jpg|png)$/.test(
           image.src,
         )
       ) {
         fail(
           `${path}.image.src`,
-          "expected a local photography derivative path",
+          "expected a photography image path or the Footprint Worker URL",
         );
       }
       dimension(image.width, `${path}.image.width`);
       dimension(image.height, `${path}.image.height`);
+      if (image.thumbnail !== undefined) {
+        const thumbnail = object(image.thumbnail, `${path}.image.thumbnail`);
+        fields(thumbnail, ["src", "width", "height"], `${path}.image.thumbnail`);
+        text(thumbnail.src, `${path}.image.thumbnail.src`);
+        if (!/^https:\/\/qtj-photos\.evolandeco-github-io\.workers\.dev\/thumbnails\/photo-[a-f0-9]{16}\.webp$/.test(thumbnail.src))
+          fail(`${path}.image.thumbnail.src`, "expected a hosted photography thumbnail");
+        dimension(thumbnail.width, `${path}.image.thumbnail.width`);
+        dimension(thumbnail.height, `${path}.image.thumbnail.height`);
+      }
     }
   });
 }
@@ -499,6 +509,7 @@ export function getPublicPhotography(
           src: photo.image.src,
           width: photo.image.width,
           height: photo.image.height,
+          ...(photo.image.thumbnail ? { thumbnail: { ...photo.image.thumbnail } } : {}),
         },
       });
     }

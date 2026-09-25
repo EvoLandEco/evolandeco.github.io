@@ -1,3 +1,4 @@
+import photography from "../src/content-data/photography-public.json";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 const routes = ["/", "/research", "/publications", "/software", "/blog", "/photography"];
@@ -66,21 +67,22 @@ test("Selected publications, thesis and citation files", async ({
 test("Gallery modal, history, keyboard, focus and direct image routes", async ({
   page,
 }) => {
-  await page.goto("/photography/sample-landscapes");
+  const album = photography.albums[0];
+  await page.goto(album.href);
   const first = page.locator("[data-photo-link]").first();
   await first.focus();
   await page.keyboard.press("Enter");
   await expect(page.getByTestId("photo-viewer")).toBeVisible();
-  await expect(page).toHaveURL(/mountain-lake/);
+  await expect(page).toHaveURL(new RegExp(album.photos[0].id));
   await page.keyboard.press("ArrowRight");
-  await expect(page).toHaveURL(/river-valley/);
+  await expect(page).toHaveURL(new RegExp(album.photos[1].id));
   await page.keyboard.press("Escape");
   await expect(page.getByTestId("photo-viewer")).not.toBeVisible();
   await expect(first).toBeFocused();
   await page.goForward();
   await expect(page.getByTestId("photo-viewer")).toBeVisible();
   await page.reload();
-  await expect(page.locator("h1")).toContainText("fjord");
+  await expect(page.locator("h1")).toHaveText(album.photos[1].caption!);
   await expect(page.getByTestId("photo-viewer")).toHaveCount(0);
   await page.goto("/photography");
   expect(
@@ -151,8 +153,8 @@ test("Core content and full-image routes without JavaScript", async ({
   for (const route of [
     ...routes,
     "/research/netforge",
-    "/photography/sample-wild-places",
-    "/photography/sample-wild-places/canyon",
+    photography.albums[0].href,
+    photography.albums[0].photos[0].href,
   ]) {
     await page.goto("http://127.0.0.1:3000" + route);
     await expect(page.locator("h1")).toBeVisible();
@@ -198,7 +200,7 @@ test("Album search and embedded technical articles", async ({ page }) => {
   await expect(page.locator("[data-album-id]:visible")).toHaveCount(0);
   await expect(page.getByRole("status")).toContainText("No matching albums");
   await page.getByRole("button", { name: "Reset search" }).click();
-  await expect(page.locator("[data-album-id]:visible")).toHaveCount(3);
+  await expect(page.locator("[data-album-id]:visible")).toHaveCount(photography.albums.length);
   await page.goto("/writing/hybrid-corop-farm");
   const article = page.frameLocator("iframe").first();
   await expect(article.locator(".blog-post-body")).toBeVisible();
@@ -354,20 +356,42 @@ test("Research glyph background pauses offscreen and respects reduced motion", a
   await expect(glyphs).toHaveAttribute("data-motion-state", "paused");
 });
 
-test("Blog collects explorations and notes with working reader routes", async ({ page }) => {
+test("Blog groups notes by subject with working reader routes", async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/blog");
-  expect(await page.locator('.site-dock a').evaluateAll(links => links.map(a => a.getAttribute('href')))).toEqual(['/', '/research/', '/publications/', '/software/']);
-  await expect(page.locator('.blog-experiment')).toHaveCount(4);
+  expect(await page.locator('.site-dock a').evaluateAll(links => links.map(a => a.getAttribute('href')))).toEqual(['/', '/research/', '/publications/', '/software/', '/blog/', '/photography/']);
+  await expect(page.locator('.blog-experiment')).toHaveCount(0);
+  await expect(page.locator('.blog-category-heading')).toHaveText(['Development', 'Networks', 'Machine learning', 'Evolution']);
+  await expect(page.locator('.blog-note')).toHaveCount(6);
+  await page.getByRole('button', { name: 'Machine learning 2', exact: true }).click();
+  await expect(page.locator('.blog-note')).toHaveCount(2);
+  await expect(page.locator('.blog-category-heading')).toHaveText(['Machine learning']);
+  await page.getByRole('button', { name: 'All notes 6', exact: true }).click();
   await expect(page.locator('.blog-note')).toHaveCount(6);
   const notes = await page.locator('.blog-note').evaluateAll(links => links.map(a => a.getAttribute('href')!));
   for (const href of notes) {
     const response = await page.goto(href);
     expect(response?.status()).toBe(200);
     await expect(page.locator('h1')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Blog · Migrating' })).toHaveAttribute('aria-disabled', 'true');
+    await expect(page.locator('.site-dock a[href="/blog/"]')).toBeVisible();
     await expect(page.locator('article > iframe')).toBeVisible();
+    for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      const body = page.frameLocator('article > iframe').locator('body');
+      await expect(body).toContainText(/\S/);
+      await expect.poll(() => body.evaluate(el => {
+        const root = el.ownerDocument.documentElement;
+        return root.scrollHeight - root.clientHeight;
+      })).toBe(0);
+      await expect.poll(() => body.evaluate(el => {
+        const doc = el.ownerDocument;
+        return doc.defaultView!.innerWidth - doc.documentElement.clientWidth;
+      })).toBe(0);
+    }
   }
+  expect(errors).toEqual([]);
   await page.goto('/blog/explore/evolab');
   await expect(page.locator('.exploration-frame')).toHaveAttribute('src', '/explorations/evolab.html');
   await page.goto('/software');
@@ -435,24 +459,38 @@ test("Embedded notes and explorations share controls and follow the site theme",
   await page.frameLocator('article > iframe').locator('#toggleAll').click();
 });
 
-test("Sample map pins open collections and covers show a lens", async ({ page }) => {
+test("Country map pins and albums are linked and covers show a lens", async ({ page }) => {
   await page.goto('/photography');
-  await expect(page.locator('.album-count, .album-sample')).toHaveCount(0);
-  await expect(page.locator('.album-caption h3')).toHaveText(['Norway', 'United States', 'New Zealand']);
-  await expect(page.locator('.album-open')).toHaveText(['Let’s go', 'Let’s go', 'Let’s go']);
+  const albums = photography.albums;
+  await expect(page.locator('.album-caption h3')).toHaveText(albums.map(album => album.title));
   const pins = page.locator('.collection-pin');
-  await expect(pins).toHaveCount(3);
-  const cards = page.locator('.album-card');
-  for (let i = 0; i < 3; i++) {
-    await expect(pins.nth(i)).toHaveAttribute('href', (await cards.nth(i).getAttribute('href'))!);
-    await expect(pins.nth(i)).toHaveAttribute('aria-label', /sample collection/);
+  await expect(pins).toHaveCount(photography.countries.length);
+  await expect(page.locator('.collection-pin[data-pending="true"]')).toHaveCount(10);
+  await page.locator("#map-JP").focus();
+  await expect(page.locator('.atlas-pin-label[data-active="true"]')).toHaveText("Japan");
+  await expect(page.locator("#map-JP")).not.toHaveAttribute("href");
+  for (const album of albums) {
+    await expect(page.locator(`#map-${album.countryCode}`)).toHaveAttribute('href', album.href);
   }
-  await cards.first().locator('.album-lens').hover({ position: { x: 120, y: 110 } });
-  await expect(cards.first().locator('.album-lens-overlay')).toBeVisible();
-  await cards.first().click();
-  await expect(page).toHaveURL(/\/photography\/sample-landscapes\/?$/);
+  const czech = page.locator('#map-CZ');
+  await czech.hover();
+  const label = page.locator('.map-label-layer .atlas-pin-label[data-active="true"]');
+  await expect(label).toHaveText('Czech Republic');
+  await expect(label).toHaveCSS('opacity', '1');
+  expect(await czech.evaluate(pin => Boolean(pin.compareDocumentPosition(document.querySelector('.map-label-layer')!) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
+  await czech.focus();
+  await page.getByRole('heading', { name: 'Country albums' }).hover();
+  await expect(label).toHaveText('Czech Republic');
+  await page.locator('#map-NL').focus();
+  await expect(page.locator('#map-NL')).toHaveAttribute('data-selected', 'true');
+  const card = page.locator('.album-card').first();
+  await card.locator('.album-lens').hover({ position: { x: 120, y: 110 } });
+  await expect(card.locator('.album-lens-overlay')).toBeVisible();
+  await card.click();
+  await expect(page).toHaveURL(new RegExp(albums[0].href));
+  await page.getByRole('link', { name: 'Back to the map', exact: false }).click();
+  await expect(page).toHaveURL(new RegExp(`#map-${albums[0].countryCode}$`));
 });
-
 
 test("Animated theme switcher persists the selected theme", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference', colorScheme: 'light' });
@@ -468,17 +506,14 @@ test("Animated theme switcher persists the selected theme", async ({ page }) => 
 });
 
 
-test("Migrating destinations cannot navigate from the dock", async ({ page }) => {
-  await page.goto('/');
-  for (const name of ['Blog', 'Footprint']) {
-    const item = page.getByRole('link', { name: `${name} · Migrating` });
-    await expect(item).toHaveAttribute('aria-disabled', 'true');
-    await expect(item).not.toHaveAttribute('href');
-    await item.click({ force: true });
-    await expect(page).toHaveURL(/\/$/);
-    await item.focus();
-    await page.keyboard.press('Enter');
-    await expect(page).toHaveURL(/\/$/);
+test("Blog and Footprint are available from the dock", async ({ page }) => {
+  for (const path of ['/blog/', '/photography/']) {
+    await page.goto('/');
+    const item = page.locator(`.site-dock a[href="${path}"]`);
+    await expect(item).not.toHaveAttribute('aria-disabled');
+    await item.click();
+    await expect(page).toHaveURL(new RegExp(`${path}$`));
+    await expect(page.locator('meta[name="robots"]')).not.toHaveAttribute('content', /noindex/);
   }
 });
 

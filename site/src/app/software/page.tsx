@@ -1,3 +1,4 @@
+import { AuroraText } from "@/components/magicui/aurora-text";
 import { NetworkBackdrop, SectionHeading } from "@/components/portfolio-sections";
 import {
   Brain,
@@ -26,7 +27,7 @@ export default function Software() {
     <>
       <section className="surface toolkit-feature">
         <h1 className="sr-only">Software</h1>
-        <div className="toolkit-intro"><h2>Tech stack</h2></div>
+        <div className="toolkit-intro"><h2 className="visual-intro"><AuroraText colors={["var(--primary)", "var(--toolkit-sage)", "var(--primary)"]} speed={0.45}>The tools behind the research.</AuroraText></h2></div>
         <div className="toolkit-layout">
           <div className="toolkit-copy">
           <div className="toolkit-list" data-testid="toolkit-list">

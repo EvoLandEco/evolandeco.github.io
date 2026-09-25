@@ -55,19 +55,15 @@
 
             <div class="blog-post-body">
                 
-                <p>Converting an HTML webpage to a PDF document can be incredibly useful in various scenarios. While many tools are available for this task, they often fall short by not producing a true PDF with selectable elements and failing to respect the webpage's CSS styles, leading to incorrect or unattractive outputs.</p>
-
-                <p><code>pdfgen.js</code> generates high-quality PDFs efficiently and directly from a URL, offering a range of customizable arguments to tailor the PDF to your need.</p>
-
-                <p>Below, I provide an overview of the script, its features, and how to use it.</p>
-
-                <h3 class="mt-5 mb-3">Setting Up Puppeteer and Command Line Arguments</h3>
+                <p>Puppeteer renders a web page in Chromium and prints it to PDF, preserving selectable text and print CSS. This example accepts a URL, page dimensions and margins on the command line.</p>
+<p>PDF page dimensions use physical units. Puppeteer has no PDF DPI setting; increasing the viewport size changes the page layout rather than the resolution of vector text. See <a href="https://pptr.dev/api/puppeteer.pdfoptions">Puppeteer’s PDF options</a>.</p>
+<h3 class="mt-5 mb-3">Set up Puppeteer</h3>
                 <p>First, we need to import Puppeteer and set up command line argument parsing with <code>yargs</code>. Puppeteer is used to control a headless Chrome or Chromium browser, and <code>yargs</code> helps in parsing command line arguments.</p>
                 <pre><code class="javascript">const puppeteer = require('puppeteer');
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');</code></pre>
 
-                <h3 class="mt-5 mb-3">Defining Standard Page Sizes</h3>
+                <h3 class="mt-5 mb-3">Define page sizes</h3>
                 <p>Next, we define standard page sizes in inches. These sizes will be used to set the dimensions of the PDF pages.</p>
                 <pre><code class="javascript">const pageSizes = {
     A4: { width: 8.27, height: 11.69 },
@@ -79,149 +75,77 @@ const { hideBin } = require('yargs/helpers');</code></pre>
     A3: { width: 11.69, height: 16.54 }
 };</code></pre>
 
-                <h3 class="mt-5 mb-3">Configuring Command Line Arguments</h3>
-                <p>We use <code>yargs</code> to configure the command line arguments for our script. These arguments allow the user to specify various parameters such as the URL, output file path, DPI, page size, and margins.</p>
+                <h3 class="mt-5 mb-3">Configure command line arguments</h3>
+                <p>We use <code>yargs</code> to configure the command line arguments for our script. These arguments allow the user to specify various parameters such as the URL, output file path, page size, and margins.</p>
                 <pre><code class="javascript">const argv = yargs(hideBin(process.argv))
-    .usage('Usage: $0 --url &lt;string&gt; --output &lt;string&gt; [--dpi &lt;number&gt;] [--scale &lt;number&gt;] [--pageSize &lt;string&gt; | --width &lt;number&gt; --height &lt;number&gt;] [--top &lt;number&gt;] [--right &lt;number&gt;] [--bottom &lt;number&gt;] [--left &lt;number&gt;] [--no-background] [--no-margin]')
-    .demandOption(['url', 'output'])
-    .describe('dpi', 'The DPI (dots per inch) for the PDF')
-    .describe('scale', 'The scale factor for the PDF')
-    .describe('url', 'The URL of the HTML file to convert to PDF')
-    .describe('output', 'The file path to write the generated PDF')
-    .describe('pageSize', 'The standard page size (A4, Letter, Legal, Tabloid, Executive, A5, A3)')
-    .describe('width', 'The custom width for the PDF (in inches)')
-    .describe('height', 'The custom height for the PDF (in inches)')
-    .describe('top', 'Top margin in mm')
-    .describe('right', 'Right margin in mm')
-    .describe('bottom', 'Bottom margin in mm')
-    .describe('left', 'Left margin in mm')
-    .describe('no-background', 'Disable printing background (default: false)')
-    .describe('no-margin', 'Set all margins to 0 (conflicts with individual margin settings)')
-    .default('dpi', 300)
-    .default('scale', 1.0)
-    .default('pageSize', 'A4')
-    .default('top', 10)
-    .default('right', 10)
-    .default('bottom', 10)
-    .default('left', 10)
-    .boolean('no-background')
-    .boolean('no-margin')
-    .conflicts('no-margin', ['top', 'right', 'bottom', 'left'])
-    .help('h')
-    .alias('h', 'help')
-    .argv;
+    .option('url', { type: 'string', demandOption: true })
+    .option('output', { type: 'string', demandOption: true })
+    .option('pageSize', { choices: Object.keys(pageSizes) })
+    .option('width', { type: 'number', describe: 'Page width in inches' })
+    .option('height', { type: 'number', describe: 'Page height in inches' })
+    .option('scale', { type: 'number', default: 1 })
+    .option('background', { type: 'boolean', default: true })
+    .option('margin', { type: 'boolean', default: true })
+    .option('top', { type: 'number', default: 10 })
+    .option('right', { type: 'number', default: 10 })
+    .option('bottom', { type: 'number', default: 10 })
+    .option('left', { type: 'number', default: 10 })
+    .check(args =&gt; {
+        if (!['http:', 'https:', 'file:'].includes(new URL(args.url).protocol))
+            throw new Error('Use an HTTP, HTTPS or file URL.');
+        const custom = args.width !== undefined || args.height !== undefined;
+        if (custom &amp;&amp; (args.pageSize || !(args.width &gt; 0 &amp;&amp; args.height &gt; 0)
+            || !Number.isFinite(args.width) || !Number.isFinite(args.height)))
+            throw new Error('Supply both positive dimensions, or a pageSize.');
+        if (!(args.scale &gt;= 0.1 &amp;&amp; args.scale &lt;= 2))
+            throw new Error('Scale must be between 0.1 and 2.');
+        for (const side of ['top', 'right', 'bottom', 'left']) {
+            if (!Number.isFinite(args[side]) || args[side] &lt; 0)
+                throw new Error('Margins must be nonnegative millimeters.');
+        }
+        return true;
+    })
+    .strict()
+    .help()
+    .parse();
 
-const dpi = parseInt(argv.dpi, 10);
-const scale = parseFloat(argv.scale);
-const url = argv.url;
-const outputPath = argv.output;
-const noBackground = argv['no-background'];
-const noMargin = argv['no-margin'];
+const { width, height } = argv.width !== undefined
+    ? { width: argv.width, height: argv.height }
+    : pageSizes[argv.pageSize || 'A4'];</code></pre>
 
-let width, height;
-
-if (argv.pageSize) {
-    const pageSize = pageSizes[argv.pageSize];
-    if (pageSize) {
-        width = pageSize.width;
-        height = pageSize.height;
-    } else {
-        console.error('Invalid page size. Valid options are: A4, Letter, Legal, Tabloid, Executive, A5, A3.');
-        process.exit(1);
+                <h3 class="mt-5 mb-3">Generate the PDF</h3>
+                <p>We create an async function to generate the PDF using Puppeteer. This function launches a headless browser, navigates to the specified URL, and generates the PDF with the specified settings.</p>
+                <pre><code class="javascript">async function generatePDF() {
+    const browser = await puppeteer.launch({ headless: true });
+    try {
+        const page = await browser.newPage();
+        await page.goto(argv.url, { waitUntil: 'networkidle0', timeout: 60000 });
+        await page.pdf({
+            path: argv.output,
+            width: `${width}in`,
+            height: `${height}in`,
+            printBackground: argv.background,
+            scale: argv.scale,
+            margin: Object.fromEntries(
+                ['top', 'right', 'bottom', 'left'].map(side =&gt;
+                    [side, `${argv.margin ? argv[side] : 0}mm`])
+            )
+        });
+    } finally {
+        await browser.close();
     }
-} else if (argv.width &amp;&amp; argv.height) {
-    width = parseFloat(argv.width);
-    height = parseFloat(argv.height);
-} else {
-    console.error('Please provide either a standard page size or custom width and height.');
-    process.exit(1);
 }
 
-const widthPx = Math.round(width * dpi);
-const heightPx = Math.round(height * dpi);
+generatePDF().catch(err =&gt; {
+    console.error(err);
+    process.exitCode = 1;
+});</code></pre>
 
-let top, right, bottom, left;
-if (noMargin) {
-    top = right = bottom = left = 0;
-} else {
-    top = parseFloat(argv.top);
-    right = parseFloat(argv.right);
-    bottom = parseFloat(argv.bottom);
-    left = parseFloat(argv.left);
-}
-
-const topInches = top / 25.4;
-const rightInches = right / 25.4;
-const bottomInches = bottom / 25.4;
-const leftInches = left / 25.4;</code></pre>
-
-                <h3 class="mt-5 mb-3">Generating the PDF</h3>
-                <p>Now, we create an async function to generate the PDF using Puppeteer. This function launches a headless browser, navigates to the specified URL, sets the viewport, and generates the PDF with the specified settings.</p>
-                <pre><code class="javascript">async function generatePDF(url, outputPath) {
-    const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-    const page = await browser.newPage();
-    await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
-
-    await page.setViewport({
-        width: widthPx,
-        height: heightPx,
-        deviceScaleFactor: 1,
-    });
-
-    await page.pdf({
-        path: outputPath,
-        width: `${widthPx}px`,
-        height: `${heightPx}px`,
-        printBackground: !noBackground,
-        margin: {
-            top: topInches,
-            right: rightInches,
-            bottom: bottomInches,
-            left: leftInches
-        },
-        scale: scale
-    });
-
-    await browser.close();
-}
-
-generatePDF(url, outputPath)
-    .then(() =&gt; console.log('PDF generated successfully'))
-    .catch(err =&gt; console.error('Error generating PDF:', err));</code></pre>
-
-                <h3 class="mt-5 mb-3">Flexibility</h3>
-                <p>
-                    This script allows you to customize various parameters such as:
-                </p>
-                <ul>
-                    <li><strong>DPI:</strong> The dots per inch for the PDF, with a default value of 300 DPI.</li>
-                    <li><strong>Scale:</strong> The scale factor for the PDF, defaulting to 1.0.</li>
-                    <li><strong>Page Size:</strong> Standard page sizes like A4, Letter, Legal, etc.</li>
-                    <li><strong>Custom Dimensions:</strong> Specify custom width and height in inches if needed.</li>
-                    <li><strong>Margins:</strong> Customize top, right, bottom, and left margins in millimeters, or set all margins to zero.</li>
-                    <li><strong>Background:</strong> Option to disable printing the background.</li>
-                </ul>
-
-                <h3 class="mt-5 mb-3">Getting Started</h3>
-                <p>
-                    To use this script, you need to have Node.js and Puppeteer installed. You can find the script and detailed instructions in my GitHub repository, click the image below to open it:.
-                </p>
-                <div class="center-repo">
-                    <a href="https://github.com/EvoLandEco/WebToolBox">
-                        <span>View repository ↗</span>
-                    </a>
-                </div>
-                <h3 class="mt-5 mb-3">Example Usage</h3>
-                <p>
-                    Here is an example command to generate a PDF:
-                </p>
-                <pre><code class="bash">node pdfgen.js --url https://example.com --output example.pdf --dpi 300 --scale 1.0 --pageSize A4 --top 10 --right 10 --bottom 10 --left 10</code></pre>
-                <p>
-                    This command converts the HTML page at <code>https://example.com</code> to a PDF named <code>example.pdf</code> with 300 DPI, a scale factor of 1.0, A4 page size, and 10mm margins on all sides.
-                </p>
+                <h3>Run the script</h3>
+<p>Install the dependencies with <code>npm install puppeteer yargs</code>, save the blocks above as <code>pdfgen.cjs</code>, then run:</p>
+<pre><code class="bash">node pdfgen.cjs --url https://example.com --output example.pdf --pageSize A4 --top 10 --right 10 --bottom 10 --left 10</code></pre>
+<p>This creates an A4 PDF with 10 mm margins. Use <code>--width 8 --height 10</code> for custom dimensions, <code>--no-margin</code> for borderless output, or <code>--no-background</code> to omit background fills. Print CSS controls page breaks and content visibility.</p>
+<a class="note-repository" href="https://github.com/EvoLandEco/WebToolBox" target="_blank" rel="noopener"><i class="fa-brands fa-github" aria-hidden="true"></i><span><strong>WebToolBox</strong><span>View source on GitHub</span></span><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
 
             </div>
 
