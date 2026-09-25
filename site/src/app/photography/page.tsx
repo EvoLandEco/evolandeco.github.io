@@ -1,7 +1,7 @@
 import { Lens } from "@/components/magicui/lens";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { AlbumSearch } from "@/components/album-search";
-import Image from "next/image";
+import { LoadingImage as Image } from "@/components/loading-image";
 import { ArrowUpRight } from "lucide-react";
 import { MagicCard } from "@/components/magicui/magic-card";
 import { SectionHeading } from "@/components/portfolio-sections";

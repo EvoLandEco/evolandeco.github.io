@@ -592,3 +592,36 @@ test("Phone globe taps enlarge without a callout or external navigation", async 
   expect(context.pages()).toHaveLength(1);
   await context.close();
 });
+
+test("Image placeholders cover delayed downloads and viewer navigation", async ({ page }) => {
+  let release: () => void = () => {};
+  let pending = new Promise<void>(resolve => { release = resolve; });
+  await page.route(/\/art\/.*\.webp|qtj-photos.*\.webp/, async route => {
+    await pending;
+    await route.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="#315ba6"/></svg>' });
+  });
+  for (const [url, selector] of [
+    ['/publications/', '.thesis-book img'],
+    ['/blog/', '.blog-note img'],
+    ['/photography/', '.album-lens > img'],
+    [photography.albums[0].href, '.photo-tile img'],
+  ]) {
+    pending = new Promise<void>(resolve => { release = resolve; });
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
+    const image = page.locator(selector).first();
+    await image.scrollIntoViewIfNeeded();
+    await expect(image).toHaveAttribute('data-image-loading', 'true');
+    expect(await image.evaluate(el => el.getBoundingClientRect().height)).toBeGreaterThan(30);
+    release();
+    await expect(image).not.toHaveAttribute('data-image-loading');
+  }
+  for (const next of [false, true]) {
+    pending = new Promise<void>(resolve => { release = resolve; });
+    if (next) await page.getByRole('button', { name: 'Next photo' }).click();
+    else await page.locator('[data-photo-link]').first().click();
+    const image = page.locator('.viewer-photo img');
+    await expect(image).toHaveAttribute('data-image-loading', 'true');
+    release();
+    await expect(image).not.toHaveAttribute('data-image-loading');
+  }
+});

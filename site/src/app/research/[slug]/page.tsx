@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
+import { LoadingImage as Image } from "@/components/loading-image";
 import Link from "next/link";
 import { MDXContent } from "@content-collections/mdx/react";
 import { allResearch } from "content-collections";

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { LoadingImage } from "@/components/loading-image";
 import { ArrowUpRight, BookOpen, GraduationCap } from "lucide-react";
 import data from "@/content-data/portfolio.json";
 import { selectedPublications } from "@/lib/selected-publications";
@@ -15,7 +16,7 @@ export default function Publications() {
       <section className="surface">
           <article className="thesis-layout">
             <a className="thesis-book" href={phd.thesisUrl!} aria-label="Read Diversification Models and Neural Inference, full thesis PDF">
-              <Image src="/art/thesis-cover.webp" alt="Front cover of Diversification Models and Neural Inference by Tianjian Qin" width={1145} height={1600} sizes="(max-width: 639px) 200px, 230px" priority />
+              <LoadingImage src="/art/thesis-cover.webp" alt="Front cover of Diversification Models and Neural Inference by Tianjian Qin" width={1145} height={1600} sizes="(max-width: 639px) 200px, 230px" priority />
             </a>
             <div className="thesis-copy">
               <span className="thesis-label"><GraduationCap size={18} aria-hidden /> Doctoral thesis · {phd.end}</span>

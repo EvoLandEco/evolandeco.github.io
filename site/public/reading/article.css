@@ -122,3 +122,7 @@ th { font-weight: 600; background: var(--ui-card); text-align: left; }
   .note-project-body { padding: 20px; }
 }
 @media (prefers-reduced-motion: reduce) { .note-project-image img { transition: none; } }
+
+img[data-image-loading="true"] { background: linear-gradient(110deg, var(--ui-card) 25%, var(--ui-accent) 45%, var(--ui-card) 65%); background-size: 250% 100%; animation: image-loading 1.8s ease-in-out infinite; }
+@keyframes image-loading { from { background-position: 150% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { img[data-image-loading="true"] { animation: none; } }
