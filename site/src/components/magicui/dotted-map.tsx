@@ -22,6 +22,7 @@ export interface DottedMapProps<
   width?: number;
   height?: number;
   mapSamples?: number;
+  region?: Parameters<typeof createMap>[0]["region"];
   markers?: M[];
   dotColor?: string;
   markerColor?: string;
@@ -29,6 +30,7 @@ export interface DottedMapProps<
   stagger?: boolean;
   pulse?: boolean;
 
+  renderMarkerLabel?: DottedMapProps<M>["renderMarkerOverlay"];
   renderMarkerOverlay?: (args: {
     marker: MapMarker<M>;
     index: number;
@@ -42,6 +44,7 @@ export function DottedMap<M extends Marker = Marker>({
   width = 150,
   height = 75,
   mapSamples = 5000,
+  region,
   markers = [],
   dotColor = "currentColor",
   markerColor = "#FF6900",
@@ -49,15 +52,15 @@ export function DottedMap<M extends Marker = Marker>({
   stagger = true,
   pulse = false,
   renderMarkerOverlay,
+  renderMarkerLabel,
   className,
   style,
   ...svgProps
 }: DottedMapProps<M>) {
-  const { points, addMarkers } = createMap({
-    width,
-    height,
-    mapSamples,
-  });
+  const { points, addMarkers } = React.useMemo(
+    () => createMap({ width, height, mapSamples, region }),
+    [width, height, mapSamples, region],
+  );
   const processedMarkers = addMarkers(markers);
 
   // Compute stagger helpers in a single, simple pass
@@ -183,6 +186,15 @@ export function DottedMap<M extends Marker = Marker>({
           </g>
         );
       })}
+      <g className="map-label-layer" pointerEvents="none">
+        {processedMarkers.map((marker, index) => {
+          const rowIndex = yToRowIndex.get(marker.y) ?? 0;
+          const x = marker.x + (stagger && rowIndex % 2 === 1 ? xStep / 2 : 0);
+          return <React.Fragment key={`${marker.x}-${marker.y}-${index}`}>
+            {renderMarkerLabel?.({ marker: { ...marker, x }, index, x, y: marker.y, r: marker.size ?? dotRadius })}
+          </React.Fragment>;
+        })}
+      </g>
     </svg>
   );
 }

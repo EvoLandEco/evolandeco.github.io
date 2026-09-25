@@ -1,0 +1,26 @@
+{
+  "name": "qtj-photos",
+  "main": "index.mjs",
+  "compatibility_date": "2026-09-25",
+  "workers_dev": true,
+  "r2_buckets": [
+    {
+      "binding": "PHOTOS",
+      "bucket_name": "qtj-footprint"
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1
+  },
+  "ratelimits": [
+    {
+      "name": "PHOTO_RATE_LIMIT",
+      "namespace_id": "2026092501",
+      "simple": {
+        "limit": 240,
+        "period": 60
+      }
+    }
+  ]
+}

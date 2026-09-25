@@ -14,7 +14,7 @@ for(const width of [390,1440]) for(let run=1;run<=3;run++){
 fs.writeFileSync(root+'performance-lab.json',JSON.stringify({date:new Date().toISOString(),browser:browser.version(),machine:{platform:os.platform(),arch:os.arch(),cpus:os.cpus()[0].model},profile:'Unthrottled localhost production server, fresh context per run, reduced motion, 2 second observation; lab values, no field INP',runs},null,2));
 const page=await browser.newPage();
 for(const width of [360,1440])for(const theme of ['light','dark']){
- await page.setViewportSize({width,height:900});await page.emulateMedia({colorScheme:theme,reducedMotion:'reduce'});await page.goto('http://localhost:3000/photography/sample-wild-places');await page.screenshot({path:root+`album-${width}-${theme}.png`,fullPage:true});await page.locator('[data-photo-link]').first().click();await page.screenshot({path:root+`viewer-${width}-${theme}.png`});
+ await page.setViewportSize({width,height:900});await page.emulateMedia({colorScheme:theme,reducedMotion:'reduce'});await page.goto('http://localhost:3000/photography/austria');await page.screenshot({path:root+`album-${width}-${theme}.png`,fullPage:true});await page.locator('[data-photo-link]').first().click();await page.screenshot({path:root+`viewer-${width}-${theme}.png`});
 }
 await page.setViewportSize({width:1440,height:1000});await page.emulateMedia({colorScheme:'light',reducedMotion:'reduce'});await page.goto('http://localhost:3000/software');await page.getByTestId('signature-icon-cloud').scrollIntoViewIfNeeded();await page.waitForTimeout(500);await page.screenshot({path:root+'toolkit-preview.png'});
 await browser.close();console.log(runs.map(({width,run,lcp,cls})=>({width,run,lcp,cls})));

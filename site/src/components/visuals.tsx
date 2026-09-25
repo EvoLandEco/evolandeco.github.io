@@ -129,7 +129,7 @@ export function Approach() {
   return (
     <div ref={panel} className="research-approach" data-testid="signature-beam"
       data-motion-state={m.playing ? "running" : "paused"}>
-      <p className="visual-intro">Understanding life through models.</p>
+      <p className="visual-intro"><AuroraText colors={["var(--primary)", "var(--approach-green)", "var(--primary)"]} speed={0.45}>Understanding life through models.</AuroraText></p>
       <div ref={container} className="approach-network" role="img"
         aria-label="Phylogenies, temporal networks and spatial observations feed models and inference, producing scientific insight and research software.">
         <GlyphMatrix className="approach-glyphs" glyphs="ATCG01·+λΣ∆" cellSize={14}
