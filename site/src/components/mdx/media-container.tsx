@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+import { LoadingImage } from "@/components/loading-image";
 
 interface MediaContainerProps {
   src: string;
@@ -18,7 +18,9 @@ export function MediaContainer({
       className={`ring-4 ring-muted w-full h-[300px] rounded-lg overflow-hidden flex items-center justify-center ${className}`}
     >
       {type === "image" ? (
-        <img
+        <LoadingImage
+          width={1200}
+          height={800}
           src={src}
           alt={alt}
           className="w-full h-full object-cover object-center max-w-full max-h-full"

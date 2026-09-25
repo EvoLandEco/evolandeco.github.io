@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { LoadingImage as Image } from "@/components/loading-image";
 import { ArrowRight, LayoutGrid, Code2, Network, Brain, GitBranch } from "lucide-react";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import data from "@/content-data/legacy.json";

@@ -1,5 +1,5 @@
 "use client";
-import Image from "next/image";
+import { LoadingImage as Image } from "@/components/loading-image";
 import { useEffect, useRef, useState } from "react";
 import type { PublicAlbum } from "../../scripts/photography-model";
 export function PhotoGallery({ album }: { album: PublicAlbum }) {
