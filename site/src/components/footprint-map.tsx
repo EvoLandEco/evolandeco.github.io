@@ -43,7 +43,7 @@ export function FootprintMap({ countries }: { countries: PublicPhotography["coun
             return <g className="atlas-pin-label" data-pending={!marker.albumHref} data-active={(hovered || selected) === marker.code} aria-hidden="true">
               <path className="atlas-label-stem" d={`M${x} ${y - 1.4}v-1.1`} />
               <rect className="country-label-bg" x={left} y={y - 8} width={width} height={5.5} rx={2.75} />
-              <image href={`https://flagcdn.com/w80/${marker.code.toLowerCase()}.webp`} x={left + 1.5} y={y - 6.6} width={3.3} height={2.5} preserveAspectRatio="xMidYMid meet" />
+              <image href={`/flags/${marker.code.toLowerCase()}.webp`} x={left + 1.5} y={y - 6.6} width={3.3} height={2.5} preserveAspectRatio="xMidYMid meet" />
               <text className="country-label" x={left + 6} y={y - 5.2} dominantBaseline="central" fontSize={1.9}>{label}</text>
             </g>;
           }} />
