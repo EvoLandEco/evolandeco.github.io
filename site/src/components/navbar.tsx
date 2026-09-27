@@ -1,11 +1,12 @@
 "use client";
 import { useSyncExternalStore } from "react";
 import { Tooltip, TooltipArrow, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { useAtlasNavigation } from "./atlas-navigation";
 import Link from "next/link";
 import { ProfileCard } from "./profile-card";
 import portfolio from "@/content-data/portfolio.json";
 import { usePathname } from "next/navigation";
-import { House, FlaskConical, BookOpen, Code2, MapPin, NotebookPen, FileDown, Mail, Clock3 } from "lucide-react";
+import { House, FlaskConical, BookOpen, Code2, MapPin, NotebookPen, FileDown, Mail, Clock3, Orbit } from "lucide-react";
 import { Dock, DockIcon } from "./magicui/dock";
 import data from "@/content-data/ui-content.json";
 const icons = [House, FlaskConical, BookOpen, Code2, NotebookPen, MapPin];
@@ -18,7 +19,9 @@ function subscribeWidth(notify: () => void) {
 }
 export default function Navbar() {
   const path = usePathname();
+  const { open } = useAtlasNavigation();
   const pageLabel = path === "/" ? "About me"
+    : path.startsWith("/atlas") ? "ATLAS"
     : path.startsWith("/research") ? "Research"
     : path.startsWith("/publications") ? "Publications"
     : path.startsWith("/software") ? "Software"
@@ -53,7 +56,7 @@ export default function Navbar() {
                 {n.migrating ? <span className="nav-migrating" role="link" aria-disabled="true" tabIndex={0} aria-label={`${n.label} · Migrating`} title={`${n.label} · Migrating`}>
                   <DockIcon className="nav-item"><Icon aria-hidden className="dock-glyph" /></DockIcon>
                   <Clock3 className="migration-mark" size={12} aria-hidden />
-                </span> : <Link href={n.path} aria-label={n.label} aria-current={active ? "page" : undefined}>
+                </span> : <Link href={n.path} onClick={n.path === "/" ? open : undefined} aria-label={n.label} aria-current={active ? "page" : undefined}>
                   <DockIcon className="nav-item">
                     <Icon aria-hidden className="dock-glyph" />
                   </DockIcon>
@@ -65,6 +68,12 @@ export default function Navbar() {
             </Tooltip>
           );
         })}
+        <span className="atlas-nav-divider" aria-hidden />
+        <Tooltip><TooltipTrigger asChild>
+          <Link href="/atlas/" onClick={open} className="atlas-nav" aria-label="ATLAS" aria-current={path.startsWith("/atlas") ? "page" : undefined}>
+            <DockIcon className="nav-item"><Orbit aria-hidden className="dock-glyph" /></DockIcon>
+          </Link>
+        </TooltipTrigger><TooltipContent side={wide ? "bottom" : "top"} className="dock-tooltip">ATLAS · Surveillance< TooltipArrow /></TooltipContent></Tooltip>
       </Dock>
       </TooltipProvider>
     </nav>

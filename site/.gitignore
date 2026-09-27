@@ -6,6 +6,9 @@ playwright-report/
 test-results/
 
 out/
+.cache/
 evidence/*.png
 evidence/*.log
 evidence/browser-tests.json
+atlas-worker/worker-configuration.d.ts
+atlas-worker/.wrangler/

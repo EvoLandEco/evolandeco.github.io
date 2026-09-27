@@ -18,18 +18,32 @@ export function projectPoint(p: Vec3, phi: number, theta: number) {
   return {
     x,
     y,
+    z,
     visible: z >= 0 || x * x + y * y >= GLOBE_RADIUS * GLOBE_RADIUS,
   };
 }
-export function arcPoint(from: Vec3, to: Vec3, t: number): Vec3 {
+export function rimIndicator(point: ReturnType<typeof projectPoint>) {
+  const distance = Math.hypot(point.x, point.y);
+  // The rear antipode has no screen bearing.
+  if (point.z >= 0 || distance < Number.EPSILON) return null;
+  const radius = GLOBE_RADIUS + .035;
+  return {
+    x: point.x / distance * radius,
+    y: point.y / distance * radius,
+    angle: Math.atan2(point.y, -point.x) * 180 / Math.PI,
+    opacity: Math.min(1, -point.z / .08),
+  };
+}
+
+export function arcPoint(from: Vec3, to: Vec3, t: number, lift = 0.4, bend?: Vec3): Vec3 {
   const sum = from.map((v, i) => v + to[i]);
   const length = Math.hypot(...sum);
   const r = GLOBE_RADIUS;
   return from.map(
     (v, i) =>
       (1 - t) ** 2 * r * v +
-      (2 * (1 - t) * t * (r + 0.4) * sum[i]) / length +
-      t * t * r * to[i],
+      (2 * (1 - t) * t * (r + lift) * sum[i]) / length +
+      t * t * r * to[i] + 2 * (1 - t) * t * (bend?.[i] ?? 0),
   ) as Vec3;
 }
 
@@ -39,6 +53,8 @@ export function drawGlobeEffects(
   phi: number,
   time: number,
   dark: boolean,
+  theta = 0.22,
+  highlighted = -1,
 ) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
@@ -46,7 +62,7 @@ export function drawGlobeEffects(
     scale = (width * 0.96) / 2;
   const points = locations.map(globePoint);
   const project = (p: Vec3) => {
-    const v = projectPoint(p, phi, 0.22);
+    const v = projectPoint(p, phi, theta);
     return {
       x: width / 2 + v.x * scale,
       y: width / 2 - v.y * scale,
@@ -72,6 +88,7 @@ export function drawGlobeEffects(
     const blue = dark ? "108,200,255" : "24,105,227";
     // Surface rings share the node normal and foreshorten with the globe.
     const ring = (radius: number, start = 0, end = Math.PI * 2) => {
+      radius *= index === highlighted ? 1.35 : 1;
       ctx.beginPath();
       let connected = false;
       for (let j = 0; j <= 64; j++) {
@@ -119,17 +136,125 @@ export function drawGlobeEffects(
   ctx.shadowBlur = 0;
 }
 
+export function geographicArc(from: Vec3, to: Vec3) {
+  const chord = to.map((v, i) => v - from[i]) as Vec3;
+  const distance = Math.hypot(...chord);
+  const lift = Math.max(.32, Math.min(.4, distance * .35));
+  if (distance >= .4) return (t: number, bend?: Vec3) => arcPoint(from, to, t, lift, bend);
+  const midpoint = from.map((v, i) => (v + to[i]) * GLOBE_RADIUS / 2);
+  const midpointRadius = Math.hypot(...midpoint);
+  const normal = midpoint.map(v => v / midpointRadius);
+  const tangent = distance ? chord.map(v => v / distance) :
+    (Math.abs(from[1]) < .9 ? [-from[2], 0, from[0]] : [0, -from[2], from[1]]);
+  const tangentLength = Math.hypot(...tangent);
+  const halfChord = distance * GLOBE_RADIUS / 2;
+  const height = GLOBE_RADIUS - midpointRadius + .08 + distance * .15;
+  const radius = (height * height + halfChord * halfChord) / (2 * height);
+  const sweep = 2 * Math.atan2(height, halfChord);
+  const blend = Math.max(0, (distance - .2) / .2);
+  const weight = blend * blend * (3 - 2 * blend);
+  // A circular arc taller than its half-chord sweeps outward at both ends.
+  return (t: number, bend?: Vec3): Vec3 => {
+    if (t === 0 || t === 1) return (t === 0 ? from : to).map(v => v * GLOBE_RADIUS) as Vec3;
+    const angle = (2 * t - 1) * sweep;
+    const base = weight ? arcPoint(from, to, t, lift) : midpoint;
+    return midpoint.map((v, i) => {
+      const circle = v + normal[i] * (height - radius + radius * Math.cos(angle)) +
+        tangent[i] / tangentLength * radius * Math.sin(angle);
+      return circle * (1 - weight) + base[i] * weight + 2 * (1 - t) * t * (bend?.[i] ?? 0);
+    }) as Vec3;
+  };
+}
+
+export function separateGlobeRoutes(routes: { id: string; from: [number, number]; to: [number, number] }[]): Vec3[] {
+  const curves = routes.map(route => {
+    const a = globePoint(route.from), b = globePoint(route.to);
+    const pointAt = geographicArc(a, b);
+    const points = Array.from({ length: 11 }, (_, i) => pointAt(i / 10));
+    const normal: Vec3 = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    const dominant = normal.reduce((best, v, i) => Math.abs(v) > Math.abs(normal[best]) ? i : best, 0);
+    const length = Math.hypot(...normal);
+    const direction = normal.map(v => length === 0 ? 0 : v / length * Math.sign(normal[dominant])) as Vec3;
+    const tangents = points.slice(1, -1).map((_, i) => {
+      const delta = points[i + 2].map((v, k) => v - points[i][k]);
+      const size = Math.hypot(...delta);
+      return delta.map(v => v / size);
+    });
+    return { path: points, points: points.slice(1, -1), tangents, direction };
+  });
+  const neighbours = routes.map(() => new Set<number>());
+  // ponytail: pairwise curve checks suit small maps; use a spatial index for hundreds of routes.
+  for (let i = 0; i < routes.length; i++) for (let j = 0; j < i; j++) {
+    const a = curves[i], b = curves[j];
+    const close = a.points.filter((point, k) => b.points.some((other, n) =>
+      Math.hypot(...point.map((v, axis) => v - other[axis])) < .075 &&
+      Math.abs(a.tangents[k].reduce((dot, v, axis) => dot + v * b.tangents[n][axis], 0)) > Math.cos(Math.PI / 9)));
+    if (close.length >= 2) { neighbours[i].add(j); neighbours[j].add(i); }
+  }
+  const laneLimits = new Map<number, { count: number; step: number }>();
+  for (let i = 0; i < routes.length; i++) {
+    if (laneLimits.has(i)) continue;
+    const component = new Set([i]);
+    for (const j of component) for (const neighbour of neighbours[j]) component.add(neighbour);
+    const degree = Math.max(...[...component].map(j => neighbours[j].size));
+    const half = Math.ceil((degree + 1) / 2);
+    // More lanes than neighbours guarantees a free lane inside a fixed-width corridor.
+    const limit = { count: 2 * half + 1, step: Math.min(.18, .36 / half) };
+    for (const j of component) laneLimits.set(j, limit);
+  }
+  const lanes = new Map<number, number>();
+  const lanePath = (i: number, lane: number) => curves[i].path.map((point, n) => {
+    const t = n / 10;
+    return point.map((v, axis) => v + 2 * (1 - t) * t * curves[i].direction[axis] * lane * laneLimits.get(i)!.step);
+  });
+  const crossings = (i: number, lane: number, j: number) => {
+    const a = lanePath(i, lane), b = lanePath(j, lanes.get(j)!);
+    // Compare the routes from the centre of their geographic region.
+    const normal = curves[i].points[4].map((v, axis) => v + curves[j].points[4][axis]);
+    const side = (p: number[], q: number[], r: number[]) => {
+      const u = q.map((v, k) => v - p[k]), v = r.map((value, k) => value - p[k]);
+      return (u[1] * v[2] - u[2] * v[1]) * normal[0] +
+        (u[2] * v[0] - u[0] * v[2]) * normal[1] + (u[0] * v[1] - u[1] * v[0]) * normal[2];
+    };
+    let count = 0;
+    for (let k = 1; k < a.length; k++) for (let n = 1; n < b.length; n++) {
+      if (side(a[k - 1], a[k], b[n - 1]) * side(a[k - 1], a[k], b[n]) < 0 &&
+          side(b[n - 1], b[n], a[k - 1]) * side(b[n - 1], b[n], a[k]) < 0) count++;
+    }
+    return count;
+  };
+  const order = routes.map((route, i) => ({ id: route.id, i })).sort((a, b) => a.id.localeCompare(b.id));
+  for (const { i } of order) {
+    const placed = [...neighbours[i]].filter(j => lanes.has(j));
+    const occupied = new Set(placed.map(j => lanes.get(j)));
+    const { count, step } = laneLimits.get(i)!;
+    const candidates = Array.from({ length: count }, (_, n) => n % 2 ? (n + 1) / 2 : -n / 2).filter(lane => !occupied.has(lane));
+    const clearance = (lane: number) => Math.min(...placed.map(j => Math.hypot(...curves[i].points[4].map((v, axis) =>
+      v + curves[i].direction[axis] * lane * step / 2 - curves[j].points[4][axis] - curves[j].direction[axis] * lanes.get(j)! * step / 2))));
+    const ranked = candidates.map(lane => ({ lane, crosses: placed.reduce((count, j) => count + crossings(i, lane, j), 0), clearance: clearance(lane) }));
+    ranked.sort((a, b) => a.crosses - b.crosses || Math.abs(a.lane) - Math.abs(b.lane) || b.clearance - a.clearance);
+    lanes.set(i, ranked[0].lane);
+  }
+  return curves.map((curve, i) => curve.direction.map(v => v * lanes.get(i)! * laneLimits.get(i)!.step) as Vec3);
+}
+
 export function projectArcPath(
   from: [number, number],
   to: [number, number],
   phi: number,
+  geographic = false,
+  theta = 0.22,
+  bend?: Vec3,
+  range: [number, number] = [0, 1],
 ) {
   const a = globePoint(from),
     b = globePoint(to);
+  const pointAt = geographic ? geographicArc(a, b) : (t: number, bend?: Vec3) => arcPoint(a, b, t, .4, bend);
   let path = "",
     connected = false;
-  for (let i = 0; i <= 96; i++) {
-    const p = projectPoint(arcPoint(a, b, i / 96), phi, 0.22);
+  const steps = Math.max(1, Math.ceil(96 * (range[1] - range[0])));
+  for (let i = 0; i <= steps; i++) {
+    const p = projectPoint(pointAt(range[0] + (range[1] - range[0]) * i / steps, bend), phi, theta);
     if (!p.visible) {
       connected = false;
       continue;
@@ -138,4 +263,56 @@ export function projectArcPath(
     connected = true;
   }
   return path;
+}
+
+export function projectArcAnchor(from: [number, number], to: [number, number], phi: number, theta: number, bend?: Vec3) {
+  const a = globePoint(from), b = globePoint(to);
+  const pointAt = geographicArc(a, b);
+  let anchor: ReturnType<typeof projectPoint> | null = null;
+  let nearest = Infinity;
+  for (let i = 0; i <= 96; i++) {
+    const t = i / 96;
+    const point = projectPoint(pointAt(t, bend), phi, theta);
+    if (point.visible && Math.abs(t - .5) < nearest) {
+      anchor = point; nearest = Math.abs(t - .5);
+    }
+  }
+  return anchor;
+}
+
+export function projectArcTrail(from: [number, number], to: [number, number], phi: number, theta: number, bend: Vec3 | undefined, progress: number, length = .22) {
+  const start = Math.min(1, Math.max(0, progress - length));
+  const end = Math.min(1, Math.max(0, progress));
+  const pointAt = geographicArc(globePoint(from), globePoint(to));
+  const tail = projectPoint(pointAt(start, bend), phi, theta);
+  const head = projectPoint(pointAt(end, bend), phi, theta);
+  // Clip the path at the destination while its gradient continues past it.
+  const beyond = end > start ? Math.max(0, progress - end) / (end - start) : 0;
+  return {
+    path: end > start ? projectArcPath(from, to, phi, true, theta, bend, [start, end]) : "",
+    x1: 500 + tail.x * 480, y1: 500 - tail.y * 480,
+    x2: 500 + (head.x + (head.x - tail.x) * beyond) * 480,
+    y2: 500 - (head.y + (head.y - tail.y) * beyond) * 480,
+  };
+}
+
+export function projectArcArrow(from: [number, number], to: [number, number], phi: number, theta = 0.22, bend?: Vec3, progress = .91) {
+  const a = globePoint(from), b = globePoint(to);
+  const pointAt = geographicArc(a, b);
+  const tip = projectPoint(pointAt(progress, bend), phi, theta);
+  const tail = projectPoint(pointAt(Math.max(0, progress - .01), bend), phi, theta);
+  if (!tip.visible || !tail.visible) return "";
+  const x = 500 + tip.x * 480, y = 500 - tip.y * 480;
+  const dx = tip.x - tail.x, dy = tail.y - tip.y;
+  const length = Math.hypot(dx, dy);
+  if (!length) return "";
+  const ux = dx / length, uy = dy / length;
+  return `M${x - ux * 13 - uy * 6},${y - uy * 13 + ux * 6} L${x},${y} L${x - ux * 13 + uy * 6},${y - uy * 13 - ux * 6}`;
+}
+
+
+export function focusOrientation(location: [number, number], phi: number) {
+  const target = -Math.PI / 2 - location[1] * Math.PI / 180;
+  const turn = Math.atan2(Math.sin(target - phi), Math.cos(target - phi));
+  return { phi: phi + turn, theta: location[0] * Math.PI / 180 };
 }

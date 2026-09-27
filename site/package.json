@@ -16,7 +16,11 @@
     "test:e2e": "playwright test",
     "prebuild": "node --import tsx scripts/prepare-content.ts",
     "media": "node --import tsx scripts/media.ts",
-    "check:export": "python3 scripts/check-export.py"
+    "check:export": "python3 scripts/check-export.py",
+    "pretest": "node --import tsx scripts/fetch-atlas-fixture.ts",
+    "pretest:e2e": "node --import tsx scripts/fetch-atlas-fixture.ts",
+    "atlas:sync": "node --import tsx scripts/sync-atlas.ts",
+    "atlas:worker:check": "node atlas-worker/check.mjs"
   },
   "dependencies": {
     "@content-collections/mdx": "^0.2.2",
@@ -63,6 +67,7 @@
     "postcss": "^8.5.28",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
+    "wrangler": "4.140.0",
     "zod": "^4.6.5"
   },
   "packageManager": "pnpm@11.19.0"

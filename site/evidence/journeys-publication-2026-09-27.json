@@ -1,0 +1,53 @@
+{
+  "release": {
+    "version": 1,
+    "export_id": "0684e4d4a7d0d3fab5fcb5912a0f9dcea1eae59e101f95da74d70f1477380c92",
+    "published_at": "2026-09-27T14:33:29.956Z",
+    "cycle": null,
+    "mode": "initial",
+    "contract_version": "1.2.0",
+    "selector_sha256": "f448a013bfb4d45f2f34d4e07f64d164be830d19450690d022bcda38185d60a4",
+    "assets": {
+      "atlas-site.json": {
+        "sha256": "fc32de5c40fd6422c01c2844fe04b1894bac1d1cce2affb1a0e5cb386572933a",
+        "bytes": 24198588
+      },
+      "map.json": {
+        "sha256": "d6bd38e536ebb99049f30300164471fe56b60401531edba9d6ae5ab07f536728",
+        "bytes": 3896802
+      },
+      "metrics.json": {
+        "sha256": "f918339db4edaa8d8d255a40eca4389e31220cb0b5c029d06d417e2a4ee47403",
+        "bytes": 7674487
+      }
+    },
+    "correction": {
+      "replaces_export_id": "46fe3069739fdeb868f06272247c6f2263986984c8b9a0360c4d682938b56048",
+      "authorization_sha256": "cc7edac0de2737d991b00b80be7d9c7f66fd7c4ecbf710369e68690541cf4f12"
+    }
+  },
+  "preservation": "Existing reports, measurements, geographic relationships and evidence match the predecessor export.",
+  "chain_counts": {
+    "chains": 7,
+    "nodes": 19,
+    "edges": 12
+  },
+  "browser_checks": [
+    {
+      "width": 390,
+      "contract": "1.2.0",
+      "export_id": "0684e4d4a7d0d3fab5fcb5912a0f9dcea1eae59e101f95da74d70f1477380c92",
+      "chains": 7,
+      "errors": []
+    },
+    {
+      "width": 1280,
+      "contract": "1.2.0",
+      "export_id": "0684e4d4a7d0d3fab5fcb5912a0f9dcea1eae59e101f95da74d70f1477380c92",
+      "chains": 7,
+      "errors": []
+    }
+  ],
+  "data_requests": "Real Cloudflare endpoint; no request interception.",
+  "website_deployed": false
+}

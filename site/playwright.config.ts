@@ -7,6 +7,11 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   reporter: [["list"], ["json", { outputFile: "evidence/browser-tests.json" }]],
+  webServer: process.env.CI ? {
+    command: "python3 -m http.server 3000 --bind 127.0.0.1 --directory out",
+    url: "http://127.0.0.1:3000",
+    reuseExistingServer: false,
+  } : undefined,
   use: {
     actionTimeout: 10000,
     baseURL: "http://127.0.0.1:3000",
