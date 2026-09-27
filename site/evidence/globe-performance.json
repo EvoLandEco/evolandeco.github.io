@@ -1,0 +1,96 @@
+{
+  "date": "2026-09-26",
+  "environment": "Chromium headless, local production export, 1280\u00d71000 viewport, device scale factor 2, dark theme, three 4-second samples per state. Metrics measure browser main-thread time, not total application CPU or GPU utilization.",
+  "baseline": [
+    {
+      "route": "/",
+      "visible": true,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 693.14,
+        "ScriptDuration": 64.91,
+        "LayoutDuration": 2.78,
+        "RecalcStyleDuration": 23.47
+      }
+    },
+    {
+      "route": "/",
+      "visible": false,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 10.12,
+        "ScriptDuration": 0.2,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 2.45
+      }
+    },
+    {
+      "route": "/atlas/",
+      "visible": true,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 3017.62,
+        "ScriptDuration": 170.06,
+        "LayoutDuration": 3.65,
+        "RecalcStyleDuration": 31.88
+      }
+    },
+    {
+      "route": "/atlas/",
+      "visible": false,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 122.53,
+        "ScriptDuration": 0.22,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 21.38
+      }
+    }
+  ],
+  "measured": [
+    {
+      "route": "/",
+      "visible": true,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 669.94,
+        "ScriptDuration": 84.61,
+        "LayoutDuration": 3.95,
+        "RecalcStyleDuration": 26.14
+      }
+    },
+    {
+      "route": "/",
+      "visible": false,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 14.5,
+        "ScriptDuration": 0.31,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 3.74
+      }
+    },
+    {
+      "route": "/atlas/",
+      "visible": true,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 1776.26,
+        "ScriptDuration": 55.47,
+        "LayoutDuration": 6.44,
+        "RecalcStyleDuration": 58.93
+      }
+    },
+    {
+      "route": "/atlas/",
+      "visible": false,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 112.25,
+        "ScriptDuration": 0.28,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 25.45
+      }
+    }
+  ]
+}

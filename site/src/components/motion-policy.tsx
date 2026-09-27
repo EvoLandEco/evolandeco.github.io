@@ -9,6 +9,7 @@ import {
 } from "react";
 import { AnimatedThemeToggler } from "./magicui/animated-theme-toggler";
 import { useTheme } from "next-themes";
+import { usePathname } from "next/navigation";
 function subscribeMotion(notify: () => void) {
   const q = matchMedia("(prefers-reduced-motion: reduce)");
   q.addEventListener("change", notify);
@@ -33,16 +34,19 @@ export function MotionPolicy({ children }: { children: ReactNode }) {
   return <Policy.Provider value={allowed}>{children}</Policy.Provider>;
 }
 const subscribeThemeMount = () => () => {};
-export function Settings() {
+export function Settings({ inline = false }: { inline?: boolean }) {
+  const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(subscribeThemeMount, () => true, () => false);
   const dark = mounted && resolvedTheme === "dark";
-  return (
-    <AnimatedThemeToggler className="appearance-widget" role="switch"
+  if (!inline && (pathname === "/atlas" || pathname === "/atlas/")) return null;
+  const toggle = (
+    <AnimatedThemeToggler className={inline ? "atlas-toolbar-action atlas-theme-toggle" : "appearance-widget"} role="switch"
       theme={dark ? "dark" : "light"} onThemeChange={setTheme}
       aria-label="Dark mode" aria-checked={dark}
       title={dark ? "Switch to light mode" : "Switch to dark mode"} />
   );
+  return inline ? toggle : <aside aria-label="Appearance">{toggle}</aside>;
 }
 export function usePanelMotion(ref: React.RefObject<HTMLDivElement | null>, loop = false) {
   const policy = useContext(Policy);

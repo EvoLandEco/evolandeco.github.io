@@ -15,7 +15,7 @@ function ImageWithLoading({ onLoad, onError, alt, ...props }: ImageProps) {
   }, []);
   return <Image {...props} alt={alt} ref={checkCached}
     data-image-loading={loading ? "true" : undefined}
-    aria-busy={loading}
+    aria-busy={alt ? loading : undefined}
     onLoad={event => { setLoading(false); onLoad?.(event); }}
     onError={event => { setLoading(false); onError?.(event); }}
   />;

@@ -4,9 +4,12 @@ import { GeistMono } from "geist/font/mono";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MotionPolicy, Settings } from "@/components/motion-policy";
 import { ContactSection, NetworkBackdrop } from "@/components/portfolio-sections";
+import { AtlasNavigationProvider } from "@/components/atlas-navigation";
 import Navbar from "@/components/navbar";
 import data from "@/content-data/portfolio.json";
+import "../../public/cursors.css";
 import "./globals.css";
+import "./atlas/atlas.css";
 const p = data.profile;
 const analyticsToken = process.env.CLOUDFLARE_WEB_ANALYTICS_TOKEN;
 export const metadata: Metadata = {
@@ -44,7 +47,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           }}
         />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <MotionPolicy>
+          <MotionPolicy><AtlasNavigationProvider>
             <a className="skip" href="#main">
               Skip to content
             </a>
@@ -61,8 +64,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </footer>
               </div>
             </div>
-            {process.env.NEXT_PUBLIC_SHOW_APPEARANCE !== "false" && <aside aria-label="Appearance"><Settings /></aside>}
-          </MotionPolicy>
+            {process.env.NEXT_PUBLIC_SHOW_APPEARANCE !== "false" && <Settings />}
+          </AtlasNavigationProvider></MotionPolicy>
         </ThemeProvider>
         {analyticsToken && (
           <script defer src="/analytics.js"

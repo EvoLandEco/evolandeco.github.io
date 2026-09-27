@@ -1,0 +1,274 @@
+{
+  "date": "2026-09-27",
+  "uiVersion": "0.1.0",
+  "status": "experimental",
+  "environment": {
+    "server": "local production static export",
+    "data": "published Cloudflare release",
+    "browser": "headless Chromium",
+    "network": "unthrottled",
+    "loadRunsPerViewport": 3,
+    "globeRunsPerCondition": 3,
+    "globeWindowMs": 4000,
+    "globeViewport": [
+      1280,
+      1000
+    ],
+    "globeDeviceScaleFactor": 2
+  },
+  "loadSamples": [
+    {
+      "width": 390,
+      "run": 1,
+      "readyMs": 1074.9000000953674,
+      "ttfbMs": 1.7000000476837158,
+      "fcpMs": 52,
+      "lcpMs": 52,
+      "cls": 0,
+      "longTasks": 4,
+      "longestTaskMs": 121,
+      "blockingMs": 164,
+      "domNodes": 8109
+    },
+    {
+      "width": 390,
+      "run": 2,
+      "readyMs": 1010.3999998569489,
+      "ttfbMs": 1.0999999046325684,
+      "fcpMs": 48,
+      "lcpMs": 48,
+      "cls": 0,
+      "longTasks": 4,
+      "longestTaskMs": 113,
+      "blockingMs": 163,
+      "domNodes": 8109
+    },
+    {
+      "width": 390,
+      "run": 3,
+      "readyMs": 1094.2999999523163,
+      "ttfbMs": 1,
+      "fcpMs": 48,
+      "lcpMs": 48,
+      "cls": 0,
+      "longTasks": 4,
+      "longestTaskMs": 113,
+      "blockingMs": 160,
+      "domNodes": 8109
+    },
+    {
+      "width": 1280,
+      "run": 1,
+      "readyMs": 965.7000000476837,
+      "ttfbMs": 1.1000001430511475,
+      "fcpMs": 116,
+      "lcpMs": 116,
+      "cls": 0,
+      "longTasks": 6,
+      "longestTaskMs": 121,
+      "blockingMs": 264,
+      "domNodes": 8116
+    },
+    {
+      "width": 1280,
+      "run": 2,
+      "readyMs": 991.3999998569489,
+      "ttfbMs": 1.1999998092651367,
+      "fcpMs": 120,
+      "lcpMs": 120,
+      "cls": 0,
+      "longTasks": 4,
+      "longestTaskMs": 123,
+      "blockingMs": 191,
+      "domNodes": 8116
+    },
+    {
+      "width": 1280,
+      "run": 3,
+      "readyMs": 988.6000001430511,
+      "ttfbMs": 1,
+      "fcpMs": 116,
+      "lcpMs": 116,
+      "cls": 0,
+      "longTasks": 4,
+      "longestTaskMs": 123,
+      "blockingMs": 185,
+      "domNodes": 8116
+    }
+  ],
+  "initialLoadSamples": [
+    {
+      "width": 390,
+      "run": 1,
+      "readyMs": 1109.4000000953674,
+      "ttfbMs": 1.6000001430511475,
+      "fcpMs": 56,
+      "lcpMs": 56,
+      "cls": 0.24442051282051283,
+      "longTasks": 4,
+      "longestTaskMs": 127,
+      "blockingMs": 175,
+      "domNodes": 8109
+    },
+    {
+      "width": 390,
+      "run": 2,
+      "readyMs": 1007.1000001430511,
+      "ttfbMs": 1.2999999523162842,
+      "fcpMs": 52,
+      "lcpMs": 52,
+      "cls": 0.24442051282051283,
+      "longTasks": 3,
+      "longestTaskMs": 107,
+      "blockingMs": 145,
+      "domNodes": 8109
+    },
+    {
+      "width": 390,
+      "run": 3,
+      "readyMs": 1097.1000001430511,
+      "ttfbMs": 1.1000001430511475,
+      "fcpMs": 48,
+      "lcpMs": 48,
+      "cls": 0.24442051282051283,
+      "longTasks": 4,
+      "longestTaskMs": 107,
+      "blockingMs": 156,
+      "domNodes": 8109
+    },
+    {
+      "width": 1280,
+      "run": 1,
+      "readyMs": 962.7000000476837,
+      "ttfbMs": 1.0999999046325684,
+      "fcpMs": 116,
+      "lcpMs": 116,
+      "cls": 0,
+      "longTasks": 3,
+      "longestTaskMs": 123,
+      "blockingMs": 177,
+      "domNodes": 8116
+    },
+    {
+      "width": 1280,
+      "run": 2,
+      "readyMs": 965.7000000476837,
+      "ttfbMs": 1.0999999046325684,
+      "fcpMs": 112,
+      "lcpMs": 112,
+      "cls": 0,
+      "longTasks": 3,
+      "longestTaskMs": 121,
+      "blockingMs": 175,
+      "domNodes": 8116
+    },
+    {
+      "width": 1280,
+      "run": 3,
+      "readyMs": 955.4000000953674,
+      "ttfbMs": 1.1000001430511475,
+      "fcpMs": 112,
+      "lcpMs": 112,
+      "cls": 0,
+      "longTasks": 4,
+      "longestTaskMs": 125,
+      "blockingMs": 185,
+      "domNodes": 8116
+    }
+  ],
+  "globeMedians": [
+    {
+      "route": "/",
+      "visible": true,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 673.49,
+        "ScriptDuration": 84.83,
+        "LayoutDuration": 4.27,
+        "RecalcStyleDuration": 29.98
+      }
+    },
+    {
+      "route": "/",
+      "visible": false,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 21.04,
+        "ScriptDuration": 0.45,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 5.54
+      }
+    },
+    {
+      "route": "/atlas/",
+      "visible": true,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 2974.29,
+        "ScriptDuration": 382.9,
+        "LayoutDuration": 51.51,
+        "RecalcStyleDuration": 434.32
+      }
+    },
+    {
+      "route": "/atlas/",
+      "visible": false,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 297.67,
+        "ScriptDuration": 0.75,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 60.69
+      }
+    }
+  ],
+  "publishedRelease": {
+    "version": 1,
+    "export_id": "46fe3069739fdeb868f06272247c6f2263986984c8b9a0360c4d682938b56048",
+    "published_at": "2026-09-27T07:39:39.701Z",
+    "cycle": null,
+    "mode": "initial",
+    "contract_version": "1.1.0",
+    "selector_sha256": "4b8594136d1fcfba5639851bebe21738772106138a0712897c3c76a69652179d",
+    "assets": {
+      "atlas-site.json": {
+        "sha256": "f129fc5cf757ba0487c2782c2709daab0cf23d5cc8a053fa2d2baa81a103fa7a",
+        "bytes": 24136025
+      },
+      "map.json": {
+        "sha256": "d6bd38e536ebb99049f30300164471fe56b60401531edba9d6ae5ab07f536728",
+        "bytes": 3896802
+      },
+      "metrics.json": {
+        "sha256": "f918339db4edaa8d8d255a40eca4389e31220cb0b5c029d06d417e2a4ee47403",
+        "bytes": 7674487
+      }
+    },
+    "correction": {
+      "replaces_export_id": "ceb41c8edb70f083305b174ddb63bf05545d9a28ff36895af0b25bd4b7a56687",
+      "authorization_sha256": "ddf7a29594e0a3f22a8c0efa1d6a49b0dfb0101c212fc419ebcc67466aa3af25"
+    }
+  },
+  "dependencyAudit": {
+    "advisories": {},
+    "metadata": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0
+      },
+      "dependencies": 387,
+      "devDependencies": 0,
+      "optionalDependencies": 118,
+      "totalDependencies": 505
+    }
+  },
+  "limitations": [
+    "Not field Core Web Vitals or a Lighthouse score.",
+    "Physical phones and throttled networks were not measured.",
+    "Load blockingMs sums long-task time above 50 ms in the observation window; it is not standardized TBT.",
+    "Public deployment and hosted CI were not run."
+  ]
+}

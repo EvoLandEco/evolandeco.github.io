@@ -1,0 +1,138 @@
+{
+  "method": "Local Chromium, production webpack export, 1280 \u00d7 1000 viewport, device scale 2, dark theme. Median of three four-second samples per state. No concurrent browser tests during measurement. Values are renderer task time, not Core Web Vitals or field measurements.",
+  "baseline": [
+    {
+      "route": "/",
+      "visible": true,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 702.67,
+        "ScriptDuration": 81.73,
+        "LayoutDuration": 4.03,
+        "RecalcStyleDuration": 25.2
+      }
+    },
+    {
+      "route": "/",
+      "visible": false,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 16.03,
+        "ScriptDuration": 0.32,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 2.78
+      }
+    },
+    {
+      "route": "/atlas/",
+      "visible": true,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 2634.11,
+        "ScriptDuration": 368.52,
+        "LayoutDuration": 39.91,
+        "RecalcStyleDuration": 208.42
+      }
+    },
+    {
+      "route": "/atlas/",
+      "visible": false,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 193.45,
+        "ScriptDuration": 0.39,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 38.42
+      }
+    }
+  ],
+  "final": [
+    {
+      "route": "/",
+      "visible": true,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 797.09,
+        "ScriptDuration": 89.25,
+        "LayoutDuration": 4.31,
+        "RecalcStyleDuration": 28.45
+      }
+    },
+    {
+      "route": "/",
+      "visible": false,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 11.54,
+        "ScriptDuration": 0.19,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 2.98
+      }
+    },
+    {
+      "route": "/atlas/",
+      "visible": true,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 3280.15,
+        "ScriptDuration": 376.4,
+        "LayoutDuration": 38.6,
+        "RecalcStyleDuration": 214.99
+      }
+    },
+    {
+      "route": "/atlas/",
+      "visible": false,
+      "windowMs": 4000,
+      "medianMs": {
+        "TaskDuration": 121.28,
+        "ScriptDuration": 0.26,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 23.33
+      }
+    }
+  ],
+  "date_formatting_2000_calls_ms": {
+    "baseline": [
+      71.11804099999998,
+      59.88304199999999,
+      61.962500000000006,
+      61.32516699999999,
+      61.71745900000002
+    ],
+    "final": [
+      1.334333000000015,
+      0.9152500000000146,
+      0.919333000000023,
+      0.9238330000000019,
+      1.019709000000006
+    ]
+  },
+  "published_release": {
+    "version": 1,
+    "export_id": "46fe3069739fdeb868f06272247c6f2263986984c8b9a0360c4d682938b56048",
+    "published_at": "2026-09-27T07:39:39.701Z",
+    "cycle": null,
+    "mode": "initial",
+    "contract_version": "1.1.0",
+    "selector_sha256": "4b8594136d1fcfba5639851bebe21738772106138a0712897c3c76a69652179d",
+    "assets": {
+      "atlas-site.json": {
+        "sha256": "f129fc5cf757ba0487c2782c2709daab0cf23d5cc8a053fa2d2baa81a103fa7a",
+        "bytes": 24136025
+      },
+      "map.json": {
+        "sha256": "d6bd38e536ebb99049f30300164471fe56b60401531edba9d6ae5ab07f536728",
+        "bytes": 3896802
+      },
+      "metrics.json": {
+        "sha256": "f918339db4edaa8d8d255a40eca4389e31220cb0b5c029d06d417e2a4ee47403",
+        "bytes": 7674487
+      }
+    },
+    "correction": {
+      "replaces_export_id": "ceb41c8edb70f083305b174ddb63bf05545d9a28ff36895af0b25bd4b7a56687",
+      "authorization_sha256": "ddf7a29594e0a3f22a8c0efa1d6a49b0dfb0101c212fc419ebcc67466aa3af25"
+    }
+  }
+}

@@ -6,6 +6,7 @@ import data from "@/content-data/portfolio.json";
 export default function sitemap(): MetadataRoute.Sitemap {
   const origin = process.env.SITE_ORIGIN || data.profile.siteUrl;
   return [
+    "/atlas",
     ...data.navigation.filter(n => !n.migrating).map((n) => n.path),
     ...data.projects.map((p) => p.primaryUrl),
     ...notebook.articles.map(({ slug }) => `/writing/${slug}`),

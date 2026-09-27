@@ -1,0 +1,40 @@
+{
+  "export_id": "fc22216e5448c103e91ddddb47a044ac3d39a6bd8a89b4a02638edb8da6a363d",
+  "assets": {
+    "atlas-site.json": {
+      "sha256": "009bb35a63f1347176ecaabe4f88f5a01d66ea60214bd024a416bc270523281c",
+      "bytes": 15703319
+    },
+    "map.json": {
+      "sha256": "d6e9c073945abe565bbaba85a79e8254ab3785d0e85245960b8b9e8a600db86e",
+      "bytes": 3824279
+    }
+  },
+  "release": {
+    "version": 1,
+    "export_id": "fc22216e5448c103e91ddddb47a044ac3d39a6bd8a89b4a02638edb8da6a363d",
+    "published_at": "2026-09-26T21:07:19.390Z",
+    "cycle": null,
+    "mode": "initial",
+    "contract_version": "1.0.0",
+    "selector_sha256": "5377beb11a2cf9885d9d55a1783c0cad0d305fc47323e61fccb24e4de197d3c4",
+    "assets": {
+      "atlas-site.json": {
+        "sha256": "009bb35a63f1347176ecaabe4f88f5a01d66ea60214bd024a416bc270523281c",
+        "bytes": 15703319
+      },
+      "map.json": {
+        "sha256": "d6e9c073945abe565bbaba85a79e8254ab3785d0e85245960b8b9e8a600db86e",
+        "bytes": 3824279
+      },
+      "metrics.json": {
+        "sha256": "c4ab650e26a1844103758e971393c85213ba7f6fce6b02a6f6f4552e3e5fe378",
+        "bytes": 3207958
+      }
+    },
+    "correction": {
+      "replaces_export_id": "8bf6fb189590710eaab67b614f712285ca788f3e3f57e7e4e1c6e9a87b0b53de",
+      "authorization_sha256": "a5cc41e36b9a1e59c1e25a204234447586bae9250e2156bd0a2a4106c5933414"
+    }
+  }
+}

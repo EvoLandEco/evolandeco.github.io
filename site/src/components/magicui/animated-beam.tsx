@@ -5,6 +5,18 @@ import { motion, type MotionValue } from "motion/react";
 
 import { cn } from "@/lib/utils";
 
+export function BeamStroke({ path, gradientId, width, glow = false }: { path: string | MotionValue<string>; gradientId: string; width: number; glow?: boolean }) {
+  return <>{glow && [3.5, 1.8].map((scale, i) => <motion.path key={scale} d={path}
+    style={{ stroke: `url(#${gradientId})`, strokeWidth: width * scale }} strokeOpacity={i === 0 ? .12 : .3} strokeLinecap="round" />)}
+    <motion.path d={path} style={{ stroke: `url(#${gradientId})`, strokeWidth: width }} strokeOpacity="1" strokeLinecap="round" /></>;
+}
+
+export function BeamGradientStops({ start, end, projected = false }: { start: string; end: string; projected?: boolean }) {
+  return <><stop stopColor={start} stopOpacity="0" /><stop stopColor={start} />
+    <stop offset={projected ? "12%" : "32.5%"} stopColor={end} />
+    <stop offset="100%" stopColor={end} stopOpacity="0" /></>;
+}
+
 export interface AnimatedBeamProps {
   playing?: boolean;
   glow?: boolean;
@@ -158,20 +170,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
         strokeOpacity={pathOpacity}
         strokeLinecap="round"
       />
-      {playing && glow && [3.5, 1.8].map((size, i) => (
-        <motion.path key={size} d={projectedPath || pathD}
-          strokeWidth={pathWidth * size} stroke={`url(#${id})`}
-          strokeOpacity={i === 0 ? 0.12 : 0.3} strokeLinecap="round" />
-      ))}
-      {playing && (
-        <motion.path
-          d={projectedPath || pathD}
-          strokeWidth={pathWidth}
-          stroke={`url(#${id})`}
-          strokeOpacity="1"
-          strokeLinecap="round"
-        />
-      )}
+      {playing && <BeamStroke path={projectedPath || pathD} gradientId={id} width={pathWidth} glow={glow} />}
       {playing && (
         <defs>
           <motion.linearGradient
@@ -198,14 +197,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
               repeatDelay,
             }}
           >
-            <stop stopColor={gradientStartColor} stopOpacity="0"></stop>
-            <stop stopColor={gradientStartColor}></stop>
-            <stop offset={projectedPath ? "12%" : "32.5%"} stopColor={gradientStopColor}></stop>
-            <stop
-              offset="100%"
-              stopColor={gradientStopColor}
-              stopOpacity="0"
-            ></stop>
+            <BeamGradientStops start={gradientStartColor} end={gradientStopColor} projected={!!projectedPath} />
           </motion.linearGradient>
         </defs>
       )}

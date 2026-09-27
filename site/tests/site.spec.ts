@@ -17,7 +17,7 @@ test("Desktop and mobile layouts, themes, navigation and accessibility", async (
         await expect(page.locator("h1")).toBeVisible();
         await expect(
           page.getByTestId("primary-navigation").locator(".site-dock").getByRole("link"),
-        ).toHaveCount(6);
+        ).toHaveCount(7);
         await expect
           .poll(() =>
             page.evaluate(
@@ -257,9 +257,9 @@ test("Dock magnification follows placement and motion preferences", async ({ pag
   await expect.poll(async () => Math.round((await icon.boundingBox())!.width)).toBe(44);
   await page.setViewportSize({ width: 360, height: 900 });
   await link.hover();
-  await expect.poll(async () => (await icon.boundingBox())!.width).toBeGreaterThan(50);
+  await expect.poll(async () => Math.round((await icon.boundingBox())!.width)).toBe(38);
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await expect.poll(async () => Math.round((await icon.boundingBox())!.width)).toBe(44);
+  await expect.poll(async () => Math.round((await icon.boundingBox())!.width)).toBe(38);
 });
 
 test("Research approach keeps its connections and respects motion preferences", async ({ page }) => {
@@ -361,7 +361,7 @@ test("Blog groups notes by subject with working reader routes", async ({ page })
   page.on('pageerror', error => errors.push(error.message));
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/blog");
-  expect(await page.locator('.site-dock a').evaluateAll(links => links.map(a => a.getAttribute('href')))).toEqual(['/', '/research/', '/publications/', '/software/', '/blog/', '/photography/']);
+  expect(await page.locator('.site-dock a').evaluateAll(links => links.map(a => a.getAttribute('href')))).toEqual(['/', '/research/', '/publications/', '/software/', '/blog/', '/photography/', '/atlas/']);
   await expect(page.locator('.blog-experiment')).toHaveCount(0);
   await expect(page.locator('.blog-category-heading')).toHaveText(['Development', 'Networks', 'Machine learning', 'Evolution']);
   await expect(page.locator('.blog-note')).toHaveCount(6);
@@ -398,37 +398,18 @@ test("Blog groups notes by subject with working reader routes", async ({ page })
   await expect(page.getByRole('heading', { name: 'Technical notes' })).toHaveCount(0);
 });
 
-test("Globe callout reveals an accessible HerdLink link", async ({ page, browser }) => {
+test("Globe callout opens ATLAS in the same tab", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto('/');
-  const link = page.getByRole('link', { name: 'Open HerdLink (opens in a new tab)' });
-  await expect(link).toHaveAttribute('href', 'https://herdlink.nl');
-  await expect(link).toHaveAttribute('target', '_blank');
+  const link = page.getByRole('link', { name: 'Open ATLAS', exact: true });
+  await expect(link).toHaveAttribute('href', '/atlas/');
   await page.locator('.globe-frame').hover();
   await expect(link).toHaveCSS('opacity', '1');
-  await link.hover();
-  await expect(link).toHaveCSS('pointer-events', 'auto');
   await page.mouse.move(0, 0);
   await link.focus();
   await expect(link).toHaveCSS('opacity', '1');
-  const touch = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 768, height: 1024 }, reducedMotion: 'reduce' });
-  const phone = await touch.newPage();
-  await phone.goto('/');
-  const callout = phone.locator('.globe-herdlink');
-  await expect(callout).toHaveCSS('opacity', '0');
-  await phone.locator('.globe-frame').tap();
-  await expect(callout).toHaveCSS('opacity', '1');
-  await expect(phone).toHaveURL(/\/$/);
-  await phone.locator('h1').tap();
-  await expect(callout).toHaveCSS('opacity', '0');
-  await phone.locator('.globe-frame').tap();
-  await expect(callout).toHaveCSS('opacity', '1');
-  await phone.route('https://herdlink.nl/**', route => route.fulfill({ body: 'HerdLink' }));
-  const popup = phone.waitForEvent('popup');
-  await callout.tap();
-  await (await popup).close();
-  await expect(callout).toHaveCSS('opacity', '0');
-  await touch.close();
+  await link.click();
+  await expect(page).toHaveURL(/\/atlas\/$/);
 });
 
 test("Embedded notes and explorations share controls and follow the site theme", async ({ page }) => {
@@ -532,16 +513,16 @@ test("Icon cloud keeps running while visible", async ({ page }) => {
 test("Pointer focus does not hold the globe callout open", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto('/');
-  for (const selector of ['.globe-frame', '.globe-herdlink']) {
+  for (const selector of ['.globe-frame', '.globe-atlas']) {
     await page.locator('.globe-frame').hover();
     await page.locator(selector).evaluate(link => link.addEventListener('click', event => event.preventDefault(), { once: true }));
     await page.locator(selector).click();
     await page.mouse.move(0, 0);
-    await expect(page.locator('.globe-herdlink')).toHaveCSS('opacity', '0');
+    await expect(page.locator('.globe-atlas')).toHaveCSS('opacity', '0');
   }
   await page.keyboard.press('Tab');
   await page.locator('.globe-frame').focus();
-  await expect(page.locator('.globe-herdlink')).toHaveCSS('opacity', '1');
+  await expect(page.locator('.globe-atlas')).toHaveCSS('opacity', '1');
 });
 
 test("Globe animation avoids stylesheet churn and cleans up renderer wrappers", async ({ page }) => {
@@ -573,22 +554,14 @@ test("Globe animation avoids stylesheet churn and cleans up renderer wrappers", 
 });
 
 
-test("Phone globe taps enlarge without a callout or external navigation", async ({ browser }) => {
+test("Phone globe opens ATLAS without an external tab", async ({ browser }) => {
   const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
   const page = await context.newPage();
   await page.goto('/');
-  const globe = page.getByRole('button', { name: 'Enlarge globe' });
-  await expect(globe).not.toHaveAttribute('href');
-  await expect(page.locator('.globe-herdlink')).toBeHidden();
-  await globe.tap();
-  await expect(globe).toHaveAttribute('aria-pressed', 'true');
-  await expect(globe).toHaveCSS('transform', 'matrix(1.08, 0, 0, 1.08, 0, 0)');
-  await expect(page.locator('.globe-herdlink')).toBeHidden();
-  await globe.tap();
-  await expect(globe).toHaveAttribute('aria-pressed', 'false');
-  await globe.tap();
-  await page.locator('h1').tap();
-  await expect(globe).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('.globe-atlas')).toBeHidden();
+  await page.getByRole('link', { name: 'Explore ATLAS from the globe' }).tap();
+  await expect(page).toHaveURL(/\/atlas\/$/);
+  await expect(page.getByRole('heading', { name: 'ATLAS', exact: true })).toBeVisible();
   expect(context.pages()).toHaveLength(1);
   await context.close();
 });

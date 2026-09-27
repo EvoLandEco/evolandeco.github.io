@@ -37,6 +37,9 @@ jobs:
           CLOUDFLARE_WEB_ANALYTICS_TOKEN: '76e320f6acc9462092ef35a80a12408e'
       - run: pnpm typecheck
       - run: pnpm check:export
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Check ATLAS browser interactions
+        run: pnpm exec playwright test atlas.spec.ts --grep "ATLAS entry|ATLAS is readable|download errors|Checkbox filters"
       - uses: actions/upload-pages-artifact@v4
         with:
           path: site/out

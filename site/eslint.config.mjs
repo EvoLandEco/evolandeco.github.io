@@ -4,6 +4,9 @@ export default defineConfig([
   ...nextVitals,
   globalIgnores([
     ".next/**",
+    ".cache/**",
+    "atlas-worker/.wrangler/**",
+    "atlas-worker/worker-configuration.d.ts",
     "out/**",
     ".content-collections/**",
     "public/**",

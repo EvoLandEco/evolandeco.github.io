@@ -1,6 +1,8 @@
 "use client";
 import Image from "next/image";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
+import { useAtlasNavigation } from "./atlas-navigation";
+import { useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import { Globe2, TerminalSquare, Users, Package, Github, Linkedin, Fingerprint, GitBranch, Network, MapPin, BrainCircuit, ChartNoAxesCombined, Code2, ArrowUpRight } from "lucide-react";
 import softwareCards from "@/content-data/software-presentation.json";
@@ -16,67 +18,28 @@ import { Terminal, TypingAnimation } from "./magicui/terminal";
 import { usePanelMotion } from "./motion-policy";
 import data from "@/content-data/ui-content.json";
 const images = data.iconCloudItems.map((i) => i.assetPath);
-const phoneGlobeQuery = "(hover: none) and (max-width: 639px)";
-function subscribePhoneGlobe(notify: () => void) {
-  const media = matchMedia(phoneGlobeQuery);
-  media.addEventListener("change", notify);
-  return () => media.removeEventListener("change", notify);
-}
 export function AcademicGlobe() {
-  const phone = useSyncExternalStore(subscribePhoneGlobe, () => matchMedia(phoneGlobeQuery).matches, () => false);
-  const GlobeControl = phone ? "button" : "a";
   const [calloutActive, setCalloutActive] = useState(false);
-  const [touchOpen, setTouchOpen] = useState(false);
   const panel = useRef<HTMLDivElement>(null);
   const m = usePanelMotion(panel, true);
-  useEffect(() => {
-    if (!touchOpen) return;
-    const dismiss = (event: PointerEvent) => {
-      if (!panel.current?.contains(event.target as Node)) setTouchOpen(false);
-    };
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setTouchOpen(false);
-    };
-    document.addEventListener("pointerdown", dismiss);
-    document.addEventListener("keydown", escape);
-    return () => {
-      document.removeEventListener("pointerdown", dismiss);
-      document.removeEventListener("keydown", escape);
-    };
-  }, [touchOpen]);
+  const { open, transitioning } = useAtlasNavigation();
   return (
-    <div
-      ref={panel}
-      className="globe-panel"
-      data-testid="signature-globe"
-      data-motion-state={m.playing ? "running" : "paused"}
-    >
-      <div className="globe-interaction" data-touch-open={touchOpen}
-        onPointerEnter={(event) => { if (event.pointerType !== "touch") setCalloutActive(true); }} onPointerLeave={() => setCalloutActive(false)}
+    <div ref={panel} className="globe-panel" data-testid="signature-globe" data-motion-state={m.playing ? "running" : "paused"}>
+      <div className="globe-interaction"
+        onPointerEnter={() => setCalloutActive(true)} onPointerLeave={() => setCalloutActive(false)}
         onFocusCapture={() => setCalloutActive(true)} onBlurCapture={() => setCalloutActive(false)}>
-        <GlobeControl className="globe-frame"
-          {...(phone ? { type: "button" as const, "aria-pressed": touchOpen }
-            : { href: "https://herdlink.nl", target: "_blank", rel: "noopener noreferrer" })}
-          aria-label={phone ? "Enlarge globe" : "Explore HerdLink from the globe (opens in a new tab)"}
-          onClick={(event) => {
-            if (!window.matchMedia("(hover: none)").matches) return;
-            if (phone || !touchOpen) event.preventDefault();
-            setTouchOpen(!touchOpen);
-          }}>
-          <Globe playing={m.playing} visible={m.visible} />
-        </GlobeControl>
+        <Link className="globe-frame" href="/atlas/" onClick={open} aria-label="Explore ATLAS from the globe">
+          <Globe playing={m.playing} visible={m.visible || transitioning} />
+        </Link>
         <svg className="globe-callout-line" viewBox="0 0 320 320" aria-hidden="true">
-          <circle cx="160" cy="160" r="4" />
-          <circle className="callout-ring" cx="160" cy="160" r="9" />
+          <circle cx="160" cy="160" r="4" /><circle className="callout-ring" cx="160" cy="160" r="9" />
           <path d="M160 160 V44" pathLength="1" />
         </svg>
-        <ShinyButton className="globe-herdlink" href="https://herdlink.nl" target="_blank" rel="noopener noreferrer"
-          aria-label="Open HerdLink (opens in a new tab)" playing={m.playing && (calloutActive || touchOpen)} onClick={() => setTouchOpen(false)}>
-          <span className="globe-herdlink-label"><Image src="/herdlink-favicon.ico" width={20} height={20} alt="" unoptimized />Open HerdLink <ArrowUpRight size={16} aria-hidden /></span>
+        <ShinyButton className="globe-atlas" href="/atlas/" onClick={open}
+          aria-label="Open ATLAS" playing={m.playing && calloutActive}>
+          <span className="globe-atlas-label"><Globe2 size={18} aria-hidden />Open ATLAS <ArrowUpRight size={16} aria-hidden /></span>
         </ShinyButton>
       </div>
-
-
     </div>
   );
 }
