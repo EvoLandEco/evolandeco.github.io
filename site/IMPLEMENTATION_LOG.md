@@ -1,6 +1,6 @@
 # Release verification
 
-The website is a static Next.js export for GitHub Pages at https://qtj.me. The deployment artifact is `site/out`; the repository root HTML files and unrelated projects are outside that artifact.
+The website is a static Next.js export for GitHub Pages at https://qtj.me. Website source and public assets live in `site/`. The deployment artifact is `site/out`.
 
 ## Release checks
 
