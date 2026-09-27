@@ -16,7 +16,7 @@ Geist is served locally through the `geist` package. Its SIL Open Font License i
 
 Professional content derives from the supplied September 2026 CV and structured handoff. The downloadable PDF is a byte-for-byte copy of `CV_Data_Scientist_New.pdf`. Paper titles, author order, contribution markers and programme status follow those sources. The personal photograph seed contains no confirmed travel records.
 
-The six technical notes were extracted from tracked HTML articles in the repository. Article and simulation dependencies are contained in `public/notebook-assets`. Technical notes use an isolated reading document to retain their mathematical typesetting and interactive examples within the site shell. The reading view has matching typography, surfaces and project art; the complete text is also server-rendered. Untracked draft articles and unrelated working files are outside that migration.
+The six technical notes live in `content/writing`, with reading documents in `public/reading` and simulations in `public/explorations`. Article and simulation dependencies are contained in `public/notebook-assets`. Technical notes use an isolated reading document to retain their mathematical typesetting and interactive examples within the site shell. The reading view has matching typography, surfaces and project art; the complete text is also rendered on the server.
 
 Stock photography comes from [Lorem Picsum](https://picsum.photos), with original photographer credits from its image information endpoints. Per-image sources, credits and file checksums are recorded in `evidence/asset-provenance.json`. The UI explicitly labels these as sample images.
 
@@ -28,7 +28,7 @@ The project thumbnails in `public/art/*-refined.webp` use blue and sage sculptur
 
 ## Font Awesome and template details
 
-Toolkit icons use Font Awesome Free 6.4.2 SVGs from the repository's `assets/fontawesome/svgs/`. Their CC BY 4.0 notice is preserved in each SVG and `public/icons/toolkit/LICENSE.txt`. Python, R, JavaScript, React, Docker, Git and Linux use brand marks. Code, fire, chart, database, cubes, bolt, terminal and square-root symbols represent the other toolkit categories. Their SVG viewports are square, with no tile background.
+Toolkit icons use Font Awesome Free 6.4.2 SVGs in `public/icons/toolkit/`. Their CC BY 4.0 notice is preserved in each SVG and `public/icons/toolkit/LICENSE.txt`. Python, R, JavaScript, React, Docker, Git and Linux use brand marks. Code, fire, chart, database, cubes, bolt, terminal and square-root symbols represent the other toolkit categories. Their SVG viewports are square, with no tile background.
 
 Project cards follow the pinned portfolio's `project-card.tsx` composition. Timelines use its `timeline.tsx` and the layout of `section/hackathons-section.tsx`: circular icons, a connecting rule, dates above titles, compact links and a 40-pixel content gap. Institution emblems identify education and research appointments.
 
@@ -67,4 +67,4 @@ Publication identity assets and bibliographic verification are documented in [th
 
 ## Site icon
 
-The favicon uses the owner’s network-and-chip mark from `assets/icons/icon-high.png`, embedded unchanged in an SVG with a tighter square viewport. The artwork occupies 96% of the icon width.
+The favicon in `src/app/icon.svg` embeds the owner’s network and chip mark in a square viewport. The artwork occupies 96% of the icon width.
