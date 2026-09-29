@@ -1,5 +1,5 @@
 "use client";
-import { memo, useEffect, useId, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ArrowUp, ArrowDown, ArrowUpDown, RotateCcw, ArrowRight, ChevronDown, ExternalLink, FileText, Network, Grid2X2, Rows3, Check, SlidersHorizontal, Activity, CalendarDays, Microscope, Info, TriangleAlert, UserRound, PawPrint, Leaf, Wheat, CircleHelp, MapPin } from "lucide-react";
 import { createPortal } from "react-dom";
 import { ReportPagination } from "./atlas-pagination";
@@ -227,7 +227,7 @@ function HealthLanes({ nodes, relations, selected, highlighted, onHover, onLeave
   const related = new Set(activeRelation ? [activeRelation.from_node_id,activeRelation.to_node_id] : [active]);
   if (!activeRelation) for (const r of relations) if(r.from_node_id===active || r.to_node_id===active) { related.add(r.from_node_id);related.add(r.to_node_id); }
   if (!nodes.length) return <p className="atlas-empty">No episode or surveillance observations in this selection. Background context remains in the observation list.</p>;
-  return <svg ref={ref} viewBox={`0 0 ${width} ${height}`} style={{minWidth:minimumWidth}} role="group" aria-label="One Health evidence network" onPointerLeave={onLeave}>
+  return <svg ref={ref} viewBox={`0 0 ${width} ${height}`} style={{"--atlas-network-min-width":`${minimumWidth}px`} as CSSProperties} role="group" aria-label="One Health evidence network" onPointerLeave={onLeave}>
     <defs><marker id={arrow} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10" fill="none" stroke="currentColor" /></marker></defs>
     {columns.map(column=>{const domain=lanes.find(d=>d.id===column.id)!;const Icon=domainIcons[domain.id];return <g key={column.id} className="atlas-oh-lane-group" data-domain={column.id}><rect x={column.x} y="0" width={column.width} height={height} rx="12" className="atlas-oh-lane" /><foreignObject x={column.x} y="4" width={column.width} height="36"><div className="atlas-oh-lane-title" data-compact={column.width < 120}><Icon size={14} aria-hidden />{column.id === "food" ? "Food" : domain.label}</div></foreignObject></g>;})}
     {relations.map(r=>{const path=paths.get(r.id);if(!path)return null;return <g key={r.id} data-entry-id={r.id} data-highlighted={highlighted===r.id} role="button" tabIndex={0} aria-label={`${r.label}. ${words(r.kind)}${r.contested ? '. Contested' : ''}`} onClick={()=>onSelect(r.id)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onSelect(r.id);}}} onPointerEnter={()=>onHover(r.id)} onPointerLeave={onLeave} onFocus={()=>onHover(r.id)} onBlur={onLeave} className="atlas-oh-edge" data-dimmed={!!active && !(r.id===active || r.from_node_id===active || r.to_node_id===active)} data-kind={r.kind} data-basis={r.basis} data-selected={selected===r.id} aria-pressed={selected===r.id}><path d={path} stroke="transparent" strokeWidth="12" fill="none" /><path className="atlas-oh-edge-clearance" d={path} /><path className="atlas-oh-edge-line" d={path} markerEnd={r.directed?`url(#${arrow})`:undefined} /></g>;})}
