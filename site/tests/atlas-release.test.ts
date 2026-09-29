@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { weeklyCycle, publicationCandidate, correctionSchema, checkCorrectionTarget } from "../scripts/sync-atlas";
-import { verifiedBytes, releaseSchema, fetchAtlasData } from "../src/lib/atlas-release";
+import { verifiedBytes, releaseSchema, fetchAtlasData, type AtlasLoadProgress } from "../src/lib/atlas-release";
 import fixture from "./atlas-fixture.json";
 import type { AtlasPublicationHandoff } from "../src/lib/atlas-vendor/site-types";
 
@@ -32,6 +32,29 @@ test("Remote release bytes must match their published checksums", async () => {
   await assert.rejects(verifiedBytes(new Response(null, { status: 503 }), expected), /503/);
 });
 
+test("Download progress counts decoded stream bytes and preserves checksum validation", async () => {
+  const bytes = new TextEncoder().encode('{"records":[]}');
+  const expected = { bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") };
+  const progress: number[] = [];
+  let finish!: () => void;
+  const body = new ReadableStream<Uint8Array>({ start(controller) {
+    controller.enqueue(bytes.slice(0, 4));
+    finish = () => { controller.enqueue(bytes.slice(4)); controller.close(); };
+  } });
+  const download = verifiedBytes(new Response(body, { headers: { 'Content-Length': '7', 'Content-Encoding': 'gzip' } }), expected, loaded => {
+    progress.push(loaded);
+    if (loaded === 4) finish();
+  });
+  assert.deepEqual(new Uint8Array(await download), bytes);
+  assert.deepEqual(progress, [4, bytes.length]);
+  await assert.rejects(verifiedBytes(new Response(bytes.slice(0, -1)), expected, () => {}), /checksum/);
+  await assert.rejects(verifiedBytes(new Response(new Uint8Array(bytes.length)), expected, () => {}), /checksum/);
+  let cancelled = false;
+  const oversized = new ReadableStream<Uint8Array>({ start(controller) { controller.enqueue(new Uint8Array(bytes.length + 1)); }, cancel() { cancelled = true; } });
+  await assert.rejects(verifiedBytes(new Response(oversized), expected, () => {}), /checksum/);
+  assert(cancelled);
+});
+
 test("Corrections require authorization for the exact published release", () => {
   const existing = releaseSchema.parse(fixture.release);
   const authorization = { correction_version: "1.0.0", replaces_export_id: existing.export_id, reason: "Geographic review",
@@ -55,8 +78,23 @@ test("Loading checks the bundle identity and honors cancellation between data ta
   t.mock.method(globalThis, 'fetch', async (url: string) => url.endsWith('/current.json')
     ? Response.json({ ...fixture.release, assets: { ...fixture.release.assets, 'map.json': digest(map), 'atlas-site.json': digest(bundle) } })
     : new Response(url.endsWith('/map.json') ? map : bundle));
-  assert.equal((await fetchAtlasData()).bundle.contract_version, fixture.release.contract_version);
+  const progress: AtlasLoadProgress[] = [];
+  assert.equal((await fetchAtlasData(undefined, value => progress.push(value))).bundle.contract_version, fixture.release.contract_version);
+  assert.equal(progress[0].phase, 'release');
+  assert.equal(progress.at(-1)!.phase, 'prepare');
+  assert(progress.some(p => p.phase === 'verify'));
+  const total = map.length + bundle.length;
+  assert(progress.slice(1).every(p => p.total === total && p.loaded <= total));
+  assert(progress.every((p, i) => !i || p.loaded >= progress[i - 1].loaded));
+  assert.equal(progress.at(-1)!.loaded, total);
   await assert.rejects(fetchAtlasData(AbortSignal.abort()), { name: 'AbortError' });
+  const controller = new AbortController();
+  const cancelled: AtlasLoadProgress[] = [];
+  await assert.rejects(fetchAtlasData(controller.signal, value => {
+    cancelled.push(value);
+    if (value.phase === 'download') controller.abort();
+  }), { name: 'AbortError' });
+  assert(!cancelled.some(value => value.phase === 'prepare'));
   bundle = Buffer.from(JSON.stringify({ contract_version: '1.5.0', snapshot: { source_snapshot_sha256: digest(map).sha256 } }));
   await assert.rejects(fetchAtlasData(), /does not match/);
 });

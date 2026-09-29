@@ -768,13 +768,46 @@ test("DRC compact figures show repeated totals once with their reporting sources
 });
 
 
+for (const width of [390, 1280]) test(`ATLAS shows streamed download progress at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.addInitScript(dark => {
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+    const fetch = window.fetch.bind(window);
+    window.fetch = async (input, init) => {
+      const response = await fetch(input, init);
+      if (!String(input).endsWith('/atlas-site.json')) return response;
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      const split = Math.floor(bytes.length / 4);
+      return new Response(new ReadableStream({ start(controller) {
+        controller.enqueue(bytes.slice(0, split));
+        window.addEventListener('atlas-test-resume', () => { controller.enqueue(bytes.slice(split)); controller.close(); }, { once: true });
+      } }), { headers: response.headers });
+    };
+  }, width === 1280);
+  await page.goto('/atlas/');
+  const bar = page.getByRole('progressbar', { name: 'Reports download' });
+  await expect.poll(() => bar.evaluate((element: HTMLProgressElement) => element.position)).toBeGreaterThan(0.2);
+  expect(await bar.evaluate((element: HTMLProgressElement) => element.position)).toBeLessThan(1);
+  await expect(page.getByRole('status')).toContainText('Downloading reports and map');
+  expect(await bar.getAttribute('max')).toBe(String(fixture.release.assets['atlas-site.json'].bytes + fixture.release.assets['map.json'].bytes));
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await expect(bar).toBeInViewport();
+  await page.screenshot({ path: `/tmp/atlas-download-progress-${width}.png` });
+  await page.evaluate(() => window.dispatchEvent(new Event('atlas-test-resume')));
+  await expect(page.locator('.atlas-page')).toHaveAttribute('data-ready', 'true');
+  await expect(bar).toHaveCount(0);
+});
+
 test("ATLAS download errors leave a retry that loads verified reports", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 1000 });
-  await page.route("**/current.json", route => route.fulfill({ status: 503, body: "Unavailable" }), { times: 1 });
+  let unavailable = true;
+  await page.route("**/current.json", route => unavailable ? route.fulfill({ status: 503, body: "Unavailable" }) : route.fallback());
   await page.goto("/atlas/");
   await expect(page.locator(".atlas-page").getByRole("alert")).toContainText("Reports could not be loaded.");
   await expect(page.locator(".atlas-report")).toHaveCount(0);
   await expect.poll(() => page.locator("#contact").evaluate(element => element.getBoundingClientRect().top >= innerHeight)).toBe(true);
+  unavailable = false;
   await page.getByRole("button", { name: "Try again" }).click();
   await expect(page.locator(".atlas-trend-activity header > strong")).toContainText(String(documentCount));
   await expect(page.locator(".atlas-page").getByRole("alert")).toHaveCount(0);
