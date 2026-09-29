@@ -1,4 +1,5 @@
 @import url("/cursors.css");
+@import url("/scrollbars.css");
 :root {
   --ui-bg: #ffffff; --ui-card: #f7f9fc; --ui-text: #182230; --ui-muted: #566273;
   --ui-border: #dce3ec; --ui-primary: #315ba6; --ui-on-primary: #fff; --ui-accent: #eaf0f9;
@@ -46,7 +47,7 @@ a { color: var(--ui-primary); text-underline-offset: 4px; }
 }
 .chip.active, .layer-menu-button.active { background: var(--ui-primary); color: var(--ui-on-primary); }
 .alert { padding: 16px 20px; border: 1px solid var(--ui-border); border-left: 3px solid var(--ui-primary); border-radius: 12px; background: var(--ui-card); color: var(--ui-text); }
-pre { background: var(--ui-card); color: var(--ui-text); border: 1px solid var(--ui-border); border-radius: 12px; padding: 18px; overflow: auto; line-height: 1.7; }
+pre { background: var(--ui-card); color: var(--ui-text); border: 1px solid var(--ui-border); --scrollbar-radius: 12px; border-radius: var(--scrollbar-radius); padding: 18px; overflow: auto; line-height: 1.7; }
 pre code, .hljs { background: transparent; color: var(--ui-text); }
 .hljs-keyword, .hljs-selector-tag { color: var(--ui-primary); }
 .hljs-string, .hljs-title { color: #398775; }

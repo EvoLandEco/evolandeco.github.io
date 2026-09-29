@@ -85,3 +85,48 @@ The fitted Mercator extent uses the smallest circular longitude interval, with p
 ## Geographic neutrality
 
 Treat places as reporting locations, not assertions of sovereignty. Use neutral place names, preserve attributed source titles and quotations, and keep codes separate from administrative claims. Location badges use flags and geographic codes, with neutral map pins for the disputed regions listed in DESIGN.md. The globe does not draw political boundaries.
+
+## Private One Health compatibility
+
+The UI accepts site contracts 1.3.0, 1.4.0 and 1.5.0 through their matching trusted selectors. The publication configuration pins 1.5.0. Immutable asset staging leaves the live pointer unchanged. Activation requires both a content-bound publication authorization and a deployed website that accepts the candidate contract.
+
+Contract 1.3 supplies a partition of reporting attention by disease subject. The ring counts report entries, includes unclassified entries and links its categories to their reports. These counts do not measure disease incidence.
+
+Contract 1.4 supplies the One Health evidence tab. Reporting filters select eligible source records before the authoritative selector applies domain and observation-date filters. A report view retains observations from its explicit connected evidence, including disconnected observations from that report. Excluded endpoints remove their relationships. Undated observations occupy a separate table when an observation window is active; background observations stay outside the relationship diagram.
+
+People, animals, the environment and food occupy separate labelled lanes. Source hypotheses use dashed links, genomic associations use undirected dotted links, and exposure links use solid lines. Direction comes only from the export. Details preserve negative findings, uncertainty, sampling scope, units, denominators, source dates, exact quotations and proposition conflicts. Reviewed reference locations appear without inferred geographic arcs. Surveillance population panels retain separate values and units; One Health membership grants no longitudinal comparison permission.
+
+The One Health review counts distinguish complete scoped reviews, partial and unresolved reviews, entries with no relevant observation, unreviewed entries and support outside selection. Domain coverage bars count unique entries and can overlap. A selected example is not comprehensive spillover surveillance.
+
+## One Health presentation and producer workflow
+
+Network, Evidence and Overview consume the same eligible One Health selection. The overview counts report entries and does not merge entries into epidemiological episodes. Source-specific node IDs are content-derived; a label edit can change the ID. They are not persistent entity identities.
+
+The relationship matrix reads `evidence_types` and opens that relationship’s full `evidence_ids`. Contract 1.4 does not bind each evidence type to individual quotations. A marked cell means a type is cited for the relationship, not that the website independently verified it. An empty cell means the type is not recorded; it is not a negative result, contradiction or statement that no investigation occurred. Source hypotheses, source certainty and curator review state remain separate.
+
+ATLAS maintains the producer specification in `docs/ONE_HEALTH.md`, with workflow and export integration in `docs/WORKFLOW.md` and `docs/SITE_EXPORT.md` in the ATLAS repository. Source review may use existing notes and private review artifacts for richer details, but the UI must not read undeclared fields or parse those notes into scientific relationships.
+
+The following require a versioned producer contract before corresponding UI figures:
+
+- Entity and episode identities with explicit continuity decisions for cross-report episode views.
+- Linked numerator and denominator measurements, sample units and pooled, clustered or repeated sampling structure for positivity and comparable population plots.
+- Date precision, bounds, kinds and field-specific evidence for observation timelines and lead-time analyses.
+- Evidence-type quotation bindings and support, contradiction or unresolved status for evidence-level matrices.
+- Isolate identities, methods, genetic distances, thresholds and tree provenance for genomic views.
+- Observation-specific place roles and typed environmental covariate or intervention links for driver panels.
+
+Acceptance requires schema and selector versions, source-bound fixtures, eligibility checks under partial selections, unknown and negative-result distinctions, replay or integrity checks, and UI compatibility tests. A scientific source correction belongs in ATLAS. UI layout changes and methods citations require no dataset mutation. Candidate adoption and public publication are separate decisions; compatibility alone does not authorize a public release.
+
+## One Health analytical panels
+
+Contract 1.5.0 provides typed timings, sampling assessments and environmental or intervention contexts. Its pinned selector owns source selection, correction lineage, contradictions and proportion eligibility. Timeline, Sampling and Environment consume those selections without parsing narrative notes or recomputing sample fractions. These views mount only for contract 1.5.0.
+
+Timeline separates observation statements, reporting cutoffs and incomplete dates. Calendar ranges for month or year precision describe possible placement, not event duration. Publication and capture dates remain source metadata. Sampling retains counts, units, frame, methods, pooling, clustering and repeated sampling; a reviewed zero fraction remains visible. Environment distinguishes measured variables, attributed conditions, hypotheses, reported interventions and evaluated effects. Independent context records can be inspected without an observation link. Alignment does not establish transmission or intervention effects.
+
+The schema and selector handoff supports consumer testing with synthetic fixtures. Local adoption requires the sealed candidate, hashes, source review coverage and source-bound validation. Public publication requires its own authorization.
+
+Source time carries an explicit point, closed interval, open interval or unknown extent. Open intervals retain their known boundary in the incomplete-date list and never acquire an endpoint from the reporting window. Detection dates remain distinct from collection and test-result dates. Sampling inclusion periods belong to the sampling frame unless the source also establishes an observed event.
+
+## Country network analysis
+
+[Network analysis and UI acceptance](ATLAS_NETWORK_ANALYSIS.md) defines the producer analysis, evidence requirements and display rules for country statistics. Analytical exports require a separate versioned contract bound to the source release and supported filter scopes. Raw reporting counts, reviewed episode counts, collection adjustments and surveillance adjustments are distinct quantities. A valid export may mark an estimate unavailable with its data requirements; the UI must preserve that distinction from zero.

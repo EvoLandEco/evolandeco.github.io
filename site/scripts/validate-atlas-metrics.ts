@@ -22,7 +22,7 @@ export function validateAtlas(exportDirectory: string, snapshotPath: string) {
     assert.equal(createHash("sha256").update(readFileSync(new URL(file, exportRoot))).digest("hex"), hash, `ATLAS bundle checksum: ${file}`);
   }
   z.fromJSONSchema(JSON.parse(readFileSync(new URL("atlas-site.schema.json", exportRoot), "utf8"))).parse(bundle);
-  assert(["1.0.0", "1.1.0", "1.2.0"].includes(bundle.contract_version));
+  assert(["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0"].includes(bundle.contract_version));
   assert.equal(COMPACT_GROUPING_VERSION, "1.0.0");
 
   z.fromJSONSchema(JSON.parse(readFileSync(new URL(`../src/lib/atlas-vendor/${bundle.metrics.contract_version === "0.2.0" ? "1.1/" : ""}metrics.schema.json`, import.meta.url), "utf8"))).parse(metrics);

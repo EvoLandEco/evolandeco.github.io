@@ -598,3 +598,24 @@ test("Image placeholders cover delayed downloads and viewer navigation", async (
     await expect(image).not.toHaveAttribute('data-image-loading');
   }
 });
+
+
+test("Decorative networks pause outside the viewport and resume on return", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/');
+  const top = page.locator('.top-network');
+  const contact = page.locator('.contact-section .network-backdrop');
+  await expect(top).toHaveAttribute('data-playing', 'true');
+  await expect(contact).toHaveAttribute('data-playing', 'false');
+  await expect(contact.locator('.network-node').first()).toHaveCSS('animation-play-state', 'paused');
+  await page.locator('.contact-section').scrollIntoViewIfNeeded();
+  await expect(top).toHaveAttribute('data-playing', 'false');
+  await expect(top.locator('.network-node').first()).toHaveCSS('animation-play-state', 'paused');
+  await expect(contact).toHaveAttribute('data-playing', 'true');
+  await expect(contact.locator('.network-node').first()).toHaveCSS('animation-play-state', 'running');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(contact).toHaveAttribute('data-playing', 'false');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.evaluate(() => scrollTo(0, 0));
+  await expect(top).toHaveAttribute('data-playing', 'true');
+});

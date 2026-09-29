@@ -64,7 +64,15 @@ test('ATLAS full-screen workspace preserves interactions and restores the page',
   expect((await page.locator('.atlas-report[open] > summary').first().boundingBox())!.y).toBeGreaterThanOrEqual((await scroller.boundingBox())!.y - 1);
   await page.getByRole('tab', { name: 'Trends', exact: true }).click();
   for (const name of ['Reports', 'Geographic links', 'Assessments', 'Source coverage']) {
-    await page.getByRole('tab', { name, exact: true }).click();
+    await page.getByRole('tab', { name: name === 'Assessments' ? 'Reports' : name, exact: true }).click();
+    if (name === 'Assessments') await page.getByRole('group', {name:'Report content'}).getByRole('button', {name:'Assessments',exact:true}).click();
+    if (name === 'Geographic links' || name === 'Source coverage') {
+      const first = page.locator(name === 'Geographic links' ? '.atlas-connection .atlas-item-meta' : '.atlas-coverage-source > rect').first();
+      const gap = (await first.boundingBox())!.y - (await scroller.boundingBox())!.y;
+      expect(gap).toBeGreaterThanOrEqual(0);
+      expect(gap).toBeLessThanOrEqual(20);
+      await page.screenshot({ path: `/tmp/atlas-top-spacing-${name.replaceAll(' ', '-')}.png` });
+    }
     const pager = page.locator('.atlas-pagination');
     await expect(pager).toHaveCount(1);
     const position = (await pager.boundingBox())!.y;
@@ -90,7 +98,8 @@ test('ATLAS full-screen workspace preserves interactions and restores the page',
   const footer = page.locator('.atlas-workspace-footer');
   const footerPosition = (await footer.boundingBox())!.y;
   for (const name of ['Trends', 'Reports', 'Geographic links', 'Assessments', 'Source coverage']) {
-    await page.getByRole('tab', { name, exact: true }).click();
+    await page.getByRole('tab', { name: name === 'Assessments' ? 'Reports' : name, exact: true }).click();
+    if (name === 'Assessments') await page.getByRole('group', {name:'Report content'}).getByRole('button', {name:'Assessments',exact:true}).click();
     await expect(footer.getByRole('button', { name: 'About ATLAS' })).toBeVisible();
     await scroller.evaluate(el => { el.scrollTop = el.scrollHeight; });
     expect((await footer.boundingBox())!.y).toBe(footerPosition);
@@ -179,6 +188,7 @@ test('ATLAS workspace animates at the wide breakpoint and exits with its button'
   await expect(page.locator('.atlas-page')).toHaveAttribute('data-fullscreen', 'true');
   await expect(page.locator('html')).not.toHaveAttribute('data-atlas-workspace-transition');
   const globeCanvas = page.getByTestId('atlas-globe').locator('canvas').first();
+  for (const node of await page.locator('.network-node').all()) await expect(node).toHaveCSS('animation-play-state', 'paused');
   const stillAngle = await globeCanvas.getAttribute('data-angle');
   await page.waitForTimeout(250);
   await expect(globeCanvas).toHaveAttribute('data-angle', stillAngle!);
@@ -217,11 +227,11 @@ test('ATLAS workspace animates at the wide breakpoint and exits with its button'
   const badge = await page.locator('.atlas-chain-map .atlas-location-badge').first().boundingBox();
   expect(badge!.height).toBeGreaterThan(12);
   const globeBox = await page.getByTestId('atlas-globe').boundingBox();
-  const statsBox = await page.locator('.atlas-stats').boundingBox();
+  const statsBox = await page.locator('.atlas-network-overview').boundingBox();
   const legendBox = await page.getByRole('list', { name: 'Link types' }).boundingBox();
-  expect(statsBox!.x).toBeGreaterThan(globeBox!.x + globeBox!.width);
-  expect(legendBox!.x).toBe(statsBox!.x);
-  expect(Math.abs((statsBox!.y + legendBox!.y + legendBox!.height) / 2 - (globeBox!.y + globeBox!.height / 2))).toBeLessThan(2);
+  expect(statsBox!.y).toBeGreaterThanOrEqual(globeBox!.y + globeBox!.height);
+  expect(legendBox!.x).toBeGreaterThan(globeBox!.x + globeBox!.width);
+  expect(Math.abs((legendBox!.y + legendBox!.height / 2) - (globeBox!.y + globeBox!.height / 2))).toBeLessThan(2);
   await expect(page.locator('.atlas-heading .atlas-eyebrow')).toBeHidden();
   await expect(page.locator('.atlas-heading > p')).toBeHidden();
   expect(legendBox!.y).toBeLessThan(globeBox!.y + globeBox!.height);
@@ -260,7 +270,7 @@ test('ATLAS workspace animates at the wide breakpoint and exits with its button'
     await expect.poll(() => overview.evaluate(el => el.scrollHeight <= el.clientHeight)).toBe(true);
     const controls = await overview.locator('.atlas-controls').boundingBox();
     expect(controls!.y + controls!.height).toBeLessThanOrEqual(720);
-    const stats = await overview.locator('.atlas-stats').boundingBox();
+    const stats = await overview.locator('.atlas-network-overview').boundingBox();
     const legend = await overview.locator('.atlas-link-legend').boundingBox();
     const heading = await overview.locator('.atlas-heading').boundingBox();
     expect(stats!.y).toBeGreaterThanOrEqual(heading!.y + heading!.height);

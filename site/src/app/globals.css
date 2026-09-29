@@ -1211,6 +1211,8 @@ main > .surface.hero { padding: 30px 0 10px; min-height: 350px; gap: 18px; grid-
 .top-network { position: absolute; z-index: -1; inset: 0 0 auto; height: 520px; opacity: 0.33; }
 .network-edges { stroke: currentColor; stroke-width: 0.65; opacity: 0.32; fill: none; }
 .network-node { fill: currentColor; animation: network-breathe 8s ease-in-out infinite; }
+.network-backdrop[data-playing="false"] .network-node,
+body:has(.atlas-page[data-fullscreen]) .network-node { animation-play-state: paused; }
 @keyframes network-breathe { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.8; } }
 .contact-section { position: relative; margin: 88px 0 48px; border: 1px solid var(--border); border-radius: 16px; padding: 60px 28px 44px; text-align: center; isolation: isolate; }
 .contact-section > .network-backdrop { position: absolute; inset: 0; z-index: -1; border-radius: 16px; opacity: 0.4; }
@@ -1240,7 +1242,7 @@ footer { border-top: 0; text-align: center; justify-content: center; }
 .profile-trigger::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(115deg, transparent 25%, #ffffff66 48%, transparent 70%); transform: translateX(-110%); transition: transform 650ms ease; pointer-events: none; }
 .profile-trigger:is(:hover, :focus-visible)::after { transform: translateX(110%); }
 .profile-trigger[aria-expanded="true"] { box-shadow: 0 0 0 5px color-mix(in srgb, var(--primary) 12%, transparent), 0 8px 25px #315ba629; }
-.profile-popover { position: fixed; inset: 100px auto auto 16px; margin: 0; padding: 0; width: min(340px, calc(100vw - 32px)); max-height: calc(100dvh - 120px); overflow-y: auto; border: 1px solid var(--border); border-radius: 22px; background: var(--card); color: var(--foreground); box-shadow: 0 24px 70px #101b3330, 0 4px 12px #101b3310; }
+.profile-popover { position: fixed; inset: 100px auto auto 16px; margin: 0; padding: 0; width: min(340px, calc(100vw - 32px)); max-height: calc(100dvh - 120px); overflow-y: auto; border: 1px solid var(--border); --scrollbar-radius: 22px; border-radius: var(--scrollbar-radius); background: var(--card); color: var(--foreground); box-shadow: 0 24px 70px #101b3330, 0 4px 12px #101b3310; }
 .profile-popover:popover-open { animation: profile-reveal 220ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 @keyframes profile-reveal { from { opacity: 0; transform: translateY(-8px) scale(0.96); } to { opacity: 1; transform: none; } }
 .profile-magic-card { border-radius: 21px; }

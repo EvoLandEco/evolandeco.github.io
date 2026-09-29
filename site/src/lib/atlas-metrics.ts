@@ -23,7 +23,7 @@ export function createMetrics(bundle: AtlasSiteBundle, selectedResearch: ReturnT
     const figures = selectedResearch(recordIds).panels.filter(p => p.kind === kind && ids.includes(p.id)).flatMap(p => p.compact_groups);
     const unique = [...new Map(figures.map(g => [g.id, g])).values()];
     const contexts = new Set(unique.slice(0, 2).flatMap(g => g.context_ids));
-    return unique.filter(g => g.context_ids.some(id => contexts.has(id)))
+    return unique.filter(g => g.context_ids.some(id => contexts.has(id))).slice(0, 4)
       .map(g => g.measure_ids.map(id => measures.get(id)!));
   }
 

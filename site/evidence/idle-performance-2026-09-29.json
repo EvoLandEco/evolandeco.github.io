@@ -1,0 +1,176 @@
+{
+  "environment": {
+    "browser": "headless Chromium",
+    "build": "production static export",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "deviceScaleFactor": 2,
+    "theme": "dark",
+    "samplesPerState": 3,
+    "sampleMs": 3000,
+    "dataset": "84af1f2142e037519b457c5e192d3cd2c06275b79922420cebf01288c7696b3f",
+    "measurement": "Browser main thread durations; not whole-process CPU or GPU utilization."
+  },
+  "baseline": [
+    {
+      "route": "/",
+      "state": "rotating",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 462.37,
+        "ScriptDuration": 42.69,
+        "LayoutDuration": 3.37,
+        "RecalcStyleDuration": 23.97,
+        "draws": 90,
+        "attributes": 9231
+      }
+    },
+    {
+      "route": "/",
+      "state": "offscreen",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 21.26,
+        "ScriptDuration": 0.46,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 6,
+        "draws": 0,
+        "attributes": 0
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "rotating",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 2740.93,
+        "ScriptDuration": 339.31,
+        "LayoutDuration": 43.32,
+        "RecalcStyleDuration": 550.28,
+        "draws": 90,
+        "attributes": 140366
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "workspace",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 1102.87,
+        "ScriptDuration": 125.89,
+        "LayoutDuration": 97.46,
+        "RecalcStyleDuration": 277.56,
+        "draws": 0,
+        "attributes": 63942
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "reduced-motion",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 0.39,
+        "ScriptDuration": 0,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 0,
+        "draws": 0,
+        "attributes": 0
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "offscreen",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 39.23,
+        "ScriptDuration": 0.48,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 9.58,
+        "draws": 0,
+        "attributes": 0
+      }
+    }
+  ],
+  "optimized": [
+    {
+      "route": "/",
+      "state": "rotating",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 490,
+        "ScriptDuration": 49.27,
+        "LayoutDuration": 3.95,
+        "RecalcStyleDuration": 22.54,
+        "draws": 90,
+        "attributes": 9068
+      }
+    },
+    {
+      "route": "/",
+      "state": "offscreen",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 18.86,
+        "ScriptDuration": 0.48,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 4.33,
+        "draws": 0,
+        "attributes": 0
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "rotating",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 2702.55,
+        "ScriptDuration": 337.25,
+        "LayoutDuration": 34.61,
+        "RecalcStyleDuration": 525.6,
+        "draws": 91,
+        "attributes": 141662
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "workspace",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 886.51,
+        "ScriptDuration": 138.18,
+        "LayoutDuration": 19.6,
+        "RecalcStyleDuration": 183.61,
+        "draws": 0,
+        "attributes": 63938
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "reduced-motion",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 0.62,
+        "ScriptDuration": 0,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 0,
+        "draws": 0,
+        "attributes": 0
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "offscreen",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 26.09,
+        "ScriptDuration": 0.3,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 3.75,
+        "draws": 0,
+        "attributes": 0
+      }
+    }
+  ]
+}

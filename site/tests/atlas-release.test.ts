@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { weeklyCycle, publicationCandidate, correctionSchema, checkCorrectionTarget } from "../scripts/sync-atlas";
-import { verifiedBytes, releaseSchema } from "../src/lib/atlas-release";
+import { verifiedBytes, releaseSchema, fetchAtlasData } from "../src/lib/atlas-release";
 import fixture from "./atlas-fixture.json";
 import type { AtlasPublicationHandoff } from "../src/lib/atlas-vendor/site-types";
 
@@ -45,4 +45,18 @@ test("Corrections require authorization for the exact published release", () => 
   assert.throws(() => checkCorrectionTarget(existing.export_id, null), /existing publication/);
   const corrected = releaseSchema.parse({ ...existing, correction: { replaces_export_id: existing.export_id, authorization_sha256: "a".repeat(64) } });
   assert.deepEqual(corrected.correction, { replaces_export_id: existing.export_id, authorization_sha256: "a".repeat(64) });
+});
+
+
+test("Loading checks the bundle identity and honors cancellation between data tasks", async t => {
+  const map = Buffer.from('{}');
+  const digest = (bytes: Buffer) => ({ sha256: createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length });
+  let bundle = Buffer.from(JSON.stringify({ contract_version: fixture.release.contract_version, snapshot: { source_snapshot_sha256: digest(map).sha256 } }));
+  t.mock.method(globalThis, 'fetch', async (url: string) => url.endsWith('/current.json')
+    ? Response.json({ ...fixture.release, assets: { ...fixture.release.assets, 'map.json': digest(map), 'atlas-site.json': digest(bundle) } })
+    : new Response(url.endsWith('/map.json') ? map : bundle));
+  assert.equal((await fetchAtlasData()).bundle.contract_version, fixture.release.contract_version);
+  await assert.rejects(fetchAtlasData(AbortSignal.abort()), { name: 'AbortError' });
+  bundle = Buffer.from(JSON.stringify({ contract_version: '1.5.0', snapshot: { source_snapshot_sha256: digest(map).sha256 } }));
+  await assert.rejects(fetchAtlasData(), /does not match/);
 });

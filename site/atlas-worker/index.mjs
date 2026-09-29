@@ -11,7 +11,9 @@ const worker = {
     }
     const path = new URL(request.url).pathname;
     const current = path === "/current.json";
-    if (!current && !/^\/releases\/[a-f0-9]{64}\/(atlas-site|map|metrics)\.json$/.test(path))
+    const releaseAsset = /^\/releases\/[a-f0-9]{64}\/(?:(?:atlas-site|map|metrics|network-transport|release)\.json|view\.mjs)$/.test(path);
+    const networkAsset = /^\/network-analysis\/[a-f0-9]{64}\/(network-analysis|network-analysis\.schema|coverage-ledger)\.json$/.test(path);
+    if (!current && !releaseAsset && !networkAsset)
       return new Response("Not found", { status: 404, headers });
     const ip = request.headers.get("CF-Connecting-IP");
     if (!ip) return new Response("Forbidden", { status: 403, headers });
@@ -25,7 +27,7 @@ const worker = {
       ? await env.ATLAS.head(key)
       : await env.ATLAS.get(key, { onlyIf: request.headers });
     if (!object) return new Response("Not found", { status: 404, headers });
-    headers.set("Content-Type", "application/json; charset=utf-8");
+    headers.set("Content-Type", path.endsWith(".mjs") ? "text/javascript; charset=utf-8" : "application/json; charset=utf-8");
     headers.set("Cache-Control", current ? "public, max-age=60, must-revalidate" : "public, max-age=31536000, immutable");
     headers.set("ETag", object.httpEtag);
     if (!current) headers.set("Content-Encoding", "gzip");

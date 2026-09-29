@@ -8,6 +8,7 @@ import { AtlasNavigationProvider } from "@/components/atlas-navigation";
 import Navbar from "@/components/navbar";
 import data from "@/content-data/portfolio.json";
 import "../../public/cursors.css";
+import "../../public/scrollbars.css";
 import "./globals.css";
 import "./atlas/atlas.css";
 const p = data.profile;
@@ -59,7 +60,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <footer>
                   <span>© 2026 Tianjian Qin</span>
                   <p className="footer-credit">
-                    Powered by <a href="https://magicui.design/">Magic UI</a>, built by GPT-6 Astra.
+                    Powered by <a href="https://magicui.design/">Magic UI</a>.
                   </p>
                 </footer>
               </div>

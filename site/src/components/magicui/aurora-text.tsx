@@ -3,7 +3,8 @@
 // Upstream SHA-256: c7bd0b72a093084a881416975249c507ddd715249ac5832a9161538eeef29927
 "use client"
 
-import React, { memo } from "react"
+import React, { memo, useRef } from "react"
+import { usePanelMotion } from "../motion-policy"
 
 interface AuroraTextProps {
   children: React.ReactNode
@@ -19,6 +20,8 @@ export const AuroraText = memo(
     colors = ["#FF0080", "#7928CA", "#0070F3", "#38bdf8"],
     speed = 1,
   }: AuroraTextProps) => {
+    const element = useRef<HTMLSpanElement>(null)
+    const motion = usePanelMotion(element, true)
     const gradientStyle = {
       backgroundImage: `linear-gradient(135deg, ${colors.join(", ")}, ${
         colors[0]
@@ -26,10 +29,11 @@ export const AuroraText = memo(
       WebkitBackgroundClip: "text",
       WebkitTextFillColor: "transparent",
       animationDuration: `${10 / speed}s`,
+      animationPlayState: motion.playing ? "running" as const : "paused" as const,
     }
 
     return (
-      <span className={`relative inline-block ${className}`}>
+      <span ref={element} className={`relative inline-block ${className}`}>
         <span className="sr-only">{children}</span>
         <span
           className="animate-aurora relative bg-size-[200%_auto] bg-clip-text text-transparent"

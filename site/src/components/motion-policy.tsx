@@ -48,7 +48,7 @@ export function Settings({ inline = false }: { inline?: boolean }) {
   );
   return inline ? toggle : <aside aria-label="Appearance">{toggle}</aside>;
 }
-export function usePanelMotion(ref: React.RefObject<HTMLDivElement | null>, loop = false) {
+export function usePanelMotion(ref: React.RefObject<Element | null>, loop = false) {
   const policy = useContext(Policy);
   const [visible, setVisible] = useState(false);
   const [finished, setFinished] = useState(false);

@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { atlas, metrics, measures, panelMeasures, compactPanelFigures } from "./atlas-fixture";
-import { metricValue } from "../src/lib/atlas-metrics";
+import { bundle, atlas, metrics, measures, panelMeasures, compactPanelFigures } from "./atlas-fixture";
+import { createResearch } from "../src/lib/atlas-comparisons";
+import { createMetrics, metricValue } from "../src/lib/atlas-metrics";
 
 test("Metric panels preserve conflicts and exclude evidence outside the reporting window", () => {
   const all = new Set(metrics.records.map(r => r.record_id));
@@ -80,4 +81,17 @@ test("Reviewed series retain only explicit connections with complete visible sup
   assert.equal(partial.numeric_coverage!.reviewed_connection_count, 0);
   assert.equal(partial.numeric_coverage!.records_with_measures + partial.numeric_coverage!.records_without_reviewed_measures, partial.numeric_coverage!.record_count);
   assert.equal(createResearch(bundle).selectedResearch(all).reviewed_series.length, 0);
+});
+
+
+test("Globe compact figures show at most four measurements", () => {
+  const all = new Set(atlas.records.map(r => r.id));
+  for (const panel of metrics.panels) {
+    assert(compactPanelFigures(panel.kind, [panel.id], all).length <= 4);
+  }
+  const view = createResearch(bundle).selectedResearch(all);
+  const panel = view.panels.find(panel => panel.compact_groups.length)!;
+  const groups = Array.from({length: 6}, (_, index) => ({...panel.compact_groups[0], id: `test-group-${index}`}));
+  const crowded = createMetrics(bundle, () => ({...view, panels: [{...panel, compact_groups: groups}]}));
+  assert.equal(crowded.compactPanelFigures(panel.kind, [panel.id], all).length, 4);
 });

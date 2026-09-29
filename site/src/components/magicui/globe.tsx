@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useMemo, useId } from "react";
 import createGlobe from "cobe";
 import { motion, motionValue } from "motion/react";
 import { AnimatedBeam, BeamStroke, BeamGradientStops } from "./animated-beam";
-import { drawGlobeEffects, projectArcPath, projectArcArrow, projectArcTrail, globePoint, projectPoint, GLOBE_RADIUS, focusOrientation, rimIndicator, projectArcAnchor, separateGlobeRoutes } from "./globe-effects";
+import { drawGlobeEffects, prepareGlobeArc, globeProjection, globePoint, GLOBE_RADIUS, focusOrientation, rimIndicator, separateGlobeRoutes } from "./globe-effects";
 import { useTheme } from "next-themes";
 
 // Decorative connections illustrate a global research network.
@@ -69,6 +69,11 @@ export function Globe({
     return new Map(layoutRoutes.map((route, i) => [route.groupId ?? route.id, bends[i]]));
   }, [geographic, layoutRoutes]);
   const routeBends = useMemo(() => routes.map(route => routeLayout.get(route.groupId ?? route.id)), [routes, routeLayout]);
+  const curves = useMemo(() => routes.map((route, i) => prepareGlobeArc(route.from, route.to, geographic, routeBends[i])), [routes, geographic, routeBends]);
+  const nodePoints = useMemo(() => nodes?.map(node => globePoint(node.location).map(v => v * GLOBE_RADIUS) as [number, number, number]), [nodes]);
+  const routePaths = useRef<(SVGPathElement | null)[]>([]);
+  const routeHalos = useRef<(SVGPathElement | null)[]>([]);
+  const routeHits = useRef<(SVGPathElement | null)[]>([]);
   const beamPaths = useMemo(() => routes.map(() => motionValue("")), [routes]);
   const arrows = useMemo(() => routes.map(() => motionValue("")), [routes]);
   const trails = useMemo(() => routes.map(() => motionValue("")), [routes]);
@@ -149,32 +154,41 @@ export function Globe({
     const el = canvas.current;
     const dark = resolvedTheme === "dark";
     paintArrows.current = () => {
-      if (nodes) routes.forEach(({ from, to, directed, type }, i) => {
+      const project = globeProjection(angle.current, tilt.current);
+      if (nodes) routes.forEach(({ directed, type }, i) => {
         if (!directed && type !== "movement") return;
         const length = type === "movement" ? .45 : .22;
         const cycle = (clock.current / (type === "movement" ? 5000 : 5400) + .35 + i * .19) % 1;
         const progress = cycle * (type === "movement" ? 1 + length : 1);
-        if (type !== "movement") arrows[i].set(projectArcArrow(from, to, angle.current, tilt.current, routeBends[i], progress));
-        const trail = projectArcTrail(from, to, angle.current, tilt.current, routeBends[i], progress, length);
+        if (type !== "movement") arrows[i].set(curves[i].arrow(project, progress));
+        const trail = curves[i].trail(project, progress, length);
         trails[i].set(trail.path);
         const gradient = trailGradients.current[i];
-        if (gradient) for (const coordinate of ["x1", "y1", "x2", "y2"] as const) gradient.setAttribute(coordinate, String(trail[type === "movement" ? ({ x1: "x2", y1: "y2", x2: "x1", y2: "y1" } as const)[coordinate] : coordinate]));
+        if (gradient && trail.path) for (const coordinate of ["x1", "y1", "x2", "y2"] as const) gradient.setAttribute(coordinate, String(trail[type === "movement" ? ({ x1: "x2", y1: "y2", x2: "x1", y2: "y1" } as const)[coordinate] : coordinate]));
       });
     };
     let paintedPhi = NaN, paintedTheta = NaN;
     paint.current = () => {
+      const project = globeProjection(angle.current, tilt.current);
       if (angle.current !== paintedPhi || tilt.current !== paintedTheta) {
-      routes.forEach(({ from, to }, i) => {
-        beamPaths[i].set(projectArcPath(from, to, angle.current, !!nodes, tilt.current, routeBends[i]));
+      routes.forEach((_, i) => {
+        const path = curves[i].path(project);
+        if (nodes) {
+          if (routePaths.current[i]?.getAttribute("d") !== path) {
+            routePaths.current[i]?.setAttribute("d", path);
+            routeHalos.current[i]?.setAttribute("d", path);
+            routeHits.current[i]?.setAttribute("d", path);
+          }
+        } else beamPaths[i].set(path);
         const badge = routeCounts.current[i];
         if (badge) {
-          const anchor = projectArcAnchor(from, to, angle.current, tilt.current, routeBends[i]);
+          const anchor = curves[i].anchor(project);
           badge.style.visibility = anchor ? "visible" : "hidden";
           if (anchor) badge.setAttribute("transform", `translate(${500 + anchor.x * 480},${500 - anchor.y * 480})`);
         }
       });
-      nodes?.forEach((node, i) => {
-        const position = projectPoint(globePoint(node.location).map(v => v * GLOBE_RADIUS) as [number, number, number], angle.current, tilt.current);
+      nodes?.forEach((_, i) => {
+        const position = project(nodePoints![i]);
         const rim = position.visible ? null : rimIndicator(position);
         const anchor = position.visible ? position : rim;
         const pin = pins.current[i];
@@ -200,15 +214,15 @@ export function Globe({
       if (onMove) {
         let anchor = null;
         if (target?.kind === "node") {
-          const node = nodes?.find(n => n.id === target.id);
-          if (node) {
-            const point = projectPoint(globePoint(node.location).map(v => v * GLOBE_RADIUS) as [number, number, number], angle.current, tilt.current);
+          const index = nodes?.findIndex(n => n.id === target.id) ?? -1;
+          if (index >= 0) {
+            const point = project(nodePoints![index]);
             anchor = point.visible ? point : rimIndicator(point);
           }
         } else if (target?.kind === "link") {
           const index = routes.findIndex(r => r.id === target.id);
           const link = routes[index];
-          if (link) anchor = projectArcAnchor(link.from, link.to, angle.current, tilt.current, routeBends[index]);
+          if (link) anchor = curves[index].anchor(project);
         }
         onMove(anchor ? { x: 500 + anchor.x * 480, y: 500 - anchor.y * 480, target: `${target?.kind}:${target?.id}` } : null);
       }
@@ -230,9 +244,9 @@ export function Globe({
       paint.current = () => {};
       paintArrows.current = () => {};
     };
-  }, [visible, resolvedTheme, beamPaths, arrows, trails, routes, nodes, routeBends]);
+  }, [visible, resolvedTheme, beamPaths, arrows, trails, routes, nodes, curves, nodePoints]);
   useEffect(() => {
-    if (!playing || !visible) return;
+    if (!playing || !visible || (nodes && !rotating && !routes.some(route => route.directed || route.type === "movement"))) return;
     let frame = 0, last = 0, rendered = 0;
     const animate = (t: number) => {
       frame = requestAnimationFrame(animate);
@@ -249,11 +263,11 @@ export function Globe({
       if (turning || !nodes) paint.current();
       else paintArrows.current();
       if (turning) renderer.current?.update({ phi: angle.current, theta: tilt.current });
-      if (canvas.current) canvas.current.dataset.angle = angle.current.toFixed(5);
+      if (turning && canvas.current) canvas.current.dataset.angle = angle.current.toFixed(5);
     };
     frame = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(frame);
-  }, [playing, visible, nodes]);
+  }, [playing, visible, nodes, rotating, routes]);
   useEffect(() => {
     if (!visible || (!focus && !overview.current)) return;
     const from = { phi: angle.current, theta: tilt.current };
@@ -345,9 +359,9 @@ export function Globe({
       ))}
       {nodes && <svg className="atlas-globe-pins" data-playing={playing && visible} viewBox="0 0 1000 1000" aria-label="Reporting locations and geographic links">
         <defs><radialGradient id={haloId}><stop offset="0" stopColor="currentColor" stopOpacity=".45" /><stop offset="1" stopColor="currentColor" stopOpacity="0" /></radialGradient></defs>
-        {routes.map((route, i) => <motion.path key={route.groupId ?? route.id} d={beamPaths[i]} fill="none" stroke="transparent" strokeWidth={18} className="atlas-link-target"
+        {routes.map((route, i) => <path key={route.groupId ?? route.id} ref={el => { routeHits.current[i] = el; }} fill="none" stroke="transparent" strokeWidth={18} className="atlas-link-target"
           role="button" tabIndex={0} aria-label={route.label} aria-description={route.count && route.count > 1 ? `${route.count} links between these locations` : undefined} onPointerEnter={() => highlight({ kind: "link", id: route.id })} onPointerLeave={() => highlight(null)} onFocus={() => highlight({ kind: "link", id: route.id })} onBlur={() => highlight(null)} onClick={() => { highlight(null); onLink?.(route.id); }}
-          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); highlight(null); onLink?.(route.id); } }}></motion.path>)}
+          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); highlight(null); onLink?.(route.id); } }}></path>)}
         {nodes.map((node, i) => ({ node, i })).sort((a, b) => Number(a.node.id === selected) - Number(b.node.id === selected)).map(({ node, i }) => <g key={node.id} ref={el => { pins.current[i] = el; }} className="atlas-globe-pin"
           data-selected={selected === node.id} role="button" tabIndex={0} aria-label={node.label} onPointerEnter={() => highlight({ kind: "node", id: node.id })} onPointerLeave={() => highlight(null)} onFocus={() => highlight({ kind: "node", id: node.id })} onBlur={() => highlight(null)} onClick={() => { highlight(null); onSelect?.(node.id); }}
           onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); highlight(null); onSelect?.(node.id); } }}>
@@ -365,8 +379,8 @@ export function Globe({
           <circle className="atlas-globe-hit" r="11" />
         </g>)}
         {routes.map((route, i) => <g key={`visual:${route.groupId ?? route.id}`} className="atlas-route" data-kind={route.type} data-active={annotation?.kind === "link" && annotation.id === route.id} aria-hidden="true">
-          <motion.path d={beamPaths[i]} className="atlas-route-halo" />
-          <motion.path d={beamPaths[i]} className="atlas-route-line" />
+          <path ref={el => { routeHalos.current[i] = el; }} className="atlas-route-halo" />
+          <path ref={el => { routePaths.current[i] = el; }} className="atlas-route-line" />
           {route.type === "movement" ? <g className="atlas-travel-beam globe-beam-green">
             <defs><linearGradient id={`${haloId}-trail-${i}`} ref={el => { trailGradients.current[i] = el; }} gradientUnits="userSpaceOnUse">
               <BeamGradientStops start="#58ac8b" end="var(--atlas-travel-head)" projected />

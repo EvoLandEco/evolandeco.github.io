@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import { Activity, ChartNoAxesCombined, GitBranch } from "lucide-react";
+import { memo, useId, useMemo, useState, type CSSProperties } from "react";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import { Activity, ChartNoAxesCombined, ChartPie, GitBranch } from "lucide-react";
 import { useAtlas } from "./atlas-context";
 import { AtlasChains } from "./atlas-chains";
 import { AtlasSelect } from "./atlas-select";
@@ -7,7 +8,7 @@ import { ObservationPlot } from "./atlas-metrics";
 import { visibleMeasure } from "@/lib/atlas-metrics";
 import type { AtlasRecord } from "@/lib/atlas";
 
-export function AtlasTrends({ rows, window, onReport }: { rows: AtlasRecord[]; window: [string, string]; onReport: (ids: string[], expand?: boolean) => void }) {
+export const AtlasTrends = memo(function AtlasTrends({ rows, window, onReport }: { rows: AtlasRecord[]; window: [string, string]; onReport: (ids: string[], expand?: boolean) => void }) {
   const { metrics, measures, atlasDocuments, selectedResearch } = useAtlas();
   const [context, setContext] = useState("");
   const [panel, setPanel] = useState("journeys");
@@ -30,7 +31,7 @@ export function AtlasTrends({ rows, window, onReport }: { rows: AtlasRecord[]; w
       months.push({ month, records, count: new Set(records.map(r => r.document_id)).size });
       cursor.setUTCMonth(cursor.getUTCMonth() + 1);
     }
-    return { chains: view.reviewed_chains, series, months, measured: view.numeric_coverage?.records_with_measures ?? measured.size, documents: new Set(rows.map(r => r.document_id)).size };
+    return { composition: view.disease_composition, chains: view.reviewed_chains, series, months, measured: view.numeric_coverage?.records_with_measures ?? measured.size, documents: new Set(rows.map(r => r.document_id)).size };
   }, [rows, window, metrics, measures, atlasDocuments, selectedResearch]);
   const selected = data.series.find(s => s.id === context) ?? data.series[0];
   const peak = Math.max(1, ...data.months.map(m => m.count));
@@ -45,12 +46,13 @@ export function AtlasTrends({ rows, window, onReport }: { rows: AtlasRecord[]; w
         </button>)}</div>
       </section>
       <section className="atlas-trend-coverage" aria-labelledby="atlas-coverage-title">
-        <h2 id="atlas-coverage-title">Figure coverage</h2>
+        <header><ChartPie size={17} aria-hidden /><h2 id="atlas-coverage-title">{data.composition ? "Reporting attention" : "Figure coverage"}</h2></header>
+        {data.composition ? <DiseaseRing composition={data.composition} onReport={onReport} /> : <>
         <svg viewBox="10 10 124 124" role="img" aria-label={`${data.measured} of ${rows.length} records have extracted figures`}>
           <circle cx="72" cy="72" r="58" className="atlas-coverage-track" />
           <circle cx="72" cy="72" r="58" pathLength="100" strokeDasharray={`${coverage} ${100 - coverage}`} transform="rotate(-90 72 72)" className="atlas-coverage-value" />
           <text x="72" y="72" textAnchor="middle">{data.measured}<tspan x="72" dy="19">of {rows.length} records</tspan></text>
-        </svg>
+        </svg></>}
       </section>
     </div>
     {data.chains.length > 0 && <div className="atlas-trend-switch" role="group" aria-label="Trend figure">
@@ -74,4 +76,46 @@ export function AtlasTrends({ rows, window, onReport }: { rows: AtlasRecord[]; w
       </> : <p className="atlas-empty">No observations across multiple dates in this selection. Try a wider reporting window or another topic.</p>}
     </section>
   </div>;
+});
+
+
+function DiseaseRing({ composition, onReport }: { composition: import("@/lib/atlas-contract").AtlasDiseaseComposition; onReport: (ids: string[]) => void }) {
+  const clipId = useId();
+  const [hovered, setHovered] = useState<string | null>(null);
+  const categories = composition.categories.filter(c => c.count > 0).sort((a,b) => b.count-a.count);
+  const palette = Array.from({length:6}, (_, i)=>`var(--attention-${i+1})`);
+  const slices = categories.slice(0,5);
+  if (categories.length > 5) slices.push({ id: "other", label: "Other report subjects", kind: "other", count: categories.slice(5).reduce((sum,c)=>sum+c.count,0), proportion: null, record_ids: categories.slice(5).flatMap(c=>c.record_ids) });
+  const active = slices.find(slice=>slice.id===hovered);
+  const percent = (count: number) => new Intl.NumberFormat("en-GB", {style:"percent",maximumFractionDigits:1}).format(count/composition.denominator);
+  return <div className="atlas-disease-ring" data-highlighted={!!active}><Tooltip.Provider delayDuration={120}><Tooltip.Root onOpenChange={open=>{if(!open)setHovered(null);}}>
+    <Tooltip.Trigger asChild><svg viewBox="10 10 124 124" role="group" aria-label={`Reporting attention by subject across ${composition.denominator} report entries; not disease incidence`}>
+      <circle cx="72" cy="72" r="58" className="atlas-coverage-track" />
+      {slices.map((category, index) => {
+        const portion = category.count / composition.denominator;
+        const start = slices.slice(0, index).reduce((sum, slice) => sum + slice.count, 0) / composition.denominator;
+        const point = (turn: number, radius = 58) => `${72 + radius * Math.sin(turn * Math.PI * 2)} ${72 - radius * Math.cos(turn * Math.PI * 2)}`;
+        const path = `M${point(start)} A58 58 0 0 1 ${point(start + portion / 2)} A58 58 0 0 1 ${point(start + portion)}`;
+        const trim = portion < 1 ? Math.min(5 / (2 * Math.PI * 58), portion / 4) : 0;
+        const visiblePath = `M${point(start + trim)} A58 58 0 0 1 ${point(start + portion / 2)} A58 58 0 0 1 ${point(start + portion - trim)}`;
+        const wedge = `M72 72 L${point(start, 80)} A80 80 0 0 1 ${point(start + portion / 2, 80)} A80 80 0 0 1 ${point(start + portion, 80)} Z`;
+        const angle = (start + portion / 2) * Math.PI * 2;
+        const lift = portion < 1 ? 5 : 0;
+        return <g style={{"--segment-x":`${Math.sin(angle)*lift}px`,"--segment-y":`${-Math.cos(angle)*lift}px`,"--segment-color":palette[index]} as CSSProperties} key={category.id} onMouseEnter={()=>setHovered(category.id)} onFocus={()=>setHovered(category.id)} className="atlas-disease-segment" data-active={hovered===category.id} role="button" tabIndex={0} aria-label={`${category.label}: ${category.count} report entries (${percent(category.count)}). View reports`} onClick={()=>onReport(category.record_ids)} onKeyDown={event=>{if(event.key==="Enter" || event.key===" "){event.preventDefault();onReport(category.record_ids);}}}>
+            <defs><clipPath id={`${clipId}-${index}`}><path d={wedge} /></clipPath></defs>
+            <path className="atlas-disease-hit" d={path} />
+            <path className="atlas-disease-arc" d={visiblePath} stroke={palette[index]} clipPath={portion<1?`url(#${clipId}-${index})`:undefined} />
+          </g>;
+      })}
+      <text x="72" y="72" textAnchor="middle">{composition.denominator}<tspan x="72" dy="19">report entries</tspan></text>
+    </svg></Tooltip.Trigger>
+    {active && <Tooltip.Portal><Tooltip.Content className="atlas-figure-infocard atlas-disease-infocard" side="top" sideOffset={12} collisionPadding={12}>
+      <strong>{active.label}</strong>
+      <div className="atlas-disease-info-value"><b>{active.count.toLocaleString("en-GB")}</b><span>report entries</span><b>{percent(active.count)}</b></div>
+      <span className="atlas-figure-info-meta">Of {composition.denominator.toLocaleString("en-GB")} selected entries · reporting attention</span>
+      {active.id==="other" && <span className="atlas-figure-info-meta">{categories.length-5} additional subjects</span>}
+      <span className="atlas-figure-info-meta">Click to view reports</span>
+      <Tooltip.Arrow className="atlas-figure-info-arrow" />
+    </Tooltip.Content></Tooltip.Portal>}
+  </Tooltip.Root></Tooltip.Provider></div>;
 }

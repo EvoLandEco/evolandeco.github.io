@@ -20,9 +20,23 @@ for (const [path, method, status] of [["/private.json", "GET", 404], ["/current.
   assert.equal((await worker.fetch(request(path, { method }), env)).status, status);
 }
 assert.equal(reads, 0);
+for (const name of ['network-transport.json', 'release.json', 'view.mjs']) {
+  const path = `/releases/${'a'.repeat(64)}/${name}`;
+  const response = await worker.fetch(request(path), env);
+  assert.equal(response.status, 200);
+  assert.equal(keys.at(-1), path.slice(1) + '.gz');
+  assert.match(response.headers.get('Content-Type'), name.endsWith('.mjs') ? /javascript/ : /json/);
+}
+for (const name of ['network-analysis.json', 'network-analysis.schema.json', 'coverage-ledger.json']) {
+  const path = `/network-analysis/${'b'.repeat(64)}/${name}`;
+  assert.equal((await worker.fetch(request(path), env)).status, 200);
+  assert.equal(keys.at(-1), path.slice(1) + '.gz');
+}
+for (const path of [`/network-analysis/${'b'.repeat(64)}/private.json`, '/network-analysis/invalid/network-analysis.json', `/releases/${'a'.repeat(64)}/private.mjs`])
+  assert.equal((await worker.fetch(request(path), env)).status, 404);
 const file = await worker.fetch(request(path), env);
 assert.equal(await file.text(), "data");
-assert.equal(keys[0], path.slice(1) + ".gz");
+assert.equal(keys.at(-1), path.slice(1) + ".gz");
 assert.equal(file.headers.get("Content-Encoding"), "gzip");
 assert.match(file.headers.get("Cache-Control"), /immutable/);
 assert.equal(file.headers.get("Access-Control-Allow-Origin"), "*");

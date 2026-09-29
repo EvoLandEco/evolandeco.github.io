@@ -1,0 +1,73 @@
+import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { createHash } from 'node:crypto';
+
+test('Network review loads on demand, verifies the candidate and keeps rankings unadjusted', async ({ page }) => {
+  const root = process.env.ATLAS_NETWORK_CANDIDATE;
+  test.skip(!root, 'Requires the producer network candidate');
+  const descriptor = readFileSync(join(root!, 'network-transport.json'));
+  let analysisRequests = 0;
+  await page.route('**/current.json', async route => {
+    const response = await route.fetch();
+    const release = await response.json();
+    release.assets['network-transport.json'] = { bytes: descriptor.length, sha256: createHash('sha256').update(descriptor).digest('hex') };
+    await route.fulfill({ json: release });
+  });
+  await page.route('**/releases/*/network-transport.json', route => route.fulfill({ body: descriptor, contentType: 'application/json' }));
+  await page.route('**/network-analysis/*/network-analysis.json', route => {
+    analysisRequests++;
+    return route.fulfill({ body: readFileSync(join(root!, 'network-analysis.json')), contentType: 'application/json' });
+  });
+  await page.goto('/atlas/');
+  await page.locator('.atlas-page[data-ready="true"]').waitFor();
+  expect(analysisRequests).toBe(0);
+  const trigger = page.getByRole('button', { name: 'Network methods & references for Country network statistics' });
+  await trigger.click();
+  const review = page.getByRole('region', { name: 'Network evidence review' });
+  await expect(review).toBeVisible();
+  await expect(review).toContainText('197 → 135');
+  await expect(review).toContainText('197 of 197 statements inspected');
+  await expect(review).toContainText('107 assessed statements');
+  await review.getByText('Movement subjects', { exact: true }).click();
+  await expect(review).toContainText('160 statements');
+  await expect(review).toContainText('16 statements');
+  await expect(review).toContainText('Adjusted rankings unavailable for the full dataset.');
+  await review.getByText('Reviewed repeat-report groups (28)', { exact: true }).click();
+  await review.getByText('SN → IT · 2 statements → 1 reviewed unit', { exact: true }).click();
+  await expect(review).toContainText('Senegal');
+  await expect(review).toContainText('independence is not established');
+  expect(analysisRequests).toBe(1);
+  await page.getByRole('dialog').screenshot({ path: '/tmp/atlas-network-review.png' });
+  await page.keyboard.press('Escape');
+  await expect(trigger).toBeFocused();
+  await page.route('**/releases/*/network-transport.json', route => route.fulfill({ body: '{}', contentType: 'application/json' }));
+  await trigger.click();
+  await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Network analysis could not be verified');
+  expect(analysisRequests).toBe(1);
+  await page.unroute('**/releases/*/network-transport.json');
+  await page.route('**/releases/*/network-transport.json', route => route.fulfill({ body: descriptor, contentType: 'application/json' }));
+  await page.getByRole('button', { name: 'Retry analysis' }).click();
+  await expect(review).toContainText('197 → 135');
+  expect(analysisRequests).toBe(2);
+});
+
+test('Local attached analysis follows link-type filtering without requesting global corrections', async ({ page }) => {
+  test.skip(!process.env.ATLAS_NETWORK_CANDIDATE, 'Requires the attached local analysis');
+  await page.goto('/atlas/');
+  await page.locator('.atlas-page[data-ready="true"]').waitFor();
+  const trigger = page.getByRole('button', { name: 'Network methods & references for Country network statistics' });
+  await trigger.click();
+  const review = page.getByRole('region', { name: 'Network evidence review' });
+  await expect(review).toContainText('197 → 135');
+  await page.keyboard.press('Escape');
+  await page.locator('summary[aria-label="Link type"]').click();
+  const types = page.locator('.atlas-select').filter({ has: page.locator('summary[aria-label="Link type"]') });
+  await types.getByRole('checkbox', { name: 'Shared event', exact: true }).check();
+  await page.keyboard.press('Escape');
+  await trigger.click();
+  await expect(review).toContainText('8 → 6');
+  await expect(review.getByText('Reviewed repeat-report groups (2)', { exact: true })).toBeVisible();
+  await expect(review).toContainText('8 of 8 statements inspected');
+  await expect(review).toContainText('Adjusted rankings unavailable for the full dataset.');
+});

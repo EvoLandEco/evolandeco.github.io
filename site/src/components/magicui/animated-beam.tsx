@@ -1,14 +1,22 @@
 "use client";
 
-import { useEffect, useId, useState, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, useId, useState, type RefObject } from "react";
 import { motion, type MotionValue } from "motion/react";
 
 import { cn } from "@/lib/utils";
 
 export function BeamStroke({ path, gradientId, width, glow = false }: { path: string | MotionValue<string>; gradientId: string; width: number; glow?: boolean }) {
-  return <>{glow && [3.5, 1.8].map((scale, i) => <motion.path key={scale} d={path}
+  const strokes = useRef<(SVGPathElement | null)[]>([]);
+  useLayoutEffect(() => {
+    if (typeof path === "string") return;
+    const draw = (value: string) => { for (const stroke of strokes.current) stroke?.setAttribute("d", value); };
+    draw(path.get());
+    return path.on("change", draw);
+  }, [path, glow]);
+  const d = typeof path === "string" ? path : undefined;
+  return <>{glow && [3.5, 1.8].map((scale, i) => <path key={scale} ref={el => { strokes.current[i] = el; }} d={d}
     style={{ stroke: `url(#${gradientId})`, strokeWidth: width * scale }} strokeOpacity={i === 0 ? .12 : .3} strokeLinecap="round" />)}
-    <motion.path d={path} style={{ stroke: `url(#${gradientId})`, strokeWidth: width }} strokeOpacity="1" strokeLinecap="round" /></>;
+    <path ref={el => { strokes.current[glow ? 2 : 0] = el; }} d={d} style={{ stroke: `url(#${gradientId})`, strokeWidth: width }} strokeOpacity="1" strokeLinecap="round" /></>;
 }
 
 export function BeamGradientStops({ start, end, projected = false }: { start: string; end: string; projected?: boolean }) {
