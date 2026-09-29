@@ -1369,7 +1369,8 @@ footer { border-top: 0; text-align: center; justify-content: center; }
 /* The BJFU artwork occupies the left 120px of its 134px canvas. */
 .institution-logo-bfu img { width: calc(100% * 134 / 120); max-width: none; object-fit: fill; }
 .dark .institution-logo { background: var(--card); border-color: var(--border); }
-.dark .institution-logo img { filter: brightness(1.65); }
+/* Filtered HTML images inside SVG labels lose their position in WebKit. */
+.dark .institution-logo img:not(foreignObject *) { filter: brightness(1.65); }
 
 .dark .network-backdrop { color: #8ebddd; }
 .dark .top-network { opacity: 0.55; }
