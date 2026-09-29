@@ -84,7 +84,7 @@ test("ATLAS entry, date windows, evidence and source focus", async ({ page }) =>
   await expect(page).toHaveURL(/\/atlas\/$/);
   await expect(page.locator(".atlas-page")).toHaveAttribute("data-ready", "true");
   await expect(page.locator("html")).not.toHaveAttribute("data-atlas-transition");
-  await expect(page.locator(".atlas-stats")).toContainText(String(documentCount));
+  await expect(page.locator(".atlas-trend-activity header > strong")).toContainText(String(documentCount));
   await expect(page.getByRole("button", { name: "1 month", exact: true })).toHaveCount(0);
   for (const name of ["3 months", "6 months", "1 year"]) {
     await page.getByRole("button", { name, exact: true }).click();
@@ -117,7 +117,8 @@ test("ATLAS entry, date windows, evidence and source focus", async ({ page }) =>
   await expect(page.locator(".atlas-connection")).toHaveCount(Math.min(12, groupGeographicLinks(snapshot.map_links.filter(l => l.support.every(([id]) => mapRecords.get(id)!.publication.slice(0, 10) <= "2026-06-26")), mapRecords).length));
   await page.getByRole("button", { name: "All dates", exact: true }).click();
   await expect(page.locator(".atlas-connection")).toHaveCount(Math.min(12, routeGroups.length));
-  await page.getByRole("tab", { name: /Assessments/ }).click();
+  await page.getByRole("tab", { name: "Reports", exact: true }).click();
+  await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Assessments", exact: true }).click();
   await expect(page.locator(".atlas-connection")).toHaveCount(Math.min(12, snapshot.relationships.length));
   await page.getByRole("tab", { name: /Source coverage/ }).click();
   await page.getByRole("button", { name: "Reports from RIVM", exact: true }).click();
@@ -378,11 +379,22 @@ test("Closing globe selections restores the overview orientation", async ({ page
       angle: Number(await canvas.getAttribute("data-angle")),
       tilt: await canvas.getAttribute("data-tilt"),
     };
-    await select(page, "Reporting topic", "Bundibugyo imported case · France");
+    await page.locator('summary[aria-label="Reporting topic"]').click();
+    const firstTopic = page.getByRole('checkbox', { name: 'Bundibugyo imported case · France', exact: true });
+    await firstTopic.evaluate(input => input.addEventListener('click', () => {
+      const globe = document.querySelector('canvas[data-markers]')!;
+      globe.setAttribute('data-selection-angle', globe.getAttribute('data-angle')!);
+    }, { once: true, capture: true }));
+    await firstTopic.check();
+    before.angle = Number(await canvas.getAttribute('data-selection-angle'));
+    await firstTopic.press('Escape');
+    await canvas.scrollIntoViewIfNeeded();
     await expect(canvas).toHaveAttribute("data-tilt", "0.81158");
     await select(page, "Reporting topic", "Crimean-Congo haemorrhagic fever · Spain");
+    await canvas.scrollIntoViewIfNeeded();
     await expect(canvas).toHaveAttribute("data-tilt", "0.70162");
     await page.getByRole("button", { name: "Clear globe selection", exact: true }).click();
+    await canvas.scrollIntoViewIfNeeded();
     await expect(canvas).toHaveAttribute("data-tilt", before.tilt!);
     const restored = Number(await canvas.getAttribute("data-angle"));
     expect(Math.abs(Math.atan2(Math.sin(restored - before.angle), Math.cos(restored - before.angle)))).toBeLessThan(.15);
@@ -390,13 +402,17 @@ test("Closing globe selections restores the overview orientation", async ({ page
 
     const link = page.getByRole("button", { name: "Reported return travel · Bundibugyo", exact: true });
     await link.focus(); await page.keyboard.press("Enter");
+    await canvas.scrollIntoViewIfNeeded();
     await expect(canvas).toHaveAttribute("data-tilt", "-0.05061");
     await page.getByRole("button", { name: "Reset all", exact: true }).click();
+    await canvas.scrollIntoViewIfNeeded();
     await expect(canvas).toHaveAttribute("data-tilt", before.tilt!);
 
     await select(page, "Reporting topic", "Bundibugyo imported case · France");
+    await canvas.scrollIntoViewIfNeeded();
     await expect(canvas).toHaveAttribute("data-tilt", "0.81158");
     await select(page, "Reporting topic", "All places & topics");
+    await canvas.scrollIntoViewIfNeeded();
     await expect(canvas).toHaveAttribute("data-tilt", before.tilt!);
   }
 });
@@ -455,7 +471,8 @@ test("Report pages cover every document and reset with the reporting scope", asy
   expect(seen.length).toBe(documentCount);
   expect(new Set(seen).size).toBe(documentCount);
   await expect(top.getByRole("button", { name: "Next report page" })).toBeDisabled();
-  await expect(page.locator(".atlas-timeline-next")).toHaveCount(0);
+  await expect(page.locator(".atlas-timeline-next")).toBeVisible();
+  await expect(page.locator(".atlas-report-tools")).toHaveAttribute("data-timeline", "true");
   await select(page, "Report page, top", `Page 2 of ${documentPages}`);
   await expect(reports.first()).toHaveAttribute("id", seen[12]);
   await expect(page.getByRole("heading", { name: "Report chronology" })).toBeFocused();
@@ -482,7 +499,7 @@ test("Assessment evidence and source coverage land on their report pages", async
   await page.goto("/atlas/");
   await page.getByRole("tab", { name: "Reports", exact: true }).click();
   await select(page, "Report page, top", `Page ${documentPages} of ${documentPages}`);
-  await page.getByRole("tab", { name: /^Assessments/ }).click();
+  await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Assessments", exact: true }).click();
   const assessment = page.locator(".atlas-connection").first();
   await assessment.getByText("Evidence & scope", { exact: true }).click();
   await assessment.getByRole("button", { name: "View report", exact: true }).first().click();
@@ -658,7 +675,7 @@ test("ATLAS assertion branches show section evidence and respect partial windows
   await page.getByLabel('Reset all', { exact: true }).click();
   await select(page, 'Reporting topic', 'Cholera · Central African Republic');
   const repeated = page.locator('.atlas-comparison[data-kind="republication"]').first();
-  await repeated.locator('xpath=ancestor::details').locator('summary').first().click();
+  await page.locator('.atlas-report > summary').filter({ hasText: 'Repeated reporting' }).first().click();
   await expect(repeated).toBeVisible();
   await repeated.locator('.atlas-assertion-report').last().click();
   await expect(page.locator('.atlas-report[data-evidence="true"][open]')).toBeVisible();
@@ -697,6 +714,8 @@ test("Home-style travel beams animate while hovering and stop for reduced motion
   await page.goto("/atlas/");
   const legendBeam = page.locator(".atlas-legend-arrow");
   await expect(page.locator('.atlas-link-legend [data-kind="movement"] linearGradient')).toHaveAttribute("gradientUnits", "userSpaceOnUse");
+  expect(await legendBeam.evaluate(el => el instanceof HTMLElement)).toBe(true);
+  await expect(legendBeam).toHaveCSS("will-change", "transform, opacity");
   const legendPosition = await legendBeam.evaluate(el => getComputedStyle(el).transform);
   await expect.poll(() => legendBeam.evaluate(el => getComputedStyle(el).transform)).not.toBe(legendPosition);
   const link = page.getByRole("button", { name: "Reported return travel · Bundibugyo", exact: true });
@@ -757,7 +776,7 @@ test("ATLAS download errors leave a retry that loads verified reports", async ({
   await expect(page.locator(".atlas-report")).toHaveCount(0);
   await expect.poll(() => page.locator("#contact").evaluate(element => element.getBoundingClientRect().top >= innerHeight)).toBe(true);
   await page.getByRole("button", { name: "Try again" }).click();
-  await expect(page.locator(".atlas-stats")).toContainText(String(documentCount));
+  await expect(page.locator(".atlas-trend-activity header > strong")).toContainText(String(documentCount));
   await expect(page.locator(".atlas-page").getByRole("alert")).toHaveCount(0);
 });
 
@@ -781,8 +800,9 @@ for (const width of [390, 1280]) test(`Expanded evidence headings stay reachable
   await report.locator(":scope > summary").click();
   await expect(report).not.toHaveAttribute("open", "");
   await expect.poll(async () => (await report.locator(":scope > summary").boundingBox())!.y).toBeGreaterThanOrEqual(-1);
-  for (const name of [/Geographic links/, /Assessments/]) {
-    await page.getByRole("tab", { name }).click();
+  for (const name of ["Geographic links", "Assessments"]) {
+    await page.getByRole("tab", { name: name === "Assessments" ? "Reports" : name, exact: true }).click();
+    if (name === "Assessments") await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Assessments", exact: true }).click();
     const entry = page.locator(".atlas-connection").first();
     const disclosure = entry.locator("details").first();
     await disclosure.locator(":scope > summary").click();
@@ -807,11 +827,11 @@ for (const width of [390, 1280]) test(`Trends filter observations and navigate t
   const trends = page.locator(".atlas-trends");
   await expect(trends.getByRole("heading", { name: "Reporting activity" })).toBeVisible();
   const bars = await trends.locator(".atlas-activity-bars").boundingBox();
-  const coverageChart = await trends.locator(".atlas-trend-coverage svg").boundingBox();
+  const coverageChart = await trends.locator('.atlas-trend-coverage svg[role="img"]').boundingBox();
   expect(Math.abs(bars!.height - coverageChart!.height)).toBeLessThan(1);
   const counts = await trends.locator(".atlas-activity-track b").allTextContents();
   expect(counts.reduce((sum, count) => sum + Number(count), 0)).toBe(documentCount);
-  await expect(trends.locator(".atlas-trend-coverage svg")).toHaveAttribute("aria-label", /19 of 785 records/);
+  await expect(trends.locator('.atlas-trend-coverage svg[role="img"]')).toHaveAttribute("aria-label", /19 of 785 records/);
   await select(page, "Reporting topic", "Lassa fever · Nigeria");
   await select(page, "Observation series", "Lassa fever · Nigeria · Confirmed cases · interval");
   await expect(trends.locator(".atlas-observation-grid circle")).toHaveCount(4);
@@ -903,7 +923,8 @@ for (const width of [390, 1280]) test(`Links and assessments paginate and reset 
     ["Geographic links", "Geographic link", "data-link-id", routeGroups.map(g => g.entries.at(-1)!.link.id)],
     ["Assessments", "Assessment", "data-assessment-id", snapshot.relationships.map(a => a.id)],
   ] as const) {
-    await page.getByRole("tab", { name: new RegExp(`^${tab}`) }).click();
+    await page.getByRole("tab", { name: tab === "Assessments" ? "Reports" : new RegExp(`^${tab}`), exact: true }).click();
+    if (tab === "Assessments") await page.getByRole("group", {name:"Report content"}).getByRole("button", {name:"Assessments",exact:true}).click();
     const entries = page.locator(".atlas-connection");
     const pages = Math.ceil(ids.length / 12);
     const shown = () => entries.evaluateAll((items, attr) => items.map(item => item.getAttribute(attr)), attribute);
@@ -1094,7 +1115,7 @@ for (const width of [390, 1280]) test(`Reviewed Trends render only permitted con
   await expect(evidence).toContainText(series.reason);
   await expect(evidence).toContainText('Source-checked draft');
   await expect(evidence).toContainText('Published');
-  await expect(page.locator(".atlas-trend-coverage svg")).toHaveAttribute("aria-label", /records have extracted figures/);
+  await expect(page.locator('.atlas-trend-coverage svg[role="img"]')).toHaveAttribute("aria-label", /records have extracted figures/);
   if (process.env.ATLAS_REVIEWED_CANDIDATE) { await plot.scrollIntoViewIfNeeded(); await page.screenshot({ path: `/tmp/atlas-reviewed-trends-${width}.png` }); }
   const hidden = candidate.metrics.reviewed_series[0].members[1].eligibility.record_ids[0];
   const date = candidate.records.find(r => r.id === hidden)!.publication.slice(0, 10);
@@ -1239,4 +1260,184 @@ test('EU/EEA report mentions display a loaded EU flag', async ({ page }) => {
   await expect(flag).toBeVisible();
   await expect.poll(() => flag.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
   await claim.screenshot({ path: '/tmp/atlas-eu-eea-flag.png' });
+});
+
+for (const [width, height, workspace] of [[390, 850, false], [1280, 950, false], [1440, 850, true]] as const) test(`Reports switch preserves both views at ${width}px ${workspace ? "workspace" : "page"}`, async ({ page }) => {
+  await page.setViewportSize({ width, height });
+  await page.emulateMedia({ reducedMotion: "reduce", colorScheme: workspace ? "dark" : "light" });
+  await page.goto("/atlas/");
+  await expect(page.locator('.atlas-page')).toHaveAttribute('data-ready', 'true');
+  if (workspace) {
+    await page.getByRole('button', { name: 'Click to enter full screen' }).focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.atlas-page')).toHaveAttribute('data-fullscreen', 'true');
+  }
+  await expect(page.getByRole('tab', { name: 'Assessments', exact: true })).toHaveCount(0);
+  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+  const toggle = page.getByRole('group', { name: 'Report content' });
+  const reports = toggle.getByRole('button', { name: 'Reports', exact: true });
+  const assessments = toggle.getByRole('button', { name: 'Assessments', exact: true });
+  const position = workspace ? 'bottom' : 'top';
+  const reportPages = page.getByRole('navigation', { name: `Report pages, ${position}` });
+  const assessmentPages = page.getByRole('navigation', { name: `Assessment pages, ${position}` });
+  await expect(reports).toHaveAttribute('aria-pressed', 'true');
+  const dates = page.locator('.atlas-timeline-next');
+  const tools = page.locator('.atlas-report-tools');
+  await expect(dates).toBeVisible();
+  await tools.scrollIntoViewIfNeeded();
+  const datesBox = (await dates.boundingBox())!, switchBox = (await toggle.boundingBox())!;
+  expect(Math.abs(datesBox.y + datesBox.height / 2 - switchBox.y - switchBox.height / 2)).toBeLessThan(1);
+  expect(datesBox.x + datesBox.width).toBeLessThan(switchBox.x);
+  const connection = await page.locator('.atlas-report-prelude').evaluate(el => {
+    const stem = getComputedStyle(el, '::before');
+    const report = el.nextElementSibling!.getBoundingClientRect();
+    const box = el.getBoundingClientRect();
+    return { x: box.left + parseFloat(stem.left), reportX: report.left, bottom: box.bottom, reportY: report.top };
+  });
+  expect((await tools.boundingBox())!.y + (await tools.boundingBox())!.height).toBe((await page.locator('.atlas-report-prelude').boundingBox())!.y);
+  expect(connection.x).toBe(connection.reportX);
+  expect(connection.bottom).toBe(connection.reportY);
+  await page.screenshot({ path: `/tmp/atlas-report-dates-${width}.png` });
+  if (workspace) {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await assessments.click();
+    expect(await dates.evaluate(el => el.getAnimations().some(animation => animation instanceof CSSTransition && animation.transitionProperty === 'margin-left'))).toBe(true);
+    await expect(dates).toHaveCSS('margin-left', '0px');
+    await reports.click();
+    await expect(dates).toHaveCSS('margin-left', '48px');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+  }
+  await reportPages.getByRole('button', { name: 'Next report page' }).click();
+  await expect(dates).toBeVisible();
+  await expect(dates.locator('time')).toHaveText(['26 Sept 2026', '30 Sept 2026']);
+  await expect(tools).toHaveAttribute('data-timeline', 'true');
+  expect(await page.locator('.atlas-report-prelude').evaluate(el => getComputedStyle(el, '::before').borderLeftWidth)).toBe('1px');
+  await assessments.click();
+  await expect(dates).toBeVisible();
+  await expect(dates.locator('time')).toHaveText(['26 Sept 2026', '30 Sept 2026']);
+  await expect(tools).not.toHaveAttribute('data-timeline');
+  expect(await tools.evaluate(el => getComputedStyle(el, '::before').opacity)).toBe('0');
+  await expect(dates).toHaveCSS('margin-left', '0px');
+  const assessmentTop = (await page.locator('.atlas-connection > .atlas-entry-heading').first().boundingBox())!.y;
+  const switchBottom = (await toggle.boundingBox())!.y + (await toggle.boundingBox())!.height;
+  expect(assessmentTop - switchBottom).toBeLessThanOrEqual(workspace ? 22 : 70);
+  await toggle.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `/tmp/atlas-assessment-spacing-${width}.png` });
+  await assessmentPages.getByRole('button', { name: 'Next assessment page' }).click();
+  await assessments.focus();
+  await assessments.press('ArrowLeft');
+  await expect(reports).toBeFocused();
+  await expect(reportPages).toContainText('Page 2 of');
+  await reports.press('ArrowRight');
+  await expect(assessments).toBeFocused();
+  await expect(assessmentPages).toContainText('Page 2 of');
+  await page.getByRole('tab', { name: 'Trends', exact: true }).click();
+  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+  await expect(assessments).toHaveAttribute('aria-pressed', 'true');
+  await expect(assessmentPages).toContainText('Page 2 of');
+  await page.getByRole('button', { name: '3 months', exact: true }).click();
+  await expect(assessments).toHaveAttribute('aria-pressed', 'true');
+  await expect(assessmentPages).toContainText('Page 1 of');
+  if (workspace) {
+    const switchY = (await toggle.boundingBox())!.y;
+    const pagerY = (await assessmentPages.boundingBox())!.y;
+    await page.locator('.atlas-workspace-scroll').evaluate(el => { el.scrollTop = el.scrollHeight; });
+    expect((await toggle.boundingBox())!.y).toBe(switchY);
+    expect((await assessmentPages.boundingBox())!.y).toBe(pagerY);
+    await expect(page.locator('.atlas-pagination')).toHaveCount(1);
+    expect(await page.locator('.atlas-workspace').evaluate(el => el.scrollHeight <= el.clientHeight)).toBe(true);
+  }
+  await toggle.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `/tmp/atlas-reports-switch-${width}.png` });
+  expect((await new AxeBuilder({ page }).include('.atlas-workspace').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('Report bodies and scope contents render when opened', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/atlas/');
+  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+  await expect(page.locator('.atlas-report')).toHaveCount(12);
+  await expect(page.locator('.atlas-report-body')).toHaveCount(0);
+  const report = page.locator('.atlas-report').first();
+  await report.locator(':scope > summary').click();
+  await expect(report.locator('.atlas-report-body')).toBeVisible();
+  await expect(page.locator('.atlas-report-body')).toHaveCount(1);
+  const scope = report.locator('.atlas-scope-trigger').first();
+  await expect(report.locator('.atlas-scope-body > *')).toHaveCount(0);
+  await scope.click();
+  const dialog = page.getByRole('dialog', { name: /^Scope & source/ });
+  await expect(dialog.locator('.atlas-scope-body')).not.toBeEmpty();
+  await page.keyboard.press('Escape');
+  await expect(scope).toBeFocused();
+  await expect(report.locator('.atlas-scope-body > *')).toHaveCount(0);
+  await scope.click();
+  await expect(dialog).toBeVisible();
+});
+
+test('Globe and title animations pause while the document is hidden', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/atlas/');
+  const pins = page.locator('.atlas-globe-pins');
+  const title = page.locator('.atlas-heading .animate-aurora');
+  await expect(pins).toHaveAttribute('data-playing', 'true');
+  await expect(title).toHaveCSS('animation-play-state', 'running');
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect(pins).toHaveAttribute('data-playing', 'false');
+  await expect(title).toHaveCSS('animation-play-state', 'paused');
+  for (const node of await page.locator('.network-node').all()) await expect(node).toHaveCSS('animation-play-state', 'paused');
+  const path = page.locator('.atlas-travel-beam > path').first();
+  const paused = await path.getAttribute('d');
+  await page.waitForTimeout(250);
+  await expect(path).toHaveAttribute('d', paused!);
+  await page.evaluate(() => {
+    Reflect.deleteProperty(document, 'hidden');
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect(pins).toHaveAttribute('data-playing', 'true');
+  await page.locator('.main-column > footer').scrollIntoViewIfNeeded();
+  await expect(title).toHaveCSS('animation-play-state', 'paused');
+});
+
+test('Closed selectors release choices and preserve keyboard navigation', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/atlas/');
+  const hiddenChoices = page.locator('.atlas-select:not([open]) .atlas-select-options :is([role="option"], input)');
+  await expect(hiddenChoices).toHaveCount(0);
+  const topic = page.locator('summary[aria-label="Reporting topic"]');
+  await topic.focus();
+  await topic.press('Enter');
+  const search = page.getByRole('searchbox', { name: 'Search reporting topic' });
+  await expect(search).toBeFocused();
+  await search.fill('Bundibugyo imported case');
+  await search.press('ArrowDown');
+  await expect(page.getByRole('checkbox').first()).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(topic).toBeFocused();
+  await expect(hiddenChoices).toHaveCount(0);
+  await topic.press('End');
+  await expect(page.getByRole('checkbox').last()).toBeFocused();
+  await page.keyboard.press('Escape');
+  await topic.press('Enter');
+  await expect(search).toHaveValue('');
+  await page.locator('.atlas-heading h1').click();
+  await expect(hiddenChoices).toHaveCount(0);
+
+  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+  const pages = page.locator('summary[aria-label="Report page, top"]');
+  await pages.focus();
+  await pages.press('ArrowDown');
+  const second = page.getByRole('option', { name: `Page 2 of ${documentPages}`, exact: true });
+  await expect(second).toBeFocused();
+  await second.press('Enter');
+  await expect(pages).toContainText(`Page 2 of ${documentPages}`);
+  await expect(page.locator('#atlas-report-heading')).toBeFocused();
+  await expect(hiddenChoices).toHaveCount(0);
+  await pages.focus();
+  await pages.press('Enter');
+  await expect(page.getByRole('option', { selected: true })).toBeFocused();
+  await page.keyboard.press('Escape');
 });

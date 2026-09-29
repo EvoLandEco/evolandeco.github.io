@@ -1,0 +1,137 @@
+{
+  "adoption_status": "adopted_for_local_review",
+  "adopted_at": "2026-09-28T13:03:56.927880+00:00",
+  "candidate_directory": "/Users/tianjian/Documents/ChatGPT/EpiWeekly/reports/who-workflow-2026-09-28/final",
+  "export_id": "deb479877652f3260444d0a499c17bf4b3ab8cf1950b0bc7e1c0c8e5e46b5409",
+  "manifest_sha256": "46c66fd41bb58d4926b6af45f7e02e4be324cb686c451cf52f5120ccf3f8ac83",
+  "selector_sha256": "5786eb97ab1eb242ddd805699498ad9d1ff588358274f9601c91ba9af286167b",
+  "snapshot_sha256": "1f3e55886455dc3211c3a41418d1ae8d9c75722fafd40094374ceddbefe2d3a3",
+  "contract_version": "1.4.0",
+  "software_version": "0.1.0a25",
+  "preview": "http://localhost:3001/atlas/",
+  "data_origin": "http://localhost:3004",
+  "publication_authorized": false,
+  "publication_hold": true,
+  "counts_as_weekly_completion": false,
+  "checks": {
+    "bundle_hashes": "passed",
+    "consumer_schema_and_evidence": "passed",
+    "historical_capture_cutoff": "passed",
+    "reviewed_connection_gaps": "passed",
+    "mobile_and_workspace_browser_scenarios": 7,
+    "production_map_links_sources_and_largest_report": "passed",
+    "in_app_preview": "332 documents, 124 geographic routes, final candidate visible"
+  },
+  "load_measurements": [
+    {
+      "run": 0,
+      "readyMs": 1312,
+      "heapUsedMB": 204.346408,
+      "longTasks": 4,
+      "longestTaskMs": 385
+    },
+    {
+      "run": 1,
+      "readyMs": 1125,
+      "heapUsedMB": 204.45054,
+      "longTasks": 3,
+      "longestTaskMs": 387
+    },
+    {
+      "run": 2,
+      "readyMs": 1119,
+      "heapUsedMB": 204.067352,
+      "longTasks": 3,
+      "longestTaskMs": 382,
+      "largestReportOpenMs": 157,
+      "largestReportTiles": 813
+    }
+  ],
+  "data_measurements": {
+    "bytes": 169073546,
+    "gzipBytes": 12571728,
+    "parseMs": 318.91212500000006,
+    "selectorMedianMs": 86.76433399999996,
+    "selectorMaxMs": 108.78833400000008
+  },
+  "rendering_measurements": [
+    {
+      "route": "/",
+      "state": "rotating",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 603.39,
+        "ScriptDuration": 52.11,
+        "LayoutDuration": 4.44,
+        "RecalcStyleDuration": 25.74,
+        "draws": 90,
+        "attributes": 8720
+      }
+    },
+    {
+      "route": "/",
+      "state": "offscreen",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 9.45,
+        "ScriptDuration": 0.16,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 2.43,
+        "draws": 0,
+        "attributes": 0
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "rotating",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 2859.75,
+        "ScriptDuration": 356.29,
+        "LayoutDuration": 41.98,
+        "RecalcStyleDuration": 462.99,
+        "draws": 89,
+        "attributes": 138373
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "workspace",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 1277.94,
+        "ScriptDuration": 139.21,
+        "LayoutDuration": 108.31,
+        "RecalcStyleDuration": 291.27,
+        "draws": 0,
+        "attributes": 64491
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "reduced-motion",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 0.24,
+        "ScriptDuration": 0,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 0,
+        "draws": 0,
+        "attributes": 0
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "offscreen",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 14.29,
+        "ScriptDuration": 0.2,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 2.63,
+        "draws": 0,
+        "attributes": 0
+      }
+    }
+  ]
+}

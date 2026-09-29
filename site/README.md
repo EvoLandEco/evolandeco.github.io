@@ -44,7 +44,7 @@ pnpm test:e2e
 
 Browser tests use the static preview server at port 3000. `CHROMIUM_PATH` can select an installed Chromium executable. Screenshots and test reports are stored in `evidence/`.
 
-With the production preview running, `node scripts/profile-globe.mjs /tmp/globe-profile.json` measures Home and ATLAS while their globes are visible and offscreen. It reports median main-thread, script, style and layout time across three four-second samples using [Chromium performance metrics](https://chromedevtools.github.io/devtools-protocol/tot/Performance/). Run it without concurrent browser tests. These local measurements do not represent total desktop-app CPU usage or GPU utilization.
+With the production preview running, `node scripts/profile-globe.mjs /tmp/globe-profile.json` measures Home and ATLAS during rotation, in workspace mode, with reduced motion and offscreen. It reports median main-thread, script, style and layout time across three three-second samples using [Chromium performance metrics](https://chromedevtools.github.io/devtools-protocol/tot/Performance/). Run it without concurrent browser tests. These local measurements do not represent total desktop-app CPU usage or GPU utilization.
 
 ## ATLAS export
 
@@ -60,11 +60,13 @@ Use `0.MINOR.PATCH` during experimental development:
 
 For each UI release, set the metadata, add a dated entry below describing its scope and supported export contracts, and run type, lint and relevant browser checks before publishing. Increment once per release, rather than for every edit.
 
+**0.2.0 · Experimental · 28 September 2026** — One Health networks, evidence, timelines, sampling and environmental context; reporting attention; responsive workspace panels; loading and rendering improvements. Export contracts: `1.0.0` through `1.5.0`. One Health analytical panels require `1.5.0`. See [release checks and dataset activation](evidence/release-preflight-2026-09-28.md).
+
 **0.1.0 · Experimental · 27 September 2026** — Interactive globe, evidence panels, reporting filters, observation plots and journey maps. Export contracts: `1.0.0`, `1.1.0` and `1.2.0`; reviewed journey maps require `1.2.0`. This entry identifies the local UI baseline and does not certify a production deployment.
 
 ### Dataset delivery
 
-ATLAS data is hosted in the private Cloudflare R2 bucket `qtj-atlas` and served through its read-only Worker. The browser loads a checksum-verified release at runtime. The repository contains the frontend, trusted selector, types, validation and publication scripts; data bundles are excluded from Git. `pnpm atlas:sync --project /path/to/EpiWeekly` publishes only after ATLAS reports all three weekly jobs complete for the same Wednesday cycle. Dataset publication requires no frontend build or Git push. Cloudflare credentials stay in Wrangler's local OAuth configuration.
+ATLAS data is hosted in the private Cloudflare R2 bucket `qtj-atlas` and served through its read-only Worker. The browser loads a checksum-verified release at runtime. The repository contains the frontend, trusted selector, types, validation and publication scripts; data bundles are excluded from Git. `pnpm atlas:sync --project /path/to/EpiWeekly` publishes only after ATLAS reports all three weekly jobs complete for the same Wednesday cycle. Publication within a supported contract requires no frontend build or Git push. A higher contract must wait for a compatible website deployment. Add `--stage-only` to upload and verify immutable assets without changing `current.json`. Cloudflare credentials stay in Wrangler's local OAuth configuration.
 
 ATLAS's supplied selector applies evidence eligibility and compact figure selection to the interface's selected record set. Callouts display up to two contexts, retaining competing values. Reports expose the reviewed measurements in scope. Observation plots use the supplied series membership and show unconnected points.
 
@@ -95,3 +97,11 @@ The shared layout loads analytics once, with SPA navigation tracking enabled. Th
 Open Web Analytics → qtj.me to see visits, page views, referrers and geographic breakdowns. Counts begin after deployment and may take a few minutes to appear. Browser blocking can prevent visits from being counted; these figures are not an exact count of distinct people.
 
 Setup reference: https://developers.cloudflare.com/web-analytics/get-started/
+
+### Private One Health preview
+
+The local UI supports sealed site 1.3.0 and One Health 1.4.0 candidates as well as the public 1.2.0 release. The publication configuration remains pinned to 1.2.0. One Health interface work and candidate validation do not authorize publication.
+
+Set `NEXT_PUBLIC_ATLAS_DATA_ORIGIN` to a loopback data service with the candidate release pointer and checksum-matched assets. Keep candidate bundles outside Git. Run `ATLAS_ONE_HEALTH_CANDIDATE=/path/to/candidate pnpm test` to include the actual-data checks; the candidate directory contains `structured/` and `snapshot.json`. Run `tests/atlas-one-health.spec.ts` against that private preview for evidence selection, filters, phone and workspace layouts, accessibility and public-release compatibility.
+
+One Health includes Network, Evidence and Overview views under the shared reporting filters. The figure methods dialog contains literature references and interpretation limits. The [citation verification record](evidence/one-health-design-citations-2026-09-28.md) documents the papers and their relevance; the [producer boundary](ATLAS_EXPORT_CONTRACT.md#one-health-presentation-and-producer-workflow) identifies features that require a versioned ATLAS export.

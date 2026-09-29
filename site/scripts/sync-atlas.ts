@@ -61,7 +61,7 @@ async function currentRelease() {
   assert(response.ok, `Cannot read published release: ${response.status}`);
   return releaseSchema.parse(await response.json());
 }
-export async function syncAtlas(project: string, cycle: string, initial = false, correctionPath?: string) {
+export async function syncAtlas(project: string, cycle: string, initial = false, correctionPath?: string, stageOnly = false) {
   assert(!(initial && correctionPath), "Choose either initial publication or correction");
   const cache = resolve(site, ".cache/atlas-sync");
   await mkdir(cache, { recursive: true });
@@ -122,6 +122,11 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
     assert.deepEqual(await currentRelease(), existing, "Published release changed during upload");
     const releasePath = resolve(cache, "current.json");
     await writeFile(releasePath, JSON.stringify(release));
+    if (stageOnly) {
+      await writeFile(resolve(cache, `staged-${release.export_id}.json`), JSON.stringify({ release, handoff: final }, null, 2));
+      console.log(JSON.stringify({ status: "staged", export_id: release.export_id, url: releaseRoot(release), activation_pending: true }));
+      return;
+    }
     put("current.json", releasePath, false);
     assert.deepEqual(await currentRelease(), release);
     await writeFile(resolve(cache, `${correctionPath ? `correction-${release.export_id}` : initial ? "initial" : cycle}.json`), JSON.stringify({ release, handoff: final }, null, 2));
@@ -129,7 +134,7 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
   } finally { await rm(lock, { recursive: true }); }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  const { values } = parseArgs({ options: { project: { type: "string" }, cycle: { type: "string" }, initial: { type: "boolean", default: false }, correction: { type: "string" } } });
+  const { values } = parseArgs({ options: { project: { type: "string" }, cycle: { type: "string" }, initial: { type: "boolean", default: false }, correction: { type: "string" }, "stage-only": { type: "boolean", default: false } } });
   assert(values.project, "Supply --project with the local ATLAS checkout");
-  syncAtlas(resolve(values.project), values.cycle ?? weeklyCycle(), values.initial, values.correction).catch(error => { console.error(error); process.exitCode = 1; });
+  syncAtlas(resolve(values.project), values.cycle ?? weeklyCycle(), values.initial, values.correction, values["stage-only"]).catch(error => { console.error(error); process.exitCode = 1; });
 }

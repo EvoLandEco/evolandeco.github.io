@@ -5,22 +5,28 @@ export function globePoint([lat, lon]: [number, number]): Vec3 {
     b = (lon * Math.PI) / 180 - Math.PI;
   return [-Math.cos(a) * Math.cos(b), Math.sin(a), Math.cos(a) * Math.sin(b)];
 }
-export function projectPoint(p: Vec3, phi: number, theta: number) {
-  const x = Math.cos(phi) * p[0] + Math.sin(phi) * p[2];
-  const y =
-    Math.sin(phi) * Math.sin(theta) * p[0] +
-    Math.cos(theta) * p[1] -
-    Math.cos(phi) * Math.sin(theta) * p[2];
-  const z =
-    -Math.sin(phi) * Math.cos(theta) * p[0] +
-    Math.sin(theta) * p[1] +
-    Math.cos(phi) * Math.cos(theta) * p[2];
-  return {
-    x,
-    y,
-    z,
-    visible: z >= 0 || x * x + y * y >= GLOBE_RADIUS * GLOBE_RADIUS,
+export function globeProjection(phi: number, theta: number) {
+  const cp = Math.cos(phi), sp = Math.sin(phi), ct = Math.cos(theta), st = Math.sin(theta);
+  return (p: Vec3) => {
+    const x = cp * p[0] + sp * p[2];
+    const y =
+      sp * st * p[0] +
+      ct * p[1] -
+      cp * st * p[2];
+    const z =
+      -sp * ct * p[0] +
+      st * p[1] +
+      cp * ct * p[2];
+    return {
+      x,
+      y,
+      z,
+      visible: z >= 0 || x * x + y * y >= GLOBE_RADIUS * GLOBE_RADIUS,
+    };
   };
+}
+export function projectPoint(p: Vec3, phi: number, theta: number) {
+  return globeProjection(phi, theta)(p);
 }
 export function rimIndicator(point: ReturnType<typeof projectPoint>) {
   const distance = Math.hypot(point.x, point.y);
@@ -35,16 +41,20 @@ export function rimIndicator(point: ReturnType<typeof projectPoint>) {
   };
 }
 
-export function arcPoint(from: Vec3, to: Vec3, t: number, lift = 0.4, bend?: Vec3): Vec3 {
+function quadraticArc(from: Vec3, to: Vec3, lift: number) {
   const sum = from.map((v, i) => v + to[i]);
   const length = Math.hypot(...sum);
   const r = GLOBE_RADIUS;
-  return from.map(
+  return (t: number, bend?: Vec3) => from.map(
     (v, i) =>
       (1 - t) ** 2 * r * v +
       (2 * (1 - t) * t * (r + lift) * sum[i]) / length +
       t * t * r * to[i] + 2 * (1 - t) * t * (bend?.[i] ?? 0),
   ) as Vec3;
+}
+
+export function arcPoint(from: Vec3, to: Vec3, t: number, lift = 0.4, bend?: Vec3): Vec3 {
+  return quadraticArc(from, to, lift)(t, bend);
 }
 
 export function drawGlobeEffects(
@@ -61,8 +71,9 @@ export function drawGlobeEffects(
   const width = canvas.width,
     scale = (width * 0.96) / 2;
   const points = locations.map(globePoint);
+  const projection = globeProjection(phi, theta);
   const project = (p: Vec3) => {
-    const v = projectPoint(p, phi, theta);
+    const v = projection(p);
     return {
       x: width / 2 + v.x * scale,
       y: width / 2 - v.y * scale,
@@ -140,7 +151,8 @@ export function geographicArc(from: Vec3, to: Vec3) {
   const chord = to.map((v, i) => v - from[i]) as Vec3;
   const distance = Math.hypot(...chord);
   const lift = Math.max(.32, Math.min(.4, distance * .35));
-  if (distance >= .4) return (t: number, bend?: Vec3) => arcPoint(from, to, t, lift, bend);
+  const quadratic = quadraticArc(from, to, lift);
+  if (distance >= .4) return quadratic;
   const midpoint = from.map((v, i) => (v + to[i]) * GLOBE_RADIUS / 2);
   const midpointRadius = Math.hypot(...midpoint);
   const normal = midpoint.map(v => v / midpointRadius);
@@ -157,7 +169,7 @@ export function geographicArc(from: Vec3, to: Vec3) {
   return (t: number, bend?: Vec3): Vec3 => {
     if (t === 0 || t === 1) return (t === 0 ? from : to).map(v => v * GLOBE_RADIUS) as Vec3;
     const angle = (2 * t - 1) * sweep;
-    const base = weight ? arcPoint(from, to, t, lift) : midpoint;
+    const base = weight ? quadratic(t) : midpoint;
     return midpoint.map((v, i) => {
       const circle = v + normal[i] * (height - radius + radius * Math.cos(angle)) +
         tangent[i] / tangentLength * radius * Math.sin(angle);
@@ -238,76 +250,70 @@ export function separateGlobeRoutes(routes: { id: string; from: [number, number]
   return curves.map((curve, i) => curve.direction.map(v => v * lanes.get(i)! * laneLimits.get(i)!.step) as Vec3);
 }
 
-export function projectArcPath(
-  from: [number, number],
-  to: [number, number],
-  phi: number,
-  geographic = false,
-  theta = 0.22,
-  bend?: Vec3,
-  range: [number, number] = [0, 1],
-) {
-  const a = globePoint(from),
-    b = globePoint(to);
-  const pointAt = geographic ? geographicArc(a, b) : (t: number, bend?: Vec3) => arcPoint(a, b, t, .4, bend);
-  let path = "",
-    connected = false;
-  const steps = Math.max(1, Math.ceil(96 * (range[1] - range[0])));
-  for (let i = 0; i <= steps; i++) {
-    const p = projectPoint(pointAt(range[0] + (range[1] - range[0]) * i / steps, bend), phi, theta);
-    if (!p.visible) {
-      connected = false;
-      continue;
-    }
-    path += `${connected ? "L" : "M"}${(500 + p.x * 480).toFixed(2)},${(500 - p.y * 480).toFixed(2)} `;
-    connected = true;
-  }
-  return path;
-}
-
-export function projectArcAnchor(from: [number, number], to: [number, number], phi: number, theta: number, bend?: Vec3) {
+export function prepareGlobeArc(from: [number, number], to: [number, number], geographic = true, bend?: Vec3) {
   const a = globePoint(from), b = globePoint(to);
-  const pointAt = geographicArc(a, b);
-  let anchor: ReturnType<typeof projectPoint> | null = null;
-  let nearest = Infinity;
-  for (let i = 0; i <= 96; i++) {
-    const t = i / 96;
-    const point = projectPoint(pointAt(t, bend), phi, theta);
-    if (point.visible && Math.abs(t - .5) < nearest) {
-      anchor = point; nearest = Math.abs(t - .5);
+  const curve = geographic ? geographicArc(a, b) : quadraticArc(a, b, .4);
+  const pointAt = (t: number) => curve(t, bend);
+  const points = Array.from({ length: 97 }, (_, i) => pointAt(i / 96));
+  type Projection = ReturnType<typeof globeProjection>;
+  function path(project: Projection, start = 0, end = 1) {
+    let path = "", connected = false;
+    const steps = Math.max(1, Math.ceil(96 * (end - start)));
+    for (let i = 0; i <= steps; i++) {
+      const p = project(start === 0 && end === 1 ? points[i] : pointAt(start + (end - start) * i / steps));
+      if (!p.visible) { connected = false; continue; }
+      path += `${connected ? "L" : "M"}${(500 + p.x * 480).toFixed(2)},${(500 - p.y * 480).toFixed(2)} `;
+      connected = true;
     }
+    return path;
   }
-  return anchor;
-}
-
-export function projectArcTrail(from: [number, number], to: [number, number], phi: number, theta: number, bend: Vec3 | undefined, progress: number, length = .22) {
-  const start = Math.min(1, Math.max(0, progress - length));
-  const end = Math.min(1, Math.max(0, progress));
-  const pointAt = geographicArc(globePoint(from), globePoint(to));
-  const tail = projectPoint(pointAt(start, bend), phi, theta);
-  const head = projectPoint(pointAt(end, bend), phi, theta);
-  // Clip the path at the destination while its gradient continues past it.
-  const beyond = end > start ? Math.max(0, progress - end) / (end - start) : 0;
   return {
-    path: end > start ? projectArcPath(from, to, phi, true, theta, bend, [start, end]) : "",
-    x1: 500 + tail.x * 480, y1: 500 - tail.y * 480,
-    x2: 500 + (head.x + (head.x - tail.x) * beyond) * 480,
-    y2: 500 - (head.y + (head.y - tail.y) * beyond) * 480,
+    path,
+    anchor(project: Projection) {
+      let anchor: ReturnType<Projection> | null = null, nearest = Infinity;
+      for (let i = 0; i <= 96; i++) {
+        const point = project(points[i]), distance = Math.abs(i / 96 - .5);
+        if (point.visible && distance < nearest) { anchor = point; nearest = distance; }
+      }
+      return anchor;
+    },
+    trail(project: Projection, progress: number, length = .22) {
+      const start = Math.min(1, Math.max(0, progress - length));
+      const end = Math.min(1, Math.max(0, progress));
+      const tail = project(pointAt(start)), head = project(pointAt(end));
+      // The path stops at the destination while its gradient continues past it.
+      const beyond = end > start ? Math.max(0, progress - end) / (end - start) : 0;
+      return {
+        path: end > start ? path(project, start, end) : "",
+        x1: 500 + tail.x * 480, y1: 500 - tail.y * 480,
+        x2: 500 + (head.x + (head.x - tail.x) * beyond) * 480,
+        y2: 500 - (head.y + (head.y - tail.y) * beyond) * 480,
+      };
+    },
+    arrow(project: Projection, progress = .91) {
+      const tip = project(pointAt(progress)), tail = project(pointAt(Math.max(0, progress - .01)));
+      if (!tip.visible || !tail.visible) return "";
+      const x = 500 + tip.x * 480, y = 500 - tip.y * 480;
+      const dx = tip.x - tail.x, dy = tail.y - tip.y;
+      const length = Math.hypot(dx, dy);
+      if (!length) return "";
+      const ux = dx / length, uy = dy / length;
+      return `M${x - ux * 13 - uy * 6},${y - uy * 13 + ux * 6} L${x},${y} L${x - ux * 13 + uy * 6},${y - uy * 13 - ux * 6}`;
+    },
   };
 }
 
-export function projectArcArrow(from: [number, number], to: [number, number], phi: number, theta = 0.22, bend?: Vec3, progress = .91) {
-  const a = globePoint(from), b = globePoint(to);
-  const pointAt = geographicArc(a, b);
-  const tip = projectPoint(pointAt(progress, bend), phi, theta);
-  const tail = projectPoint(pointAt(Math.max(0, progress - .01), bend), phi, theta);
-  if (!tip.visible || !tail.visible) return "";
-  const x = 500 + tip.x * 480, y = 500 - tip.y * 480;
-  const dx = tip.x - tail.x, dy = tail.y - tip.y;
-  const length = Math.hypot(dx, dy);
-  if (!length) return "";
-  const ux = dx / length, uy = dy / length;
-  return `M${x - ux * 13 - uy * 6},${y - uy * 13 + ux * 6} L${x},${y} L${x - ux * 13 + uy * 6},${y - uy * 13 - ux * 6}`;
+export function projectArcPath(from: [number, number], to: [number, number], phi: number, geographic = false, theta = .22, bend?: Vec3, range: [number, number] = [0, 1]) {
+  return prepareGlobeArc(from, to, geographic, bend).path(globeProjection(phi, theta), ...range);
+}
+export function projectArcAnchor(from: [number, number], to: [number, number], phi: number, theta: number, bend?: Vec3) {
+  return prepareGlobeArc(from, to, true, bend).anchor(globeProjection(phi, theta));
+}
+export function projectArcTrail(from: [number, number], to: [number, number], phi: number, theta: number, bend: Vec3 | undefined, progress: number, length = .22) {
+  return prepareGlobeArc(from, to, true, bend).trail(globeProjection(phi, theta), progress, length);
+}
+export function projectArcArrow(from: [number, number], to: [number, number], phi: number, theta = .22, bend?: Vec3, progress = .91) {
+  return prepareGlobeArc(from, to, true, bend).arrow(globeProjection(phi, theta), progress);
 }
 
 

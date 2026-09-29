@@ -1,0 +1,165 @@
+{
+  "date": "2026-09-28",
+  "environment": "Chromium headless, local production export, 1440\u00d71000 viewport, device scale factor 2, dark theme. Three 3-second samples per state, median reported. Browser main-thread time is not total CPU or GPU utilization. Measurements include SVG attribute instrumentation.",
+  "export_id": "bae2fe60800e390cf785a3bc916c60a9df1641d5094a5211add45ed9d9427c64",
+  "baseline": [
+    {
+      "route": "/",
+      "state": "rotating",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 606.62,
+        "ScriptDuration": 64.48,
+        "LayoutDuration": 3.3,
+        "RecalcStyleDuration": 23.08,
+        "draws": 90,
+        "attributes": 8400
+      }
+    },
+    {
+      "route": "/",
+      "state": "offscreen",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 8.38,
+        "ScriptDuration": 0.15,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 2.12,
+        "draws": 0,
+        "attributes": 0
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "rotating",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 2798.1,
+        "ScriptDuration": 434.01,
+        "LayoutDuration": 28.85,
+        "RecalcStyleDuration": 340.15,
+        "draws": 89,
+        "attributes": 93157
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "workspace",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 1208.11,
+        "ScriptDuration": 152.82,
+        "LayoutDuration": 90.17,
+        "RecalcStyleDuration": 260.82,
+        "draws": 0,
+        "attributes": 51408
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "reduced-motion",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 16.72,
+        "ScriptDuration": 0,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 0,
+        "draws": 0,
+        "attributes": 0
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "offscreen",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 110.04,
+        "ScriptDuration": 0.16,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 20.88,
+        "draws": 0,
+        "attributes": 0
+      }
+    }
+  ],
+  "optimized": [
+    {
+      "route": "/",
+      "state": "rotating",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 600.97,
+        "ScriptDuration": 52.32,
+        "LayoutDuration": 4.41,
+        "RecalcStyleDuration": 25.69,
+        "draws": 90,
+        "attributes": 8740
+      }
+    },
+    {
+      "route": "/",
+      "state": "offscreen",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 8.54,
+        "ScriptDuration": 0.17,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 2.05,
+        "draws": 0,
+        "attributes": 0
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "rotating",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 2281.59,
+        "ScriptDuration": 279.67,
+        "LayoutDuration": 37.45,
+        "RecalcStyleDuration": 394.91,
+        "draws": 90,
+        "attributes": 117529
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "workspace",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 1077.69,
+        "ScriptDuration": 106.71,
+        "LayoutDuration": 84.91,
+        "RecalcStyleDuration": 236.83,
+        "draws": 0,
+        "attributes": 50132
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "reduced-motion",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 0.43,
+        "ScriptDuration": 0,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 0,
+        "draws": 0,
+        "attributes": 0
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "offscreen",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 37.61,
+        "ScriptDuration": 0.5,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 6.87,
+        "draws": 0,
+        "attributes": 0
+      }
+    }
+  ]
+}
