@@ -559,6 +559,36 @@ test("Globe cards show location badges and readable details in both themes", asy
   }
 });
 
+for (const theme of ['light', 'dark']) test(`Source coverage paints images inside their labels in ${theme} mode`, async ({ page, browserName }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.addInitScript(theme => localStorage.setItem('theme', theme), theme);
+  await page.goto('/atlas/');
+  await page.getByRole('tab', { name: /^Source coverage/ }).click();
+  const graph = page.locator('.atlas-source-network');
+  const { default: sharp } = await import('sharp');
+  const images = [graph.locator('.atlas-location-flag').nth(0), graph.locator('.atlas-location-flag').nth(1), graph.locator('.institution-logo img').first()];
+  for (const image of images) {
+    await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth > 0)).toBe(true);
+    await image.scrollIntoViewIfNeeded();
+    await page.mouse.move(0, 0);
+    await expect(graph).toHaveAttribute('data-highlighted', 'false');
+    await expect(image).toHaveCSS('filter', 'none');
+    const { data, info } = await sharp(await image.screenshot()).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+    let colored = 0;
+    for (let i = 0; i < data.length; i += info.channels) {
+      const rgb = [data[i], data[i + 1], data[i + 2]];
+      if (Math.max(...rgb) > 110 && Math.max(...rgb) - Math.min(...rgb) > 70) colored++;
+    }
+    expect(colored / (info.width * info.height)).toBeGreaterThan(.05);
+  }
+  await graph.locator('.atlas-coverage-topic').nth(4).focus();
+  const logo = graph.locator('.atlas-coverage-source[data-active="true"] .institution-logo img').first();
+  await logo.scrollIntoViewIfNeeded();
+  await expect(logo).toHaveCSS('filter', 'none');
+  await page.screenshot({ path: `/tmp/atlas-source-labels-${browserName}-${theme}.png` });
+});
+
 test("Source coverage highlights connected logos, locations and paths", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 1000 });
   await page.emulateMedia({ reducedMotion: "no-preference", colorScheme: "dark" });

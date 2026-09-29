@@ -255,7 +255,7 @@ html[data-atlas-transition]::view-transition-new(atlas-globe):only-child { anima
 .atlas-location-badge { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; gap: 3px; padding: 0 5px; height: 23px; margin: 2px 3px 2px 0; font-size: 10px; font-weight: 500; letter-spacing: .03em; color: var(--primary); border: 1px solid color-mix(in srgb, var(--primary) 20%, var(--border)); border-radius: 7px; background: var(--card); }
 .atlas-location-badge svg { flex-shrink: 0; }
 .atlas-location-flag { width: 20px; height: 15px; object-fit: contain; border-radius: 2px; }
-.dark .atlas-location-flag { filter: drop-shadow(0 0 1px #c6d9f5); }
+.dark .atlas-location-flag:not(foreignObject *) { filter: drop-shadow(0 0 1px #c6d9f5); }
 .atlas-geographic-route-pin .atlas-location-flag { width: 26px; height: 20px; }
 .dark .atlas-location-badge { border-color: color-mix(in srgb, var(--primary) 55%, var(--border)); box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 12%, transparent); }
 .atlas-timeline-next { display: flex; align-items: center; margin-left: calc(var(--timeline-inset) + 32px); padding: 0; border-radius: 10px; transition: margin-left .24s ease, padding .24s ease, background-color .24s ease; }
