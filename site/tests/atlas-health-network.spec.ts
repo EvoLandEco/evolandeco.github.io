@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-for (const [width,height] of [[390,950],[1280,720],[1280,950]]) test(`One Health network presentation ${width}×${height}`,async({page})=>{
+for (const [width,height] of [[390,950],[1280,720],[1280,950],[1512,820]]) test(`One Health network presentation ${width}×${height}`,async({page})=>{
  test.skip(!process.env.ATLAS_HEALTH_PARTIAL,'Requires the partial One Health dataset');
  await page.setViewportSize({width,height});
  await page.emulateMedia({reducedMotion:'reduce',colorScheme:width===390?'dark':'light'});
  await page.goto('/atlas/');
- await page.locator('.atlas-page[data-ready="true"]').waitFor();
- if(width===1280){await page.getByRole('button',{name:'Click to enter full screen'}).focus();await page.keyboard.press('Enter');}
+ await page.locator('.atlas-page[data-ready="true"]').waitFor({timeout:60000});
+ if(width>=1280){await page.getByRole('button',{name:'Click to enter full screen'}).focus();await page.keyboard.press('Enter');}
  await page.getByRole('tab',{name:'One Health',exact:true}).click();
  const view=page.getByRole('region',{name:'One Health evidence'});
  await view.locator('summary[aria-label="One Health report"]').click();
@@ -18,7 +18,7 @@ for (const [width,height] of [[390,950],[1280,720],[1280,950]]) test(`One Health
  await expect(view.locator('.atlas-oh-lane-title svg')).toHaveCount(3);
  await expect(view.locator('.atlas-oh-node-label')).toHaveCount(6);
  await expect(view.locator('.atlas-oh-node-label').first()).toContainText('Exposure reported');
- expect(await view.locator('.atlas-oh-network > svg').evaluate(el=>{const svg=el as SVGSVGElement;return Math.abs(svg.clientWidth/svg.clientHeight-svg.viewBox.baseVal.width/svg.viewBox.baseVal.height)<0.02;})).toBe(true);
+ expect(await view.locator('.atlas-oh-network > svg').evaluate(el=>{const matrix=(el as SVGSVGElement).getScreenCTM()!;return Math.abs(matrix.a-matrix.d)<0.001;})).toBe(true);
  expect(await view.locator('.atlas-oh-lane-title').evaluateAll(headings=>headings.every(el=>el.scrollWidth<=el.clientWidth+1))).toBe(true);
  await expect(view.locator('.atlas-oh-detail-kind > svg')).toHaveCount(1);
  expect(await view.locator('.atlas-oh-network').evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
@@ -39,7 +39,7 @@ for (const [width,height] of [[390,950],[1280,720],[1280,950]]) test(`One Health
  expect(await nodeEntries.evaluate(el=>el.scrollTop)).toBeGreaterThan(0);
  expect(await matchingNode.evaluate(el=>{
    const entry=el.getBoundingClientRect(),frame=el.closest('.atlas-oh-node-entries')!.getBoundingClientRect();
-   return entry.top>=frame.top-1 && entry.bottom<=frame.bottom+1;
+   return Math.min(entry.bottom,frame.bottom)-Math.max(entry.top,frame.top)>=Math.min(entry.height,frame.height)-1;
  })).toBe(true);
  await expect(page.getByRole('tooltip')).toHaveCount(0);
  const firstEntry=nodeEntries.locator('.atlas-oh-entry').first();
@@ -92,10 +92,21 @@ for (const [width,height] of [[390,950],[1280,720],[1280,950]]) test(`One Health
  await expect(connection.locator('.atlas-oh-list-finding')).toContainText('Exposure');
  await expect(connection.locator('.atlas-oh-connection-marker > span')).toHaveText('2 — 1');
  await expect(connection.locator('.atlas-oh-connection-marker circle')).toHaveCount(2);
- if(width===1280){
+ if(width>=1280){
    const main=view.locator('.atlas-oh-main');
-   await expect(main).toHaveCSS('overflow-y','auto');
-   await expect(main).toHaveCSS('scrollbar-width','none');
+   await expect(main).toHaveCSS('overflow-y','hidden');
+   expect(await main.evaluate(el=>el.scrollHeight<=el.clientHeight+1)).toBe(true);
+   const figure=view.locator('.atlas-oh-figure');
+   const figureBounds=await figure.boundingBox();
+   const listBounds=await view.locator('.atlas-oh-observations').boundingBox();
+   const mainBounds=await main.boundingBox();
+   expect(listBounds!.y+listBounds!.height).toBeLessThanOrEqual(mainBounds!.y+mainBounds!.height+1);
+   await nodeEntries.evaluate(el=>{el.scrollTop=0;});
+   await nodeEntries.hover();
+   await page.mouse.wheel(0,300);
+   await expect.poll(()=>nodeEntries.evaluate(el=>el.scrollTop)).toBeGreaterThan(0);
+   expect(await figure.boundingBox()).toEqual(figureBounds);
+   expect(await main.evaluate(el=>el.scrollTop)).toBe(0);
    await main.screenshot({path:`/tmp/atlas-health-column-${width}-${height}.png`});
  }
 

@@ -942,7 +942,7 @@ html[data-atlas-workspace-transition]::view-transition-group(*) { animation-dura
 .atlas-oh-main { min-width: 0; min-height: 0; }
 .atlas-oh-main > * + * { margin-top: 12px; }
 .atlas-oh-network { overflow-x: auto; background: var(--background); }
-.atlas-oh-network > svg { display: block; width: 100%; }
+.atlas-oh-network > svg { display: block; width: 100%; min-width: var(--atlas-network-min-width); }
 .atlas-oh-lane { fill: color-mix(in srgb, var(--domain-color) 4%, var(--background)); }
 .atlas-oh-lane-title { display: flex; align-items: center; justify-content: center; gap: 6px; height: 36px; color: var(--foreground); font-size: 13px; font-weight: 550; }
 .atlas-oh-lane-title[data-compact="true"] { flex-direction: column; gap: 2px; font-size: 12px; line-height: 1.25; }
@@ -1040,7 +1040,13 @@ html[data-atlas-workspace-transition]::view-transition-group(*) { animation-dura
 .atlas-page[data-fullscreen] .atlas-oh-layout { align-items: stretch; }
 .atlas-page[data-fullscreen] .atlas-oh-main, .atlas-page[data-fullscreen] .atlas-oh-detail { overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
 .atlas-page[data-fullscreen] .atlas-oh-detail { position: static; max-height: none; }
-.atlas-page[data-fullscreen] .atlas-oh-layout[data-view="network"] .atlas-oh-main { scrollbar-width: none; scrollbar-gutter: auto; }
+.atlas-page[data-fullscreen] .atlas-oh-layout[data-view="network"] .atlas-oh-main { display: grid; grid-template-rows: minmax(0, 3fr) minmax(0, 2fr); gap: 12px; overflow: hidden; scrollbar-gutter: auto; }
+.atlas-page[data-fullscreen] .atlas-oh-layout[data-view="network"] .atlas-oh-main > * { min-height: 0; margin-top: 0; }
+.atlas-page[data-fullscreen] .atlas-oh-layout[data-view="network"] .atlas-oh-figure { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.atlas-page[data-fullscreen] .atlas-oh-network { min-height: 0; overflow: hidden; }
+.atlas-page[data-fullscreen] .atlas-oh-network > svg { height: 100%; min-width: 0; }
+.atlas-page[data-fullscreen] .atlas-oh-observations { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.atlas-page[data-fullscreen] .atlas-oh-entry-panels { height: auto; min-height: 0; }
 .atlas-disease-ring { --attention-1: #3867d6; --attention-2: #148876; --attention-3: #9251c0; --attention-4: #d08421; --attention-5: #ca527d; --attention-6: #607083; min-height: 0; position: relative; }
 .dark .atlas-disease-ring { --attention-1: #80a8ff; --attention-2: #50ccb4; --attention-3: #c19af0; --attention-4: #edba5b; --attention-5: #f18db2; --attention-6: #a9b9cb; }
 .atlas-disease-ring > svg { display: block; width: 100%; }
