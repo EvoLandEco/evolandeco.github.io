@@ -1,6 +1,6 @@
-# ATLAS UI 0.2.0 push checks
+# ATLAS UI 0.2.0 release checks
 
-The website passes its production checks. Dataset activation follows website deployment so the public page can read contract 1.5.0. The approved network analysis is publicly staged and verified.
+The public website serves the partial One Health research dataset and its matching reviewed network analysis. Incomplete annotation coverage is accepted for publication; source support, export integrity and consumer compatibility remain required.
 
 ## Validation
 
@@ -9,33 +9,28 @@ The website passes its production checks. Dataset activation follows website dep
 - Production build: 445 static pages; TypeScript passes.
 - Static export: local HTML links and assets resolve.
 - GitHub Pages browser gate: all five cases pass against the production export, covering entry, mobile themes, retry and combined filters.
-- Native public downloads pass with both the live 1.2 release and the staged 1.5 release. The 1.5 smoke check covers One Health Network, Overview, Timeline, Sampling and Environment. Neither run emits page errors.
-- The production export loads the public network transport and analysis with HTTP 200. The review shows 197 → 135 statement units and 197 of 197 inspected statements, with no page errors. Only the release pointer is substituted for this browser check; asset downloads use the public service.
+- The deployed website accepts contract 1.5.0 and the pinned selector. One Health Network, Overview, Timeline, Sampling and Environment render without page errors.
+- A direct public browser check, without request interception, verifies the active export, populated sampling and timeline views, and the network review showing 197 → 135 statement units.
+- All nine published dataset and network assets pass byte-length and SHA-256 readback checks. The active pointer matches the verified serving descriptor.
 - Production JavaScript contains no local dataset origin.
-- Worker route checks and deployment dry run pass. The network uploader passes local byte, schema and release-binding checks in dry-run mode.
+- Worker route checks pass. Compression, conditional reads, CORS, method restrictions and rate limiting pass checks.
+- The consumer validates measurements, source references, assertions, comparisons and bundle checksums. Producer checks cover baseline preservation, date selection, exact network dependency reuse and replay across 184 scopes.
 - `git diff --check` passes.
 
 ## Public data
 
-The active pointer is contract 1.2.0, export `0684e4d4a7d0d3fab5fcb5912a0f9dcea1eae59e101f95da74d70f1477380c92`.
+The active pointer serves contract 1.5.0, export `9d712c4f57ee47774b0dc69931594bf1ef6b5813429211faddf304351824b2af`, on [ATLAS](https://qtj.me/atlas/).
 
-The release-ready partial 1.5.0 dataset is staged as `84af1f2142e037519b457c5e192d3cd2c06275b79922420cebf01288c7696b3f`. Independent public downloads of `atlas-site.json`, `map.json` and `metrics.json` match all byte lengths and SHA-256 values in its sealed receipt. Its publication remains a research preview with incomplete One Health review coverage.
+The partial dataset contains 442 One Health observations, 70 relationships, 91 sampling assessments, 343 timing records and 400 context records. It retains research preview status and incomplete review coverage. The sealed checkpoint integrates 122 annotation entries and 2,086 source scope reviews; these counts describe separate review activities. Exported review records number 1,340.
 
-The inspection checkpoint `9d712c4f57ee47774b0dc69931594bf1ef6b5813429211faddf304351824b2af` is local. It contains 122 integrated annotation entries and 2,086 integrated scope reviews. Remaining annotation integration and release audits are unfinished. It is not the activation candidate.
+Saved annotations outside this checkpoint remain excluded. An attempted integration failed numeric source validation for a reported farm proportion. That failure does not invalidate the sealed checkpoint or require completion of the remaining scan before publication. Unreviewed entries are not evidence of absence.
 
-Reviewed network analysis `e3f9e9eebc37fb083be669beef930968527ca12a8d6cbe0dcf9796906832d888` binds to release `84af1f…`. Its six public assets comprise the transport descriptor, analysis, analysis schema, coverage ledger, pinned selector and attached release descriptor. Every public download matches its expected byte length and SHA-256 value. The user explicitly authorized these public files; dataset activation is separate.
+Reviewed network analysis `0d462448b48427c08c52d10b4d030f0b3c4962e6d9573e3e0e4a342116c9146b` binds to this exact dataset, map and selector. Exact replay retains 197 inspected statements, 28 repeat-report groups and 135 partially deduplicated statement units. Global adjusted rankings remain unavailable. The published files comprise the base dataset, map, metrics, network transport, analysis, schema, coverage ledger, selector and release descriptor.
 
 ## Data service and producer
 
-The read-only Worker version is `08ea0bee-c685-4083-8b13-efbf5936ec1f`. Its allowlist covers published datasets, selectors, release descriptors and network-analysis assets. Compression, conditional reads, CORS, method restrictions and rate limiting pass checks. Public `current.json` is unchanged after deployment.
+The read-only Worker version is `08ea0bee-c685-4083-8b13-efbf5936ec1f`. The public pointer is activated only after deployed consumer compatibility and public asset checks pass.
 
-ATLAS reports a clean producer checkout at [161cd0b](https://github.com/EvoLandEco/ATLAS/commit/161cd0b88caf14feb038b14bddc1381cfb46c5ea), alpha28, with 266 tests and exact network replay passing. [GitHub CI](https://github.com/EvoLandEco/ATLAS/actions/runs/36574079077) passes. One Health extraction remains paused.
+ATLAS source alpha28 is published at [161cd0b](https://github.com/EvoLandEco/ATLAS/commit/161cd0b88caf14feb038b14bddc1381cfb46c5ea), with 266 tests and [GitHub CI](https://github.com/EvoLandEco/ATLAS/actions/runs/36574079077) passing. Candidate preparation and network replay use saved evidence without further model calls. One Health extraction remains paused.
 
-## Publication order
-
-1. Keep the inspection checkpoint local until its release audits pass.
-2. Manually commit and push the website, including the Worker route checks and uploader source. Private exports and upload receipts stay outside the commit.
-3. Wait for GitHub Pages, then verify the deployed page accepts contract 1.5.0 and its pinned selector.
-4. Activate the exact approved dataset descriptor and verify One Health and network review through the public page.
-
-A website push does not change the dataset pointer. The website has not been pushed by these checks.
+The website and dataset are live. Generated datasets, raw sources, private queues and publication control files stay outside the website source commit.
