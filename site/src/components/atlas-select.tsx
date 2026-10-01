@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Activity, CalendarDays, Check, ChevronDown, GitBranch, Layers3, MapPin, Search, Network, Grid2X2, ChartNoAxesCombined, FlaskConical, Leaf } from "lucide-react";
 
 const badgeIcons = { disease: Activity, place: MapPin, period: CalendarDays, kind: GitBranch, count: Layers3, network: Network, evidence: Grid2X2, timeline: ChartNoAxesCombined, sampling: FlaskConical, environment: Leaf };
@@ -14,7 +14,7 @@ function Choice({ item, badgeId }: { item: AtlasSelectItem; badgeId?: string }) 
 }
 
 type SelectProps = {
-  label: string; searchable?: boolean; items: AtlasSelectItem[];
+  label: string; summaryLabel?: ReactNode; searchable?: boolean; items: AtlasSelectItem[];
 } & ({ multiple: true; value: string[]; onChange: (value: string[]) => void }
   | { multiple?: false; value: string; onChange: (value: string) => void });
 
@@ -80,7 +80,7 @@ export function AtlasSelect(props: SelectProps) {
     }
   }}>
     <summary aria-label={label} aria-haspopup={multiple ? "dialog" : "listbox"} aria-controls={id}>
-      <span title={selectedLabels.join(", ")}>{selectedItem?.badges ? <Choice item={selectedItem} /> : summary}</span><ChevronDown size={14} aria-hidden />
+      <span title={selectedLabels.join(", ")}>{props.summaryLabel ?? (selectedItem?.badges ? <Choice item={selectedItem} /> : summary)}</span><ChevronDown size={14} aria-hidden />
     </summary>
     <div className="atlas-select-options" role={multiple ? "dialog" : undefined} aria-label={multiple ? label : undefined}>
       {open && searchable && <label className="atlas-select-search"><Search size={15} aria-hidden /><input type="search" aria-label={`Search ${label.toLowerCase()}`} placeholder="Search…" value={query} onChange={event => setQuery(event.target.value)} /></label>}

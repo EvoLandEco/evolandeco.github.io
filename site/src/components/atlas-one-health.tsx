@@ -1,10 +1,10 @@
 "use client";
-import { memo, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ArrowUp, ArrowDown, ArrowUpDown, RotateCcw, ArrowRight, ChevronDown, ExternalLink, FileText, Network, Grid2X2, Rows3, Check, SlidersHorizontal, Activity, CalendarDays, Microscope, Info, TriangleAlert, UserRound, PawPrint, Leaf, Wheat, CircleHelp, MapPin } from "lucide-react";
+import { memo, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { ArrowUp, ArrowDown, ArrowUpDown, RotateCcw, ArrowRight, ChevronDown, ExternalLink, FileText, Network, Grid2X2, Rows3, BookOpen, Check, SlidersHorizontal, Activity, CalendarDays, Microscope, Info, TriangleAlert, UserRound, PawPrint, Leaf, Wheat, CircleHelp, MapPin } from "lucide-react";
 import { createPortal } from "react-dom";
 import { ReportPagination } from "./atlas-pagination";
 import { revealAtlasEntries } from "@/lib/atlas-detail-scroll";
-import { useAtlas } from "./atlas-context";
+import { useAtlas, useAtlasPanelState } from "./atlas-context";
 import { useElementSize } from "./use-element-size";
 import { AtlasScope } from "./atlas-scope";
 import { AtlasHealthPanels } from "./atlas-one-health-panels";
@@ -26,17 +26,18 @@ const relationLabels: Record<Relation["kind"], string> = { exposure: "Exposure",
 const words = (value: string) => value.replaceAll("_", " ");
 const dateLabel = (node: Node | Relation) => node.observation_date.value ? formatDate(node.observation_date.value) : node.period_start.value && node.period_end.value ? `${formatDate(node.period_start.value)} – ${formatDate(node.period_end.value)}` : "Observation date unknown";
 
-export const AtlasOneHealth = memo(function AtlasOneHealth({ rows, onReport, footerTarget }: { footerTarget: HTMLElement | null; rows: AtlasRecord[]; onReport: (ids: string[], expand?: boolean) => void }) {
+export const AtlasOneHealth = memo(function AtlasOneHealth({ rows, onReport, footerTarget, mergedTimeline = false, initialReport = "" }: { mergedTimeline?: boolean; initialReport?: string; footerTarget: HTMLElement | null; rows: AtlasRecord[]; onReport: (ids: string[], expand?: boolean) => void }) {
   const { bundle, selectedOneHealth, atlasDocuments } = useAtlas();
-  const [mode, setMode] = useState<HealthMode>("network");
-  const [report, setReport] = useState("");
-  const [selection, setSelection] = useState("");
+  const [mode, setMode] = useAtlasPanelState<HealthMode>("health.mode", "network");
+  const [report, setReport] = useAtlasPanelState("health.report", initialReport);
+  const [selection, setSelection] = useAtlasPanelState("health.selection", "");
   const [hover, setHover] = useState({report:"",id:""});
   const main=useRef<HTMLDivElement>(null);
   const figure=useRef<HTMLDivElement>(null);
   const nodeEntries=useRef<HTMLDivElement>(null);
   const relationEntries=useRef<HTMLDivElement>(null);
-  const [entryFilters,setEntryFilters]=useState<string[]>([]);
+  const [entryFilters,setEntryFilters]=useAtlasPanelState<string[]>("health.filters", []);
+  const [overviewTools,setOverviewTools]=useState<HTMLDivElement|null>(null);
   const entryFilterMenu=useRef<HTMLDetailsElement>(null);
   const detail = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -50,7 +51,11 @@ export const AtlasOneHealth = memo(function AtlasOneHealth({ rows, onReport, foo
   useEffect(() => { detail.current?.scrollTo({ top: 0 }); }, [selection, report]);
   const ids = useMemo(() => new Set(rows.map(row => row.id)), [rows]);
   const view = useMemo(() => selectedOneHealth(ids), [ids, selectedOneHealth]);
-  const entryIndex=useMemo(()=>view ? healthEntryIndex(view) : new Map<string,HealthEntry>(),[view]);
+  const entryIndex=useMemo(()=>{
+    const index = view ? healthEntryIndex(view) : new Map<string,HealthEntry>();
+    if (mergedTimeline) for (const entry of index.values()) entry.counts.timeline += entry.counts.environment;
+    return index;
+  },[view,mergedTimeline]);
   const reports = useMemo(() => [...entryIndex].map(([id,entry])=>{
     const record=bundle.records.find(r=>r.id===id)!;
     return {id,entry,topic:bundle.topics.find(t=>t.id===record.topic_id)!.label,document:atlasDocuments.get(record.document_id)!};
@@ -76,40 +81,43 @@ export const AtlasOneHealth = memo(function AtlasOneHealth({ rows, onReport, foo
   };
   const clearHighlight=()=>setHover({report:"",id:""});
   if (!view) return <p className="atlas-empty">This dataset does not contain One Health reviews.</p>;
-  const modeItems:AtlasSelectItem[]=panelModes.map(m=>({value:m.value,label:m.label,title:m.label,badges:m.value==='overview' ? [{kind:'count',label:`${overviewRows.length} entries`}] : [
+  const modeItems:AtlasSelectItem[]=panelModes.filter(m => !mergedTimeline || m.value !== "environment").map(m=>({value:m.value,label:m.label,title:m.label,badges:m.value==='overview' ? [{kind:'count',label:`${overviewRows.length} entries`}] : [
     {kind:m.value,label:current ? `${current.entry.counts[m.value]} in this entry` : 'No entry selected',empty:!current?.entry.counts[m.value]},
     {kind:'count',label:`${matching.filter(r=>r.entry.counts[m.value]>0).length} entries available`},
   ]}));
+  const ModeIcon = { network: Network, evidence: Grid2X2, overview: Rows3, timeline: CalendarDays, sampling: Microscope, environment: Leaf }[mode];
   const items = [...nodes, ...undated];
   const selected = mode === "evidence" ? relations.find(r => r.id === selection) ?? relations[0] : items.find(n => n.id === selection) ?? relations.find(r => r.id === selection) ?? items[0];
   const review = view.reviews.find(r => r.record_id === current?.id);
+  const reviewHelp = review && current && <AtlasScope label="Review scope" title={current.document.title}><p>{words(review.outcome)} review</p><p>{review.scope}</p><p>{review.reason}</p>{!relations.some(r=>r.kind==="cross_species_transmission") && <p>No supported cross-species transmission relationship in this selection.</p>}<ul>{review.pending_items.map(item=><li key={item}>{item}</li>)}</ul></AtlasScope>;
   return <section className="atlas-one-health" aria-label="One Health evidence" onKeyDown={event => {
     if (event.key !== "Escape") return;
     const menu=entryFilterMenu.current;
     if (menu?.open && menu.contains(event.target as globalThis.Node)) { event.stopPropagation(); menu.open = false; menu.querySelector("summary")?.focus(); }
   }}>
     <h2 className="sr-only">One Health evidence</h2>
-    <div className="atlas-oh-tools">{"timings" in view ? <div className="atlas-oh-view-select"><AtlasSelect label="One Health view" value={mode} items={modeItems} onChange={value=>setMode(value as HealthMode)} /></div> : <div className="atlas-oh-views" role="group" aria-label="One Health view">{([{id:"network",label:"Network",Icon:Network},{id:"evidence",label:"Evidence",Icon:Grid2X2},{id:"overview",label:"Overview",Icon:Rows3}] as const).map(({id,label,Icon})=><button key={id} aria-pressed={mode===id} onClick={()=>setMode(id)}><Icon size={14} aria-hidden />{label}</button>)}</div>}
-    {mode !== "overview" && current && <AtlasSelect label="One Health report" searchable value={current.id} onChange={value => { setReport(value); setSelection(""); }} items={matching.map(r => ({ value:r.id, label:`${r.topic} · ${r.document.title}`, title:r.topic, badges:[{kind:"period",label:formatDate(r.document.publication)},...healthViews.filter(v=>"timings" in view || v.value==='network' || v.value==='evidence').map(v=>({kind:v.value,label:`${v.label} ${r.entry.counts[v.value]}`,empty:r.entry.counts[v.value]===0}))] }))} />}
+    <div className="atlas-oh-tools atlas-panel-tools">{"timings" in view ? <div className="atlas-oh-view-select"><AtlasSelect label="One Health view" summaryLabel={<span className="atlas-oh-mode-label"><ModeIcon size={14} aria-hidden /><span>{modeItems.find(item => item.value === mode)?.label}</span></span>} value={mode} items={modeItems} onChange={value=>setMode(value as HealthMode)} /></div> : <div className="atlas-oh-views" role="group" aria-label="One Health view">{([{id:"network",label:"Network",Icon:Network},{id:"evidence",label:"Evidence",Icon:Grid2X2},{id:"overview",label:"Overview",Icon:Rows3}] as const).map(({id,label,Icon})=><button key={id} aria-pressed={mode===id} onClick={()=>setMode(id)}><Icon size={14} aria-hidden />{label}</button>)}</div>}
+    {mode !== "overview" && current && <AtlasSelect label="One Health report" searchable value={current.id} onChange={value => { setReport(value); setSelection(""); }} items={matching.map(r => ({ value:r.id, label:`${r.topic} · ${r.document.title}`, title:r.topic, badges:[{kind:"period",label:formatDate(r.document.publication)},...healthViews.filter(v=>(!mergedTimeline || v.value!=="environment") && ("timings" in view || v.value==='network' || v.value==='evidence')).map(v=>({kind:v.value,label:`${v.label} ${r.entry.counts[v.value]}`,empty:r.entry.counts[v.value]===0}))] }))} />}
+    {mode === "overview" && <div ref={setOverviewTools} className="atlas-oh-overview-tools" />}
     <details ref={entryFilterMenu} className="atlas-oh-entry-filters"><summary aria-label={`Filter One Health entries${entryFilters.length ? `: ${entryFilters.length} active` : ''}`} title="Filter entries"><SlidersHorizontal size={16} aria-hidden />{entryFilters.length>0 && <b>{entryFilters.length}</b>}</summary>
       <div className="atlas-oh-filter-menu"><header><strong>Find entries</strong><span aria-live="polite">{matching.length} / {reports.length}</span><button type="button" disabled={!entryFilters.length} onClick={()=>setEntryFilters([])}>Clear</button></header>
         <p>Matches any choice within a group; all selected features. Each entry keeps its full evidence.</p>
-        {[{label:'Content available',items:healthViews.filter(v=>"timings" in view || v.value==='network' || v.value==='evidence').map(v=>({value:`view:${v.value}`,label:v.label}))},
+        {[{label:'Content available',items:healthViews.filter(v=>(!mergedTimeline || v.value!=="environment") && ("timings" in view || v.value==='network' || v.value==='evidence')).map(v=>({value:`view:${v.value}`,label:v.label}))},
           {label:'Includes domain',items:domains.map(d=>({value:`domain:${d.id}`,label:d.label}))},
           {label:'Features',items:[...("timings" in view ? [{value:'feature:dated',label:'Dated panel evidence'},{value:'feature:fraction',label:'Reviewed sample fraction'}] : []),{value:'feature:negative',label:'Negative findings'},{value:'feature:hypothesis',label:'Source hypothesis'}]},
         ].map(group=><fieldset key={group.label}><legend>{group.label}</legend>{group.items.map(item=><label key={item.value}><input type="checkbox" checked={entryFilters.includes(item.value)} onChange={()=>setEntryFilters(prev=>prev.includes(item.value)?prev.filter(v=>v!==item.value):[...prev,item.value])} />{item.label}</label>)}</fieldset>)}
       </div>
-    </details><AtlasScope label="Figure methods & references" title="One Health evidence"><HealthMethods /></AtlasScope></div>
-    {mode === "overview" ? <HealthOverview footerTarget={footerTarget} rows={overviewRows} view={view} onOpen={(id,nodeId)=>{setReport(id);setSelection(nodeId ?? "");setMode("network");}} onReport={onReport} /> : current && "timings" in view && (mode === "timeline" || mode === "sampling" || mode === "environment") ? <AtlasHealthPanels key={`${mode}:${current.id}`} mode={mode} view={view} reportId={current.id} nodeIds={selectedIds ?? new Set<string>()} onReport={onReport} /> : current ? <>
+    </details></div>
+    {footerTarget && createPortal(<div className="atlas-view-about"><AtlasScope buttonLabel="About One Health" label="Figure methods & references" title="One Health evidence"><HealthMethods /></AtlasScope></div>, footerTarget)}
+    {mode === "overview" ? <HealthOverview toolsTarget={overviewTools} footerTarget={footerTarget} rows={overviewRows} view={view} onOpen={(id,nodeId)=>{setReport(id);setSelection(nodeId ?? "");setMode("network");}} onReport={onReport} /> : current && "timings" in view && (mode === "timeline" || mode === "sampling" || mode === "environment") ? <AtlasHealthPanels mergedTimeline={mergedTimeline} key={`${mode}:${current.id}`} mode={mode} view={view} reportId={current.id} nodeIds={selectedIds ?? new Set<string>()} onReport={onReport} /> : current ? <>
       <div className="atlas-oh-layout" data-view={mode}>
         <div ref={main} className="atlas-oh-main">
           <div className="atlas-oh-figure">
-            <header><h3>{mode === "network" ? <Network size={16} aria-hidden /> : <Grid2X2 size={16} aria-hidden />}{mode === "network" ? "Observations" : "Relationship evidence"} <span>{mode === "network" ? `${items.length} nodes · ${relations.length} connections` : relations.length}</span></h3>{review && <AtlasScope label="Review scope" title={current.document.title}><p>{words(review.outcome)} review</p><p>{review.scope}</p><p>{review.reason}</p>{!relations.some(r=>r.kind==="cross_species_transmission") && <p>No supported cross-species transmission relationship in this selection.</p>}<ul>{review.pending_items.map(item=><li key={item}>{item}</li>)}</ul></AtlasScope>}</header>
-            {mode === "evidence" ? <HealthEvidence relations={relations} selected={selected?.id} onSelect={setSelection} /> : <div ref={figure} className="atlas-oh-network"><HealthLanes key={current.id} nodes={diagramNodes} relations={relations} selected={selected?.id} highlighted={highlighted} onHover={id=>highlight(id,true)} onLeave={clearHighlight} onSelect={id=>select(id,true)} /></div>}
+            {mode === "evidence" ? <HealthEvidence relations={relations} selected={selected?.id} onSelect={setSelection} reviewHelp={reviewHelp} /> : <div ref={figure} className="atlas-oh-network"><HealthLanes key={current.id} nodes={diagramNodes} relations={relations} selected={selected?.id} highlighted={highlighted} onHover={id=>highlight(id,true)} onLeave={clearHighlight} onSelect={id=>select(id,true)} /></div>}
             {mode === "network" && <div className="atlas-oh-key">{[...new Set(relations.filter(r=>r.basis!=="source_hypothesis").map(r=>r.kind))].map(kind=><span key={kind}><i data-kind={kind==="genomic_association"?"genomic":undefined} />{relationLabels[kind]}</span>)}{relations.some(r=>r.basis==="source_hypothesis") && <span><i data-kind="hypothesis" />Source hypothesis</span>}{relations.some(r=>r.directed) && <span>→ Source-supported direction</span>}</div>}
           </div>
           {mode === "network" && <><section className="atlas-oh-observations" aria-label="Observation list">
-            <h4 className="atlas-oh-list-title"><FileText size={14} aria-hidden />Observation list</h4>
+            <div className="atlas-oh-list-title"><h4><FileText size={14} aria-hidden />Observation list</h4>{reviewHelp}</div>
             <div className="atlas-oh-entry-panels">
               <section aria-label="Observation nodes"><div ref={nodeEntries} className="atlas-oh-node-entries"><HealthObservationList nodes={items} networkNodes={diagramNodes} selected={selected?.id} highlighted={highlighted} onHover={highlight} onLeave={clearHighlight} onSelect={select} /><SurveillancePanels nodes={nodes.filter(n=>n.scope==="surveillance")} /></div></section>
               <section aria-label="Observation connections">
@@ -138,21 +146,20 @@ const evidenceTypes: Record<Relation["evidence_types"][number], string> = {
   traceback: "Traceback", experimental_study: "Experiment", ecological_analysis: "Ecology", source_assessment: "Source assessment",
 };
 
-function HealthEvidence({relations,selected,onSelect}:{relations:Relation[];selected?:string;onSelect:(id:string)=>void}) {
+function HealthEvidence({relations,selected,onSelect,reviewHelp}:{relations:Relation[];selected?:string;onSelect:(id:string)=>void;reviewHelp:ReactNode}) {
   const types = (Object.keys(evidenceTypes) as Relation["evidence_types"]).filter(type=>relations.some(r=>r.evidence_types.includes(type)));
   if (!relations.length) return <p className="atlas-empty">No reviewed relationships in this selection. Observations alone do not establish a connection.</p>;
-  return <><p className="atlas-oh-note">Marked cells identify evidence types cited for a relationship. Select a cell to inspect its source evidence.</p>
-    <div className="atlas-oh-table atlas-oh-matrix"><table><caption className="sr-only">Relationship evidence types</caption><thead><tr><th scope="col">Relationship</th>{types.map(type=><th scope="col" key={type} title={words(type)}>{evidenceTypes[type]}</th>)}</tr></thead><tbody>{relations.map(r=><tr key={r.id} data-selected={selected===r.id}>
-      <th scope="row"><button onClick={()=>onSelect(r.id)}>{r.label}</button><small>{relationLabels[r.kind]} · {r.basis === "source_hypothesis" ? "Source hypothesis" : "Source reported"}{r.contested ? " · Contested" : ""}</small></th>
-      {types.map(type=><td key={type}>{r.evidence_types.includes(type) ? <button className="atlas-oh-cited" aria-label={`${evidenceTypes[type]} cited for ${r.label}`} aria-pressed={selected===r.id} onClick={()=>onSelect(r.id)}><Check size={16} aria-hidden /><span>Cited</span></button> : <span aria-label="Evidence type not recorded">—</span>}</td>)}
+  return <><div className="atlas-oh-table atlas-oh-matrix"><table><caption className="sr-only">Relationship evidence types</caption><thead><tr><th scope="col"><div className="atlas-oh-relationship-heading">Relationship{reviewHelp}</div></th>{types.map(type=><th scope="col" key={type} title={words(type)}>{evidenceTypes[type]}</th>)}</tr></thead><tbody>{relations.map(r=><tr key={r.id} data-selected={selected===r.id} onClick={()=>onSelect(r.id)}>
+      <th scope="row"><button aria-pressed={selected===r.id}>{r.label}</button><div className="atlas-oh-relationship-badges"><span className="atlas-oh-list-finding"><Network size={12} aria-hidden />{relationLabels[r.kind]}</span><span className="atlas-select-badge" data-caution={r.basis === "source_hypothesis" || undefined}>{r.basis === "source_hypothesis" ? <CircleHelp size={12} aria-hidden /> : <FileText size={12} aria-hidden />}{r.basis === "source_hypothesis" ? "Source hypothesis" : "Source reported"}</span>{r.contested && <span className="atlas-select-badge" data-caution="true"><TriangleAlert size={12} aria-hidden />Contested</span>}</div></th>
+      {types.map(type=><td key={type}>{r.evidence_types.includes(type) ? <button className="atlas-oh-cited" aria-label={`${evidenceTypes[type]} cited for ${r.label}`} aria-pressed={selected===r.id}><Check size={16} aria-hidden /><span>Cited</span></button> : <span aria-label="Evidence type not recorded">—</span>}</td>)}
     </tr>)}</tbody></table></div><p className="atlas-oh-note">Columns show types cited in this selection. — means this type is not recorded for the relationship, not a negative result. Quotations are linked to the relationship as a whole, not to individual cells.</p></>;
 }
 
-function HealthOverview({rows,view,onOpen,onReport,footerTarget}:{rows:AtlasRecord[];view:AtlasSelectedOneHealth;onOpen:(id:string,nodeId?:string)=>void;onReport:(ids:string[],expand?:boolean)=>void;footerTarget:HTMLElement|null}) {
+function HealthOverview({rows,view,onOpen,onReport,footerTarget,toolsTarget}:{toolsTarget:HTMLElement|null;rows:AtlasRecord[];view:AtlasSelectedOneHealth;onOpen:(id:string,nodeId?:string)=>void;onReport:(ids:string[],expand?:boolean)=>void;footerTarget:HTMLElement|null}) {
   const {bundle,tracks}=useAtlas();
-  const [query,setQuery]=useState("");
-  const [page,setPage]=useState(0);
-  const [sort,setSort]=useState<{key:"report"|"evidence"|Domain;direction:"ascending"|"descending"}>({key:"evidence",direction:"descending"});
+  const [query,setQuery]=useAtlasPanelState("health.overview.query", "");
+  const [page,setPage]=useAtlasPanelState("health.overview.page", 0);
+  const [sort,setSort]=useAtlasPanelState<{key:"report"|"evidence"|Domain;direction:"ascending"|"descending"}>("health.overview.sort", {key:"evidence",direction:"descending"});
   const scroll=useRef<HTMLDivElement>(null);
   const evidence=useMemo(()=>healthOverviewEvidence(view),[view]);
   const reviews=useMemo(()=>new Map(view.reviews.map(r=>[r.record_id,r])),[view]);
@@ -171,17 +178,17 @@ function HealthOverview({rows,view,onOpen,onReport,footerTarget}:{rows:AtlasReco
     setSort({key,direction:sort.key===key ? sort.direction==="ascending"?"descending":"ascending" : key==="report"?"ascending":"descending"});
     setPage(0);
   };
-  const heading=(key:typeof sort.key,label:string,Icon:typeof FileText)=>{
+  const overviewHelp=<AtlasScope label="Overview ordering and scope" title="Evidence coverage"><p>Default order: reported, uncontested relationships first; then distinct evidence types, supporting documents, source passages and observations, each in descending order. Ties use the most recent publication date.</p><p>Counts use observations belonging to each report entry and relationships explicitly supported by that entry. Hypotheses and contested relationships are shown separately and do not contribute to relationship support counts. Documents and passages are counted once per entry.</p><p>This is a reading order based on recorded support, not a confidence score. More evidence does not establish causation or stronger study quality. Positive and negative findings have equal weight. Domain headings sort by observation count; the report heading sorts by topic name.</p></AtlasScope>;
+  const heading=(key:typeof sort.key,label:string)=>{
     const SortIcon=sort.key===key ? sort.direction==="ascending"?ArrowUp:ArrowDown : ArrowUpDown;
-    return <th scope="col" key={key} aria-sort={sort.key===key?sort.direction:"none"}><button onClick={()=>changeSort(key)} title={key==="report"?"Sort by topic name":key==="evidence"?"Sort by recorded evidence coverage":`Sort by ${label.toLowerCase()} observation count`}><Icon size={14} aria-hidden /><span>{label}</span><SortIcon className="atlas-oh-sort-icon" size={12} aria-hidden /></button></th>;
+    return <th scope="col" key={key} aria-sort={sort.key===key?sort.direction:"none"}><div className="atlas-oh-relationship-heading"><button onClick={()=>changeSort(key)} title={key==="report"?"Sort by topic name":key==="evidence"?"Sort by recorded evidence coverage":`Sort by ${label.toLowerCase()} observation count`}><span>{label}</span><SortIcon className="atlas-oh-sort-icon" size={12} aria-hidden /></button>{key === "report" && overviewHelp}</div></th>;
   };
   useEffect(()=>{scroll.current?.scrollTo({top:0});},[currentPage,query,sort,rows]);
   return <div className="atlas-oh-overview">
-    <div className="atlas-oh-overview-tools"><label className="atlas-oh-search"><span className="sr-only">Report entries</span><input type="search" aria-label="Search One Health report entries" placeholder="Search title or topic…" value={query} onChange={e=>{setQuery(e.target.value);setPage(0);}} /><small aria-live="polite">{entries.length} entries</small></label>
-      <button className="atlas-oh-sort-reset" onClick={resetSort} disabled={sort.key==="evidence"&&sort.direction==="descending"} title="Reset to evidence order"><RotateCcw size={14} aria-hidden /><span>Reset sort</span></button>
-      <AtlasScope label="Overview ordering and scope" title="Evidence coverage"><p>Default order: reported, uncontested relationships first; then distinct evidence types, supporting documents, source passages and observations, each in descending order. Ties use the most recent publication date.</p><p>Counts use observations belonging to each report entry and relationships explicitly supported by that entry. Hypotheses and contested relationships are shown separately and do not contribute to relationship support counts. Documents and passages are counted once per entry.</p><p>This is a reading order based on recorded support, not a confidence score. More evidence does not establish causation or stronger study quality. Positive and negative findings have equal weight. Domain headings sort by observation count; the report heading sorts by topic name.</p></AtlasScope>
-    </div>
-    <div ref={scroll} className="atlas-oh-table atlas-oh-overview-scroll"><table><caption className="sr-only">Report entries by One Health domain and recorded evidence coverage</caption><thead><tr>{heading("report","Report entry & review",FileText)}{heading("evidence","Evidence",Microscope)}{columns.map(d=>heading(d.id,d.label,domainIcons[d.id]))}</tr></thead><tbody>{entries.slice(currentPage*20,currentPage*20+20).map(row=>{
+    {toolsTarget && createPortal(<><label className="atlas-oh-search"><span className="sr-only">Report entries</span><input type="search" aria-label="Search One Health report entries" placeholder="Search title or topic…" value={query} onChange={e=>{setQuery(e.target.value);setPage(0);}} /></label>
+      <button className="atlas-oh-sort-reset" onClick={resetSort} disabled={sort.key==="evidence"&&sort.direction==="descending"} title="Reset to evidence order" aria-label="Reset sort"><RotateCcw size={16} aria-hidden /></button>
+    </>,toolsTarget)}
+    <div ref={scroll} className="atlas-oh-table atlas-oh-overview-scroll"><table><caption className="sr-only">Report entries by One Health domain and recorded evidence coverage</caption><thead><tr>{heading("report","Report entry & review")}{heading("evidence","Evidence")}{columns.map(d=>heading(d.id,d.id === "food" ? "Food" : d.label))}</tr></thead><tbody>{entries.slice(currentPage*20,currentPage*20+20).map(row=>{
       const support=evidence.get(row.id),observations=support?.nodes ?? [],review=reviews.get(row.id);
       const status=review ? review.outcome === "reviewed" ? "Complete for stated scope" : words(review.outcome) : reviewedIds.has(row.id) ? "Support outside selection" : "Unreviewed";
       return <tr key={row.id} data-record-id={row.id}><th scope="row"><button title={row.title} onClick={()=>observations.length ? onOpen(row.id) : onReport([row.id],true)}>{tracks.get(row.track)?.label ?? row.title}</button><small>{formatDate(row.publication)} · {row.source}</small><span className="atlas-oh-review-state" title={review?.scope}>{status}</span></th>
@@ -199,12 +206,12 @@ function HealthOverview({rows,view,onOpen,onReport,footerTarget}:{rows:AtlasReco
 function HealthMethods() {
   return <div className="atlas-literature">
     <p>ATLAS UI visualizes reviewed ATLAS exports. These papers inform the presentation; source passages in the details panel support individual observations and relationships. The papers do not validate this interface or its records.</p>
-    <h3>Network: distinguish exposure from infection</h3><p>Domain columns retain the reported entities, findings and observation scope. Connections appear only when exported; arrows require an explicit direction. This distinction follows the successive barriers discussed by <a href="https://doi.org/10.1038/nrmicro.2017.45" target="_blank" rel="noopener noreferrer">Plowright et al. (2017)</a>. Position and spacing do not encode time, distance or risk.</p>
-    <h3>Evidence: inspect the types behind a relationship</h3><p>The matrix separates reported evidence types without ranking certainty. <a href="https://doi.org/10.1038/s41586-024-07849-4" target="_blank" rel="noopener noreferrer">Caserta et al. (2024)</a> combine epidemiological and genomic investigation; <a href="https://doi.org/10.1038/s41576-023-00649-y" target="_blank" rel="noopener noreferrer">Djordjevic et al. (2024)</a> discuss genomic methods and their strengths. This motivates keeping evidence types inspectable. Genomic association alone is not displayed as transmission direction. A cell opens the whole relationship evidence because the export has no quotation binding for each type.</p>
-    <h3>Overview: distinguish review coverage from absence</h3><p>The entry by domain view exposes findings alongside review status, informed by the integrated surveillance goals of <a href="https://doi.org/10.1016/j.onehlt.2023.100617" target="_blank" rel="noopener noreferrer">OHHLEP et al. (2023)</a>. An empty cell is not a negative test or an uninvestigated domain. Counts describe source observations and report entries, not incidence or surveillance sensitivity.</p>
-    <h3>Sampling and comparability</h3><p>The <a href="https://doi.org/10.2903/j.efsa.2025.9759" target="_blank" rel="noopener noreferrer">EFSA and ECDC report (2025)</a> distinguishes surveillance systems by comparability. ATLAS retains population, period, sample unit and method. Shared plotting of positivity requires linked numerators and denominators with compatible sampling; the interface does not derive these from narrative proximity.</p>
-    <h3>Aligned time, sampling and environmental context</h3><p>The <a href="https://doi.org/10.1038/s41586-022-05506-2" target="_blank" rel="noopener noreferrer">Eby et al. (2023)</a> study aligns ecological and spillover observations over time. ATLAS uses alignment to inspect reported dates; it does not infer the study’s ecological mechanisms in other records. Month and year placement ranges preserve date precision, and reporting cutoffs remain separate from observation events.</p><p>Sampling panels follow the exported decision on matched tested and positive units. Fractions are descriptive results from the sampled material, with no assumed population representativeness or confidence interval. Environmental panels distinguish measured variables, attributed hypotheses, reported conditions, interventions and evaluated effects. An intervention’s position beside an observation is not evidence that it caused a change.</p>
-    <h3>References</h3><ol className="atlas-references">
+    <h3><Network size={16} aria-hidden />Network: distinguish exposure from infection</h3><p>Domain columns retain the reported entities, findings and observation scope. Connections appear only when exported; arrows require an explicit direction. This distinction follows the successive barriers discussed by <a href="https://doi.org/10.1038/nrmicro.2017.45" target="_blank" rel="noopener noreferrer">Plowright et al. (2017)</a>. Position and spacing do not encode time, distance or risk.</p>
+    <h3><Grid2X2 size={16} aria-hidden />Evidence: inspect the types behind a relationship</h3><p>The matrix separates reported evidence types without ranking certainty. <a href="https://doi.org/10.1038/s41586-024-07849-4" target="_blank" rel="noopener noreferrer">Caserta et al. (2024)</a> combine epidemiological and genomic investigation; <a href="https://doi.org/10.1038/s41576-023-00649-y" target="_blank" rel="noopener noreferrer">Djordjevic et al. (2024)</a> discuss genomic methods and their strengths. This motivates keeping evidence types inspectable. Genomic association alone is not displayed as transmission direction. A cell opens the whole relationship evidence because the export has no quotation binding for each type.</p>
+    <h3><Rows3 size={16} aria-hidden />Overview: distinguish review coverage from absence</h3><p>The entry by domain view exposes findings alongside review status, informed by the integrated surveillance goals of <a href="https://doi.org/10.1016/j.onehlt.2023.100617" target="_blank" rel="noopener noreferrer">OHHLEP et al. (2023)</a>. An empty cell is not a negative test or an uninvestigated domain. Counts describe source observations and report entries, not incidence or surveillance sensitivity.</p>
+    <h3><Microscope size={16} aria-hidden />Sampling and comparability</h3><p>The <a href="https://doi.org/10.2903/j.efsa.2025.9759" target="_blank" rel="noopener noreferrer">EFSA and ECDC report (2025)</a> distinguishes surveillance systems by comparability. ATLAS retains population, period, sample unit and method. Shared plotting of positivity requires linked numerators and denominators with compatible sampling; the interface does not derive these from narrative proximity.</p>
+    <h3><CalendarDays size={16} aria-hidden />Aligned time, sampling and environmental context</h3><p>The <a href="https://doi.org/10.1038/s41586-022-05506-2" target="_blank" rel="noopener noreferrer">Eby et al. (2023)</a> study aligns ecological and spillover observations over time. ATLAS uses alignment to inspect reported dates; it does not infer the study’s ecological mechanisms in other records. Month and year placement ranges preserve date precision, and reporting cutoffs remain separate from observation events.</p><p>Sampling panels follow the exported decision on matched tested and positive units. Fractions are descriptive results from the sampled material, with no assumed population representativeness or confidence interval. Environmental panels distinguish measured variables, attributed hypotheses, reported conditions, interventions and evaluated effects. An intervention’s position beside an observation is not evidence that it caused a change.</p>
+    <h3><BookOpen size={16} aria-hidden />References</h3><ol className="atlas-references">
       <li>Plowright RK et al. (2017). <a href="https://doi.org/10.1038/nrmicro.2017.45" target="_blank" rel="noopener noreferrer">Pathways to zoonotic spillover.</a> <i>Nature Reviews Microbiology</i> 15, 502–510.</li>
       <li>Caserta LC et al. (2024). <a href="https://doi.org/10.1038/s41586-024-07849-4" target="_blank" rel="noopener noreferrer">Spillover of highly pathogenic avian influenza H5N1 virus to dairy cattle.</a> <i>Nature</i> 634, 669–676.</li>
       <li>Djordjevic SP et al. (2024). <a href="https://doi.org/10.1038/s41576-023-00649-y" target="_blank" rel="noopener noreferrer">Genomic surveillance for antimicrobial resistance — a One Health perspective.</a> <i>Nature Reviews Genetics</i> 25, 142–157. Published online in 2023; cited by the 2024 journal issue.</li>
@@ -227,7 +234,7 @@ function HealthLanes({ nodes, relations, selected, highlighted, onHover, onLeave
   const related = new Set(activeRelation ? [activeRelation.from_node_id,activeRelation.to_node_id] : [active]);
   if (!activeRelation) for (const r of relations) if(r.from_node_id===active || r.to_node_id===active) { related.add(r.from_node_id);related.add(r.to_node_id); }
   if (!nodes.length) return <p className="atlas-empty">No episode or surveillance observations in this selection. Background context remains in the observation list.</p>;
-  return <svg ref={ref} viewBox={`0 0 ${width} ${height}`} style={{"--atlas-network-min-width":`${minimumWidth}px`} as CSSProperties} role="group" aria-label="One Health evidence network" onPointerLeave={onLeave}>
+  return <svg ref={ref} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMinYMin meet" style={{"--atlas-network-min-width":`${minimumWidth}px`} as CSSProperties} role="group" aria-label="One Health evidence network" onPointerLeave={onLeave}>
     <defs><marker id={arrow} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10" fill="none" stroke="currentColor" /></marker></defs>
     {columns.map(column=>{const domain=lanes.find(d=>d.id===column.id)!;const Icon=domainIcons[domain.id];return <g key={column.id} className="atlas-oh-lane-group" data-domain={column.id}><rect x={column.x} y="0" width={column.width} height={height} rx="12" className="atlas-oh-lane" /><foreignObject x={column.x} y="4" width={column.width} height="36"><div className="atlas-oh-lane-title" data-compact={column.width < 120}><Icon size={14} aria-hidden />{column.id === "food" ? "Food" : domain.label}</div></foreignObject></g>;})}
     {relations.map(r=>{const path=paths.get(r.id);if(!path)return null;return <g key={r.id} data-entry-id={r.id} data-highlighted={highlighted===r.id} role="button" tabIndex={0} aria-label={`${r.label}. ${words(r.kind)}${r.contested ? '. Contested' : ''}`} onClick={()=>onSelect(r.id)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onSelect(r.id);}}} onPointerEnter={()=>onHover(r.id)} onPointerLeave={onLeave} onFocus={()=>onHover(r.id)} onBlur={onLeave} className="atlas-oh-edge" data-dimmed={!!active && !(r.id===active || r.from_node_id===active || r.to_node_id===active)} data-kind={r.kind} data-basis={r.basis} data-selected={selected===r.id} aria-pressed={selected===r.id}><path d={path} stroke="transparent" strokeWidth="12" fill="none" /><path className="atlas-oh-edge-clearance" d={path} /><path className="atlas-oh-edge-line" d={path} markerEnd={r.directed?`url(#${arrow})`:undefined} /></g>;})}

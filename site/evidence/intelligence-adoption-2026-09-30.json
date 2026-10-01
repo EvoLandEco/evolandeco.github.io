@@ -1,0 +1,388 @@
+{
+  "recorded_at": "2026-09-30T19:36:28.294966+00:00",
+  "scope": "Local ATLAS experiment with integrated Analysis, Reports and One Health views",
+  "experiment_id": "288a2d4b8fa31829e2b12793ceee0e0ec6282b86213136f37cff145d0ad47a78",
+  "schema_version": "0.1.0",
+  "source_export_id": "9d712c4f57ee47774b0dc69931594bf1ef6b5813429211faddf304351824b2af",
+  "sidecar": {
+    "path": "/Users/tianjian/Documents/ChatGPT/EpiWeekly/reports/intelligence-experiment-2026-09-30/intelligence.json",
+    "bytes": 1937534,
+    "sha256": "e45ab29850c9b54dd27bddf82fc2350446251b3105e768db1afad92cce69ada3"
+  },
+  "producer_input_identity": {
+    "site_sha256": "f9ef77745e81fb87529fc936f22bf3dae7970054097ba38a4b409f16fedc1142",
+    "selector_sha256": "80f15b7fda19c2fd1aed5d92a6317733fe5b69aa66c5fa0e386b403a61b21e0c",
+    "producer_sha256": "a878e789a269779387c0400cdaf92e713ffd6ee0fa514b9d9c973b7b4f232932",
+    "profile_sha256": "152a376a9e7c982823938c6ded0fd08ac054af4648f1f34ac5f99d2323636812",
+    "schema_sha256": "3b0d3bb1dcffa911608da43b38cc71494781820716261eb8c2d812385af0912e",
+    "selection_adapter_sha256": "ecd88034e6d7f1185e38f3ade623b4e6936d2818fc0e48b7de9366fbb8f1557a",
+    "network_method_sha256": "a5db52cd6f506223588e9a3333e5002f7babf65aa4ceff6d9b9db310058f860b",
+    "method_version": "0.1.0"
+  },
+  "preview_url": "http://127.0.0.1:3005/atlas/experimental/",
+  "ui_files": [
+    {
+      "path": "site/README.md",
+      "sha256": "bebd448276a9300aa89cf8e5b632157f17fdeeb25193a30d10336587ad49847a"
+    },
+    {
+      "path": "site/src/app/atlas/experimental/page.tsx",
+      "sha256": "17713ce82fe194635976c758e0cd66be70f8d6d193beb3eb8ce6956c9db315bf"
+    },
+    {
+      "path": "site/src/app/atlas/experimental/preview.tsx",
+      "sha256": "e319ada684c5848df766d8a5acb1e89bb32dcee0a69d6e9bfe74e7ceac6224c7"
+    },
+    {
+      "path": "site/src/app/atlas/atlas.css",
+      "sha256": "f3a4babe95a6cea36abb43139ccceb138f449b98a117a52007808e1edb705b5a"
+    },
+    {
+      "path": "site/src/components/atlas-analysis.tsx",
+      "sha256": "fa744c811355fc83c8cb7715cf7411ac9d624a38ce8d4058812105b0d06820fa"
+    },
+    {
+      "path": "site/src/components/atlas-analysis-results.tsx",
+      "sha256": "3e3eb792731d39d7ba8e74c32983ae0f385ed8b5795ae7d854a117b26779daf9"
+    },
+    {
+      "path": "site/src/components/atlas-analysis.module.css",
+      "sha256": "d386680731140f1bd99e8502d46d8a98ecc12b8a921dfbba26114a724b96abfa"
+    },
+    {
+      "path": "site/src/components/atlas-explorer.tsx",
+      "sha256": "1a16dd8a5ffd94ea5fede40a935b4511b2e62cffd3e6d5ea71dc6184ec778500"
+    },
+    {
+      "path": "site/src/components/atlas-remote.tsx",
+      "sha256": "43e2cccc873bfce496c94c6cdf583e94f9e7c8a7df5c7785703df41c389857f7"
+    },
+    {
+      "path": "site/src/components/atlas-one-health.tsx",
+      "sha256": "05f9bcca702f3457763cc109da2cd6226921bd35d16a65262267adbcf3b6ecfb"
+    },
+    {
+      "path": "site/src/components/atlas-one-health-panels.tsx",
+      "sha256": "4bd79b2bb40879b990f11543ef1f9905a31e8736998e996d72fd0a18670af605"
+    },
+    {
+      "path": "site/src/components/atlas-trends.tsx",
+      "sha256": "4f51cf3d41f6cc2b3a2cde91c8c327ecaf0b78961c8701b87d14231c33b07b2a"
+    },
+    {
+      "path": "site/src/components/motion-policy.tsx",
+      "sha256": "dbdb7e205cac7b2f41b24c2e42bf4a1dd237dd242cd313b5cbdbe61d9f0560d5"
+    },
+    {
+      "path": "site/src/lib/atlas-intelligence.ts",
+      "sha256": "975f88fd421f7606e27e2bc137c5d6530b3061ae604a2f22d46c1898d1430288"
+    },
+    {
+      "path": "site/tests/atlas-intelligence.spec.ts",
+      "sha256": "ab51810ee799c161860399ecfe8f2c702be4890d5adf1f6be76e0e9ddacdb4a8"
+    },
+    {
+      "path": "site/tests/atlas-intelligence.test.ts",
+      "sha256": "394181ad518643ba97d83d200499be43b2f70330be4abcd857efc6f1ae0103aa"
+    },
+    {
+      "path": "site/src/components/atlas-evidence-summary.tsx",
+      "sha256": "537af8db51dd81bf627d8e1af1788ba4565aa44a3ca31bc7f75a9013eee8bf4f"
+    },
+    {
+      "path": "site/src/components/atlas-pagination.tsx",
+      "sha256": "78072db10a6b92f0dd4a35b6b68f1add152804787226d61fd3c6986ee7d21bcc"
+    },
+    {
+      "path": "site/src/components/atlas-select.tsx",
+      "sha256": "3f6de0a2d3eda0e7b4ec62a056927be4db1f0107050b0d8577faa690ea4ebeec"
+    },
+    {
+      "path": "site/tests/atlas.spec.ts",
+      "sha256": "f7c09f2d5535e2f93aab9bb8fb1c831df795ef1a4b359bd6e5528e34f222f9b2"
+    },
+    {
+      "path": "site/src/components/atlas-comparisons.tsx",
+      "sha256": "163a725dafb6136477df049f49c03b14597a71aff1aea6aead01c51a6cd8feea"
+    },
+    {
+      "path": "site/src/components/atlas-scope.tsx",
+      "sha256": "d6fd6120c90044387dd0e4af2f09cbbe20a51cd8abde2f9b9ef429b00e7a543a"
+    },
+    {
+      "path": "site/tests/atlas-health-entry-menu.spec.ts",
+      "sha256": "bb0380c94194a2e054409eb5b9dce039ab3d82da779bdb9de9b4703bd51ba110"
+    },
+    {
+      "path": "site/tests/atlas-one-health.spec.ts",
+      "sha256": "f1e9c2319c2ac0c800f0b0222aab80fbf9d65c6efbd7fab46c494c96fa33a16a"
+    },
+    {
+      "path": "site/tests/atlas-health-network.spec.ts",
+      "sha256": "33e5a8a66c504696e85e4158cf5887b4c9bb9833e321fc4b6bc776ea9ae2cad7"
+    },
+    {
+      "path": "site/tests/atlas-health-panels.spec.ts",
+      "sha256": "496983242c232d895cf605ef8712c16a0f55ef9fc432ae1b09f7e43f751fa2fe"
+    },
+    {
+      "path": "site/tests/atlas-health-partial.spec.ts",
+      "sha256": "967fa97daa7371d3f08ea3edac5e683888099002f9d8753af6f9eb79dbf59ab6"
+    },
+    {
+      "path": "site/src/lib/atlas-health-layout.ts",
+      "sha256": "aa323f27657802b24a4c056522b8afd31e4adbb235d79687d553fdd8468c75d8"
+    },
+    {
+      "path": "site/tests/atlas-health-layout.test.ts",
+      "sha256": "a0dbaf0f2fc6dbbd692d9c13ad14ac162262e1da09c8b1e91f443f80949caaca"
+    }
+  ],
+  "checks": [
+    {
+      "name": "Chromium 1440px workspace and 390px page",
+      "status": "passed",
+      "passed": 2,
+      "test_file": "site/tests/atlas-intelligence.spec.ts"
+    },
+    {
+      "name": "Producer payload preservation, checksum and unsupported claim rejection",
+      "status": "passed",
+      "passed": 1,
+      "test_file": "site/tests/atlas-intelligence.test.ts"
+    },
+    {
+      "name": "TypeScript",
+      "status": "passed"
+    },
+    {
+      "name": "ESLint for changed TypeScript files",
+      "status": "passed"
+    },
+    {
+      "name": "git diff --check",
+      "status": "passed"
+    },
+    {
+      "name": "WebKit merged navigation",
+      "status": "not_run"
+    },
+    {
+      "name": "Floating pagination across five views, unchanged content width and mobile dock clearance",
+      "status": "passed",
+      "passed": 1
+    },
+    {
+      "name": "Report page traversal and reporting filter resets",
+      "status": "passed",
+      "passed": 1
+    },
+    {
+      "name": "Expanded comparison badges: contradiction, different scope and republication",
+      "status": "passed",
+      "passed": 1
+    },
+    {
+      "name": "Source coverage image rendering and interaction in Chromium; image rendering in WebKit, light and dark themes",
+      "status": "passed",
+      "passed": 5
+    },
+    {
+      "name": "Network source pane height, page scroll alignment and independent fullscreen scrolling",
+      "status": "passed",
+      "passed": 1
+    },
+    {
+      "name": "Overview single-row controls, table headings, sorting, search and help at desktop and phone widths; fullscreen rendering",
+      "status": "passed",
+      "passed": 1
+    },
+    {
+      "name": "Shared 16 px menu gap across five tabs and three Reports views in desktop, fullscreen and phone layouts",
+      "status": "passed",
+      "passed": 1
+    },
+    {
+      "name": "Analysis signal overview, connection search, selection and scroll row sizing at 1440 px and 390 px",
+      "status": "passed",
+      "passed": 2,
+      "test_file": "site/tests/atlas-intelligence.spec.ts"
+    },
+    {
+      "name": "Count chart and table hover, keyboard report navigation, fullscreen row visibility and accessibility at 1440 px and 390 px",
+      "status": "passed",
+      "passed": 2,
+      "test_file": "site/tests/atlas-intelligence.spec.ts"
+    },
+    {
+      "name": "Consolidated Analysis methods, eligibility and provenance, selected-series context and result panels at desktop and phone sizes",
+      "status": "passed",
+      "passed": 2,
+      "test_file": "site/tests/atlas-intelligence.spec.ts"
+    },
+    {
+      "name": "Compact prediction statistics and contextual methods dialog at 1440 px and 390 px",
+      "status": "passed",
+      "passed": 2,
+      "test_file": "site/tests/atlas-intelligence.spec.ts"
+    },
+    {
+      "name": "Sticky top controls and expanded report clearance in page, fullscreen and phone layouts; navigation in desktop and phone layouts",
+      "status": "passed",
+      "passed": 4,
+      "test_file": "site/tests/atlas-intelligence.spec.ts"
+    },
+    {
+      "name": "Model Evaluation containment, independent scrolling and linked model hover; desktop and phone navigation",
+      "status": "passed",
+      "passed": 3,
+      "test_file": "site/tests/atlas-intelligence.spec.ts"
+    }
+  ],
+  "test_notes": [
+    "Navigation order, source coverage placement and footer pagination are checked.",
+    "Signals and model evaluation share their selected series with Trends.",
+    "Geographic signal navigation, source risk profiles and One Health return links are checked.",
+    "The timeline exposes observation, environment and intervention layers.",
+    "Analysis accessibility, phone overflow and browser errors are checked.",
+    "The regular ATLAS route retains its navigation without Analysis.",
+    "Report sections link to supported relationship entries and source risk profiles; One Health has no risk shortcut in its toolbar.",
+    "One Health view, report and filter controls share a single toolbar row on desktop and phone.",
+    "The complete evidence toolbar and separator stay at the viewport top while the page scrolls outside workspace mode.",
+    "Compact report switches retain icon buttons beside capture and update dates at narrow container widths.",
+    "The Reports header shows timeline dates for Reports, a Relationships and Risks switch for Assessments, and unconnected dates for Source coverage. All six transitions retain a 64 px header in the live preview. Desktop and phone layout checks pass; reduced motion disables the entrance animation.",
+    "Source coverage dates sit within an open bracket over the chart. Column headings identify sources, report counts and reporting topics. Soft node surfaces, borderless location labels and subdued links preserve the source and topic navigation.",
+    "One Health toolbar uses borderless selectors, a view icon, a compact date and a circular filter control. Desktop and phone checks cover the single row layout and view navigation.",
+    "Analysis places its view switch, signal type, monitored series and observations link in one borderless toolbar. Repeated explanations are absent from the main view; study scope, methods and eligibility remain in disclosures. Desktop and phone checks cover series sharing, model evaluation, accessible controls and toolbar alignment.",
+    "About One Health occupies the footer right edge. Its methods dialog preserves the references and returns keyboard focus to the trigger on close. The toolbar has no methods button.",
+    "One Health panels omit repeated visible view headings. Network review help follows the legend; Evidence review help sits beside the Relationship column label. Both dialogs open and close in desktop and phone checks. The fullscreen network figure uses two grid rows for the graph and legend.",
+    "Evidence relationship rows show separate type, source basis and contested badges. The introductory instruction line is absent. Desktop and phone checks cover the labels and evidence navigation.",
+    "Evidence rows highlight on hover and keyboard focus. Clicking any cell selects the relationship; native buttons retain keyboard activation. Desktop and phone checks cover selection through an unmarked cell and through Enter.",
+    "One Health views share a 20 px toolbar gap. Network columns begin at the figure edge; the outer gutter is reserved for routes within the final domain. Graph aspect ratios are preserved. Three layout tests and desktop/phone navigation checks pass; Overview spacing is verified in the preview.",
+    "In the two-column Network layout, source details stretch to the left column height without contributing their intrinsic content height. The pane scrolls internally and has no sticky offset. Normal and fullscreen geometry checks pass.",
+    "Overview places search and its borderless reset button beside the view selector. Help follows the Report entry & review heading. Table headings use one line, with horizontal scrolling available on narrow screens. Sorting, reset, search and help dialog checks pass.",
+    "The workspace owns the 16 px gap below the main menu. Trends, Analysis, One Health, Reports and Geographic links align at this inset. Reports dates retain their timeline and coverage connectors.",
+    "About Analysis occupies the footer right edge and uses the shared methods dialog and reference typography. Desktop and phone checks cover the five references, preprint status, interpretation limits, Escape, focus return and button removal on tab changes. TypeScript, ESLint and whitespace checks pass.",
+    "The Analysis toolbar contains its view switch and selectors. Navigation to Trends uses the main tab menu and retains the selected series. Desktop and phone navigation checks, TypeScript and ESLint pass.",
+    "All signals presents category totals and six recent signals. Country connections use a searchable list with source details, report links and method disclosures. Signal rows retain their content height inside the scroll container. Desktop and phone checks cover category navigation, exact signal selection, search, empty results, keyboard selection and row content bounds; TypeScript and ESLint pass.",
+    "Count checks use linked chart and table highlights. Chart columns accept pointer movement across the full plot height and keyboard focus; the matching table row is revealed within its scroll container. Period links and chart activation open the individual report. The fullscreen chart and table share the available height. Model evaluation remains accessible through the Analysis view switch. Desktop and phone checks cover hover in both directions, keyboard activation, visible rows, absent duplicate controls and accessibility; TypeScript and ESLint pass.",
+    "About Analysis contains study scope, model definitions, scoring rules, signal interpretation, study and selected-series limits, the eligibility ledger, export identifiers and references. Section icons and scope fields use the shared methods dialog typography. Monitoring and evaluation contain no method or provenance disclosures; prediction intervals and source evidence remain beside the results. Desktop and phone checks cover preserved eligibility reasons and references, selected-series context, removed disclosures, Escape and chart interactions; TypeScript and ESLint pass.",
+    "Model evaluation places its three target statistics above the prediction chart. A shared question-mark dialog at the title right edge contains context, availability, interval values, training observations, selected calculation methods and sources. Performance rows omit repeated baseline labels; baseline identity remains in the dialog. Desktop and phone checks cover stat position, right alignment, data preservation, Escape and focus return, extrapolation values and accessibility; TypeScript and ESLint pass.",
+    "Analysis, One Health and Reports share a sticky control row with an opaque surface beneath the tab menu. Reports control height is measured for expanded report and assessment heading offsets. Desktop, phone and fullscreen checks verify the 16 px menu gap, sticky positions and visible hit targets. Desktop and phone navigation checks, TypeScript and ESLint pass.",
+    "Model Evaluation fits the fullscreen workspace with an independently scrolling performance table. The prediction plot uses its measured dimensions to retain readable labels. Model rows preview predictions on hover and commit selection through click or keyboard activation; prediction hover reveals and highlights the matching row. Checks cover 780 px and 640 px viewport heights, desktop and phone navigation, and accessibility. Three browser tests, TypeScript and ESLint pass."
+  ],
+  "screenshots": [
+    "/tmp/atlas-merged-analysis-1440.png",
+    "/tmp/atlas-merged-analysis-390.png",
+    "/tmp/atlas-merged-sources-1440.png",
+    "/tmp/atlas-merged-sources-390.png",
+    "/tmp/atlas-merged-timeline-1440.png",
+    "/tmp/atlas-merged-timeline-390.png",
+    "/tmp/atlas-report-assessments-1440.png",
+    "/tmp/atlas-report-assessments-390.png",
+    "/tmp/atlas-one-health-toolbar-1440.png",
+    "/tmp/atlas-one-health-toolbar-390.png",
+    "/tmp/atlas-sticky-menu-1440.png",
+    "/tmp/atlas-sticky-menu-390.png",
+    "/tmp/atlas-floating-pagination-phone.png",
+    "/tmp/atlas-floating-pagination-desktop.png",
+    "/tmp/atlas-compact-report-switch.png",
+    "/tmp/atlas-assessment-switch-1440.png",
+    "/tmp/atlas-assessment-switch-390.png",
+    "/tmp/atlas-one-health-controls-1440.png",
+    "/tmp/atlas-one-health-controls-390.png",
+    "/tmp/atlas-analysis-controls-1440.png",
+    "/tmp/atlas-analysis-controls-390.png",
+    "/tmp/atlas-one-health-footer-1440.png",
+    "/tmp/atlas-one-health-footer-390.png",
+    "/tmp/atlas-one-health-network-help-1440.png",
+    "/tmp/atlas-one-health-evidence-help-1440.png",
+    "/tmp/atlas-one-health-network-help-390.png",
+    "/tmp/atlas-one-health-evidence-help-390.png",
+    "/tmp/atlas-one-health-evidence-hover-1440.png",
+    "/tmp/atlas-one-health-evidence-hover-390.png",
+    "/tmp/atlas-one-health-matched-columns.png",
+    "/tmp/atlas-overview-controls-1440.png",
+    "/tmp/atlas-overview-controls-390.png",
+    "/tmp/atlas-overview-headings-1440.png",
+    "/tmp/atlas-overview-fullscreen.png",
+    "/tmp/atlas-menu-spacing-fullscreen.png",
+    "/tmp/atlas-about-analysis-1440.png",
+    "/tmp/atlas-about-analysis-390.png",
+    "/tmp/atlas-all-signals-1440.png",
+    "/tmp/atlas-country-signals-1440.png",
+    "/tmp/atlas-all-signals-390.png",
+    "/tmp/atlas-country-signals-390.png",
+    "/tmp/atlas-count-hover-1440.png",
+    "/tmp/atlas-count-hover-390.png",
+    "/tmp/atlas-prediction-summary-1440.png",
+    "/tmp/atlas-prediction-summary-390.png",
+    "/tmp/atlas-sticky-controls-analysis-page.png",
+    "/tmp/atlas-sticky-controls-analysis-fullscreen.png",
+    "/tmp/atlas-sticky-controls-analysis-phone.png",
+    "/tmp/atlas-sticky-controls-one-health-page.png",
+    "/tmp/atlas-sticky-controls-one-health-fullscreen.png",
+    "/tmp/atlas-sticky-controls-one-health-phone.png",
+    "/tmp/atlas-sticky-controls-reports-page.png",
+    "/tmp/atlas-sticky-controls-reports-fullscreen.png",
+    "/tmp/atlas-sticky-controls-reports-phone.png",
+    "/tmp/atlas-evaluation-contained-780.png",
+    "/tmp/atlas-evaluation-contained-640.png"
+  ],
+  "scientific_scope": {
+    "time_basis": "retrospective_observation_order",
+    "status": "research_experiment",
+    "interpretation": "Retrospective observation-order hindcasts and source-reported risk evidence; not a current forecast."
+  },
+  "production": {
+    "deployment_performed": false,
+    "dataset_published": false,
+    "release_descriptors_changed": false,
+    "globe_modified": false,
+    "build_check": "Not run for this local handoff",
+    "route_guard": "Requires development mode and ATLAS_INTELLIGENCE_PREVIEW=1"
+  },
+  "analysis_reference_verification": {
+    "checked_at": "2026-09-30",
+    "implementation_source": "/Users/tianjian/Documents/ChatGPT/EpiWeekly/scripts/intelligence/build.py",
+    "method_version": "0.1.0",
+    "references": [
+      {
+        "citation": "Ray EL et al. (2023), International Journal of Forecasting 39(3), 1366–1383",
+        "url": "https://doi.org/10.1016/j.ijforecast.2022.06.005",
+        "verified_against": "https://publikationen.bibliothek.kit.edu/1000163946/151608760",
+        "supports": "Section 2.4 empirical symmetric random-walk baseline. ATLAS discrete quantiles and zero censoring at each step are stated as implementation choices; its direct relative WIS ratio is distinguished from the paper’s pairwise aggregation."
+      },
+      {
+        "citation": "Suez E, Fox SJ (2026), medRxiv 2026.03.18.26348748",
+        "url": "https://doi.org/10.64898/2026.03.18.26348748",
+        "verified_against": "https://www.medrxiv.org/content/10.64898/2026.03.18.26348748v1",
+        "supports": "Motivation for comparing baseline specifications. Preprint status is explicit; the paper does not establish the eight-change ATLAS window as optimal."
+      },
+      {
+        "citation": "Stan Development Team, Stan User’s Guide, Posterior predictive sampling",
+        "url": "https://mc-stan.org/docs/stan-users-guide/posterior-prediction.html",
+        "verified_against": "https://mc-stan.org/docs/stan-users-guide/posterior-prediction.html",
+        "supports": "Analytic Gamma–Poisson posterior predictive as a negative binomial distribution. ATLAS prior and four-observation window are described as study choices."
+      },
+      {
+        "citation": "Bracher J, Ray EL, Gneiting T, Reich NG (2021), PLOS Computational Biology 17(2), e1008618",
+        "url": "https://doi.org/10.1371/journal.pcbi.1008618",
+        "verified_against": "https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1008618",
+        "supports": "Weighted interval score definition and interpretation. Producer weights and denominator match the formula for three central intervals and the median."
+      },
+      {
+        "citation": "Martin E, Angles J, Pondo T, Pagaoa M, Torrone E (2024), CDC Stacks report",
+        "url": "https://stacks.cdc.gov/view/cdc/164155",
+        "verified_against": "https://stacks.cdc.gov/view/cdc/164155/cdc_164155_DS1.pdf",
+        "supports": "Distinction between surveillance aberrations, outbreaks and data quality issues. Cited for interpretation, not validation of the ATLAS 95th-quantile rule."
+      }
+    ],
+    "findings": [
+      "Ray et al. uses the 2023 journal issue; online publication was in 2022.",
+      "Suez and Fox is a preprint, not a peer-reviewed journal article.",
+      "First country connections are documented as an ATLAS archive query without claiming a published transmission inference method.",
+      "No citation is used to claim prospective validation or correction of reporting and collection bias."
+    ]
+  }
+}

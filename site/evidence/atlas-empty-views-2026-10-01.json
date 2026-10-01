@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-01",
+  "scope": "Empty One Health views and chart sizing lifecycle",
+  "reproduced_error": "Failed to execute 'observe' on 'ResizeObserver': parameter 1 is not of type 'Element'.",
+  "cause": "The sizing effect observed a missing SVG when the network rendered an empty state.",
+  "fix": "The resize observer attaches through the element ref and disconnects when the element unmounts.",
+  "checks": {
+    "browser_tests_passed": 4,
+    "viewport_widths": [
+      1440,
+      390
+    ],
+    "cases": [
+      "Zero network entry",
+      "Remembered zero network entry after tab navigation",
+      "Empty evidence, timeline and sampling",
+      "Populated entries after empty entries",
+      "All timeline layers disabled and restored",
+      "No matching entry filters and clearing filters",
+      "Report navigation and chart interactions"
+    ],
+    "page_errors": [],
+    "typescript": "passed",
+    "eslint": "passed",
+    "diff_whitespace": "passed"
+  },
+  "publication": "None"
+}

@@ -19,7 +19,7 @@ for(const viewport of [{width:390,height:950},{width:1280,height:720},{width:128
  const view=page.getByRole('region',{name:'One Health evidence'});
  const choose=async(name:string)=>{await view.locator('summary[aria-label="One Health view"]').click();await view.getByRole('option',{name,exact:true}).click();};
  await choose('Timeline');
- await expect(view.getByRole('heading',{name:'Aligned evidence timeline'})).toBeVisible();
+ await expect(view.getByRole('heading',{name:'Aligned evidence timeline'})).toHaveClass('sr-only');
  await expect(view.locator('.atlas-oh-time-point')).toHaveCount(3);
  await expect(view.getByRole('heading',{name:'Undated or incomplete dates 3'})).toBeVisible();
  await expect(view.getByRole('heading',{name:'Reporting cutoffs 1'})).toBeVisible();

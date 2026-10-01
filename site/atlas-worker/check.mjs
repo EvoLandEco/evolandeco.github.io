@@ -34,6 +34,13 @@ for (const name of ['network-analysis.json', 'network-analysis.schema.json', 'co
 }
 for (const path of [`/network-analysis/${'b'.repeat(64)}/private.json`, '/network-analysis/invalid/network-analysis.json', `/releases/${'a'.repeat(64)}/private.mjs`])
   assert.equal((await worker.fetch(request(path), env)).status, 404);
+for (const name of ['intelligence.json', 'contract.schema.json']) {
+  const path = `/intelligence/${'c'.repeat(64)}/${name}`;
+  assert.equal((await worker.fetch(request(path), env)).status, 200);
+  assert.equal(keys.at(-1), path.slice(1) + '.gz');
+}
+for (const path of [`/intelligence/${'c'.repeat(64)}/private.json`, '/intelligence/invalid/intelligence.json'])
+  assert.equal((await worker.fetch(request(path), env)).status, 404);
 const file = await worker.fetch(request(path), env);
 assert.equal(await file.text(), "data");
 assert.equal(keys.at(-1), path.slice(1) + ".gz");

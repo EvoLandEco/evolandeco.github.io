@@ -13,7 +13,8 @@ for (const [width,height] of [[390,950],[1280,720],[1280,950],[1512,820]]) test(
  await view.locator('summary[aria-label="One Health report"]').click();
  await view.getByRole('searchbox').fill('alfalfa sprouted seeds');
  await view.getByRole('option',{name:/alfalfa sprouted seeds/}).first().click();
- await expect(view.getByRole('heading',{name:/Observations/}).locator('svg')).toHaveCount(1);
+ await expect(view.locator('.atlas-oh-figure > header')).toHaveCount(0);
+ await expect(view.locator('.atlas-oh-key').getByRole('button',{name:/^Review scope for/})).toBeVisible();
  await expect(view.locator('.atlas-oh-key')).toHaveCSS('justify-content','center');
  await expect(view.locator('.atlas-oh-lane-title svg')).toHaveCount(3);
  await expect(view.locator('.atlas-oh-node-label')).toHaveCount(6);

@@ -37,11 +37,13 @@ export function healthLayout(nodes: Node[], edges: Edge[], domains: string[], av
   }
   groups.push(nodes.filter(n => !visited.has(n.id)));
   const gap = 8 + routes.length * 6;
-  const minimumWidth = domains.length * 76 + (domains.length + 1) * gap;
+  const outerGutter = routes.some(edge => byId.get(edge.from_node_id)!.domain === domains.at(-1) && byId.get(edge.to_node_id)!.domain === domains.at(-1)) ? gap : 0;
+  const gutters = Math.max(0, domains.length - 1) * gap + outerGutter;
+  const minimumWidth = domains.length * 76 + gutters;
   const width = Math.max(minimumWidth, availableWidth);
   const points = new Map<string, Point & { width: number }>(), paths = new Map<string, string>();
-  const cellWidth = (width - (domains.length + 1) * gap) / Math.max(1, domains.length);
-  const lanes = domains.map((id, i) => ({id, x: gap + i * (cellWidth + gap), width: cellWidth}));
+  const cellWidth = (width - gutters) / Math.max(1, domains.length);
+  const lanes = domains.map((id, i) => ({id, x: i * (cellWidth + gap), width: cellWidth}));
   let y = 56;
   for (const group of groups.filter(g => g.length)) {
     const members = group.slice().sort((a, b) => domains.indexOf(a.domain) - domains.indexOf(b.domain));

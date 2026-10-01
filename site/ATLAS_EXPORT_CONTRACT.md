@@ -8,7 +8,7 @@ The site loads its data from `https://qtj-atlas.evolandeco-github-io.workers.dev
 
 `src/lib/atlas-vendor/` contains the trusted ATLAS selector, TypeScript declarations and measurement schema. `src/content-data/atlas-hosting.json` pins the supported contract and selector hash. Executable code is never loaded from an exported dataset. Large data and test fixtures live outside Git in R2 and the ignored `.cache/` directory.
 
-The publication target is contract 1.2.0 with reviewed journeys and connections. The UI also reads 1.0.0 and 1.1.0 releases. Each publication must match the target contract and its trusted selector; a different contract requires a compatibility review. Dataset publication and the GitHub Pages website deployment are separate operations.
+The publication target is contract 1.5.0 with reviewed journeys, connections and One Health evidence. The UI reads contracts 1.0.0 through 1.5.0. Each publication must match the target contract and its trusted selector; a different contract requires a compatibility review. Dataset publication and the GitHub Pages website deployment are separate operations.
 
 The structured bundle owns canonical entities, identities and research figures. The byte-preserved map input must match `snapshot.source_snapshot_sha256`. The measurements download contains the bundle's embedded metrics.
 
@@ -130,3 +130,11 @@ Source time carries an explicit point, closed interval, open interval or unknown
 ## Country network analysis
 
 [Network analysis and UI acceptance](ATLAS_NETWORK_ANALYSIS.md) defines the producer analysis, evidence requirements and display rules for country statistics. Analytical exports require a separate versioned contract bound to the source release and supported filter scopes. Raw reporting counts, reviewed episode counts, collection adjustments and surveillance adjustments are distinct quantities. A valid export may mark an estimate unavailable with its data requirements; the UI must preserve that distinction from zero.
+
+## Analysis delivery
+
+The Analysis panel reads Intelligence contract 0.2.0. The release pointer's `intelligence` descriptor identifies the experiment, schema version, uncompressed byte count and SHA-256. The browser verifies the file at `intelligence/<experiment_id>/intelligence.json`, validates its schema, and requires its source export, site checksum and selector checksum to match the loaded release. The adjacent `contract.schema.json` documents the export. A missing or incompatible analysis displays an unavailable state without attributing results to another dataset.
+
+The producer owns signals, source risk statements, model predictions, intervals, scores and method provenance. The website does not fit models or alter their outputs. The default combined prediction is the pointwise median ensemble of the three exported component models. About Analysis retains methods, references, retrospective evaluation limits and provenance.
+
+For an authorized partial release, stage the base through `atlas:sync --correction <authorization> --stage-only`. Then run `node --import tsx scripts/publish-atlas-intelligence.ts --authorization <authorization> --release <staged-receipt> --dry-run`. The same command without `--dry-run` stages the matching network and Intelligence files and a complete immutable release descriptor. Consumer checks can select that staged descriptor through `ATLAS_RELEASE_FILE` in the Analysis browser suite. Add `--activate` only after the checks pass. Activation rechecks source hashes, all public assets and the exact public release being replaced under the shared writer lock. Partial coverage and unresolved reviews remain visible; publication does not create weekly completion or scientific acceptance receipts.

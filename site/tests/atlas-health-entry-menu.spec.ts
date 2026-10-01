@@ -8,7 +8,7 @@ for(const width of [390,1280])test(`One Health entry discovery ${width}`,async({
  await page.getByRole('tab',{name:'One Health',exact:true}).click();
  const view=page.getByRole('region',{name:'One Health evidence'});
  await expect(view).not.toContainText('inspected');
- await expect(view.getByRole('button',{name:/Figure methods & references for/})).toBeVisible();
+ await expect(page.locator('.atlas-workspace-footer').getByRole('button',{name:'About One Health',exact:true})).toBeVisible();
  await view.locator('summary[aria-label="One Health view"]').click();
  const option=view.getByRole('option',{name:'Sampling',exact:true});await expect(option).toContainText('entries available');await expect(option).toContainText('in this entry');
  await page.screenshot({path:`/tmp/atlas-health-view-menu-${width}.png`});await option.click();

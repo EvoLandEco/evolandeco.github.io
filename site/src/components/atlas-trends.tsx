@@ -1,7 +1,7 @@
 import { memo, useId, useMemo, useState, type CSSProperties } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { Activity, ChartNoAxesCombined, ChartPie, GitBranch } from "lucide-react";
-import { useAtlas } from "./atlas-context";
+import { useAtlas, useAtlasPanelState } from "./atlas-context";
 import { AtlasChains } from "./atlas-chains";
 import { AtlasSelect } from "./atlas-select";
 import { ObservationPlot } from "./atlas-metrics";
@@ -10,8 +10,8 @@ import type { AtlasRecord } from "@/lib/atlas";
 
 export const AtlasTrends = memo(function AtlasTrends({ rows, window, onReport }: { rows: AtlasRecord[]; window: [string, string]; onReport: (ids: string[], expand?: boolean) => void }) {
   const { metrics, measures, atlasDocuments, selectedResearch } = useAtlas();
-  const [context, setContext] = useState("");
-  const [panel, setPanel] = useState("journeys");
+  const [context, setContext] = useAtlasPanelState("trends.series", "");
+  const [panel, setPanel] = useAtlasPanelState("trends.panel", "journeys");
   const data = useMemo(() => {
     const ids = new Set(rows.map(r => r.id));
     const view = selectedResearch(ids);

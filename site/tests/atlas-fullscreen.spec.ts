@@ -344,13 +344,7 @@ for (const theme of ['light', 'dark'] as const) test(`Workspace scope overlays p
   await page.mouse.move(0, 0);
   const journeyHelp = page.getByRole('button', { name: 'Scope & review', exact: true });
   expect(await helpStyle(journeyHelp)).toEqual(sharedHelpStyle);
-  const seriesHelp = page.getByRole('button', { name: 'Series scope', exact: true });
-  expect(await helpStyle(seriesHelp)).toEqual(sharedHelpStyle);
-  await seriesHelp.click();
-  const scope = page.getByRole('dialog', { name: 'Series scope', exact: true });
-  await expect(scope).toContainText('Nigeria NCDC national Lassa fever surveillance');
-  await scope.getByRole('button', { name: 'Close series scope' }).press('Escape');
-  await expect(seriesHelp).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Series scope', exact: true })).toHaveCount(0);
   await expect(page.locator('.atlas-observation-details > .atlas-chart-note')).toHaveCount(0);
   const values = page.getByRole('group', { name: 'Values & sources', exact: true });
   await expect(values).toBeVisible();
@@ -399,7 +393,8 @@ test('Source coverage gathers connected nodes and restores the layout', async ({
   await page.goto('/atlas/');
   const entrance = page.getByRole('button', { name: 'Click to enter full screen' });
   await entrance.focus(); await entrance.press('Enter');
-  await page.getByRole('tab', { name: 'Source coverage', exact: true }).click();
+  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+  await page.getByRole('group', { name: 'Report content' }).getByRole('button', { name: 'Source coverage', exact: true }).click();
   const graph = page.locator('.atlas-source-network');
   const positions = () => graph.locator('.atlas-coverage-node').evaluateAll(nodes => nodes.map(n => new DOMMatrix(getComputedStyle(n).transform).m42));
   const original = await positions();
