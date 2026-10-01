@@ -1101,7 +1101,7 @@ for (const width of [390, 1280]) test(`Checkbox filters combine topics, sources 
   const labels = ["Bundibugyo reporting · DRC", "Bundibugyo imported case · France"];
   const topics = snapshot.tracks.filter(t => labels.includes(t.label)).map(t => t.id);
   const sources = ["ECDC_CDTR", "WHO_DON"];
-  for (const [label, choices] of [["Reporting topic", labels], ["Reporting source", ["ECDC", "WHO · DON"]], ["Link type", ["Reported travel", "Shared event"]]] as const) {
+  for (const [label, choices, summary] of [["Reporting topic", labels, "2 selected"], ["Reporting source", ["ECDC", "WHO · DON"], "2 sources"], ["Link type", ["Reported travel", "Shared event"], "2 link types"]] as const) {
     const menu = page.locator(".atlas-select").filter({ has: page.locator(`summary[aria-label="${label}"]`) });
     await menu.locator("summary").click();
     for (const choice of choices) {
@@ -1109,7 +1109,7 @@ for (const width of [390, 1280]) test(`Checkbox filters combine topics, sources 
       await expect(menu).toHaveAttribute("open", "");
       await expect(menu.getByRole("checkbox", { name: choice, exact: true })).toBeChecked();
     }
-    await expect(menu.locator("summary")).toContainText("2 selected");
+    await expect(menu.locator("summary")).toHaveText(summary);
     await menu.getByRole("checkbox", { name: choices[1], exact: true }).press("Escape");
   }
   const rows = snapshot.records.filter(r => topics.includes(r.track) && sources.includes(r.source));
