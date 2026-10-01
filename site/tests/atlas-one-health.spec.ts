@@ -18,7 +18,7 @@ for (const {width,height,workspace} of [{width:390,height:950,workspace:false},{
  await expect(view.locator('.atlas-oh-edge[data-kind="genomic_association"]')).toHaveCount(1);
  const scope=view.getByRole('button',{name:/^Review scope for/});
  expect(await scope.evaluate(el=>{
-  const button=el.getBoundingClientRect(),header=el.closest('header')!.getBoundingClientRect();
+  const button=el.getBoundingClientRect(),header=el.closest('.atlas-oh-key')!.getBoundingClientRect();
   return button.left>=header.left && button.right<=header.right && button.top>=header.top && button.bottom<=header.bottom;
  })).toBe(true);
  await scope.click();await expect(view.getByRole('dialog',{name:/^Review scope for/})).toBeVisible();
@@ -112,10 +112,10 @@ for (const width of [390,1280]) test(`One Health evidence, overview and literatu
  await matrix.getByRole('button',{name:/Genomics cited for/}).click();
  await expect(view.getByRole('complementary')).toContainText('does not assign individual passages to evidence types');
  await expect(matrix.getByLabel('Evidence type not recorded').first()).toBeVisible();
- const methods=view.getByRole('button',{name:/Figure methods & references for/});
- expect(await methods.evaluate(el=>{const a=el.getBoundingClientRect(),b=el.closest('.atlas-oh-tools')!.getBoundingClientRect();return a.left>=b.left && a.right<=b.right && a.top>=b.top && a.bottom<=b.bottom;})).toBe(true);
+ const methods=page.locator('.atlas-workspace-footer').getByRole('button',{name:'About One Health',exact:true});
+ expect(await methods.evaluate(el=>{const a=el.getBoundingClientRect(),b=el.closest('.atlas-workspace-footer')!.getBoundingClientRect();return a.left>=b.left && a.right<=b.right && a.top>=b.top && a.bottom<=b.bottom;})).toBe(true);
  await methods.click();
- const modal=view.getByRole('dialog',{name:/Figure methods & references for/});
+ const modal=page.getByRole('dialog',{name:/Figure methods & references for/});
  for(const doi of ['10.1038/nrmicro.2017.45','10.1038/s41586-024-07849-4','10.1038/s41576-023-00649-y','10.1016/j.onehlt.2023.100617','10.2903/j.efsa.2025.9759']) await expect(modal.locator(`li a[href="https://doi.org/${doi}"]`)).toHaveCount(1);
  await expect(modal).toContainText('The papers do not validate this interface or its records');
  await page.keyboard.press('Escape');

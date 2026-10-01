@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-01",
+  "scope": "Shared presentation for About ATLAS, About One Health and About Analysis",
+  "component": "AtlasScope",
+  "checks": {
+    "typescript": "passed",
+    "eslint": "passed",
+    "diff_whitespace": "passed",
+    "browser": {
+      "navigation_tests": 2,
+      "presentation_tests": 2,
+      "widths": [
+        1440,
+        390
+      ],
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "accessibility_violations": [],
+      "verified": [
+        "Matching title, body and section typography",
+        "Matching dialog width and padding",
+        "Reference list styling",
+        "No horizontal overflow",
+        "Escape closes the dialog and restores trigger focus",
+        "ATLAS credits and dataset link retained"
+      ]
+    },
+    "visual_review": [
+      "Desktop About ATLAS",
+      "Desktop About Analysis",
+      "Mobile dark About One Health"
+    ]
+  },
+  "publication": "None"
+}

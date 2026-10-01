@@ -39,7 +39,7 @@ export function Settings({ inline = false }: { inline?: boolean }) {
   const { resolvedTheme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(subscribeThemeMount, () => true, () => false);
   const dark = mounted && resolvedTheme === "dark";
-  if (!inline && (pathname === "/atlas" || pathname === "/atlas/")) return null;
+  if (!inline && (pathname === "/atlas" || pathname.startsWith("/atlas/"))) return null;
   const toggle = (
     <AnimatedThemeToggler className={inline ? "atlas-toolbar-action atlas-theme-toggle" : "appearance-widget"} role="switch"
       theme={dark ? "dark" : "light"} onThemeChange={setTheme}

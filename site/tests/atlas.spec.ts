@@ -24,7 +24,12 @@ test.beforeEach(async ({ page }) => {
 });
 
 
+async function showPageControl(page: Page) {
+  await page.locator('.atlas-toolbar').evaluate(el => window.scrollTo(0, window.scrollY + el.getBoundingClientRect().top + 80));
+}
+
 async function select(page: Page, label: string, choice: string) {
+  if (label.endsWith("page, side")) await showPageControl(page);
   await page.locator(`summary[aria-label="${label}"]`).click();
   if (["Reporting topic", "Reporting source", "Link type"].includes(label)) {
     const all = { "Reporting topic": "All places & topics", "Reporting source": "All sources", "Link type": "All link types" }[label]!;
@@ -120,7 +125,8 @@ test("ATLAS entry, date windows, evidence and source focus", async ({ page }) =>
   await page.getByRole("tab", { name: "Reports", exact: true }).click();
   await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Assessments", exact: true }).click();
   await expect(page.locator(".atlas-connection")).toHaveCount(Math.min(12, snapshot.relationships.length));
-  await page.getByRole("tab", { name: /Source coverage/ }).click();
+  await page.getByRole("tab", { name: "Reports", exact: true }).click();
+  await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Source coverage", exact: true }).click();
   await page.getByRole("button", { name: "Reports from RIVM", exact: true }).click();
   await expect(page.locator(".atlas-filters summary").nth(1)).toContainText("RIVM");
   await expect(page.locator(".atlas-report")).toHaveCount(12);
@@ -145,7 +151,8 @@ test("ATLAS is readable on phones and in both themes", async ({ page }) => {
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const axe = await new AxeBuilder({ page }).analyze();
     expect(axe.violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.target) }))).toEqual([]);
-    await page.getByRole("tab", { name: /Source coverage/ }).click();
+    await page.getByRole("tab", { name: "Reports", exact: true }).click();
+  await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Source coverage", exact: true }).click();
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: `evidence/atlas-${width}-${theme}.png`, fullPage: true });
   }
@@ -427,13 +434,14 @@ test("View evidence scrolls to matching reports and highlights their support", a
     const highlighted = page.locator('.atlas-report[data-evidence="true"]');
     await expect(page.getByRole("tab", { name: /^Reports/ })).toHaveAttribute("aria-selected", "true");
     await expect(highlighted).toHaveCount(12);
-    await expect(page.locator('summary[aria-label="Report page, top"]')).toContainText("Page 1 of 2 · 12 relevant");
+    await expect(page.locator('summary[aria-label="Report page, side"] > span')).toHaveAttribute('title', 'Page 1 of 2 · 12 relevant');
     await expect(highlighted.first().locator('summary').first()).toBeFocused();
     const logo = await highlighted.first().locator('.atlas-source-logo').boundingBox();
     expect(Math.abs(logo!.x + logo!.width / 2 - (await highlighted.first().boundingBox())!.x)).toBeLessThan(2);
     await expect.poll(async () => Math.abs((await highlighted.first().boundingBox())!.y - 96)).toBeLessThan(1);
 
-    await page.getByRole("navigation", { name: "Report pages, top" }).getByRole("button", { name: "Next report page" }).click();
+    await showPageControl(page);
+    await page.getByRole("navigation", { includeHidden: true, name: "Report pages, side" }).getByRole("button", { name: "Next report page" }).click();
     await expect(highlighted).toHaveCount(1);
     await expect(page.getByRole("heading", { name: "Report chronology" })).toBeFocused();
     await page.getByRole("button", { name: "Reset all", exact: true }).click();
@@ -459,11 +467,12 @@ test("Report pages cover every document and reset with the reporting scope", asy
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/atlas/");
   await page.getByRole("tab", { name: "Reports", exact: true }).click();
-  const top = page.getByRole("navigation", { name: "Report pages, top" });
+  const top = page.getByRole("navigation", { includeHidden: true, name: "Report pages, side" });
   const reports = page.locator(".atlas-report");
   const seen: string[] = [];
   for (let index = 0; index < documentPages; index++) {
-    await expect(top).toContainText(`Page ${index + 1} of ${documentPages}`);
+    await expect(top).toContainText(`${index + 1} / ${documentPages}`);
+    await showPageControl(page);
     await expect(reports).toHaveCount(Math.min(12, documentCount - index * 12));
     seen.push(...await reports.evaluateAll(nodes => nodes.map(n => n.id)));
     if (index < documentPages - 1) await top.getByRole("button", { name: "Next report page" }).click();
@@ -473,23 +482,24 @@ test("Report pages cover every document and reset with the reporting scope", asy
   await expect(top.getByRole("button", { name: "Next report page" })).toBeDisabled();
   await expect(page.locator(".atlas-timeline-next")).toBeVisible();
   await expect(page.locator(".atlas-report-tools")).toHaveAttribute("data-timeline", "true");
-  await select(page, "Report page, top", `Page 2 of ${documentPages}`);
+  await select(page, "Report page, side", `Page 2 of ${documentPages}`);
   await expect(reports.first()).toHaveAttribute("id", seen[12]);
   await expect(page.getByRole("heading", { name: "Report chronology" })).toBeFocused();
   await select(page, "Reporting source", "RIVM");
   await expect(reports).toHaveCount(12);
-  await expect(top).toContainText("Page 1 of 2");
+  await expect(top).toContainText("1 / 2");
   await setWindowDate(page, "start", "2026-09-15");
   await expect(reports).toHaveCount(0);
   await expect(page.locator(".atlas-empty")).toBeVisible();
   await page.getByRole("button", { name: "All dates", exact: true }).click();
   await expect(reports).toHaveCount(12);
   await page.getByRole("button", { name: "Reset all", exact: true }).click();
-  await expect(top).toContainText(`Page 1 of ${documentPages}`);
+  await expect(top).toContainText(`1 / ${documentPages}`);
+  await showPageControl(page);
   await expect(top.getByRole("button", { name: "Previous report page" })).toBeDisabled();
-  await select(page, "Report page, top", `Page ${documentPages} of ${documentPages}`);
+  await select(page, "Report page, side", `Page ${documentPages} of ${documentPages}`);
   await setWindowDate(page, "start", "2026-07-01");
-  await expect(top).toContainText("Page 1 of");
+  await expect(top).toContainText("1 /");
   await page.getByRole("button", { name: "All dates", exact: true }).click();
   await expect(reports.first()).toHaveAttribute("id", seen[0]);
 });
@@ -498,7 +508,7 @@ test("Assessment evidence and source coverage land on their report pages", async
   await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
   await page.goto("/atlas/");
   await page.getByRole("tab", { name: "Reports", exact: true }).click();
-  await select(page, "Report page, top", `Page ${documentPages} of ${documentPages}`);
+  await select(page, "Report page, side", `Page ${documentPages} of ${documentPages}`);
   await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Assessments", exact: true }).click();
   const assessment = page.locator(".atlas-connection").first();
   await assessment.getByText("Evidence & scope", { exact: true }).click();
@@ -508,13 +518,15 @@ test("Assessment evidence and source coverage land on their report pages", async
   await expect(target).toHaveAttribute("id", "atlas-report-doc_7641c48c3fa91de32057ede8");
   await expect(target.locator("summary").first()).toBeFocused();
   await expect.poll(async () => (await target.boundingBox())!.y >= 95 && (await target.boundingBox())!.y < 300).toBe(true);
-  await page.getByRole("tab", { name: /^Source coverage/ }).click();
+  await page.getByRole("tab", { name: "Reports", exact: true }).click();
+  await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Source coverage", exact: true }).click();
   await page.getByRole("button", { name: "Reports from RIVM", exact: true }).click();
   await expect(target).toHaveCount(12);
   await expect(target.first()).toHaveAttribute("id", "atlas-report-doc_6e527328bfd8ac3062b57f81");
   await expect(target.first().locator("summary").first()).toBeFocused();
   await page.getByRole("button", { name: "Reset all", exact: true }).click();
-  await page.getByRole("tab", { name: /^Source coverage/ }).click();
+  await page.getByRole("tab", { name: "Reports", exact: true }).click();
+  await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Source coverage", exact: true }).click();
   await page.locator(".atlas-source-network").getByRole("button", { name: "Bundibugyo imported case · France", exact: true }).click();
   await expect(target).toHaveCount(4);
   await expect(target.first().locator("summary").first()).toBeFocused();
@@ -564,7 +576,8 @@ for (const theme of ['light', 'dark']) test(`Source coverage paints images insid
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.addInitScript(theme => localStorage.setItem('theme', theme), theme);
   await page.goto('/atlas/');
-  await page.getByRole('tab', { name: /^Source coverage/ }).click();
+  await page.getByRole("tab", { name: "Reports", exact: true }).click();
+  await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Source coverage", exact: true }).click();
   const graph = page.locator('.atlas-source-network');
   const { default: sharp } = await import('sharp');
   const images = [graph.locator('.atlas-location-flag').nth(0), graph.locator('.atlas-location-flag').nth(1), graph.locator('.institution-logo img').first()];
@@ -593,7 +606,8 @@ test("Source coverage highlights connected logos, locations and paths", async ({
   await page.setViewportSize({ width: 1280, height: 1000 });
   await page.emulateMedia({ reducedMotion: "no-preference", colorScheme: "dark" });
   await page.goto("/atlas/");
-  await page.getByRole("tab", { name: /^Source coverage/ }).click();
+  await page.getByRole("tab", { name: "Reports", exact: true }).click();
+  await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Source coverage", exact: true }).click();
   const graph = page.locator(".atlas-source-network");
   const edge = graph.locator(".atlas-coverage-edge").filter({ hasText: "RIVM" });
   await expect(graph.locator(".atlas-coverage-source .institution-logo img")).toHaveCount(bundle.channels.length);
@@ -629,7 +643,8 @@ test("Source coverage highlights connected logos, locations and paths", async ({
   await expect(page.locator('.atlas-report > summary')).toBeFocused();
 
   await page.getByRole("button", { name: "Reset all", exact: true }).click();
-  await page.getByRole("tab", { name: /^Source coverage/ }).click();
+  await page.getByRole("tab", { name: "Reports", exact: true }).click();
+  await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Source coverage", exact: true }).click();
   await page.emulateMedia({ reducedMotion: "reduce" });
   await graph.getByRole("button", { name: "Chikungunya · France", exact: true }).focus();
   expect(await graph.locator('.atlas-coverage-edge[data-active="true"]').count()).toBeGreaterThan(0);
@@ -718,11 +733,13 @@ test("Six-month findings paginate in coverage and unlocated topics stay off the 
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/atlas/");
   await page.getByRole("tab", { name: "Reports", exact: true }).click();
-  await page.getByRole("tab", { name: /^Source coverage/ }).click();
+  await page.getByRole("tab", { name: "Reports", exact: true }).click();
+  await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Source coverage", exact: true }).click();
   const topics = page.locator(".atlas-coverage-topic");
   await expect(topics).toHaveCount(24);
   const first = await topics.first().getAttribute("aria-label");
-  await page.getByRole("navigation", { name: "Topic pages, top", exact: true }).getByRole("button", { name: "Next topic page", exact: true }).click();
+  await showPageControl(page);
+  await page.getByRole("navigation", { includeHidden: true, name: "Topic pages, side", exact: true }).getByRole("button", { name: "Next topic page", exact: true }).click();
   await expect(topics).toHaveCount(24);
   await expect(topics.first()).not.toHaveAttribute("aria-label", first!);
   const unlocated = bundle.topics.find(t => !t.place_ids.length && t.id.startsWith("report-item:") && bundle.topics.filter(other => other.label === t.label).length === 1)!;
@@ -733,9 +750,10 @@ test("Six-month findings paginate in coverage and unlocated topics stay off the 
   await expect(page.locator('.atlas-globe-pin[data-selected="true"]')).toHaveCount(0);
   await expect(page.locator('.atlas-callout-card')).toHaveCount(0);
   await expect(page.locator('canvas[data-markers]')).not.toHaveAttribute("data-tilt", /NaN/);
-  await page.getByRole("tab", { name: /^Source coverage/ }).click();
+  await page.getByRole("tab", { name: "Reports", exact: true }).click();
+  await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Source coverage", exact: true }).click();
   await expect(topics).toHaveCount(1);
-  await expect(page.getByRole("navigation", { name: /^Topic pages/ })).toHaveCount(0);
+  await expect(page.getByRole("navigation", { includeHidden: true, name: /^Topic pages/ })).toHaveCount(0);
   await page.getByRole("button", { name: "About ATLAS", exact: true }).click();
   await expect(page.getByRole("link", { name: "Download dataset", exact: true })).toHaveAttribute("href", /\/releases\/[a-f0-9]{64}\/atlas-site\.json$/);
 });
@@ -992,14 +1010,15 @@ for (const width of [390, 1280]) test(`Links and assessments paginate and reset 
     const pages = Math.ceil(ids.length / 12);
     const shown = () => entries.evaluateAll((items, attr) => items.map(item => item.getAttribute(attr)), attribute);
     expect(await shown()).toEqual(ids.slice(0, 12));
-    await page.getByRole("navigation", { name: `${entity} pages, top` }).getByRole("button", { name: `Next ${entity.toLowerCase()} page` }).click();
+    await showPageControl(page);
+    await page.getByRole("navigation", { includeHidden: true, name: `${entity} pages, side` }).getByRole("button", { name: `Next ${entity.toLowerCase()} page` }).click();
     await expect.poll(shown).toEqual(ids.slice(12, 24));
     await expect(page.locator(tab === "Assessments" ? "#atlas-assessments-heading" : "#atlas-links-heading")).toBeFocused();
-    await select(page, `${entity} page, top`, `Page ${pages} of ${pages}`);
+    await select(page, `${entity} page, side`, `Page ${pages} of ${pages}`);
     await expect.poll(shown).toEqual(ids.slice((pages - 1) * 12));
-    await expect(page.getByRole("navigation", { name: `${entity} pages, top` }).getByRole("button", { name: `Next ${entity.toLowerCase()} page` })).toBeDisabled();
+    await expect(page.getByRole("navigation", { includeHidden: true, name: `${entity} pages, side` }).getByRole("button", { name: `Next ${entity.toLowerCase()} page` })).toBeDisabled();
     await page.getByRole("button", { name: "3 months", exact: true }).click();
-    await expect(page.getByRole("navigation", { name: `${entity} pages, top` })).toContainText("Page 1 of");
+    await expect(page.getByRole("navigation", { includeHidden: true, name: `${entity} pages, side` })).toContainText("1 /");
     await page.getByRole("button", { name: "All dates", exact: true }).click();
     await expect.poll(shown).toEqual(ids.slice(0, 12));
   }
@@ -1008,7 +1027,7 @@ for (const width of [390, 1280]) test(`Links and assessments paginate and reset 
   await page.keyboard.press("Enter");
   await expect(page.locator(`.atlas-connection[data-link-id="${last.id}"]`)).toHaveAttribute("data-selected", "true");
   const pages = Math.ceil(routeGroups.length / 12);
-  await expect(page.getByRole("navigation", { name: "Geographic link pages, top" })).toContainText(`Page ${pages} of ${pages}`);
+  await expect(page.getByRole("navigation", { includeHidden: true, name: "Geographic link pages, side" })).toContainText(`${pages} / ${pages}`);
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
@@ -1051,7 +1070,8 @@ for (const width of [390, 1280]) test(`Unified filters show and clear every acti
   await expect(page.getByRole("button", { name: "All dates", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("slider", { name: "Replay publication date" })).toHaveCount(0);
   await expect(page.locator(".atlas-link-target")).toHaveCount(routeGroups.length);
-  await page.getByRole("tab", { name: "Source coverage", exact: true }).click();
+  await page.getByRole("tab", { name: "Reports", exact: true }).click();
+  await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Source coverage", exact: true }).click();
   await page.getByRole("button", { name: "Reports from RIVM", exact: true }).click();
   await openRules();
   await expect(panel.getByRole("button", { name: "Remove source filter" })).toContainText("RIVM");
@@ -1490,17 +1510,46 @@ test('Closed selectors release choices and preserve keyboard navigation', async 
   await expect(hiddenChoices).toHaveCount(0);
 
   await page.getByRole('tab', { name: 'Reports', exact: true }).click();
-  const pages = page.locator('summary[aria-label="Report page, top"]');
+  const pages = page.locator('summary[aria-label="Report page, side"]');
+  await showPageControl(page);
   await pages.focus();
   await pages.press('ArrowDown');
   const second = page.getByRole('option', { name: `Page 2 of ${documentPages}`, exact: true });
   await expect(second).toBeFocused();
   await second.press('Enter');
-  await expect(pages).toContainText(`Page 2 of ${documentPages}`);
+  await expect(pages).toContainText(`2 / ${documentPages}`);
   await expect(page.locator('#atlas-report-heading')).toBeFocused();
   await expect(hiddenChoices).toHaveCount(0);
+  await showPageControl(page);
   await pages.focus();
   await pages.press('Enter');
   await expect(page.getByRole('option', { selected: true })).toBeFocused();
   await page.keyboard.press('Escape');
+});
+
+
+test("Expanded comparisons show one status badge without repeating the report label", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/atlas/");
+  await page.getByRole("tab", { name: "Reports", exact: true }).click();
+  for (const kind of [...new Set(bundle.comparisons.map(comparison => comparison.kind))]) {
+    const comparison = bundle.comparisons.find(item => item.kind === kind)!;
+    const assertion = bundle.assertions.find(item => item.id === comparison.participant_ids[0])!;
+    const record = mapRecords.get(assertion.record_id)!;
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await select(page, "Reporting topic", snapshot.tracks.find(track => track.id === record.track)!.label);
+    const report = page.locator(`#atlas-report-${assertion.document_id}`);
+    for (let index = 0; index < documentPages && await report.count() === 0; index++) {
+      await showPageControl(page);
+      await page.getByRole('button', { name: 'Next report page', exact: true }).click();
+    }
+    await report.locator(':scope > summary').click();
+    const entry = report.locator(`.atlas-comparison[data-kind="${kind}"]`).first();
+    await expect(entry).toBeVisible();
+    const label = await entry.getAttribute('aria-label');
+    await expect(report.locator(':scope > summary .atlas-status').filter({ hasText: label! })).toHaveCount(1);
+    await expect(entry.locator('header .atlas-status')).toHaveCount(1);
+    await expect(entry.locator('header .atlas-status')).toHaveText(/^(Unresolved|Documented)$/);
+    await report.screenshot({ path: `/tmp/atlas-comparison-${kind}.png` });
+  }
 });

@@ -32,6 +32,8 @@ test('Independent relationships occupy separate rows without detours', () => {
   const nodes = [{id:'1',domain:'human'}, {id:'2',domain:'food'}, {id:'3',domain:'environment'}, {id:'4',domain:'human'}, {id:'5',domain:'environment'}, {id:'6',domain:'human'}];
   const edges = [{id:'a',from_node_id:'1',to_node_id:'2'}, {id:'b',from_node_id:'4',to_node_id:'3'}];
   const layout = healthLayout(nodes, edges, ['human','environment','food'], 500);
+  assert.equal(layout.lanes[0].x, 0);
+  assert.equal(layout.lanes.at(-1)!.x + layout.lanes.at(-1)!.width, layout.width);
   assert.equal(layout.points.get('1')!.y, layout.points.get('2')!.y);
   assert.equal(layout.points.get('4')!.y, layout.points.get('3')!.y);
   assert.ok(layout.points.get('4')!.y > layout.points.get('1')!.y + 104);

@@ -2,7 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { EvidenceSummary } from "./atlas-evidence-summary";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { ArrowRight, CalendarDays, ChevronDown, FileText, GitBranch, MapPin, MapPinOff, X } from "lucide-react";
-import { useAtlas } from "./atlas-context";
+import { useAtlas, useAtlasPanelState } from "./atlas-context";
 import { useElementSize } from "./use-element-size";
 import { AtlasSelect } from "./atlas-select";
 import { LocationBadges } from "./atlas-location-badges";
@@ -17,7 +17,7 @@ const kinds: Record<AtlasChainKind, string> = {
 };
 
 export function AtlasChains({ chains, onReport }: { chains: AtlasSelectedChain[]; onReport: (ids: string[]) => void }) {
-  const [choice, setChoice] = useState("");
+  const [choice, setChoice] = useAtlasPanelState("trends.chain", "");
   const chain = chains.find(c => c.id === choice) ?? chains[0];
   if (!chain) return null;
   return <section id="atlas-journeys" className="atlas-chain-section" aria-labelledby="atlas-chains-title">
@@ -41,7 +41,7 @@ function ChainFigure({ chain, onReport }: { chain: AtlasSelectedChain; onReport:
   const selection = useRef<HTMLDivElement>(null);
   const nodesGroup = useRef<HTMLDetailsElement>(null);
   const routesGroup = useRef<HTMLDetailsElement>(null);
-  const [selected, setSelected] = useState("");
+  const [selected, setSelected] = useAtlasPanelState(`chain.${chain.id}.selection`, "");
   const [hovered, setHovered] = useState("");
   const [focused, setFocused] = useState("");
   const hoverFigure = (id: string, focus = false) => {
@@ -56,7 +56,7 @@ function ChainFigure({ chain, onReport }: { chain: AtlasSelectedChain; onReport:
     onFocus: () => { if (figure) hoverFigure(id, true); else { setFocused(id); setHovered(""); } }, onBlur: () => setFocused(current => current === id ? "" : current),
   });
   const [selectionChain, setSelectionChain] = useState(chain.id);
-  if (selectionChain !== chain.id) { setSelectionChain(chain.id); setSelected(""); setHovered(""); setFocused(""); }
+  if (selectionChain !== chain.id) { setSelectionChain(chain.id); setHovered(""); setFocused(""); }
   useEffect(() => {
     if (details.current && selection.current) {
       details.current.scrollTop += selection.current.closest(".atlas-chain-entry")!.getBoundingClientRect().top - details.current.getBoundingClientRect().top - 42;

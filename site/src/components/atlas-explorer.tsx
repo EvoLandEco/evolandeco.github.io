@@ -1,11 +1,12 @@
 "use client";
+import type { AtlasExperiment } from "@/lib/atlas-intelligence";
 import type { AtlasRelease } from '@/lib/atlas-release';
 import { coveragePositions } from "@/lib/atlas-coverage-layout";
 import { atlasUI } from "@/lib/atlas-ui";
 import { EvidenceSummary } from "./atlas-evidence-summary";
 import { memo, useCallback, useId, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type MouseEvent } from "react";
 import { flushSync } from "react-dom";
-import { GitBranch, FlaskConical, HeartHandshake, Maximize2, Minimize2, ChartNoAxesCombined, Activity, ArrowRight, CalendarDays, ChevronRight, ArrowLeftRight, MapPin, Download, ExternalLink, FileText, Globe2, Info, Network, RefreshCw, RotateCcw, ScanLine, TriangleAlert, ChevronDown, ChevronsUp, X } from "lucide-react";
+import { GitBranch, ShieldCheck, FlaskConical, HeartHandshake, Maximize2, Minimize2, ChartNoAxesCombined, Activity, ArrowRight, CalendarDays, ChevronRight, ArrowLeftRight, MapPin, Download, ExternalLink, FileText, Globe2, Info, Network, RefreshCw, RotateCcw, ScanLine, TriangleAlert, ChevronDown, ChevronsUp, X } from "lucide-react";
 import { groupGeographicLinks, dayDate, dayNumber, monthsBefore, formatDate, linkLabels, supported, topicIds, sourceName, reportsPerPage, type AtlasRecord, type AtlasTrack, type AtlasLink, type AtlasAssessment, type DateBasis } from "@/lib/atlas";
 import { Globe, type GlobeLink, type GlobeHover, type GlobeAnchor } from "./magicui/globe";
 import { AuroraText } from "./magicui/aurora-text";
@@ -15,6 +16,7 @@ import { useAtlasNavigation } from "./atlas-navigation";
 import { motion, useReducedMotion, useMotionValue, useMotionValueEvent, type MotionValue } from "motion/react";
 import { ReportPagination } from "./atlas-pagination";
 import { AtlasSelect } from "./atlas-select";
+import { AtlasScope } from "./atlas-scope";
 import { CountryText, ReportCountryFlags, LocationBadges, LocationSymbol } from "./atlas-location-badges";
 import { BeamStroke, BeamGradientStops } from "./magicui/animated-beam";
 import Image from "next/image";
@@ -24,11 +26,13 @@ import { AtlasNetworkOverview } from "./atlas-network-overview";
 import { AtlasTrends } from "./atlas-trends";
 import { MetricFigures, ObservationHistory } from "./atlas-metrics";
 import { SourceComparisons, ComparisonBadge } from "./atlas-comparisons";
-import { useAtlas, AtlasWorkspaceContext } from "./atlas-context";
+import { useAtlas, AtlasWorkspaceContext, AtlasPanelStateContext, useAtlasPanelState } from "./atlas-context";
 
-const evidenceTabs = [ ["trends", "Trends", ChartNoAxesCombined], ["one-health", "One Health", HeartHandshake], ["reports", "Reports", FileText], ["links", "Geographic links", Globe2], ["sources", "Source coverage", Network] ] as const;
+const AtlasAnalysis = dynamic(() => import("./atlas-analysis").then(module => module.AtlasAnalysis));
+const AtlasRiskAssessments = dynamic(() => import("./atlas-analysis").then(module => module.AtlasRiskAssessments));
+const evidenceTabs = [ ["trends", "Trends", ChartNoAxesCombined], ["analysis", "Analysis", FlaskConical], ["one-health", "One Health", HeartHandshake], ["reports", "Reports", FileText], ["links", "Geographic links", Globe2], ["sources", "Source coverage", Network] ] as const;
 type Tab = typeof evidenceTabs[number][0];
-const reportViews = [["reports", "Reports", FileText], ["assessments", "Assessments", ScanLine]] as const;
+const reportViews = [["reports", "Reports", FileText], ["assessments", "Assessments", ScanLine], ["sources", "Source coverage", Network]] as const;
 type ReportView = typeof reportViews[number][0];
 function keepHeadingVisible(heading: HTMLElement) {
   requestAnimationFrame(() => {
@@ -55,14 +59,23 @@ function Evidence({ support, onReport }: { support: (string | number)[][]; onRep
   })}</div>;
 }
 
-export function AtlasExplorer({ downloadRoot, release }: { downloadRoot: string; release: AtlasRelease }) {
+export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadRoot: string; release: AtlasRelease; experiment?: AtlasExperiment }) {
   const { bundle, atlas, mapLocations, dateBounds, windowRecords, reportDocuments, lookup, tracks, countriesForLink, metrics, selectedResearch } = useAtlas();
-  const tabs = evidenceTabs.filter(([id]) => id !== "one-health" || bundle.contract_version === "1.4.0" || bundle.contract_version === "1.5.0");
+  const tabs = evidenceTabs.filter(([id]) => (id !== "analysis" || !!experiment) && (id !== "sources" || !experiment) && (id !== "one-health" || bundle.contract_version === "1.4.0" || bundle.contract_version === "1.5.0"));
+  const [panelStates] = useState(() => new Map<string, unknown>());
+  const reportTabs = reportViews.filter(([id]) => id !== "sources" || !!experiment);
   const { arriving } = useAtlasNavigation();
   const panel = useRef<HTMLDivElement>(null);
   const page = useRef<HTMLDivElement>(null);
   const workspaceScroll = useRef<HTMLDivElement>(null);
-  const datasetDialog = useRef<HTMLDialogElement>(null);
+  const toolbar = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const element = toolbar.current;
+    if (!element) return;
+    const resize = new ResizeObserver(() => element.parentElement?.style.setProperty("--atlas-toolbar-height", `${element.getBoundingClientRect().height}px`));
+    resize.observe(element);
+    return () => resize.disconnect();
+  }, []);
   const rulesMenu = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     const close = (event: PointerEvent) => {
@@ -138,8 +151,24 @@ export function AtlasExplorer({ downloadRoot, release }: { downloadRoot: string;
   const [footerTarget, setFooterTarget] = useState<HTMLElement | null>(null);
   const [tab, setTab] = useState<Tab>("trends");
   const [reportView, setReportView] = useState<ReportView>("reports");
+  useLayoutEffect(() => {
+    const workspace = toolbar.current?.parentElement;
+    const tools = workspace?.querySelector<HTMLElement>(".atlas-report-tools");
+    if (!workspace || !tools) return;
+    const measure = () => workspace.style.setProperty("--atlas-report-tools-height", `${tools.getBoundingClientRect().height}px`);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(tools);
+    return () => { observer.disconnect(); workspace.style.removeProperty("--atlas-report-tools-height"); };
+  }, [tab, reportView]);
   const showingReports = tab === "reports" && reportView === "reports";
+  const [assessmentKind, setAssessmentKind] = useState("relationships");
   const showingAssessments = tab === "reports" && reportView === "assessments";
+  const showingRelationships = showingAssessments && (!experiment || assessmentKind === "relationships");
+  const showingSources = tab === "sources" || tab === "reports" && reportView === "sources";
+  const [analysisSeries, setAnalysisSeries] = useState("");
+  const [healthReport, setHealthReport] = useState("");
+  const [riskRecord, setRiskRecord] = useState("");
   function changeReportView(next: ReportView) {
     setReportView(next);
     setReportJump(undefined);
@@ -175,6 +204,19 @@ export function AtlasExplorer({ downloadRoot, release }: { downloadRoot: string;
   const links = useMemo(() => linkGroups.map(group => (group.entries.find(e => e.link.id === selectedLink) ?? group.entries.at(-1)!).link), [linkGroups, selectedLink]);
   const assessments = useMemo(() => atlas.relationships.filter(a => supported(a.support, recordIds) && (!topic.length || topicIds(topic).includes(a.track))
     && (!source.length || a.support.some(([id]) => source.includes(lookup.get(id)!.source)))), [atlas.relationships, recordIds, topic, source, lookup]);
+  const reportRelationships = useMemo(() => {
+    const entries = new Map<string, AtlasAssessment[]>();
+    if (experiment) for (const assessment of assessments) {
+      const support = [...assessment.support, ...(assessment.updates ?? []).filter(update => supported(update.support, recordIds)).flatMap(update => update.support)];
+      for (const id of new Set(support.map(([id]) => id))) {
+        const related = entries.get(id) ?? [];
+        related.push(assessment);
+        entries.set(id, related);
+      }
+    }
+    return entries;
+  }, [experiment, assessments, recordIds]);
+  const riskRecords = useMemo(() => new Set(experiment?.data?.risk_profiles.map(profile => profile.record_id)), [experiment]);
   const documents = useMemo(() => reportDocuments(rows, basis, topic, source), [rows, basis, topic, source, reportDocuments]);
   const reportScope = JSON.stringify([basis, window, topic, source]);
   const entryScope = JSON.stringify([reportScope, kind]);
@@ -247,7 +289,7 @@ export function AtlasExplorer({ downloadRoot, release }: { downloadRoot: string;
     const points = contextNodes.filter(n => n.topics.some(t => topicIds(id).includes(t)));
     setSelectedPoint(points.length === 1 ? points[0].id : "");
     setFocus(points.length === 1 ? points[0].location : undefined);
-  }, [contextNodes]);
+  }, [contextNodes, setReportView]);
   function choosePoint(id: string) {
     const point = globeNodes.find(n => n.id === id);
     if (!point) return;
@@ -307,9 +349,33 @@ export function AtlasExplorer({ downloadRoot, release }: { downloadRoot: string;
     setReportJump({ documentId: index < 0 ? null : targetDocuments[index][0].document_id, expand });
   }, [rows, basis, reportDocuments, window]);
   const showReports = useCallback((ids: string[], expand?: boolean) => openReports(ids, [], [], expand), [openReports]);
+  const showAnalysisReports = (ids: string[], expand = true) => {
+    const known = ids.filter(id => lookup.has(id));
+    if (known.every(id => recordIds.has(id))) { showReports(known, expand); return; }
+    const targetIds = new Set(known);
+    const allDocuments = reportDocuments(windowRecords(min, max, basis), basis, [], []);
+    const index = allDocuments.findIndex(records => records.some(record => targetIds.has(record.id)));
+    setWindow([min, max]); setPreset(3); setTopic([]); setSource([]); setEvidenceIds(known);
+    setTab("reports"); setReportView("reports");
+    setReportPage({ scope: JSON.stringify([basis, [min, max], [], []]), index: Math.max(0, Math.floor(index / reportsPerPage)) });
+    setReportJump({ documentId: index < 0 ? null : allDocuments[index][0].document_id, expand });
+  };
   const showSourceReports = useCallback((s: string) => openReports(filtered.filter(r => r.source === s).map(r => r.id), topic, s), [openReports, filtered, topic]);
   const showTopicReports = useCallback((id: string) => { chooseTopic(id); openReports(filtered.filter(r => r.track === id).map(r => r.id), id, source); }, [chooseTopic, openReports, filtered, source]);
   const showConnectionReports = useCallback((s: string, id: string) => openReports(filtered.filter(r => r.source === s && r.track === id).map(r => r.id), id, s), [openReports, filtered]);
+  const showAssessment = useCallback((id: string) => {
+    const index = assessments.findIndex(assessment => assessment.id === id);
+    if (index < 0) return;
+    setAssessmentKind("relationships"); setReportView("assessments"); setTab("reports");
+    setEntryPages(current => ({ ...current, scope: entryScope, assessments: Math.floor(index / reportsPerPage) }));
+    setReportJump({ documentId: null, headingId: `atlas-assessment-${id}` });
+  }, [assessments, entryScope]);
+  const showRisk = useCallback((id: string) => {
+    panelStates.set("reports.risk", experiment?.data?.risk_profiles.find(profile => profile.record_id === id)?.id ?? "");
+    setRiskRecord(id); setAssessmentKind("risk"); setReportView("assessments");
+    setReportJump(undefined); setTab("reports");
+    workspaceScroll.current?.scrollTo({ top: 0 });
+  }, [panelStates, experiment]);
   function changeReportPage(index: number) {
     if (!Number.isInteger(index) || index < 0 || index >= pageCount) return;
     setReportPage({ scope: reportScope, index });
@@ -324,7 +390,7 @@ export function AtlasExplorer({ downloadRoot, release }: { downloadRoot: string;
   function viewEvidence() {
     openReports(calloutLink ? calloutLink.support.map(([id]) => String(id)) : calloutReports.map(r => r.id), calloutNode ? `place:${calloutNode.topics.join(",")}` : "");
   }
-  return <AtlasWorkspaceContext value={fullscreen}><div className="atlas-stage" style={fullscreen ? { height: pageHeight } : undefined}><div ref={page} className="atlas-page" data-ready={!arriving} data-fullscreen={fullscreen || undefined} role={fullscreen ? "dialog" : undefined} aria-modal={fullscreen || undefined} aria-label={fullscreen ? "ATLAS full screen" : undefined} onKeyDown={event => {
+  return <AtlasPanelStateContext value={panelStates}><AtlasWorkspaceContext value={fullscreen}><div className="atlas-stage" style={fullscreen ? { height: pageHeight } : undefined}><div ref={page} className="atlas-page" data-ready={!arriving} data-fullscreen={fullscreen || undefined} role={fullscreen ? "dialog" : undefined} aria-modal={fullscreen || undefined} aria-label={fullscreen ? "ATLAS full screen" : undefined} onKeyDown={event => {
     if (!fullscreen || event.defaultPrevented) return;
     if (event.key === "Escape") { event.preventDefault(); changeFullscreen(false); }
     if (event.key === "Tab") {
@@ -441,93 +507,73 @@ export function AtlasExplorer({ downloadRoot, release }: { downloadRoot: string;
     </div>
     </div>
     <div className="atlas-detail-column">
-    <section className="atlas-workspace atlas-reveal" aria-label="Report evidence" data-report-view={tab === "reports" ? reportView : undefined}>
-      <div className="atlas-toolbar">
+    <section className="atlas-workspace atlas-reveal" aria-label="Report evidence" data-experiment={experiment ? "true" : undefined} data-report-view={tab === "reports" ? reportView : undefined}>
+      <div ref={toolbar} className="atlas-toolbar">
         <button className="atlas-toolbar-action atlas-toolbar-reset" title="Reset all filters and rules" aria-label="Reset all filters and rules" data-active={ruleCount > 0} disabled={!ruleCount} onClick={resetAll}><RotateCcw size={17} aria-hidden /></button>
       <div className="atlas-tabs" role="tablist" aria-label="Evidence views">{tabs.map(([id, label, Icon]) => <button key={id} id={`atlas-tab-${id}`} role="tab" aria-label={label} title={label} tabIndex={tab === id ? 0 : -1} onKeyDown={e => {
             const index = tabs.findIndex(t => t[0] === tab);
             const next = e.key === "ArrowRight" ? (index + 1) % tabs.length : e.key === "ArrowLeft" ? (index + tabs.length - 1) % tabs.length : e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : -1;
             if (next >= 0) { e.preventDefault(); changeTab(tabs[next][0]); document.getElementById(`atlas-tab-${tabs[next][0]}`)?.focus(); }
-          }} aria-selected={tab === id} aria-controls="atlas-panel" onClick={() => changeTab(id)}><Icon size={16} aria-hidden /><span>{label}</span>{id !== "trends" && id !== "one-health" && <b>{id === "reports" ? documents.length : id === "links" ? links.length : new Set(filtered.map(r => r.source)).size}</b>}</button>)}</div>
+          }} aria-selected={tab === id} aria-controls="atlas-panel" onClick={() => changeTab(id)}><Icon size={16} aria-hidden /><span>{label}</span>{id !== "trends" && id !== "one-health" && id !== "analysis" && <b>{id === "reports" ? documents.length : id === "links" ? links.length : new Set(filtered.map(r => r.source)).size}</b>}</button>)}</div>
         {process.env.NEXT_PUBLIC_SHOW_APPEARANCE !== "false" && <Settings inline />}
       </div>
-      {tab === "reports" && <div className="atlas-report-tools" data-timeline={showingReports && window[1] === max && documents.length > 0 || undefined}>
-          {(showingAssessments || window[1] === max && documents.length > 0) && <div className="atlas-timeline-next">
+      {tab === "reports" && <div className="atlas-report-tools atlas-panel-tools" data-coverage={showingSources || undefined} data-timeline={showingReports && window[1] === max && documents.length > 0 || undefined}>
+          <div key={reportView} className="atlas-report-context">
+          {showingAssessments && experiment ? <div className="atlas-assessment-switch" role="group" aria-label="Assessment category">
+            <button aria-label="Report relationships" title="Report relationships" aria-pressed={assessmentKind === "relationships"} aria-controls="atlas-panel" onClick={() => setAssessmentKind("relationships")}><GitBranch size={15} aria-hidden /><span>Relationships</span></button>
+            <button aria-label="Source risk assessments" title="Source risk assessments" aria-pressed={assessmentKind === "risk"} aria-controls="atlas-panel" onClick={() => setAssessmentKind("risk")}><ShieldCheck size={15} aria-hidden /><span>Risks</span></button>
+          </div> : (showingSources || showingAssessments || window[1] === max && documents.length > 0) && <div className="atlas-timeline-next">
             <span className="atlas-timeline-next-label">
               <span><span>Captured</span><time dateTime={atlas.snapshot.captured_at}>{formatDate(atlas.snapshot.captured_at)}</time></span>
               <RefreshCw size={14} aria-hidden />
               <span title={`Planned update · ${atlas.snapshot.schedule_timezone}`}><span>Next update <span className="sr-only">(planned)</span></span><time dateTime={atlas.snapshot.next_update_date}>{formatDate(atlas.snapshot.next_update_date)}</time></span>
             </span>
           </div>}
+          </div>
       <div className="atlas-report-switch" role="group" aria-label="Report content">
-        {reportViews.map(([id, label, Icon])=><button key={id} id={`atlas-report-view-${id}`} aria-label={label} title={label} aria-pressed={reportView===id} aria-controls="atlas-panel" onClick={()=>changeReportView(id)} onKeyDown={event=>{
-          const next = event.key==="ArrowLeft" || event.key==="Home" ? "reports" : event.key==="ArrowRight" || event.key==="End" ? "assessments" : null;
+        {reportTabs.map(([id, label, Icon])=><button key={id} id={`atlas-report-view-${id}`} aria-label={label} title={label} aria-pressed={reportView===id} aria-controls="atlas-panel" onClick={()=>changeReportView(id)} onKeyDown={event=>{
+          const index = reportTabs.findIndex(item => item[0] === id);
+          const nextIndex = event.key === "ArrowLeft" ? (index + reportTabs.length - 1) % reportTabs.length : event.key === "ArrowRight" ? (index + 1) % reportTabs.length : event.key === "Home" ? 0 : event.key === "End" ? reportTabs.length - 1 : -1;
+          const next = nextIndex < 0 ? null : reportTabs[nextIndex][0];
           if (next) { event.preventDefault(); changeReportView(next); document.getElementById(`atlas-report-view-${next}`)?.focus(); }
-        }}><Icon size={15} aria-hidden /><span>{label}</span><b>{id==="reports"?documents.length:assessments.length}</b></button>)}
+        }}><Icon size={15} aria-hidden /><span>{label}</span><b>{id==="reports"?documents.length:id==="sources"?new Set(filtered.map(r=>r.source)).size:assessments.length}</b></button>)}
       </div></div>}
       <div className="atlas-workspace-scroll" ref={workspaceScroll}>
       <div id="atlas-panel" role="tabpanel" aria-labelledby={`atlas-tab-${tab}`}>
         {showingReports && <div className="atlas-report-list">
           <div className="atlas-report-prelude">
           <h2 className="sr-only" id="atlas-report-heading" tabIndex={-1}>Report chronology</h2>
-          {!fullscreen && pageCount > 1 && <ReportPagination position="top" index={pageIndex} items={pageItems} onChange={changeReportPage} />}
           <p className="sr-only" role="status">{documents.length ? `${pageIndex * reportsPerPage + 1}–${Math.min((pageIndex + 1) * reportsPerPage, documents.length)} of ${documents.length} reports` : "0 reports"}</p>
 
           {documents.length === 0 && <p className="atlas-empty">No reports in this selection. Widen the dates or clear the focus.</p>}
           {topic.length > 0 && <ObservationHistory topicIds={topicIds(topic)} recordIds={new Set(filtered.map(r => r.id))} onReport={showReports} />}
           </div>
-          {pageDocuments.map(records => <Report key={records[0].document_id} records={records} basis={basis} highlighted={records.some(r => evidence.has(r.id))} recordIds={recordIds} onReport={openReports} />)}
-          {!fullscreen && pageCount > 1 && <ReportPagination position="bottom" index={pageIndex} items={pageItems} onChange={changeReportPage} />}
+          {pageDocuments.map(records => <Report key={records[0].document_id} records={records} basis={basis} highlighted={records.some(r => evidence.has(r.id))} recordIds={recordIds} onReport={openReports} relationships={reportRelationships} riskRecords={riskRecords} onAssessment={showAssessment} onRisk={showRisk} />)}
         </div>}
-        {tab === "one-health" && <AtlasOneHealth footerTarget={footerTarget} rows={filtered} onReport={showReports} />}
+        {tab === "analysis" && experiment && <AtlasAnalysis footerTarget={footerTarget} experiment={experiment} rows={filtered} links={eligibleLinks} seriesId={analysisSeries} onSeries={setAnalysisSeries} onReport={showAnalysisReports} onLink={chooseLink} /> }
+        {tab === "one-health" && <AtlasOneHealth mergedTimeline={!!experiment} initialReport={healthReport} footerTarget={footerTarget} rows={filtered} onReport={showReports} />}
         {tab === "trends" && <AtlasTrends rows={filtered} window={window} onReport={showReports} />}
         {tab === "links" && <>
           <h2 className="sr-only" id="atlas-links-heading" tabIndex={-1}>Geographic links</h2>
-          {!fullscreen && linkPageCount > 1 && <ReportPagination entity="Geographic link" position="top" index={linkPageIndex} items={linkPageItems} onChange={index => changeEntryPage("links", index)} />}
           {links.length === 0 && <p className="atlas-empty">No supported geographic links in this selection.</p>}
           {links.slice(linkPageIndex * reportsPerPage, (linkPageIndex + 1) * reportsPerPage).map((link, index) => <GeographicEntry key={linkGroups[linkPageIndex * reportsPerPage + index].id} link={link} group={linkGroups[linkPageIndex * reportsPerPage + index]} selected={link.id === selectedLink} recordIds={recordIds} onLocate={chooseLink} onReport={openReports} />)}
-          {!fullscreen && linkPageCount > 1 && <ReportPagination entity="Geographic link" position="bottom" index={linkPageIndex} items={linkPageItems} onChange={index => changeEntryPage("links", index)} />}
         </>}
-        {showingAssessments && <>
+        {showingAssessments && experiment && assessmentKind === "risk" && <AtlasRiskAssessments experiment={experiment} initialRecord={riskRecord} rows={filtered} onReport={showReports} onOneHealth={id => { panelStates.set("health.report", id); panelStates.set("health.mode", "network"); panelStates.set("health.selection", ""); panelStates.set("health.filters", []); setHealthReport(id); changeTab("one-health"); }} />}
+        {showingRelationships && <>
           <h2 className="sr-only" id="atlas-assessments-heading" tabIndex={-1}>Source assessments</h2>
-          {!fullscreen && assessmentPageCount > 1 && <ReportPagination entity="Assessment" position="top" index={assessmentPageIndex} items={assessmentPageItems} onChange={index => changeEntryPage("assessments", index)} />}
           {assessments.length === 0 && <p className="atlas-empty">No assessments supported by this reporting window.</p>}
-          {assessments.slice(assessmentPageIndex * reportsPerPage, (assessmentPageIndex + 1) * reportsPerPage).map(a => <AssessmentEntry key={a.id} assessment={a} recordIds={recordIds} onLocate={chooseTopic} onReport={openReports} />)}
-          {!fullscreen && assessmentPageCount > 1 && <ReportPagination entity="Assessment" position="bottom" index={assessmentPageIndex} items={assessmentPageItems} onChange={index => changeEntryPage("assessments", index)} />}
+          {assessments.slice(assessmentPageIndex * reportsPerPage, (assessmentPageIndex + 1) * reportsPerPage).map(a => <AssessmentEntry key={a.id} selected={reportJump?.headingId === `atlas-assessment-${a.id}`} assessment={a} recordIds={recordIds} onLocate={chooseTopic} onReport={openReports} />)}
         </>}
-        {tab === "sources" && <>
+        {showingSources && <>
           <h2 className="sr-only" id="atlas-sources-heading" tabIndex={-1}>Source coverage</h2>
-          {!fullscreen && sourcePageCount > 1 && <ReportPagination entity="Topic" position="top" index={sourcePageIndex} items={sourcePageItems} onChange={index => changeEntryPage("sources", index)} />}
           <SourceNetwork key={`${entryScope}:${sourcePageIndex}`} topics={sourcePageTopics} rows={filtered} onSource={showSourceReports} onTopic={showTopicReports} onConnection={showConnectionReports} />
-          {!fullscreen && sourcePageCount > 1 && <ReportPagination entity="Topic" position="bottom" index={sourcePageIndex} items={sourcePageItems} onChange={index => changeEntryPage("sources", index)} />}
         </>}
       </div>
 
     </div>
     <footer ref={setFooterTarget} className="atlas-workspace-footer">
-      <button className="atlas-dataset-button" aria-haspopup="dialog" onClick={event => { event.currentTarget.focus({ preventScroll: true }); datasetDialog.current?.showModal(); }}><Info size={15} aria-hidden />About ATLAS</button>
-    {fullscreen && <>
-      {showingReports && pageCount > 1 && <ReportPagination position="bottom" index={pageIndex} items={pageItems} onChange={changeReportPage} />}
-      {tab === "links" && linkPageCount > 1 && <ReportPagination entity="Geographic link" position="bottom" index={linkPageIndex} items={linkPageItems} onChange={index => changeEntryPage("links", index)} />}
-      {showingAssessments && assessmentPageCount > 1 && <ReportPagination entity="Assessment" position="bottom" index={assessmentPageIndex} items={assessmentPageItems} onChange={index => changeEntryPage("assessments", index)} />}
-      {tab === "sources" && sourcePageCount > 1 && <ReportPagination entity="Topic" position="bottom" index={sourcePageIndex} items={sourcePageItems} onChange={index => changeEntryPage("sources", index)} />}
-    </>}
-    </footer>
-    </section>
-    <dialog ref={datasetDialog} className="atlas-scope-dialog atlas-dataset-dialog" aria-label="About ATLAS" onKeyDown={event => {
-      event.stopPropagation();
-      if (event.key !== "Tab") return;
-      const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('button, a[href]')];
-      const first = controls[0], last = controls.at(-1);
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
-    }} onClick={event => {
-      if (event.target !== event.currentTarget) return;
-      const rect = event.currentTarget.getBoundingClientRect();
-      if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) event.currentTarget.close();
-    }}>
-      <header><h2>About ATLAS</h2><button autoFocus aria-label="Close About ATLAS" onClick={() => datasetDialog.current?.close()}><X size={18} aria-hidden /></button></header>
-      <div className="atlas-scope-body atlas-methods">
+      <AtlasScope buttonLabel="About ATLAS" label="About ATLAS" title="ATLAS">
+      <div className="atlas-literature atlas-methods">
         <p className="atlas-about-name">Agentic Tracking and Longitudinal Analysis for Surveillance</p>
         <div className="atlas-about-ui" aria-label="ATLAS UI release">
           <span className="atlas-status"><GitBranch size={13} aria-hidden />ATLAS UI v{atlasUI.version}</span>
@@ -536,7 +582,7 @@ export function AtlasExplorer({ downloadRoot, release }: { downloadRoot: string;
         <p>ATLAS UI visualizes exports produced by ATLAS, bringing source documents, extracted findings and their supporting quotations into one view.</p>
         <a className="atlas-about-repo" href="https://github.com/EvoLandEco/ATLAS" target="_blank" rel="noopener noreferrer"><GitBranch size={16} aria-hidden /><span>EvoLandEco/ATLAS</span><ExternalLink size={13} aria-hidden /><span className="sr-only"> on GitHub</span></a>
         <section className="atlas-about-section" aria-labelledby="atlas-about-technology">
-          <h3 id="atlas-about-technology">Built with</h3>
+          <h3 id="atlas-about-technology"><FlaskConical size={16} aria-hidden />Built with</h3>
           <dl className="atlas-about-credits">
             <div><dt>AI engine</dt><dd>GPT-6 Astra</dd></div>
             <div><dt>Interface backbone</dt><dd>MagicUI</dd></div>
@@ -544,13 +590,13 @@ export function AtlasExplorer({ downloadRoot, release }: { downloadRoot: string;
           </dl>
         </section>
         <section className="atlas-about-section" aria-labelledby="atlas-about-snapshot">
-          <h3 id="atlas-about-snapshot">Research snapshot</h3>
+          <h3 id="atlas-about-snapshot"><CalendarDays size={16} aria-hidden />Research snapshot</h3>
           <p>{formatDate(atlas.snapshot.publication_from)} – {formatDate(atlas.snapshot.publication_until)} · {atlas.snapshot.selected_document_count} reports from a corpus of {atlas.snapshot.corpus_document_count}.</p>
           <p>{metrics.coverage.measure_count} source-checked measurements across {metrics.coverage.records_with_measures} report entries; {metrics.coverage.pending_candidate_count} candidates await review. Editorial acceptance is pending. Figures retain their source scope and observation dates; comparability remains under review.</p>
           <p>Extracted findings and proposed relationships are provided for research review, not as an accepted event registry or a measure of transmission risk.</p>
         </section>
         <section className="atlas-about-section" aria-labelledby="atlas-about-reading">
-          <h3 id="atlas-about-reading">Reading the evidence</h3>
+          <h3 id="atlas-about-reading"><FileText size={16} aria-hidden />Reading the evidence</h3>
           <dl className="atlas-about-methods">
             <div><dt>Dates &amp; scope</dt><dd>Dates refer to publication or capture, not outbreak onset. Relationships appear when every supporting report falls inside the selected window; later assessments use their own supporting documents.</dd></div>
             <div><dt>Locations &amp; links</dt><dd>Globe points use reviewed locations and retain the available precision. Routes group endpoint pairs by their latest supporting publication. Travel, shared events and hypotheses require explicit source support; shared bulletin coverage appears in the source network.</dd></div>
@@ -562,9 +608,18 @@ export function AtlasExplorer({ downloadRoot, release }: { downloadRoot: string;
           <a className="atlas-download" href={`${downloadRoot}/metrics.json`} download><Download size={16} aria-hidden />Download measurements</a>
         </div>
       </div>
-    </dialog>
+      </AtlasScope>
+    <>
+      {showingReports && pageCount > 1 && <ReportPagination position="bottom" index={pageIndex} items={pageItems} onChange={changeReportPage} />}
+      {tab === "links" && linkPageCount > 1 && <ReportPagination entity="Geographic link" position="bottom" index={linkPageIndex} items={linkPageItems} onChange={index => changeEntryPage("links", index)} />}
+      {showingRelationships && assessmentPageCount > 1 && <ReportPagination entity="Assessment" position="bottom" index={assessmentPageIndex} items={assessmentPageItems} onChange={index => changeEntryPage("assessments", index)} />}
+      {showingSources && sourcePageCount > 1 && <ReportPagination entity="Topic" position="bottom" index={sourcePageIndex} items={sourcePageItems} onChange={index => changeEntryPage("sources", index)} />}
+    </>
+    </footer>
+    </section>
+
     </div>
-  </div></div></AtlasWorkspaceContext>;
+  </div></div></AtlasWorkspaceContext></AtlasPanelStateContext>;
 }
 
 function LinkHistory({ group, selected, onChange }: { group: ReturnType<typeof groupGeographicLinks>[number]; selected: string; onChange: (id: string) => void }) {
@@ -579,12 +634,12 @@ function LinkHistory({ group, selected, onChange }: { group: ReturnType<typeof g
 }
 
 
-const AssessmentEntry = memo(function AssessmentEntry({ assessment: a, recordIds, onLocate, onReport }: {
-  assessment: AtlasAssessment; recordIds: Set<string>; onLocate: (id: string) => void; onReport: (ids: string[]) => void;
+const AssessmentEntry = memo(function AssessmentEntry({ assessment: a, selected, recordIds, onLocate, onReport }: {
+  assessment: AtlasAssessment; selected: boolean; recordIds: Set<string>; onLocate: (id: string) => void; onReport: (ids: string[]) => void;
 }) {
   const { tracks } = useAtlas();
-  return <article className="atlas-connection" data-assessment-id={a.id}>
-            <header className="atlas-entry-heading" tabIndex={-1}><div className="atlas-item-meta"><span className="atlas-status"><Info size={14} aria-hidden />{a.status}</span><button onClick={() => onLocate(a.track)}><ScanLine size={16} />Locate</button></div>
+  return <article className="atlas-connection" data-assessment-id={a.id} data-selected={selected}>
+            <header id={`atlas-assessment-${a.id}`} className="atlas-entry-heading" tabIndex={-1}><div className="atlas-item-meta"><span className="atlas-status"><Info size={14} aria-hidden />{a.status}</span><button onClick={() => onLocate(a.track)}><ScanLine size={16} />Locate</button></div>
             <div className="atlas-entry-title"><h3>{tracks.get(a.track)?.label}</h3><button className="atlas-collapse-entry" onClick={collapseEntry} aria-label={`Collapse details for ${tracks.get(a.track)?.label}`}><ChevronsUp size={15} aria-hidden /><span>Collapse</span></button></div></header><p className="atlas-assessment-dates">{a.from} → {a.to}</p><p>{a.basis}</p><MetricFigures kind="assessment" ids={[a.id]} recordIds={recordIds} />
             {a.updates?.map((u, i) => supported(u.support, recordIds) && <div className="atlas-assessment-update" key={i}><strong>Later assessment</strong><p>{u.text}</p><MetricFigures kind="assessment_update" ids={[`${a.id}:${i}`]} recordIds={recordIds} /><details><EvidenceSummary kind="source" /><Evidence support={u.support} onReport={onReport} /></details></div>)}
             <details><EvidenceSummary kind="scope" /><p>{a.limit}</p><Evidence support={a.support} onReport={onReport} /></details>
@@ -620,21 +675,29 @@ function GeographicRoute({ link }: { link: AtlasLink }) {
 }
 
 
-const Report = memo(function Report({ records, basis, highlighted, recordIds, onReport }: { records: AtlasRecord[]; basis: DateBasis; highlighted: boolean; recordIds: Set<string>; onReport: (ids: string[]) => void }) {
+const Report = memo(function Report({ records, basis, highlighted, recordIds, onReport, relationships, riskRecords, onAssessment, onRisk }: { relationships: Map<string, AtlasAssessment[]>; riskRecords: Set<string>; onAssessment: (id: string) => void; onRisk: (id: string) => void; records: AtlasRecord[]; basis: DateBasis; highlighted: boolean; recordIds: Set<string>; onReport: (ids: string[]) => void }) {
   const { atlasDocuments, reportOrganizations, reportComparisons, assertions, tracks } = useAtlas();
-  const [loaded, setLoaded] = useState(false);
+  const [open, setOpen] = useAtlasPanelState(`report.${records[0].document_id}.open`, false);
+  const [loaded, setLoaded] = useState(open);
   const first = records[0];
   const document = atlasDocuments.get(first.document_id)!;
   const organization = reportOrganizations[first.source];
   const comparisons = reportComparisons(recordIds, records.map(r => r.id));
   const comparedMeasures = new Set(comparisons.flatMap(c => c.participant_ids).map(id => assertions.get(id)!.measure_id).filter((id): id is string => id !== null));
-  return <details className="atlas-report" id={`atlas-report-${first.document_id}`} data-evidence={highlighted} onToggle={event => { if (event.target === event.currentTarget && event.currentTarget.open) setLoaded(true); }}>
+  return <details open={open} className="atlas-report" id={`atlas-report-${first.document_id}`} data-evidence={highlighted} onToggle={event => { if (event.target !== event.currentTarget) return; setOpen(event.currentTarget.open); if (event.currentTarget.open) setLoaded(true); }}>
     <summary onClick={event => { if (event.currentTarget.parentElement?.hasAttribute("open")) keepHeadingVisible(event.currentTarget); }}><span className="atlas-timeline-node institution-logo atlas-source-logo"><Image src={`/logos/atlas/${organization.logo}`} alt={organization.name} width={32} height={32} unoptimized /></span><span className="atlas-report-date">{formatDate(document[basis])}<small>{sourceName(first.source)}</small></span>
       <span className="atlas-report-summary">{highlighted && <span className="sr-only">Relevant report. </span>}<strong>{document.title}</strong>
         {comparisons.filter((c, i) => comparisons.findIndex(other => other.kind === c.kind) === i).map(c => <ComparisonBadge key={c.kind} comparison={c} />)}</span><span className="atlas-expand" aria-hidden><ChevronDown size={17} /></span></summary>
     {loaded && <ReportCountryFlags value={true}><div className="atlas-report-body"><div className="atlas-item-meta atlas-report-meta"><span><CalendarDays size={14} aria-hidden />{basis === "publication" ? `Captured ${formatDate(document.capture)}` : `Published ${formatDate(document.publication)}`}</span><a href={document.url} target="_blank" rel="noopener noreferrer">Read source <ExternalLink size={14} aria-hidden /></a></div>
       <SourceComparisons recordIds={recordIds} reportIds={records.map(r => r.id)} onReport={onReport} />
-      {records.map(record => <div key={record.id}><h3><CountryText>{tracks.get(record.track)?.label}</CountryText></h3><MetricFigures kind="record" ids={[record.id]} recordIds={recordIds} exclude={comparedMeasures} />{record.claims.map(claim => <div className="atlas-claim" key={claim.claim_index}><p><CountryText>{claim.text}</CountryText></p>{claim.quotes.length > 0 && <details><EvidenceSummary kind="quotation" />{claim.quotes.map((q, i) => <blockquote key={i}><CountryText>{q}</CountryText></blockquote>)}</details>}</div>)}</div>)}
+      {records.map(record => <div key={record.id}><h3><CountryText>{tracks.get(record.track)?.label}</CountryText></h3>
+        {(relationships.has(record.id) || riskRecords.has(record.id)) && <div className="atlas-report-assessment-links">
+          {relationships.has(record.id) && <details><EvidenceSummary kind="relationships" count={relationships.get(record.id)!.length} />
+            <ol>{relationships.get(record.id)!.map(assessment => <li key={assessment.id}><button data-assessment-id={assessment.id} onClick={() => onAssessment(assessment.id)}><span><strong>{assessment.status}</strong>{(assessment.from || assessment.to) && <small>{[assessment.from, assessment.to].filter(Boolean).join(" → ")}</small>}</span><ArrowRight size={14} aria-hidden /></button></li>)}</ol>
+          </details>}
+          {riskRecords.has(record.id) && <button onClick={() => onRisk(record.id)}><ShieldCheck size={14} aria-hidden />Source risk assessment<ArrowRight size={14} aria-hidden /></button>}
+        </div>}
+        <MetricFigures kind="record" ids={[record.id]} recordIds={recordIds} exclude={comparedMeasures} />{record.claims.map(claim => <div className="atlas-claim" key={claim.claim_index}><p><CountryText>{claim.text}</CountryText></p>{claim.quotes.length > 0 && <details><EvidenceSummary kind="quotation" />{claim.quotes.map((q, i) => <blockquote key={i}><CountryText>{q}</CountryText></blockquote>)}</details>}</div>)}</div>)}
     </div></ReportCountryFlags>}
   </details>;
 });
@@ -681,11 +744,16 @@ const SourceNetwork = memo(function SourceNetwork({ rows, topics, onSource, onTo
       onKeyDown: (e: React.KeyboardEvent<SVGGElement>) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(); } } };
   }
   return <>
-    <div className="atlas-network-scroll">{!rows.length ? <p className="atlas-empty">No source coverage in this selection.</p> : <svg className="atlas-source-network" data-highlighted={Boolean(selection)} viewBox={`0 0 760 ${height}`} role="group" aria-label="Sources connected to reporting topics" onPointerLeave={() => setHovered(null)} onPointerMove={event => {
+    <div className="atlas-network-scroll">{!rows.length ? <p className="atlas-empty">No source coverage in this selection.</p> : <svg className="atlas-source-network" data-highlighted={Boolean(selection)} viewBox={`0 0 760 ${height + 28}`} role="group" aria-label="Sources connected to reporting topics" onPointerLeave={() => setHovered(null)} onPointerMove={event => {
       const target = (event.target as Element).closest<SVGGElement>("[data-source], [data-topic]");
       const next = target ? { source: target.dataset.source, topic: target.dataset.topic } : null;
       setHovered(current => current?.source === next?.source && current?.topic === next?.topic ? current : next);
     }}>
+      <g className="atlas-coverage-headings" aria-hidden="true">
+        <Network x={10} y={6} size={13} /><text x="31" y="17">Sources · reports</text>
+        <FileText x={342} y={6} size={13} /><text x="363" y="17">Reporting topics</text>
+      </g>
+      <g transform="translate(0 28)">
       {edges.sort((a, b) => Number(a.active) - Number(b.active)).map(edge => {
         const original = `M180 ${edge.y1} C250 ${edge.y1},260 ${edge.y2},330 ${edge.y2}`;
         const y1 = sourcePositions[edge.si], y2 = topicPositions[edge.ti];
@@ -700,17 +768,20 @@ const SourceNetwork = memo(function SourceNetwork({ rows, topics, onSource, onTo
         const organization = reportOrganizations[source];
         const active = edges.some(edge => edge.source === source && edge.active);
         return <motion.g initial={false} transition={transition} className="atlas-coverage-node atlas-coverage-source" data-active={active} key={source} animate={{ x: 0, y: sourcePositions[i] }} role="button" tabIndex={0} aria-label={`Reports from ${source}`} {...interactions({ source }, () => onSource(source))}>
-          <rect className="atlas-coverage-surface" x="4" y="-24" width="176" height="48" rx="24" /><circle className="atlas-coverage-port" cx="180" r="3" />
+          <title>{`${organization.name} · ${sourceCounts[i]} source documents in the reporting selection`}</title>
+          <rect className="atlas-coverage-surface" x="4" y="-24" width="176" height="48" rx="12" /><circle className="atlas-coverage-port" cx="180" r="3" />
           <foreignObject x="10" y="-21" width="160" height="42"><div className="atlas-coverage-source-label"><span className="institution-logo"><Image src={`/logos/atlas/${organization.logo}`} alt={organization.name} width={30} height={30} unoptimized /></span><span>{sourceName(source)}</span><b>{sourceCounts[i]}</b></div></foreignObject>
         </motion.g>;
       })}
       {topics.map((topic, i) => {
         const active = edges.some(edge => edge.topic === topic.id && edge.active);
         return <motion.g initial={false} transition={transition} className="atlas-coverage-node atlas-coverage-topic" data-active={active} key={topic.id} animate={{ x: 330, y: topicPositions[i] }} role="button" tabIndex={0} aria-label={topic.label} {...interactions({ topic: topic.id }, () => onTopic(topic.id))}>
-          <rect className="atlas-coverage-surface" y="-24" width="422" height="48" rx="13" /><circle className="atlas-coverage-port" r="3" />
+          <title>{`${topic.label} · ${topicData[i].count} source documents`}</title>
+          <rect className="atlas-coverage-surface" y="-24" width="422" height="48" rx="10" /><circle className="atlas-coverage-port" r="3" />
           <foreignObject x="12" y="-23" width="398" height="46"><div className="atlas-coverage-topic-label"><strong>{topic.label}</strong><div><LocationBadges codes={topicData[i].countries} /><span>{topicData[i].count} report{topicData[i].count === 1 ? "" : "s"}</span></div></div></foreignObject>
         </motion.g>;
       })}
+      </g>
     </svg>}</div>
   </>;
 });

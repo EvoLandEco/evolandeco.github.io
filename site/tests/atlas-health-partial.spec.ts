@@ -15,7 +15,7 @@ for (const width of [390,1280]) test(`Partial One Health candidate ${width}`,asy
  const choose=async(name:string)=>{await view.locator('summary[aria-label="One Health view"]').click();await view.getByRole('option',{name,exact:true}).click();};
  await choose('Sampling');await expect(view.getByRole('table',{name:'Reviewed sampling and positivity'})).toBeVisible();
  await expect(view.getByRole('complementary')).toContainText('Source evidence');
- await choose('Timeline');await expect(view.getByRole('heading',{name:'Aligned evidence timeline'})).toBeVisible();
+ await choose('Timeline');await expect(view.getByRole('heading',{name:'Aligned evidence timeline'})).toHaveClass('sr-only');
  expect(await view.locator('.atlas-oh-time-point,.atlas-oh-time-list button').count()).toBeGreaterThan(0);
  await choose('Environment');await expect(view.getByRole('heading',{name:'Environment & interventions'})).toBeVisible();
  expect((await new AxeBuilder({page}).include('.atlas-one-health').analyze()).violations).toEqual([]);

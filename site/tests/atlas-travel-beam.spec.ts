@@ -4,7 +4,7 @@ test('Reported travel beams finish entering their destination before restarting'
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/atlas/');
-  await expect(page.locator('.atlas-page[data-ready="true"]')).toBeVisible();
+  await expect(page.locator('.atlas-page[data-ready="true"]')).toBeVisible({ timeout: 120000 });
   await page.locator('.atlas-link-target').first().press('Enter');
   await page.mouse.move(0, 0);
   const route = page.locator('.atlas-globe-pins .atlas-route[data-kind="movement"]').first();

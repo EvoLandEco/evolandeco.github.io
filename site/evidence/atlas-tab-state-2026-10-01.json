@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-01",
+  "scope": "ATLAS tab choices within the open page",
+  "storage": "Explorer-owned memory; inactive panels unmount",
+  "browser_checks": {
+    "desktop_width": 1440,
+    "mobile_width": 390,
+    "passed": [
+      "Merged Intelligence navigation and evidence at 1440px",
+      "Merged Intelligence navigation and evidence at 390px",
+      "Tab choices survive navigation at 1440px",
+      "Tab choices survive navigation at 390px"
+    ],
+    "verified": [
+      "Independent Trends and Analysis series",
+      "Per-series model, horizon and origin",
+      "Analysis view, signal type and search",
+      "One Health view, report, overview query and sort",
+      "Expanded reports and Reports subview",
+      "Inactive panels unmount",
+      "Explicit report and evidence navigation"
+    ],
+    "page_errors": []
+  },
+  "publication": "None"
+}

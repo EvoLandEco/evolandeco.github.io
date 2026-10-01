@@ -1,0 +1,93 @@
+{
+  "date": "2026-10-01",
+  "dataset": "e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48",
+  "viewport": {
+    "width": 1440,
+    "height": 1000,
+    "device_scale_factor": 2
+  },
+  "browser": "Chromium",
+  "method": "Median of three 3-second samples per state; instrumented WebGL draw calls and SVG attribute writes; Chromium Performance metrics. No other browser tests ran during sampling.",
+  "scope": "Local lab main-thread activity; excludes total desktop CPU and GPU utilization.",
+  "renderer": "Existing globe effects and geometry",
+  "samples": [
+    {
+      "route": "/",
+      "state": "rotating",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 561.36,
+        "ScriptDuration": 53.38,
+        "LayoutDuration": 4.55,
+        "RecalcStyleDuration": 26.7,
+        "draws": 90,
+        "attributes": 8795
+      }
+    },
+    {
+      "route": "/",
+      "state": "offscreen",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 7.81,
+        "ScriptDuration": 0.17,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 1.84,
+        "draws": 0,
+        "attributes": 0
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "rotating",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 2880.79,
+        "ScriptDuration": 357.54,
+        "LayoutDuration": 36.8,
+        "RecalcStyleDuration": 576.98,
+        "draws": 90,
+        "attributes": 139732
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "workspace",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 875.95,
+        "ScriptDuration": 129.72,
+        "LayoutDuration": 20.84,
+        "RecalcStyleDuration": 185.56,
+        "draws": 0,
+        "attributes": 58876
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "reduced-motion",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 1.63,
+        "ScriptDuration": 0,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 0,
+        "draws": 0,
+        "attributes": 0
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "offscreen",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 15.26,
+        "ScriptDuration": 0.15,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 2.43,
+        "draws": 0,
+        "attributes": 0
+      }
+    }
+  ]
+}

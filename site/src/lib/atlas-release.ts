@@ -10,6 +10,7 @@ export const releaseSchema = z.object({
   contract_version: z.enum(["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0"]), selector_sha256: digest,
   assets: z.object({ "atlas-site.json": asset, "map.json": asset, "metrics.json": asset, "network-transport.json": asset.optional() }),
   correction: z.object({ replaces_export_id: digest, authorization_sha256: digest }).optional(),
+  intelligence: z.object({ experiment_id: digest, schema_version: z.literal("0.2.0"), asset }).optional(),
 });
 export type AtlasRelease = z.infer<typeof releaseSchema>;
 export type AtlasLoadProgress = { phase: "release" | "download" | "verify" | "prepare"; loaded: number; total: number };

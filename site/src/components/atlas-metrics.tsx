@@ -4,8 +4,8 @@ import { AtlasScope } from "./atlas-scope";
 import { CountryText } from "./atlas-location-badges";
 import { useElementSize } from "./use-element-size";
 import type { AtlasReviewedSeries } from "@/lib/atlas-contract";
-import { useAtlas } from "./atlas-context";
-import { GitBranch, ExternalLink, TriangleAlert, X } from "lucide-react";
+import { useAtlas, useAtlasPanelState } from "./atlas-context";
+import { GitBranch, ExternalLink, TriangleAlert } from "lucide-react";
 import { visibleMeasure, metricValue, type Measure } from "@/lib/atlas-metrics";
 import { revealAtlasEntries } from "@/lib/atlas-detail-scroll";
 import { formatDate, sourceName } from "@/lib/atlas";
@@ -63,11 +63,11 @@ export function ObservationPlot({ items, onReport, series, seriesId }: { seriesI
   const transition = { duration: reducedMotion ? 0 : .45, ease: "easeInOut" as const };
   const { ref: chart, size } = useElementSize<SVGSVGElement>();
   const { atlasDocuments } = useAtlas();
-  const [selection, setSelection] = useState<string | null>(null);
+  const [selection, setSelection] = useAtlasPanelState<string | null>(`observations.${seriesId ?? items[0].measure_id}.selection`, null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [focused, setFocused] = useState<string | null>(null);
   const [selectionSeries, setSelectionSeries] = useState(seriesId);
-  if (selectionSeries !== seriesId) { setSelectionSeries(seriesId); setSelection(null); setHovered(null); setFocused(null); }
+  if (selectionSeries !== seriesId) { setSelectionSeries(seriesId); setHovered(null); setFocused(null); }
   const details = useRef<HTMLDivElement>(null);
   useEffect(() => {
     details.current?.scrollTo({ top: 0 });
@@ -83,7 +83,7 @@ export function ObservationPlot({ items, onReport, series, seriesId }: { seriesI
   const evidence = series?.evidence.filter(e => evidenceIds.includes(e.id)) ?? [];
   const dates = items.map(m => Date.parse(m.observation_date!));
   const from = Math.min(...dates), to = Math.max(...dates), top = Math.max(...items.map(m => m.value!), 1);
-  const left = 40, right = (size?.width ?? 0) - (series ? 44 : 16), bottom = (size?.height ?? 0) - 30;
+  const left = 40, right = (size?.width ?? 0) - 16, bottom = (size?.height ?? 0) - 30;
   const plotHeight = bottom - 18;
   const points = new Map(items.map((m, i) => [m.measure_id, { x: left + (to === from ? .5 : (dates[i] - from) / (to - from)) * (right - left), y: bottom - m.value! / top * plotHeight }]));
   const highlightedEdges = series?.connections.filter(e => e.id === hovered || e.id === focused) ?? [];
@@ -93,7 +93,6 @@ export function ObservationPlot({ items, onReport, series, seriesId }: { seriesI
   return <figure>
     <figcaption><strong>{items[0].label}{items[0].unit === "percent" ? " (%)" : ""}</strong><span>{items[0].disease.value} · {items[0].geography.value} · {items[0].count_kind === "interval" ? "Reporting period" : items[0].count_kind === "cumulative" ? "Cumulative" : "Reported values"}</span></figcaption>
     <div className="atlas-observation-visual">
-    {series && <SeriesReview key={seriesId} series={series} />}
     <svg ref={chart} className="atlas-observation-chart" data-report-ready={Boolean(hoveredMeasure) || undefined} onClick={() => { if (hoveredMeasure) onReport([hoveredMeasure.source_reference.record_id], true); }} viewBox={size ? `0 0 ${size.width} ${size.height}` : undefined} onPointerLeave={() => setHovered(null)} onPointerMove={event => {
       if (event.pointerType === "touch") return;
       const svg = event.currentTarget, matrix = svg.getScreenCTM();
@@ -151,22 +150,4 @@ function ObservationRow({ measure: m, onReport, publication = false, highlighted
     </button>
     <MeasureDetails measure={m} />
   </div>;
-}
-
-function SeriesReview({ series }: { series: AtlasReviewedSeries }) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  return <>
-    <button className="atlas-scope-trigger atlas-series-review-trigger" aria-label="Series scope" title="Series scope" aria-haspopup="dialog" onClick={event => { event.currentTarget.focus({ preventScroll: true }); dialog.current?.showModal(); }}>?</button>
-    <dialog ref={dialog} className="atlas-scope-dialog" aria-label="Series scope" onKeyDown={event => {
-      event.stopPropagation();
-      if (event.key === "Tab") { event.preventDefault(); dialog.current?.querySelector('button')?.focus(); }
-    }} onClick={event => {
-      if (event.target !== event.currentTarget) return;
-      const box = event.currentTarget.getBoundingClientRect();
-      if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) event.currentTarget.close();
-    }}>
-      <header><div><span>Series scope</span><h2>{series.label}</h2></div><button autoFocus aria-label="Close series scope" onClick={() => dialog.current?.close()}><X size={18} aria-hidden /></button></header>
-      <div className="atlas-scope-body atlas-series-scope"><p>{series.scope}</p></div>
-    </dialog>
-  </>;
 }

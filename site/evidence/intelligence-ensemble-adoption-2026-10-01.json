@@ -1,0 +1,130 @@
+{
+  "recorded_at": "2026-10-01T06:18:59.695225+00:00",
+  "scope": "Private Intelligence median ensemble consumer adoption",
+  "schema_version": "0.2.0",
+  "experiment_id": "4427952b816bc4f8bb29e2e5ab461772a70572f1ae6b1ea870ac7ae7a24ea6ff",
+  "source_export_id": "9d712c4f57ee47774b0dc69931594bf1ef6b5813429211faddf304351824b2af",
+  "sidecar": {
+    "path": "/Users/tianjian/Documents/ChatGPT/EpiWeekly/reports/intelligence-ensemble-2026-10-01/intelligence.json",
+    "sha256": "4fb3f4ffe98ecfc68efb4d21b039950b80b73d1e32da9aaa25f8d0f783edd51a",
+    "bytes": 2445708
+  },
+  "producer_input_identity": {
+    "site_sha256": "f9ef77745e81fb87529fc936f22bf3dae7970054097ba38a4b409f16fedc1142",
+    "selector_sha256": "80f15b7fda19c2fd1aed5d92a6317733fe5b69aa66c5fa0e386b403a61b21e0c",
+    "producer_sha256": "b29fa6163a478503bbb363175bbfb04b51aec9e60a7b1c8c8613c18f86bac661",
+    "profile_sha256": "152a376a9e7c982823938c6ded0fd08ac054af4648f1f34ac5f99d2323636812",
+    "schema_sha256": "1d4492e7386a5fbe588dabf087a9be7af8b30c4bbb31a199db513aae739ee2fd",
+    "selection_adapter_sha256": "ecd88034e6d7f1185e38f3ade623b4e6936d2818fc0e48b7de9366fbb8f1557a",
+    "network_method_sha256": "a5db52cd6f506223588e9a3333e5002f7babf65aa4ceff6d9b9db310058f860b",
+    "method_version": "0.2.0"
+  },
+  "producer_validation": "/Users/tianjian/Documents/ChatGPT/EpiWeekly/reports/intelligence-ensemble-2026-10-01/validation.json",
+  "producer_checks": "/Users/tianjian/Documents/ChatGPT/EpiWeekly/reports/intelligence-ensemble-2026-10-01/analysis-checks.json",
+  "default_model_id": "ensemble_median",
+  "method": {
+    "id": "ensemble_median",
+    "label": "Median ensemble",
+    "description": "Equal-weight median of the three component predictions at each quantile, with all components matched by origin, target, horizon and training measurements. Weights are fixed; no ensemble fitting is performed.",
+    "url": "https://doi.org/10.1016/j.ijforecast.2022.06.005",
+    "combination": "equal_weight_quantile_median",
+    "require_all_components": true,
+    "components": [
+      {
+        "model_id": "random_walk",
+        "weight": 0.3333333333333333
+      },
+      {
+        "model_id": "recent_changes",
+        "weight": 0.3333333333333333
+      },
+      {
+        "model_id": "gamma_poisson",
+        "weight": 0.3333333333333333
+      }
+    ]
+  },
+  "literature": {
+    "citation": "Ray EL et al. (2023). Comparing trained and untrained probabilistic ensemble forecasts of COVID-19 cases and deaths in the United States. International Journal of Forecasting 39(3), 1366–1383.",
+    "url": "https://doi.org/10.1016/j.ijforecast.2022.06.005",
+    "verified_source": "https://publikationen.bibliothek.kit.edu/1000163946/151608760",
+    "section": "2.6",
+    "checked_at": "2026-10-01",
+    "application": "Coordinatewise median of the three component predictive quantiles. Fixed equal weights; no weight fitting or component selection by evaluation score. The method does not establish prospective skill for these series."
+  },
+  "comparison": {
+    "ensemble_backtests": 259,
+    "ensemble_last_origin_predictions": 10,
+    "series_horizon_groups": 10,
+    "groups_with_lower_wis_than_persistence": 10,
+    "groups_with_lower_wis_than_best_component": 4,
+    "strict_historical_backtests": 0
+  },
+  "checks": [
+    {
+      "name": "Producer focused tests",
+      "status": "passed",
+      "passed": 7
+    },
+    {
+      "name": "Consumer payload preservation, method membership and weights validation",
+      "status": "passed",
+      "passed": 1
+    },
+    {
+      "name": "Desktop and phone navigation, short fullscreen containment and hover, ensemble predictions and scores across all series and horizons",
+      "status": "passed",
+      "passed": 4
+    },
+    {
+      "name": "TypeScript, ESLint and git diff --check",
+      "status": "passed"
+    }
+  ],
+  "ui_files": [
+    {
+      "path": "site/src/lib/atlas-intelligence.ts",
+      "sha256": "81e9ad4b547ee588df72aa9d4e8780c35c00364f9d1ab47756d822f44e94a102"
+    },
+    {
+      "path": "site/src/components/atlas-analysis.tsx",
+      "sha256": "18a9db0361a97611dfc54a62050f0fa88f292fe12d36013f18edb161db1453c0"
+    },
+    {
+      "path": "site/src/components/atlas-analysis-results.tsx",
+      "sha256": "7d3c0f7542c8bfad69db101726c4bda4ad6e8f382e25760455b4b33007e121f2"
+    },
+    {
+      "path": "site/src/components/atlas-analysis.module.css",
+      "sha256": "4915493fd40ece52691ec22a9d2b8993d332020436c9766f44ec7f2d295e60c7"
+    },
+    {
+      "path": "site/src/app/atlas/experimental/page.tsx",
+      "sha256": "501508fa5258abc5f04042076764b9bc3c73e204a4cde2dd1873cdef9f99ccbb"
+    },
+    {
+      "path": "site/tests/atlas-intelligence.spec.ts",
+      "sha256": "a2e2f91ff4864be636bde6713588a1420cfe2eeb8a180201e3da96df084f318b"
+    },
+    {
+      "path": "site/tests/atlas-intelligence.test.ts",
+      "sha256": "271f678f92f81fd71e9d10af7ced7a26d69e723cc58c921ece308466325f2de9"
+    },
+    {
+      "path": "site/README.md",
+      "sha256": "339e00131179a8737085672796647adbadc162a52c12ca84ff60e5ef986bb384"
+    }
+  ],
+  "preview_url": "http://127.0.0.1:3005/atlas/experimental/",
+  "production": {
+    "deployment_performed": false,
+    "dataset_published": false,
+    "committed": false,
+    "pushed": false
+  },
+  "test_notes": [
+    "About Analysis contains the ensemble definition, reference, component dependence and retrospective interpretation.",
+    "The browser renders the producer values; no ensemble calculation runs in the UI.",
+    "The public source dataset identity and original component outputs are preserved."
+  ]
+}

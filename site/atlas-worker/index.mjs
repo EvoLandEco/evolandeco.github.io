@@ -13,7 +13,8 @@ const worker = {
     const current = path === "/current.json";
     const releaseAsset = /^\/releases\/[a-f0-9]{64}\/(?:(?:atlas-site|map|metrics|network-transport|release)\.json|view\.mjs)$/.test(path);
     const networkAsset = /^\/network-analysis\/[a-f0-9]{64}\/(network-analysis|network-analysis\.schema|coverage-ledger)\.json$/.test(path);
-    if (!current && !releaseAsset && !networkAsset)
+    const intelligenceAsset = /^\/intelligence\/[a-f0-9]{64}\/(intelligence|contract\.schema)\.json$/.test(path);
+    if (!current && !releaseAsset && !networkAsset && !intelligenceAsset)
       return new Response("Not found", { status: 404, headers });
     const ip = request.headers.get("CF-Connecting-IP");
     if (!ip) return new Response("Forbidden", { status: 403, headers });

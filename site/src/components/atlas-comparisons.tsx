@@ -23,7 +23,7 @@ export function SourceComparisons({ recordIds, reportIds, onReport }: { recordId
   const comparisons = reportComparisons(recordIds, reportIds);
   if (!comparisons.length) return null;
   return <div className="atlas-comparisons">{comparisons.map(c => <section key={c.id} className="atlas-comparison" data-kind={c.kind} aria-label={labels[c.kind]}>
-    <header>{c.kind !== "contradiction" && <ComparisonBadge comparison={c} />}<span className="atlas-status" data-tone={c.status === "unresolved" ? "warning" : "info"}>{c.status === "unresolved" ? <CircleHelp size={13} aria-hidden /> : <BadgeCheck size={13} aria-hidden />}{c.status === "unresolved" ? "Unresolved" : "Documented"}</span><AtlasScope label="Comparison scope" title={labels[c.kind]}><div className="atlas-measure-details"><p><CountryText>{c.scope_review}</CountryText></p><small>ATLAS source review · {formatDate(c.reviewed_at)} · Editorial review pending</small></div></AtlasScope></header>
+    <header><span className="atlas-status" data-tone={c.status === "unresolved" ? "warning" : "info"}>{c.status === "unresolved" ? <CircleHelp size={13} aria-hidden /> : <BadgeCheck size={13} aria-hidden />}{c.status === "unresolved" ? "Unresolved" : "Documented"}</span><AtlasScope label="Comparison scope" title={labels[c.kind]}><div className="atlas-measure-details"><p><CountryText>{c.scope_review}</CountryText></p><small>ATLAS source review · {formatDate(c.reviewed_at)} · Editorial review pending</small></div></AtlasScope></header>
     <p className="atlas-comparison-reason"><CountryText>{c.reason}</CountryText></p>
     <div className="atlas-comparison-branches">{c.participant_ids.map(id => {
       const a = assertions.get(id)!, document = documents.get(a.document_id)!;

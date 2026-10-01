@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef } from "react";
 import { ArrowRight, ExternalLink, FileText } from "lucide-react";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { useAtlas } from "./atlas-context";
+import { useAtlas, useAtlasPanelState } from "./atlas-context";
 import { useElementSize } from "./use-element-size";
 import { LocationBadges } from "./atlas-location-badges";
 import { formatDate } from "@/lib/atlas";
@@ -25,28 +25,32 @@ const isContext = (item:PanelItem):item is Context => "node_ids" in item;
 const title = (item:PanelItem,nodes:Map<string,AtlasOneHealthNode>) => isContext(item) ? item.label : nodes.get(item.node_id)!.label;
 const kind = (item:PanelItem) => isContext(item) ? contextNames[item.kind] : isSampling(item) ? "Sampling assessment" : words(item.time.kind);
 
-export function AtlasHealthPanels({mode,view,reportId,nodeIds,onReport}:{mode:PanelMode;view:AtlasSelectedOneHealth;reportId:string;nodeIds:Set<string>;onReport:(ids:string[],expand?:boolean)=>void}) {
-  const [selection,setSelection]=useState("");
+export function AtlasHealthPanels({mode,view,reportId,nodeIds,onReport,mergedTimeline=false}:{mergedTimeline?:boolean;mode:PanelMode;view:AtlasSelectedOneHealth;reportId:string;nodeIds:Set<string>;onReport:(ids:string[],expand?:boolean)=>void}) {
+  const [selection,setSelection]=useAtlasPanelState(`health.${mode}.${reportId}.selection`, "");
+  const [layers,setLayers]=useAtlasPanelState("health.timeline.layers", ["observations","environment","interventions"]);
+  const combined = mode === "timeline" && mergedTimeline;
+  const inLayer = (item: PanelItem) => !combined || layers.includes(isContext(item) ? (item.kind === "reported_intervention" || item.kind === "evaluated_effect" ? "interventions" : "environment") : "observations");
   const detail=useRef<HTMLElement>(null);
   const nodes=useMemo(()=>new Map([...view.nodes,...view.undated_nodes].map(n=>[n.id,n])),[view]);
   const relevant=(row:PanelItem)=>healthPanelForEntry(row,reportId,nodeIds);
-  const dated:PanelItem[]=(mode==="timeline" ? view.timings : mode==="sampling" ? view.sampling_assessments : view.contexts).filter(relevant);
-  const undated:PanelItem[]=(mode==="timeline" ? view.undated_timings : mode==="sampling" ? view.undated_sampling_assessments : view.undated_contexts).filter(relevant);
-  const cutoffs=mode==="timeline" ? view.reporting_cutoffs.filter(relevant) : [];
+  const dated:PanelItem[]=(mode==="timeline" ? [...view.timings,...(combined ? view.contexts : [])] : mode==="sampling" ? view.sampling_assessments : view.contexts).filter(relevant).filter(inLayer);
+  const undated:PanelItem[]=(mode==="timeline" ? [...view.undated_timings,...(combined ? view.undated_contexts : [])] : mode==="sampling" ? view.undated_sampling_assessments : view.undated_contexts).filter(relevant).filter(inLayer);
+  const cutoffs=mode==="timeline" && (!combined || layers.includes("observations")) ? view.reporting_cutoffs.filter(relevant) : [];
   const rows=[...dated,...undated,...cutoffs];
   const selected=rows.find(r=>r.id===selection) ?? rows[0];
   useEffect(()=>{detail.current?.scrollTo({top:0});},[selected?.id]);
   const heading=mode==="timeline" ? "Aligned evidence timeline" : mode==="sampling" ? "Sampling & positivity" : "Environment & interventions";
   return <div className="atlas-oh-layout atlas-oh-analytic" data-view={mode}>
-    <div className="atlas-oh-main"><header className="atlas-oh-panel-heading"><h3>{heading}</h3><span>{rows.length} reviewed {rows.length===1 ? "statement" : "statements"}</span></header>
+    <div className="atlas-oh-main"><h3 className="sr-only">{heading}</h3>
+      {combined && <div className="atlas-oh-timeline-layers" role="group" aria-label="Timeline layers">{["observations","environment","interventions"].map(layer=><button key={layer} aria-pressed={layers.includes(layer)} onClick={()=>setLayers(current=>current.includes(layer)?current.filter(item=>item!==layer):[...current,layer])}>{layer === "observations" ? "Observations" : layer === "environment" ? "Environment" : "Interventions"}</button>)}</div>}
       {mode==="sampling" ? <SamplingTable rows={[...dated,...undated].filter(isSampling)} nodes={nodes} selected={selected?.id} onSelect={setSelection} /> : <>
-        <p className="atlas-oh-note">{mode==="timeline" ? "Source dates aligned by domain. Alignment does not establish a transmission sequence." : "Measured variables, source interpretations and reported actions retain separate meanings. Alignment does not establish an effect."}</p>
+        <p className="atlas-oh-note">{mode==="timeline" ? "Source dates align by domain or context kind. Alignment does not establish transmission or an intervention effect." : "Measured variables, source interpretations and reported actions retain separate meanings. Alignment does not establish an effect."}</p>
         {dated.length ? <EvidenceTimeline rows={dated} nodes={nodes} selected={selected?.id} onSelect={setSelection} /> : <p className="atlas-empty">No dated {mode==="timeline" ? "observation statements" : "context or intervention statements"} in this selection.</p>}
         {dated.length>0 && <p className="atlas-oh-note">● Exact day · ━ Reported interval · ▧ Month/year placement or uncertain time. A placement range does not mean continuous activity.</p>}
         {undated.length>0 && <section className="atlas-oh-time-list"><h4>Undated or incomplete dates <span>{undated.length}</span></h4>{undated.map(item=><button key={item.id} aria-pressed={selected?.id===item.id} onClick={()=>setSelection(item.id)}><strong>{title(item,nodes)}</strong><small>{kind(item)} · {observationTimeLabel(item.time)}</small></button>)}</section>}
       </>}
       {cutoffs.length>0 && <section className="atlas-oh-time-list"><h4>Reporting cutoffs <span>{cutoffs.length}</span></h4><p className="atlas-oh-note">Report coverage dates, separate from observation events.</p>{cutoffs.map(item=><button key={item.id} aria-pressed={selected?.id===item.id} onClick={()=>setSelection(item.id)}><strong>{title(item,nodes)}</strong><small>{observationTimeLabel(item.time)}</small></button>)}</section>}
-      {!rows.length && <p className="atlas-oh-note">No reviewed panel statements are exported for this report. This is not evidence that sampling, environmental conditions or response actions were absent.</p>}
+      {!rows.length && <p className="atlas-oh-note">No reviewed statements match this view and its selected layers. This is not evidence that sampling, environmental conditions or response actions were absent.</p>}
     </div>
     <aside ref={detail} className="atlas-oh-detail" aria-label="One Health panel source details">{selected ? <PanelDetails key={selected.id} item={selected} nodes={nodes} onReport={onReport} /> : <p className="atlas-oh-note">Select a report with reviewed statements for this view.</p>}</aside>
   </div>;
