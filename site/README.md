@@ -60,6 +60,8 @@ Use `0.MINOR.PATCH` during experimental development:
 
 For each UI release, set the metadata, add a dated entry below describing its scope and supported export contracts, and run type, lint and relevant browser checks before publishing. Increment once per release, rather than for every edit.
 
+**0.3.1 · Experimental · 1 October 2026** — Searchable Place and Disease filters with multiple selections, report entry counts, shared evidence selection and compact rules. Export contracts: `1.0.0` through `1.5.0`; separate Place and Disease controls require the reviewed disease fields in `1.3.0` or later. See [release checks and manual push](evidence/release-filters-0.3.1.md).
+
 **0.3.0 · Experimental · 1 October 2026** — Analysis signals and model evaluation with a median ensemble; Reports with chronology, assessments and source coverage; persistent tab choices; unified About dialogs; compact controls and empty-data fixes. Export contracts: `1.0.0` through `1.5.0`; analytical results require a checksum-verified Intelligence `0.2.0` export bound to the selected dataset. See [release checks and manual push](evidence/release-preflight-2026-10-01.md).
 
 **0.2.0 · Experimental · 28 September 2026** — One Health networks, evidence, timelines, sampling and environmental context; reporting attention; responsive workspace panels; loading and rendering improvements. Export contracts: `1.0.0` through `1.5.0`. One Health analytical panels require `1.5.0`. See [release checks and dataset activation](evidence/release-preflight-2026-09-28.md).
