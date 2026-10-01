@@ -614,6 +614,18 @@ html[data-atlas-transition]::view-transition-new(atlas-globe):only-child { anima
 @media (prefers-reduced-motion: reduce) { .atlas-page .atlas-controls .atlas-filter-reset, .atlas-filters .atlas-select > summary { transition: none; } }
 
 .atlas-select-check { display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 8px 10px; border-radius: 9px; cursor: var(--cursor-pointer, pointer); font-size: 12px; color: var(--foreground); }
+.atlas-select-count { margin-left: auto; padding-left: 8px; color: var(--muted-foreground); font-size: 11px; font-variant-numeric: tabular-nums; }
+.atlas-page .atlas-filters[data-faceted], .atlas-page[data-fullscreen] .atlas-filters[data-faceted] { grid-template-columns: repeat(2, minmax(0, 1fr)) auto; }
+.atlas-filters[data-faceted] > .atlas-filter-actions { grid-column: 3; grid-row: 1 / 3; flex-direction: column; align-self: stretch; justify-content: space-between; }
+.atlas-filters[data-faceted] .atlas-filter-actions .atlas-rules { flex: 0; }
+.atlas-filters[data-faceted] .atlas-rules > summary { position: relative; width: 36px; height: 36px; padding: 0; justify-content: center; }
+.atlas-filters[data-faceted] .atlas-rules > summary b { position: absolute; top: -3px; right: -3px; min-width: 15px; height: 15px; border-radius: 50%; font-size: 9px; line-height: 15px; background: var(--primary); color: var(--primary-foreground); }
+.atlas-filters[data-faceted] .atlas-rules:not([data-active="true"]) > summary b { display: none; }
+.atlas-filters[data-faceted] > div:nth-child(4) { grid-column: 2; }
+.atlas-facet-label { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.atlas-facet-label > svg { display: inline-block; margin-right: 7px; vertical-align: text-top; color: var(--primary); }
+.atlas-filter-advanced { display: grid; gap: 6px; padding-top: 8px; }
+.atlas-filters .atlas-filter-advanced .atlas-select > .atlas-select-options { position: static; width: 100%; max-height: 230px; box-shadow: none; border: 0; margin-top: 6px; }
 .atlas-select-check:hover, .atlas-select-check:has(input:checked), .atlas-select-check:has(input:focus-visible) { color: var(--primary); background: color-mix(in srgb, var(--primary) 8%, transparent); }
 .atlas-page .atlas-select-check input { flex-shrink: 0; width: 16px; height: 16px; margin: 0; accent-color: var(--primary); cursor: var(--cursor-pointer, pointer); }
 

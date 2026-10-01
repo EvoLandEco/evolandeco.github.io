@@ -56,6 +56,16 @@ Empty geographic memberships remain empty. Do not substitute a topic's country l
 
 The map presentation snapshot supplies topic layout, links, assessment prose and support references. Its exact hash ties those fields to the structured bundle. Globe projection, lane separation, date arithmetic, grouping of coincident markers, search, pagination, focus, themes and motion belong to the website.
 
+## Reporting filters
+
+Place and Disease filters use `location_memberships`, `areas`, `disease_reviews` and `diseases` in contracts 1.3.0 through 1.5.0. A report matches any selected value within a filter and every active filter across Place, Disease, Topic and Source. Memberships and disease reviews require all supporting records in the reporting window. Filtered record IDs pass to the trusted selector; relationships remain visible only with complete supporting evidence.
+
+Disease matching includes every explicit disease assignment in a report covering multiple diseases. Unresolved or unsupported assignments appear under Unclassified disease, while Not disease-specific retains its separate category. Disease names are not inferred from titles or grouped into families by the website.
+
+Place matches occurrence, exposure, travel origin, travel destination and reporting scope. Include background locations adds context memberships. Location unspecified selects entries without an eligible membership among these roles. Place filters select report entries; a matching report can describe several locations. Their connected locations remain available on the globe.
+
+Menu counts describe report entries, not source documents or cases. Each menu applies the reporting window and the other filters while leaving its own choices available. Topic selection and background location inclusion sit under Rules. Link type limits geographic links. Analysis filters select available series and evidence without fitting models again. Contracts without disease reviews retain the combined topic control.
+
 ## Research figures and comparisons
 
 Use the supplied `selectView` with the selected record IDs. Its `panels` describe measurements and cards for that selection. The embedded metrics' whole-window card groups must not replace the selector when the reporting window changes.

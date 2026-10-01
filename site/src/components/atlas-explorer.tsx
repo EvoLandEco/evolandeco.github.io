@@ -6,7 +6,7 @@ import { atlasUI } from "@/lib/atlas-ui";
 import { EvidenceSummary } from "./atlas-evidence-summary";
 import { memo, useCallback, useId, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type MouseEvent } from "react";
 import { flushSync } from "react-dom";
-import { GitBranch, ShieldCheck, FlaskConical, HeartHandshake, Maximize2, Minimize2, ChartNoAxesCombined, Activity, ArrowRight, CalendarDays, ChevronRight, ArrowLeftRight, MapPin, Download, ExternalLink, FileText, Globe2, Info, Network, RefreshCw, RotateCcw, ScanLine, TriangleAlert, ChevronDown, ChevronsUp, X } from "lucide-react";
+import { Building2, SlidersHorizontal, GitBranch, ShieldCheck, FlaskConical, HeartHandshake, Maximize2, Minimize2, ChartNoAxesCombined, Activity, ArrowRight, CalendarDays, ChevronRight, ArrowLeftRight, MapPin, Download, ExternalLink, FileText, Globe2, Info, Network, RefreshCw, RotateCcw, ScanLine, TriangleAlert, ChevronDown, ChevronsUp, X } from "lucide-react";
 import { groupGeographicLinks, dayDate, dayNumber, monthsBefore, formatDate, linkLabels, supported, topicIds, sourceName, reportsPerPage, type AtlasRecord, type AtlasTrack, type AtlasLink, type AtlasAssessment, type DateBasis } from "@/lib/atlas";
 import { Globe, type GlobeLink, type GlobeHover, type GlobeAnchor } from "./magicui/globe";
 import { AuroraText } from "./magicui/aurora-text";
@@ -16,6 +16,7 @@ import { useAtlasNavigation } from "./atlas-navigation";
 import { motion, useReducedMotion, useMotionValue, useMotionValueEvent, type MotionValue } from "motion/react";
 import { ReportPagination } from "./atlas-pagination";
 import { AtlasSelect } from "./atlas-select";
+import { reportingFacets } from "@/lib/atlas-reporting-filters";
 import { AtlasScope } from "./atlas-scope";
 import { CountryText, ReportCountryFlags, LocationBadges, LocationSymbol } from "./atlas-location-badges";
 import { BeamStroke, BeamGradientStops } from "./magicui/animated-beam";
@@ -146,6 +147,10 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
   const [window, setWindow] = useState<[string, string]>(() => [...dateBounds("publication")]);
   const [preset, setPreset] = useState<number | null>(3);
   const [topic, setTopic] = useState<string[]>([]);
+  const [places, setPlaces] = useState<string[]>([]);
+  const [diseases, setDiseases] = useState<string[]>([]);
+  const [includeContext, setIncludeContext] = useState(false);
+  const faceted = "disease_reviews" in bundle;
   const [source, setSource] = useState<string[]>([]);
   const [kind, setKind] = useState<string[]>([]);
   const [footerTarget, setFooterTarget] = useState<HTMLElement | null>(null);
@@ -195,8 +200,10 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
       from: [link.from.lat, link.from.lon], to: [link.to.lat, link.to.lon] };
   }), [atlas.map_links, lookup]);
   const rows = useMemo(() => windowRecords(window[0], window[1], basis), [window, basis, windowRecords]);
-  const recordIds = useMemo(() => new Set(rows.map(r => r.id)), [rows]);
-  const filtered = useMemo(() => rows.filter(r => (!topic.length || topicIds(topic).includes(r.track)) && (!source.length || source.includes(r.source))), [rows, topic, source]);
+  const facets = useMemo(() => faceted ? reportingFacets(bundle, rows, { places, diseases, topics: topicIds(topic), sources: source, includeContext }) : null, [faceted, bundle, rows, places, diseases, topic, source, includeContext]);
+  const filtered = useMemo(() => facets?.rows ?? rows.filter(r => (!topic.length || topicIds(topic).includes(r.track)) && (!source.length || source.includes(r.source))), [facets, rows, topic, source]);
+  const supportedRows = faceted ? filtered : rows;
+  const recordIds = useMemo(() => new Set(supportedRows.map(r => r.id)), [supportedRows]);
   const activeTracks = useMemo(() => new Set(filtered.map(r => r.track)), [filtered]);
   const eligibleLinks = useMemo(() => atlas.map_links.filter(l => supported(l.support, recordIds) && (!kind.length || kind.includes(l.type))
     && (!topic.length || topicIds(topic).some(id => l.from.track === id || l.to.track === id)) && (!source.length || l.support.some(([id]) => source.includes(lookup.get(String(id))!.source)))), [atlas.map_links, recordIds, kind, topic, source, lookup]);
@@ -217,8 +224,9 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
     return entries;
   }, [experiment, assessments, recordIds]);
   const riskRecords = useMemo(() => new Set(experiment?.data?.risk_profiles.map(profile => profile.record_id)), [experiment]);
-  const documents = useMemo(() => reportDocuments(rows, basis, topic, source), [rows, basis, topic, source, reportDocuments]);
-  const reportScope = JSON.stringify([basis, window, topic, source]);
+  const documents = useMemo(() => reportDocuments(faceted ? filtered : rows, basis, topic, source), [faceted, filtered, rows, basis, topic, source, reportDocuments]);
+  const facetScope = faceted ? [places, diseases, includeContext] : [];
+  const reportScope = JSON.stringify([basis, window, topic, source, ...facetScope]);
   const entryScope = JSON.stringify([reportScope, kind]);
   if (entryPages.scope !== entryScope) setEntryPages({ scope: entryScope, links: 0, assessments: 0, sources: 0 });
   const linkPageCount = Math.max(1, Math.ceil(links.length / reportsPerPage));
@@ -242,9 +250,9 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
     return { value: String(index), label: `Page ${index + 1} of ${pageCount}${matches ? ` · ${matches} relevant` : ""}` };
   });
   const contextNodes = useMemo(() => {
-    const selected = rows.filter(r => !source.length || source.includes(r.source));
+    const selected = faceted ? filtered : rows.filter(r => !source.length || source.includes(r.source));
     return mapLocations(selected, selectedResearch(source.length ? new Set(selected.map(r => r.id)) : recordIds));
-  }, [mapLocations, rows, source, selectedResearch, recordIds]);
+  }, [faceted, filtered, mapLocations, rows, source, selectedResearch, recordIds]);
   const globeNodes = useMemo(() => {
     if (!topic.length && !kind.length) return contextNodes;
     const topics = new Set(topicIds(topic));
@@ -259,7 +267,7 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
   const calloutNode = calloutTarget?.kind === "node" ? globeNodes.find(n => n.id === calloutTarget.id) : undefined;
   const calloutLink = calloutTarget?.kind === "link" ? atlas.map_links.find(l => l.id === calloutTarget.id) : undefined;
   const calloutGroup = calloutLink ? linkGroups.find(group => group.entries.some(e => e.link.id === calloutLink.id)) : undefined;
-  const calloutReports = calloutNode ? rows.filter(r => calloutNode.records.includes(r.id) && (!source.length || source.includes(r.source))) : [];
+  const calloutReports = calloutNode ? (faceted ? filtered : rows).filter(r => calloutNode.records.includes(r.id) && (!source.length || source.includes(r.source))) : [];
   const calloutRecords = calloutLink ? calloutLink.support.flatMap(([id]) => { const record = lookup.get(String(id)); return record ? [record] : []; }) : calloutReports;
   const calloutDocumentCount = new Set(calloutRecords.map(r => r.document_id)).size;
   const calloutLatest = calloutRecords.map(r => r[basis]).sort().at(-1);
@@ -306,7 +314,7 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
     const link = atlas.map_links.find(l => l.id === id);
     if (link) setFocus(current => current?.[0] === link.from.lat && current?.[1] === link.from.lon ? current : [link.from.lat, link.from.lon]);
   }, [linkGroups, entryScope, atlas.map_links]);
-  function reset() { setSelectedPoint(""); setTopic([]); setSource([]); setKind([]); setSelectedLink(""); setFocus(undefined); setHover(null); setEvidenceIds([]); }
+  function reset() { setPlaces([]); setDiseases([]); setIncludeContext(false); setSelectedPoint(""); setTopic([]); setSource([]); setKind([]); setSelectedLink(""); setFocus(undefined); setHover(null); setEvidenceIds([]); }
   function clearSelection() {
     if (selectedPoint) setTopic([]);
     setSelectedPoint(""); setSelectedLink(""); setFocus(undefined); setHover(null);
@@ -322,11 +330,18 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
   function changeSource(value: string[]) {
     setSource(value); setEvidenceIds([]); setSelectedLink(""); setSelectedPoint(""); setFocus(undefined); setHover(null);
   }
+  function changeFacet(field: "places" | "diseases", value: string[]) {
+    if (field === "places") setPlaces(value); else setDiseases(value);
+    setEvidenceIds([]); setSelectedLink(""); setSelectedPoint(""); setFocus(undefined); setHover(null);
+  }
   function changeKind(value: string[]) {
     setKind(value); setSelectedLink(""); setHover(null); setEvidenceIds([]);
   }
   const topicLabel = topic.map(id => tracks.get(id)?.label).filter(Boolean).join(" / ");
   const activeFilters = [
+    ...(places.length ? [{ key: "place", label: `Place · ${facets?.places.filter(item => places.includes(item.value)).map(item => item.label).join(", ")}`, clear: () => changeFacet("places", []) }] : []),
+    ...(diseases.length ? [{ key: "disease", label: `Disease · ${facets?.diseases.filter(item => diseases.includes(item.value)).map(item => item.label).join(", ")}`, clear: () => changeFacet("diseases", []) }] : []),
+    ...(includeContext ? [{ key: "background locations", label: "Include background locations", clear: () => setIncludeContext(false) }] : []),
     ...(window[0] !== min || window[1] !== max ? [{ key: "dates", label: `${formatDate(window[0])} – ${formatDate(window[1])}`, clear: () => { changeWindow(min, max); setPreset(3); } }] : []),
     ...(topic.length ? [{ key: "topic", label: `Topic · ${topicLabel}`, summary: topic.length > 1 ? `Topics · ${topic.length} selected` : `Topic · ${topicLabel}`, clear: () => chooseTopic("", tab) }] : []),
     ...(source.length ? [{ key: "source", label: `Source · ${source.map(sourceName).join(", ")}`, summary: source.length > 1 ? `Sources · ${source.length} selected` : `Source · ${sourceName(source[0])}`, clear: () => changeSource([]) }] : []),
@@ -340,14 +355,18 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
   const openReports = useCallback((ids: string[], nextTopic: string | string[] = [], nextSource: string | string[] = [], expand = false) => {
     const topics = topicIds(nextTopic);
     const sources = Array.isArray(nextSource) ? nextSource : nextSource ? [nextSource] : [];
-    const targetDocuments = reportDocuments(rows, basis, topics, sources);
+    const candidates = faceted ? reportingFacets(bundle, rows, { places, diseases, topics, sources, includeContext }).rows : rows;
+    const candidateIds = new Set(candidates.map(record => record.id));
+    const broaden = faceted && ids.some(id => !candidateIds.has(id));
+    const targetDocuments = reportDocuments(broaden ? rows : candidates, basis, topics, sources);
+    if (broaden) { setPlaces([]); setDiseases([]); }
     const targetIds = new Set(ids);
     const index = targetDocuments.findIndex(records => records.some(r => targetIds.has(r.id)));
     setTopic(topics); setSource(sources); setTab("reports"); setReportView("reports"); setHover(null);
     setEvidenceIds(ids);
-    setReportPage({ scope: JSON.stringify([basis, window, topics, sources]), index: index < 0 ? 0 : Math.floor(index / reportsPerPage) });
+    setReportPage({ scope: JSON.stringify([basis, window, topics, sources, ...(faceted ? [broaden ? [] : places, broaden ? [] : diseases, includeContext] : [])]), index: index < 0 ? 0 : Math.floor(index / reportsPerPage) });
     setReportJump({ documentId: index < 0 ? null : targetDocuments[index][0].document_id, expand });
-  }, [rows, basis, reportDocuments, window]);
+  }, [faceted, bundle, places, diseases, includeContext, rows, basis, reportDocuments, window]);
   const showReports = useCallback((ids: string[], expand?: boolean) => openReports(ids, [], [], expand), [openReports]);
   const showAnalysisReports = (ids: string[], expand = true) => {
     const known = ids.filter(id => lookup.has(id));
@@ -355,9 +374,9 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
     const targetIds = new Set(known);
     const allDocuments = reportDocuments(windowRecords(min, max, basis), basis, [], []);
     const index = allDocuments.findIndex(records => records.some(record => targetIds.has(record.id)));
-    setWindow([min, max]); setPreset(3); setTopic([]); setSource([]); setEvidenceIds(known);
+    setWindow([min, max]); setPreset(3); setTopic([]); setSource([]); setPlaces([]); setDiseases([]); setIncludeContext(false); setEvidenceIds(known);
     setTab("reports"); setReportView("reports");
-    setReportPage({ scope: JSON.stringify([basis, [min, max], [], []]), index: Math.max(0, Math.floor(index / reportsPerPage)) });
+    setReportPage({ scope: JSON.stringify([basis, [min, max], [], [], ...(faceted ? [[], [], false] : [])]), index: Math.max(0, Math.floor(index / reportsPerPage)) });
     setReportJump({ documentId: index < 0 ? null : allDocuments[index][0].document_id, expand });
   };
   const showSourceReports = useCallback((s: string) => openReports(filtered.filter(r => r.source === s).map(r => r.id), topic, s), [openReports, filtered, topic]);
@@ -477,17 +496,20 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
 
       </div>
       <section className="atlas-filter-panel" aria-label="Filters and selections">
-        <div className="atlas-filters">
-          <div data-active={topic.length > 0}><AtlasSelect multiple searchable label="Reporting topic" value={topic} onChange={id => chooseTopic(id, tab)} items={[
+        <div className="atlas-filters" data-faceted={faceted || undefined}>
+          {facets ? <>
+            <div data-active={places.length > 0}><AtlasSelect multiple searchable label="Reporting place" value={places} onChange={value => changeFacet("places", value)} summaryLabel={<span className="atlas-facet-label"><MapPin size={14} aria-hidden /><span>{places.length === 1 ? facets.places.find(item => item.value === places[0])?.label : places.length ? `${places.length} places` : "All places"}</span></span>} items={[{ value: "", label: "All places" }, ...facets.places]} /></div>
+            <div data-active={diseases.length > 0}><AtlasSelect multiple searchable label="Reporting disease" value={diseases} onChange={value => changeFacet("diseases", value)} summaryLabel={<span className="atlas-facet-label"><svg data-icon="virus" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="6" /><path d="M12 2v4m0 12v4M2 12h4m12 0h4M5 5l3 3m8 8 3 3M19 5l-3 3m-8 8-3 3" /><circle cx="10" cy="10" r=".7" fill="currentColor" stroke="none" /><circle cx="14" cy="12" r=".7" fill="currentColor" stroke="none" /><circle cx="11" cy="15" r=".7" fill="currentColor" stroke="none" /></svg><span>{diseases.length === 1 ? facets.diseases.find(item => item.value === diseases[0])?.label : diseases.length ? `${diseases.length} diseases` : "All diseases"}</span></span>} items={[{ value: "", label: "All diseases" }, ...facets.diseases]} /></div>
+          </> : <div data-active={topic.length > 0}><AtlasSelect multiple searchable label="Reporting topic" value={topic} onChange={id => chooseTopic(id, tab)} items={[
             { value: "", label: "All places & topics" },
-            ...atlas.tracks.map(t => ({ value: t.id, label: t.label }))]} /></div>
-          <div data-active={source.length > 0}><AtlasSelect multiple searchable label="Reporting source" value={source} onChange={changeSource} items={[{ value: "", label: "All sources" }, ...[...new Set(atlas.records.map(r => r.source))].sort().map(s => ({ value: s, label: sourceName(s) }))]} /></div>
-          <div data-active={kind.length > 0}><AtlasSelect multiple label="Link type" value={kind} onChange={changeKind} items={[{ value: "", label: "All link types" }, ...Object.entries(linkLabels).map(([value, label]) => ({ value, label }))]} /></div>
+            ...atlas.tracks.map(t => ({ value: t.id, label: t.label }))]} /></div>}
+          <div data-active={source.length > 0}><AtlasSelect multiple searchable label="Reporting source" value={source} onChange={changeSource} summaryLabel={<span className="atlas-facet-label"><Building2 size={14} aria-hidden /><span>{source.length === 1 ? sourceName(source[0]) : source.length ? `${source.length} sources` : "All sources"}</span></span>} items={[{ value: "", label: "All sources" }, ...[...new Set(atlas.records.map(r => r.source))].sort().map(s => ({ value: s, label: sourceName(s) }))]} /></div>
+          <div data-active={kind.length > 0}><AtlasSelect multiple label="Link type" value={kind} onChange={changeKind} summaryLabel={<span className="atlas-facet-label"><GitBranch size={14} aria-hidden /><span>{kind.length === 1 ? linkLabels[kind[0]] : kind.length ? `${kind.length} link types` : "All link types"}</span></span>} items={[{ value: "", label: "All link types" }, ...Object.entries(linkLabels).map(([value, label]) => ({ value, label }))]} /></div>
           <div className="atlas-filter-actions">
             <details className="atlas-select atlas-rules" ref={rulesMenu} data-active={ruleCount > 0} onKeyDown={event => {
               if (event.key === "Escape") { event.preventDefault(); event.currentTarget.open = false; event.currentTarget.querySelector("summary")?.focus(); }
             }}>
-              <summary aria-label={`Active rules: ${ruleCount}`}><span>Rules <b>{ruleCount}</b></span><ChevronDown size={14} aria-hidden /></summary>
+              <summary aria-label={`Active rules: ${ruleCount}`}><span>{faceted ? <SlidersHorizontal size={15} aria-hidden /> : "Rules"}<b>{ruleCount}</b></span>{!faceted && <ChevronDown size={14} aria-hidden />}</summary>
               <div className="atlas-select-options atlas-rules-options">
                 {activeFilters.length > 0 && <div className="atlas-active-filters" aria-label="Active filters">
                   {activeFilters.map(filter => <button key={filter.key} onClick={() => clearRule(filter.clear)} aria-label={`Remove ${filter.key} filter`} title={filter.label}><span>{"summary" in filter ? filter.summary : filter.label}</span><X size={13} aria-hidden /></button>)}
@@ -497,6 +519,10 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
                   {evidenceIds.length > 0 && <button onClick={() => clearRule(() => setEvidenceIds([]))} aria-label="Clear evidence highlights"><FileText size={13} aria-hidden /><span>Highlighted evidence · {new Set(evidenceIds.map(id => lookup.get(id)?.document_id)).size} reports</span><X size={13} aria-hidden /></button>}
                 </div>}
                 {ruleCount === 0 && <p className="atlas-select-empty">No active rules</p>}
+                {faceted && <div className="atlas-filter-advanced">
+                  <AtlasSelect multiple searchable label="Reporting topic" value={topic} onChange={id => chooseTopic(id, tab)} items={[{ value: "", label: "All topics" }, ...atlas.tracks.map(track => ({ value: track.id, label: track.label }))]} />
+                  <label className="atlas-select-check"><input type="checkbox" checked={includeContext} onChange={event => { setIncludeContext(event.target.checked); setSelectedLink(""); setSelectedPoint(""); setHover(null); setEvidenceIds([]); }} /><span>Include background locations</span></label>
+                </div>}
                 {topic.length === 1 && tracks.get(topic[0])?.location_note && <p className="atlas-location-note"><ScanLine size={15} aria-hidden />{tracks.get(topic[0])?.location_note}</p>}
               </div>
             </details>

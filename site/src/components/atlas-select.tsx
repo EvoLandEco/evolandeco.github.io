@@ -3,7 +3,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } f
 import { Activity, CalendarDays, Check, ChevronDown, GitBranch, Layers3, MapPin, Search, Network, Grid2X2, ChartNoAxesCombined, FlaskConical, Leaf } from "lucide-react";
 
 const badgeIcons = { disease: Activity, place: MapPin, period: CalendarDays, kind: GitBranch, count: Layers3, network: Network, evidence: Grid2X2, timeline: ChartNoAxesCombined, sampling: FlaskConical, environment: Leaf };
-export type AtlasSelectItem = { value: string; label: string; title?: string; badges?: { label: string; kind: keyof typeof badgeIcons; empty?: boolean }[] };
+export type AtlasSelectItem = { value: string; label: string; title?: string; count?: number; searchText?: string; badges?: { label: string; kind: keyof typeof badgeIcons; empty?: boolean }[] };
 
 function Choice({ item, badgeId }: { item: AtlasSelectItem; badgeId?: string }) {
   if (!item.badges) return <span>{item.label}</span>;
@@ -34,7 +34,7 @@ export function AtlasSelect(props: SelectProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const focusIndex = useRef<number | null>(null);
-  const choices = open && query.trim() ? items.filter(item => item.label.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())) : items;
+  const choices = open && query.trim() ? items.filter(item => `${item.label} ${item.searchText ?? ""}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())) : items;
   useLayoutEffect(() => {
     if (!open) return;
     const index = focusIndex.current;
@@ -57,7 +57,7 @@ export function AtlasSelect(props: SelectProps) {
     setOpen(event.currentTarget.open);
     if (!event.currentTarget.open) { setQuery(""); focusIndex.current = null; }
   }} onKeyDown={event => {
-    if (event.key === "Escape") { event.preventDefault(); close(); return; }
+    if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(); return; }
     if (event.key === "Tab") { if (root.current) root.current.open = false; return; }
     const options = [...(root.current?.querySelectorAll<HTMLElement>(multiple ? 'input[type="checkbox"]' : '[role="option"]') ?? [])];
     const focused = options.indexOf(document.activeElement as HTMLButtonElement);
@@ -86,7 +86,7 @@ export function AtlasSelect(props: SelectProps) {
       {open && searchable && <label className="atlas-select-search"><Search size={15} aria-hidden /><input type="search" aria-label={`Search ${label.toLowerCase()}`} placeholder="Search…" value={query} onChange={event => setQuery(event.target.value)} /></label>}
       <div id={id} role={multiple ? "group" : "listbox"} aria-label={label}>
       {open && choices.map((item,index) => multiple ? <label key={item.value} className="atlas-select-check">
-        <input type="checkbox" checked={item.value === items[0].value ? selected.length === 0 : selected.includes(item.value)} tabIndex={-1} onChange={() => pick(item.value)} /><span>{item.label}</span>
+        <input type="checkbox" checked={item.value === items[0].value ? selected.length === 0 : selected.includes(item.value)} tabIndex={-1} onChange={() => pick(item.value)} aria-label={item.label} /><span>{item.label}</span>{item.count !== undefined && <small className="atlas-select-count" title={`${item.count} report entries`}>{item.count}</small>}
       </label> : <button key={item.value} type="button" role="option" aria-label={item.label} aria-describedby={item.badges ? `${id}-${index}-badges` : undefined} aria-selected={item.value === value} tabIndex={-1}
         onClick={() => pick(item.value)}><Choice item={item} badgeId={`${id}-${index}-badges`} />{item.value === value && <Check size={14} aria-hidden />}</button>)}
       </div>
