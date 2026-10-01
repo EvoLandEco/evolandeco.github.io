@@ -1553,3 +1553,95 @@ test("Expanded comparisons show one status badge without repeating the report la
     await report.screenshot({ path: `/tmp/atlas-comparison-${kind}.png` });
   }
 });
+
+for (const reducedMotion of ["reduce", "no-preference"] as const) test(`Globe surface clicks and overlay drags stay distinct with ${reducedMotion} motion`, async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  await page.emulateMedia({ reducedMotion });
+  await page.goto("/atlas/");
+  const frame = page.getByTestId("atlas-globe"), canvas = frame.locator("canvas").first();
+  const atlas = page.locator(".atlas-page[data-ready='true']");
+  const entrance = page.getByRole("button", { name: "Click to enter full screen" });
+  await expect(entrance).toBeVisible();
+  await canvas.scrollIntoViewIfNeeded();
+  await page.mouse.move(1, 1);
+  expect(await entrance.evaluate(el => getComputedStyle(el).opacity)).toBe("1");
+  const buttonBox = (await entrance.boundingBox())!, statsBox = (await page.locator(".atlas-network-overview").boundingBox())!, globeBox = (await canvas.boundingBox())!;
+  expect(buttonBox.y).toBeGreaterThanOrEqual(globeBox.y + globeBox.height);
+  expect(buttonBox.y + buttonBox.height).toBeLessThan(statsBox.y);
+  const entranceStyle = await entrance.evaluate(el => {
+    const style = getComputedStyle(el);
+    return [style.backgroundColor, style.color, style.borderRadius, style.padding, style.fontWeight, style.boxShadow];
+  });
+  const surface = () => canvas.evaluate(el => {
+    const b = el.getBoundingClientRect();
+    for (const dx of [0, -.15, .15, -.25, .25]) for (const dy of [0, .15, -.15]) {
+      const x = b.left + b.width * (.5 + dx), y = b.top + b.height * (.5 + dy);
+      if (document.elementFromPoint(x, y) === el) return { x, y };
+    }
+    throw new Error("No exposed globe surface");
+  });
+  const overlayPoint = (selector: string) => frame.locator(selector).evaluateAll(elements => {
+    for (const element of elements) {
+      const matrix = (element as SVGGraphicsElement).getScreenCTM();
+      if (!matrix) continue;
+      for (const fraction of [.2, .4, .6, .8]) {
+        const local = element instanceof SVGPathElement ? element.getPointAtLength(element.getTotalLength() * fraction) : new DOMPoint(0, 0);
+        const point = new DOMPoint(local.x, local.y).matrixTransform(matrix);
+        const target = document.elementFromPoint(point.x, point.y);
+        if (target && element.contains(target)) return { x: point.x, y: point.y };
+      }
+    }
+    throw new Error("No visible overlay hit target");
+  });
+  const dragOverlays = async (fullscreen: boolean) => {
+    await expect(page.locator("html")).not.toHaveAttribute("data-atlas-workspace-transition");
+    for (const selector of [".atlas-globe-pin", ".atlas-link-target"]) {
+      const point = await overlayPoint(selector);
+      await page.mouse.move(point.x, point.y);
+      await expect(page.getByRole("tooltip")).toBeVisible();
+      const angle = Number(await canvas.getAttribute("data-angle"));
+      await page.mouse.down();
+      await page.mouse.move(point.x + 65, point.y + 2, { steps: 8 });
+      await page.mouse.up();
+      expect(Math.abs(Number(await canvas.getAttribute("data-angle")) - angle)).toBeGreaterThan(.05);
+      if (fullscreen) await expect(atlas).toHaveAttribute("data-fullscreen", "true");
+      else await expect(atlas).not.toHaveAttribute("data-fullscreen");
+      await expect(page.getByRole("tab", { name: "Trends", exact: true })).toHaveAttribute("aria-selected", "true");
+      await expect(page.getByRole("button", { name: "Clear globe selection" })).toHaveCount(0);
+    }
+  };
+  await dragOverlays(false);
+  await page.mouse.move(1, 1);
+  const point = await surface();
+  await page.mouse.move(point.x, point.y);
+  await page.mouse.down();
+  await page.mouse.move(point.x + 2, point.y + 1);
+  await page.mouse.up();
+  await expect(atlas).toHaveAttribute("data-fullscreen", "true");
+  expect(await page.getByRole("button", { name: /Exit full screen/ }).evaluate(el => {
+    const style = getComputedStyle(el);
+    return [style.backgroundColor, style.color, style.borderRadius, style.padding, style.fontWeight, style.boxShadow];
+  })).toEqual(entranceStyle);
+  await page.getByRole("button", { name: /Exit full screen/ }).click();
+  await expect(entrance).toBeFocused();
+  await entrance.click();
+  await expect(atlas).toHaveAttribute("data-fullscreen", "true");
+  await dragOverlays(true);
+  for (const selector of [".atlas-link-target", ".atlas-globe-pin"]) {
+    const angle = Number(await canvas.getAttribute("data-angle"));
+    const point = await overlayPoint(selector);
+    await page.mouse.click(point.x, point.y);
+    await page.mouse.move(1, 1);
+    await expect(page.getByRole("button", { name: "Clear globe selection" })).toBeVisible();
+    await page.getByRole("button", { name: "Clear globe selection" }).click();
+    await expect(page.getByRole("button", { name: /Exit full screen/ })).toBeFocused();
+    await expect.poll(async () => Math.abs(Number(await canvas.getAttribute("data-angle")) - angle)).toBeLessThan(.001);
+  }
+  await page.keyboard.press("Escape");
+  await expect(atlas).not.toHaveAttribute("data-fullscreen");
+  const pin = frame.locator('.atlas-globe-pin[data-occluded="false"]').first();
+  await pin.focus();
+  await pin.press("Enter");
+  await expect(page.getByRole("button", { name: "Clear globe selection" })).toBeVisible();
+  await page.locator('.atlas-observatory').screenshot({path:`/tmp/atlas-globe-entrance-${reducedMotion}.png`});
+});

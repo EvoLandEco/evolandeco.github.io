@@ -39,7 +39,7 @@ jobs:
       - run: pnpm check:export
       - run: pnpm exec playwright install --with-deps chromium
       - name: Check ATLAS browser interactions
-        run: pnpm exec playwright test atlas.spec.ts --grep "ATLAS entry|ATLAS is readable|download errors|Checkbox filters"
+        run: pnpm exec playwright test atlas.spec.ts --grep "ATLAS entry|ATLAS is readable|download errors|Checkbox filters|Globe surface clicks"
       - uses: actions/upload-pages-artifact@v4
         with:
           path: site/out
