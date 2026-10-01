@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useLayoutEffect, useRef, useMemo, useId } from "react";
+import { useEffect, useLayoutEffect, useRef, useMemo, useId, type PointerEvent, type MouseEvent } from "react";
 import createGlobe from "cobe";
 import { motion, motionValue } from "motion/react";
 import { AnimatedBeam, BeamStroke, BeamGradientStops } from "./animated-beam";
@@ -102,8 +102,8 @@ export function Globe({
   const moved = useRef(false);
   const rotatingRef = useRef(rotating);
   useEffect(() => { rotatingRef.current = rotating; }, [rotating]);
-  function highlight(item: GlobeHover) { hover.current = item; onHover?.(item); paint.current(); }
-  const drag = useRef<{ x: number; angle: number } | null>(null);
+  const drag = useRef<{ x: number; y: number; angle: number; pointerId: number; target: Element } | null>(null);
+  function highlight(item: GlobeHover) { if (drag.current) return; hover.current = item; onHover?.(item); paint.current(); }
   const { resolvedTheme } = useTheme();
   useLayoutEffect(() => {
     if (!visible || !canvas.current) return;
@@ -294,47 +294,40 @@ export function Globe({
     flight.current = requestAnimationFrame(move);
     return () => { cancelAnimationFrame(flight.current); flight.current = 0; };
   }, [focus, playing, visible]);
+  function finishDrag(event: PointerEvent<HTMLCanvasElement | SVGSVGElement>) {
+    const gesture = drag.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    drag.current = null;
+    delete event.currentTarget.dataset.dragging;
+    if (gesture.target.hasPointerCapture(event.pointerId)) gesture.target.releasePointerCapture(event.pointerId);
+  }
+  function handleClickCapture(event: MouseEvent<HTMLCanvasElement | SVGSVGElement>) {
+    if (event.detail && moved.current) { event.preventDefault(); event.stopPropagation(); }
+  }
+  function handlePointerDown(event: PointerEvent<HTMLCanvasElement | SVGSVGElement>) {
+    if (!event.isPrimary || event.button !== 0 || drag.current || !(event.target instanceof Element)) return;
+    cancelAnimationFrame(flight.current); flight.current = 0;
+    highlight(null);
+    moved.current = false;
+    drag.current = { x: event.clientX, y: event.clientY, angle: angle.current, pointerId: event.pointerId, target: event.target };
+    event.target.setPointerCapture(event.pointerId);
+  }
+  function handlePointerMove(event: PointerEvent<HTMLCanvasElement | SVGSVGElement>) {
+    const gesture = drag.current;
+    if (!gesture || gesture.pointerId !== event.pointerId || !canvas.current) return;
+    if (Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) > 5) moved.current = true;
+    if (!moved.current) return;
+    event.currentTarget.dataset.dragging = "true";
+    angle.current = gesture.angle + (event.clientX - gesture.x) / canvas.current.getBoundingClientRect().width * 3;
+    lastAngle = angle.current;
+    lastTilt = tilt.current;
+    renderer.current?.update({ phi: angle.current });
+    paint.current();
+    canvas.current.dataset.angle = angle.current.toFixed(5);
+  }
   return (
     <>
-      <canvas
-        ref={canvas}
-        aria-hidden="true"
-        onClickCapture={e => { if (moved.current) { e.preventDefault(); e.stopPropagation(); } }}
-        onPointerDown={(e) => {
-          cancelAnimationFrame(flight.current); flight.current = 0;
-          highlight(null);
-          moved.current = false;
-          drag.current = { x: e.clientX, angle: angle.current };
-          e.currentTarget.setPointerCapture(e.pointerId);
-          e.currentTarget.dataset.dragging = "true";
-        }}
-        onPointerMove={(e) => {
-          if (!drag.current) return;
-          if (Math.abs(e.clientX - drag.current.x) > 5) moved.current = true;
-          angle.current =
-            drag.current.angle +
-            ((e.clientX - drag.current.x) / e.currentTarget.clientWidth) * 3;
-          lastAngle = angle.current;
-          lastTilt = tilt.current;
-          renderer.current?.update({ phi: angle.current });
-          paint.current();
-          e.currentTarget.dataset.angle = angle.current.toFixed(5);
-        }}
-        onPointerUp={(e) => {
-          drag.current = null;
-          delete e.currentTarget.dataset.dragging;
-          if (e.currentTarget.hasPointerCapture(e.pointerId))
-            e.currentTarget.releasePointerCapture(e.pointerId);
-        }}
-        onLostPointerCapture={(e) => {
-          drag.current = null;
-          delete e.currentTarget.dataset.dragging;
-        }}
-        onPointerCancel={(e) => {
-          drag.current = null;
-          delete e.currentTarget.dataset.dragging;
-        }}
-      />
+      <canvas ref={canvas} aria-hidden="true" onClickCapture={handleClickCapture} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={finishDrag} onLostPointerCapture={finishDrag} onPointerCancel={finishDrag} />
       {!nodes && beamPaths.map((path, i) => linkStyle === "dashed" ? (
         <svg key={i} aria-hidden="true" viewBox="0 0 1000 1000"
           className="globe-dashed-link" data-playing={playing && visible}>
@@ -357,7 +350,7 @@ export function Globe({
           delay={i * 0.25}
         />
       ))}
-      {nodes && <svg className="atlas-globe-pins" data-playing={playing && visible} viewBox="0 0 1000 1000" aria-label="Reporting locations and geographic links">
+      {nodes && <svg className="atlas-globe-pins" onClickCapture={handleClickCapture} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={finishDrag} onLostPointerCapture={finishDrag} onPointerCancel={finishDrag} data-playing={playing && visible} viewBox="0 0 1000 1000" aria-label="Reporting locations and geographic links">
         <defs><radialGradient id={haloId}><stop offset="0" stopColor="currentColor" stopOpacity=".45" /><stop offset="1" stopColor="currentColor" stopOpacity="0" /></radialGradient></defs>
         {routes.map((route, i) => <path key={route.groupId ?? route.id} ref={el => { routeHits.current[i] = el; }} fill="none" stroke="transparent" strokeWidth={18} className="atlas-link-target"
           role="button" tabIndex={0} aria-label={route.label} aria-description={route.count && route.count > 1 ? `${route.count} links between these locations` : undefined} onPointerEnter={() => highlight({ kind: "link", id: route.id })} onPointerLeave={() => highlight(null)} onFocus={() => highlight({ kind: "link", id: route.id })} onBlur={() => highlight(null)} onClick={() => { highlight(null); onLink?.(route.id); }}

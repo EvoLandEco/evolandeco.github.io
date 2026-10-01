@@ -135,11 +135,14 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
     const finish = () => { if (viewTransition.current === transition) { delete document.documentElement.dataset.atlasWorkspaceTransition; viewTransition.current = null; } };
     void transition.finished.then(finish, finish);
   }
-  function overSurface(event: React.PointerEvent<HTMLDivElement>) {
+  function onGlobeSurface(event: React.MouseEvent<HTMLDivElement>) {
     const canvas = event.currentTarget.querySelector("canvas");
-    if (!wide || fullscreen || event.target !== canvas || event.buttons || !canvas) { setSurfaceHover(false); return; }
+    if (!canvas || event.target !== canvas) return false;
     const box = canvas.getBoundingClientRect();
-    setSurfaceHover(Math.hypot((event.clientX - box.left) / box.width - .5, (event.clientY - box.top) / box.height - .5) < .38);
+    return Math.hypot((event.clientX - box.left) / box.width - .5, (event.clientY - box.top) / box.height - .5) < .38;
+  }
+  function overSurface(event: React.PointerEvent<HTMLDivElement>) {
+    setSurfaceHover(wide && !fullscreen && !event.buttons && onGlobeSurface(event));
   }
   const legendBeamId = useId();
   const motion = usePanelMotion(panel, true);
@@ -429,15 +432,14 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
     </header>
     <section ref={panel} className="atlas-observatory" aria-label="Surveillance globe">
       <div className="atlas-globe-space"><div className="atlas-globe-frame globe-frame" data-testid="atlas-globe" data-expand-hint={wide && !fullscreen && surfaceHover && !hover || undefined} onPointerMove={overSurface} onPointerLeave={event => { if (!(event.relatedTarget instanceof Node) || !entrance.current?.contains(event.relatedTarget)) setSurfaceHover(false); }} onClick={event => {
-        if (event.target instanceof HTMLCanvasElement && surfaceHover && !hover && !event.defaultPrevented) changeFullscreen(true);
+        if (!event.defaultPrevented && onGlobeSurface(event)) changeFullscreen(true);
       }}>
         <Globe playing={motion.playing} rotating={!fullscreen && !topic.length && !selectedLink} visible={motion.visible || arriving}
           nodes={arriving ? undefined : globeNodes} links={arriving ? undefined : globeLinks} layoutLinks={arriving ? undefined : globeLayout}
           selected={selectedNode?.id} focus={focus} onSelect={choosePoint} onLink={chooseLink} onHover={setHover} annotation={calloutTarget} onAnnotationMove={moveCallout} />
       </div></div>
-      {wide && !fullscreen && !arriving && <button ref={entrance} className="atlas-fullscreen-entrance" onPointerLeave={() => setSurfaceHover(false)} data-visible={surfaceHover && !hover || undefined} onClick={() => changeFullscreen(true)}><Maximize2 size={16} aria-hidden /><span>Click to enter full screen</span></button>}
       {calloutTarget && (calloutNode || calloutLink) && <GlobeCallout key={calloutGroup?.id ?? `${calloutTarget.kind}:${calloutTarget.id}`} point={calloutPoint} targetKey={`${calloutTarget.kind}:${calloutTarget.id}`} pinned={!hover}>
-        {!hover && <button aria-label="Clear globe selection" onClick={clearSelection}><X size={14} /></button>}
+        {!hover && <button aria-label="Clear globe selection" onClick={() => { clearSelection(); (fullscreen ? exit : entrance).current?.focus({ preventScroll: true }); }}><X size={14} /></button>}
         <div className="atlas-callout-heading"><span className="atlas-status" data-tone={calloutLink?.type === "hypothesis" ? "warning" : undefined}>
           {calloutLink ? calloutLink.type === "hypothesis" ? <TriangleAlert size={13} aria-hidden /> : calloutLink.directed ? <ArrowRight size={13} aria-hidden /> : <Network size={13} aria-hidden /> : <MapPin size={13} aria-hidden />}
           {calloutLink ? linkLabels[calloutLink.type] : "Reporting location"}
@@ -458,6 +460,7 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
         {!hover && <a className="atlas-callout-action" href="#atlas-panel" onClick={e => { e.preventDefault(); viewEvidence(); }}>View evidence <ArrowRight size={14} aria-hidden /></a>}
 
       </GlobeCallout>}
+      {wide && !fullscreen && !arriving && <button ref={entrance} className="atlas-fullscreen-entrance" aria-label="Click to enter full screen" data-visible={surfaceHover && !hover || undefined} onClick={() => changeFullscreen(true)}><Maximize2 size={17} aria-hidden />Enter full screen</button>}
       <AtlasNetworkOverview recordIds={new Set(filtered.map(record => record.id))} release={release} links={eligibleLinks} onReport={ids => openReports(ids)} />
       <div className="atlas-link-legend atlas-reveal" role="list" aria-label="Link types" data-playing={motion.playing}>
         {Object.entries(linkLabels).map(([type, label]) => <div key={type} role="listitem">

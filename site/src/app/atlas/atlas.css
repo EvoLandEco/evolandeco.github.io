@@ -30,8 +30,9 @@ html[data-atlas-transition]::view-transition-new(root) { animation: atlas-fade .
 .atlas-link-legend[data-playing="true"] .atlas-legend-arrow { animation: atlas-legend-travel 5s linear infinite; }
 @keyframes atlas-legend-travel { from { transform: translateX(-28.5714%); opacity: 0; } 12%, 88% { opacity: 1; } to { transform: translateX(28.5714%); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .atlas-legend-arrow { animation: none !important; } }
-.atlas-globe-pins { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.atlas-globe-pins { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; touch-action: pan-y; }
 .atlas-globe-pin, .atlas-link-target { cursor: var(--cursor-pointer, pointer); pointer-events: auto; outline: none; }
+.atlas-globe-pins[data-dragging], .atlas-globe-pins[data-dragging] :is(.atlas-globe-pin, .atlas-link-target) { cursor: var(--cursor-grabbing, grabbing); }
 .atlas-globe-hit { fill: transparent; }
 .atlas-link-target:focus-visible { stroke: var(--primary); stroke-width: 6; }
 .atlas-page[data-ready="false"] .atlas-reveal { opacity: 0; pointer-events: none; }
@@ -712,9 +713,6 @@ html[data-atlas-transition]::view-transition-new(atlas-globe):only-child { anima
 .atlas-globe-frame { transition: transform .4s cubic-bezier(.22,.8,.2,1); }
 .atlas-page:not([data-fullscreen]) .atlas-globe-frame:hover { transform: scale(1.025); }
 .atlas-page .atlas-globe-frame[data-expand-hint] { cursor: var(--cursor-zoom-in, zoom-in); }
-.atlas-page button.atlas-fullscreen-entrance { position: absolute; left: 50%; top: 8%; z-index: 5; transform: translate(-50%, 8px); opacity: 0; pointer-events: none; border-radius: 999px; padding: 10px 15px; color: var(--primary); border-color: color-mix(in srgb, var(--primary) 35%, var(--border)); background: color-mix(in srgb, var(--background) 94%, transparent); box-shadow: 0 8px 30px color-mix(in srgb, var(--primary) 12%, transparent); transition: opacity .2s, transform .3s; white-space: nowrap; }
-.atlas-fullscreen-entrance::after { content: ""; position: absolute; top: 100%; left: 50%; width: 1px; height: 32px; background: linear-gradient(var(--primary), transparent); pointer-events: none; }
-.atlas-page button.atlas-fullscreen-entrance:is([data-visible], :focus-visible, :hover) { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
 html[data-magicui-theme-vt="active"]:has(.atlas-page[data-fullscreen]) { view-transition-name: none; }
 html[data-magicui-theme-vt="active"] .atlas-page[data-fullscreen] { view-transition-name: root; }
 .atlas-page[data-fullscreen] { position: fixed; inset: 0; z-index: 1000; padding: 24px; display: grid; grid-template-columns: minmax(460px, .9fr) minmax(600px, 1.1fr); gap: 28px; background: var(--background); overflow: hidden; }
@@ -808,8 +806,9 @@ html[data-magicui-theme-vt="active"] .atlas-page[data-fullscreen] { view-transit
 @media (prefers-reduced-motion: reduce) { .atlas-page[data-fullscreen] .atlas-trend-switch::before { transition: none; } }
 .atlas-page[data-fullscreen] .atlas-toolbar { padding: 12px; background: color-mix(in srgb, var(--primary) 3%, var(--background)); }
 .atlas-page[data-fullscreen] .atlas-tabs button { padding-inline: 8px; font-size: 14px; }
-.atlas-page button.atlas-fullscreen-exit { position: relative; grid-column: 2; grid-row: 2; justify-self: center; z-index: 20; color: var(--primary-foreground); background: var(--primary); border-color: var(--primary); border-radius: 999px; padding: 10px 16px; font-weight: 600; box-shadow: 0 5px 22px color-mix(in srgb, var(--primary) 22%, transparent); }
-.atlas-page button.atlas-fullscreen-exit:hover { color: var(--primary-foreground); filter: brightness(1.1); }
+.atlas-page button:is(.atlas-fullscreen-entrance, .atlas-fullscreen-exit) { position: relative; grid-column: 2; grid-row: 2; justify-self: center; z-index: 20; color: var(--primary-foreground); background: var(--primary); border-color: var(--primary); border-radius: 999px; padding: 10px 16px; font-weight: 600; box-shadow: 0 5px 22px color-mix(in srgb, var(--primary) 22%, transparent); }
+.atlas-page button:is(.atlas-fullscreen-entrance, .atlas-fullscreen-exit):hover { color: var(--primary-foreground); filter: brightness(1.1); }
+.atlas-page button.atlas-fullscreen-entrance { display: flex; width: fit-content; margin: 4px auto 22px; }
 .atlas-fullscreen-exit span { margin-left: 6px; font-size: 11px; opacity: .8; }
 html[data-atlas-workspace-transition] .atlas-heading { view-transition-name: atlas-workspace-heading; }
 html[data-atlas-workspace-transition] .atlas-observatory { view-transition-name: atlas-workspace-globe; }
