@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { JSONParser } from "@streamparser/json";
 import hosting from "../content-data/atlas-hosting.json";
 import { selectorHashes, type AtlasMapSnapshot, type AtlasSiteBundle } from "./atlas-contract";
 
@@ -45,6 +46,23 @@ export async function verifiedBytes(response: Response, expected: { sha256: stri
   return bytes;
 }
 
+export async function parseAtlasJson(bytes: ArrayBuffer, signal?: AbortSignal) {
+  // Bound decoded text allocations and let the browser handle input between chunks.
+  const parser = new JSONParser({ paths: ["$"], stringBufferSize: 64 * 1024 });
+  let result: unknown;
+  parser.onValue = ({ value }) => { result = value; };
+  const chunkSize = 1024 * 1024;
+  for (let offset = 0; offset < bytes.byteLength; offset += chunkSize) {
+    await new Promise(resolve => setTimeout(resolve, 0));
+    signal?.throwIfAborted();
+    parser.write(new Uint8Array(bytes, offset, Math.min(chunkSize, bytes.byteLength - offset)));
+  }
+  signal?.throwIfAborted();
+  if (!parser.isEnded) parser.end();
+  if (result === undefined) throw new SyntaxError("ATLAS JSON contains no value");
+  return result;
+}
+
 export async function fetchAtlasData(signal?: AbortSignal, onProgress?: (progress: AtlasLoadProgress) => void) {
   signal?.throwIfAborted();
   onProgress?.({ phase: "release", loaded: 0, total: 0 });
@@ -71,16 +89,9 @@ export async function fetchAtlasData(signal?: AbortSignal, onProgress?: (progres
     } : undefined)));
   signal?.throwIfAborted();
   onProgress?.({ phase: "prepare", loaded: total, total });
-  await new Promise(resolve => setTimeout(resolve, 0));
-  signal?.throwIfAborted();
   // Published bytes have passed ATLAS schema and evidence validation before the release pointer is written.
-  const bundleText = new TextDecoder().decode(bundleBytes);
-  const mapText = new TextDecoder().decode(mapBytes);
-  // Decoding, parsing and indexing run in separate tasks so input can be handled between them.
-  await new Promise(resolve => setTimeout(resolve, 0));
-  signal?.throwIfAborted();
-  const bundle: AtlasSiteBundle = JSON.parse(bundleText);
-  const snapshot: AtlasMapSnapshot = JSON.parse(mapText);
+  const bundle = await parseAtlasJson(bundleBytes, signal) as AtlasSiteBundle;
+  const snapshot = await parseAtlasJson(mapBytes, signal) as AtlasMapSnapshot;
   await new Promise(resolve => setTimeout(resolve, 0));
   signal?.throwIfAborted();
   if (bundle.contract_version !== release.contract_version || bundle.snapshot.source_snapshot_sha256 !== release.assets["map.json"].sha256)
