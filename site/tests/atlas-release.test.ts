@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { weeklyCycle, publicationCandidate, correctionSchema, checkCorrectionTarget } from "../scripts/sync-atlas";
-import { verifiedBytes, releaseSchema, fetchAtlasData, type AtlasLoadProgress } from "../src/lib/atlas-release";
+import { verifiedBytes, parseAtlasJson, releaseSchema, fetchAtlasData, type AtlasLoadProgress } from "../src/lib/atlas-release";
 import fixture from "./atlas-fixture.json";
 import type { AtlasPublicationHandoff } from "../src/lib/atlas-vendor/site-types";
 
@@ -30,6 +30,27 @@ test("Remote release bytes must match their published checksums", async () => {
   assert.equal((await verifiedBytes(new Response(bytes), expected)).byteLength, bytes.length);
   await assert.rejects(verifiedBytes(new Response("wrong"), expected), /checksum/);
   await assert.rejects(verifiedBytes(new Response(null, { status: 503 }), expected), /503/);
+});
+
+test("Chunked dataset parsing preserves text and nested values across boundaries and can be cancelled", async () => {
+  const encode = (text: string) => new TextEncoder().encode(text).buffer;
+  const chunkSize = 1024 * 1024;
+  for (let split = 0; split < 8; split++) {
+    const text = JSON.stringify({ text: "x".repeat(chunkSize - 10 - split) + 'é🧬\\"{}[]',
+      records: [{ values: [null, true, false, -1.25e12], text: "\n\t" }], empty: {} });
+    assert.deepEqual(await parseAtlasJson(encode(text)), JSON.parse(text));
+    await assert.rejects(parseAtlasJson(encode(text.slice(0, -1))));
+  }
+  for (const text of ['{"__proto__":{"value":1},"constructor":2}', '[0,-0,1e3,null,false,"\\ud800"]']) {
+    assert.deepEqual(await parseAtlasJson(encode(text)), JSON.parse(text));
+  }
+  for (const text of ['', '{}{}', '{"value":}', '[1,]', '{"value":1,}']) {
+    await assert.rejects(parseAtlasJson(encode(text)));
+  }
+  const controller = new AbortController();
+  const parsing = parseAtlasJson(encode(JSON.stringify({ records: Array(100_000).fill({ value: 1 }) })), controller.signal);
+  setTimeout(() => controller.abort(), 0);
+  await assert.rejects(parsing, { name: "AbortError" });
 });
 
 test("Download progress counts decoded stream bytes and preserves checksum validation", async () => {

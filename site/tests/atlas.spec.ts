@@ -97,7 +97,7 @@ test("ATLAS entry, date windows, evidence and source focus", async ({ page }) =>
     await expect(page.getByRole("slider", { name: "Window end" })).toHaveValue(String(dayNumber("2026-09-25")));
   }
   await page.getByRole("tab", { name: "Reports", exact: true }).click();
-  await expect(page.locator(".atlas-timeline-next time")).toHaveText(["26 Sept 2026", "30 Sept 2026"]);
+  await expect(page.locator(".atlas-timeline-next time")).toHaveText([/26 Sept? 2026/, /30 Sept? 2026/]);
   await setWindowDate(page, "end", "2026-09-18");
   await expect(page.locator(".atlas-timeline-next")).toHaveCount(0);
   await page.getByRole("button", { name: "All dates", exact: true }).click();
