@@ -1,0 +1,352 @@
+{
+  "date": "2026-10-02",
+  "platform": "Physical iPhone Safari with Web Inspector recording",
+  "source_recording_sha256": "01babd8d6be708b455aafe67dbfcc53381f064003694f15b0498405d76730d55",
+  "scope": {
+    "website": "Local HTTPS preview",
+    "dataset": "Live public ATLAS browser transport",
+    "duration_seconds": 171.967,
+    "memory_samples": 342,
+    "cpu_samples": 342,
+    "memory_pressure_events": 0,
+    "recording_discontinuities": 0,
+    "sample_time_origin": "Seconds relative to recording start; the export includes one leading sample before that boundary",
+    "measurement_limits": [
+      "Safari memory categories are not total operating-system memory or total device RAM.",
+      "Safari category sums are not directly comparable with Chromium JavaScript heap or CDP backing-storage measurements.",
+      "This is one interactive visit, without a matched full-archive iPhone comparison or an isolated idle interval.",
+      "Absolute timestamps, device names, raw URLs, headers, cookies and thread names are excluded."
+    ]
+  },
+  "observer_report": {
+    "sequence": [
+      "Open One Health",
+      "Switch to Reports",
+      "Open the first three reports",
+      "Close the reports",
+      "Return to One Health"
+    ],
+    "visible_alerts": 0,
+    "reloads": 0,
+    "source": "Manual interaction and visible outcome supplied by the operator"
+  },
+  "memory": {
+    "definition": "Sum of the six exported Safari categories at each sample; MiB is 1,048,576 bytes",
+    "first_sample": {
+      "elapsed_seconds": -0.487,
+      "category_sum_bytes": 119181056,
+      "category_sum_mib": 113.66,
+      "categories_bytes": {
+        "javascript": 38613800,
+        "jit": 8060928,
+        "images": 0,
+        "layers": 0,
+        "page": 63495128,
+        "other": 9011200
+      }
+    },
+    "peak_sample": {
+      "elapsed_seconds": 37.782,
+      "category_sum_bytes": 621693184,
+      "category_sum_mib": 592.893,
+      "categories_bytes": {
+        "javascript": 211528061,
+        "jit": 8929280,
+        "images": 0,
+        "layers": 0,
+        "page": 392421251,
+        "other": 8814592
+      }
+    },
+    "final_sample": {
+      "elapsed_seconds": 171.232,
+      "category_sum_bytes": 555616512,
+      "category_sum_mib": 529.877,
+      "categories_bytes": {
+        "javascript": 219775623,
+        "jit": 9043968,
+        "images": 0,
+        "layers": 0,
+        "page": 316982905,
+        "other": 9814016
+      }
+    },
+    "large_downward_steps_after_10_seconds": [
+      {
+        "elapsed_seconds": 38.287,
+        "category_sum_decrease_bytes": 96387072,
+        "page_category_decrease_bytes": 107481088
+      },
+      {
+        "elapsed_seconds": 102.274,
+        "category_sum_decrease_bytes": 47677440,
+        "page_category_decrease_bytes": 41756942
+      },
+      {
+        "elapsed_seconds": 151.6,
+        "category_sum_decrease_bytes": 54689792,
+        "page_category_decrease_bytes": 57416993
+      }
+    ],
+    "interpretation": "The category sum rises between substantial downward steps, largely in the page category. The final sample is below the peak but above the early post-load level. This short interactive capture does not establish a memory leak or a stable long-term baseline."
+  },
+  "cpu": {
+    "units": "Safari exported CPU usage values, without normalization to total device capacity",
+    "mean_usage": 26.448,
+    "median_usage": 24.8,
+    "peak_usage": 171.2,
+    "peak_elapsed_seconds": 2.535,
+    "mean_main_thread_usage": 24.833,
+    "final_30_seconds_mean_usage": 25.222,
+    "interpretation": "These samples include loading, interaction and visible animation; they are not an idle CPU benchmark."
+  },
+  "network": {
+    "record_count": 70,
+    "request_counts_by_role": {
+      "local_website_asset": 56,
+      "atlas_current_pointer": 1,
+      "external_website_asset": 4,
+      "atlas_browser_manifest_or_core": 3,
+      "atlas_intelligence": 1,
+      "atlas_detail_index": 1,
+      "atlas_detail_partition": 4
+    },
+    "response_status_counts": {
+      "200": 70
+    },
+    "fetch_type_counts": {
+      "Network Load": 62,
+      "Memory Cache": 4,
+      "Disk Cache": 4
+    },
+    "byte_telemetry_note": {
+      "core_reported_content_size_bytes": 18608245,
+      "manifest_core_bytes": 17559669,
+      "difference_bytes": 1048576,
+      "interpretation": "Safari HAR content.size differs by one MiB from the checksum-bound core size. HAR decoded sizes are not presented as verified transfer sizes; request counts and status values are reported directly."
+    },
+    "local_atlas_html_requests": 2,
+    "local_atlas_navigation_requests": 1,
+    "page_markers_within_recording": {
+      "dom-content-event": 1,
+      "load-event": 1
+    }
+  },
+  "ten_second_summary": {
+    "columns": [
+      "from_seconds",
+      "until_seconds",
+      "memory_samples",
+      "category_sum_min_bytes",
+      "category_sum_max_bytes",
+      "category_sum_end_bytes",
+      "javascript_end_bytes",
+      "page_end_bytes",
+      "mean_cpu_usage"
+    ],
+    "rows": [
+      [
+        0,
+        10,
+        20,
+        157077248,
+        593217792,
+        428558592,
+        165868284,
+        245634564,
+        46.13
+      ],
+      [
+        10,
+        20,
+        20,
+        426674432,
+        445106432,
+        445106432,
+        171957409,
+        256175199,
+        27.265
+      ],
+      [
+        20,
+        30,
+        20,
+        447138048,
+        459196672,
+        459196672,
+        175443062,
+        266583178,
+        25.145
+      ],
+      [
+        30,
+        40,
+        20,
+        459589888,
+        621693184,
+        514967808,
+        214200221,
+        283056483,
+        30.4
+      ],
+      [
+        40,
+        50,
+        20,
+        508791040,
+        525830400,
+        517507328,
+        203800142,
+        296078002,
+        27.045
+      ],
+      [
+        50,
+        60,
+        20,
+        514050304,
+        534759680,
+        534759680,
+        212161111,
+        304805545,
+        26.635
+      ],
+      [
+        60,
+        70,
+        19,
+        533940480,
+        546638080,
+        538708224,
+        216033930,
+        305405558,
+        21.042
+      ],
+      [
+        70,
+        80,
+        20,
+        540854528,
+        555665664,
+        555485440,
+        221408102,
+        316284314,
+        20.245
+      ],
+      [
+        80,
+        90,
+        20,
+        558074112,
+        568477952,
+        568477952,
+        225532088,
+        325136456,
+        20.055
+      ],
+      [
+        90,
+        100,
+        20,
+        569411840,
+        583092480,
+        582912256,
+        228423728,
+        336629968,
+        19.305
+      ],
+      [
+        100,
+        110,
+        20,
+        522619136,
+        597723392,
+        532171008,
+        215855289,
+        298162247,
+        24.79
+      ],
+      [
+        110,
+        120,
+        20,
+        532138240,
+        541231360,
+        541231360,
+        217055607,
+        306055049,
+        27.49
+      ],
+      [
+        120,
+        130,
+        20,
+        542443776,
+        553961728,
+        553961728,
+        218793741,
+        316768755,
+        31.215
+      ],
+      [
+        130,
+        140,
+        19,
+        553568512,
+        572033280,
+        572033280,
+        223403143,
+        330067065,
+        27.542
+      ],
+      [
+        140,
+        150,
+        20,
+        571050240,
+        583452928,
+        583452928,
+        226600185,
+        338207751,
+        21.765
+      ],
+      [
+        150,
+        160,
+        20,
+        526944512,
+        588630272,
+        543836416,
+        216157785,
+        308705959,
+        28.5
+      ],
+      [
+        160,
+        170,
+        20,
+        540051712,
+        552438016,
+        552438016,
+        218919966,
+        314676450,
+        25.225
+      ],
+      [
+        170,
+        171.967,
+        3,
+        553273600,
+        555616512,
+        555616512,
+        219775623,
+        316982905,
+        24.45
+      ]
+    ]
+  },
+  "transport": {
+    "source_export_id": "e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48",
+    "manifest_sha256": "b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057"
+  }
+}

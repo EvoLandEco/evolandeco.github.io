@@ -1,0 +1,52 @@
+{
+  "browser_handoff_version": "0.1.0",
+  "checked_at": "2026-10-02T07:12:26.058Z",
+  "source_export_id": "e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48",
+  "asset_count": 463,
+  "source_files_compared": [
+    "site",
+    "map"
+  ],
+  "reconstruction": true,
+  "selection_cases": 2220,
+  "pinned_selector_parity": true,
+  "all_records_individually": true,
+  "producer_ready": true,
+  "browser": {
+    "transport_version": "0.1.0",
+    "source_export_id": "e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48",
+    "scientific_contract": "1.5.0",
+    "directory": "browser-transport-e5f3-20261002-v4",
+    "manifest": {
+      "path": "browser-transport-e5f3-20261002-v4/manifest.json",
+      "sha256": "b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057",
+      "bytes": 870451
+    },
+    "source": {
+      "manifest": {
+        "path": "manifest.json",
+        "sha256": "cc84556c04d47eb07709d5d22b6d9ad094c4e6f510bf0618ad816c70a1169c1c",
+        "bytes": 510
+      },
+      "site": {
+        "path": "atlas-site.json",
+        "sha256": "e38711ca76cd622cad2c669e9f1bb7f2a23c57b9e9725e741eae19745627a91d",
+        "bytes": 295294778
+      },
+      "map": {
+        "path": "map.json",
+        "sha256": "2822e2d86308ff6c52d5c78ef4f85ee28e907f0690f344688ddd2519feaa2f6b",
+        "bytes": 15521467
+      },
+      "metrics_sha256": "1a83b8c1b8f228df00c73694994a04a124b1d388e03beb8da355a37ddd4e53b7",
+      "site_contract_version": "1.5.0",
+      "selector": {
+        "path": "view.mjs",
+        "sha256": "80f15b7fda19c2fd1aed5d92a6317733fe5b69aa66c5fa0e386b403a61b21e0c",
+        "bytes": 18774
+      }
+    }
+  },
+  "consumer_adoption": false,
+  "publication_authorized": false
+}

@@ -1,0 +1,822 @@
+{
+  "release_id": "e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48",
+  "source_assets": {
+    "atlas-site.json": {
+      "sha256": "e38711ca76cd622cad2c669e9f1bb7f2a23c57b9e9725e741eae19745627a91d",
+      "bytes": 295294778
+    },
+    "map.json": {
+      "sha256": "2822e2d86308ff6c52d5c78ef4f85ee28e907f0690f344688ddd2519feaa2f6b",
+      "bytes": 15521467
+    },
+    "metrics.json": {
+      "sha256": "6da3b86daaef26e827cc069941d312a34fce42a8fe8d3284c6a0f8bd4cc114ed",
+      "bytes": 107113318
+    },
+    "network-transport.json": {
+      "sha256": "35f95357c6df17f52106be4bf74deda1133cda49cd4f6b09918427f5cf9927a3",
+      "bytes": 1838
+    }
+  },
+  "size_basis": "UTF-8 bytes of native JSON.stringify; source_assets retain exact published byte counts",
+  "bundle_compact_bytes": 234615356,
+  "collections": {
+    "areas": {
+      "count": 178,
+      "compact_bytes": 19695
+    },
+    "assertions": {
+      "count": 31850,
+      "compact_bytes": 23146770
+    },
+    "channels": {
+      "count": 10,
+      "compact_bytes": 1386
+    },
+    "comparisons": {
+      "count": 34,
+      "compact_bytes": 40390
+    },
+    "contract_version": {
+      "compact_bytes": 7
+    },
+    "disease_reviews": {
+      "count": 2098,
+      "compact_bytes": 1408112
+    },
+    "diseases": {
+      "count": 92,
+      "compact_bytes": 6017
+    },
+    "display_groups": {
+      "count": 210,
+      "compact_bytes": 225556
+    },
+    "documents": {
+      "count": 332,
+      "compact_bytes": 582825
+    },
+    "evidence": {
+      "count": 51775,
+      "compact_bytes": 77980881
+    },
+    "limitations": {
+      "count": 6,
+      "compact_bytes": 947
+    },
+    "location_memberships": {
+      "count": 7074,
+      "compact_bytes": 3735456
+    },
+    "metrics": {
+      "compact_bytes": 107113318
+    },
+    "one_health_contexts": {
+      "count": 2291,
+      "compact_bytes": 3925155
+    },
+    "one_health_nodes": {
+      "count": 1278,
+      "compact_bytes": 2602711
+    },
+    "one_health_relations": {
+      "count": 131,
+      "compact_bytes": 229843
+    },
+    "one_health_reviews": {
+      "count": 1755,
+      "compact_bytes": 2618727
+    },
+    "one_health_sampling_assessments": {
+      "count": 559,
+      "compact_bytes": 1154067
+    },
+    "one_health_timings": {
+      "count": 1944,
+      "compact_bytes": 2377963
+    },
+    "organizations": {
+      "count": 8,
+      "compact_bytes": 514
+    },
+    "places": {
+      "count": 3712,
+      "compact_bytes": 2209918
+    },
+    "records": {
+      "count": 2098,
+      "compact_bytes": 2511339
+    },
+    "relationships": {
+      "count": 1634,
+      "compact_bytes": 1488974
+    },
+    "release_status": {
+      "compact_bytes": 18
+    },
+    "reviewed_chains": {
+      "count": 11,
+      "compact_bytes": 54898
+    },
+    "snapshot": {
+      "compact_bytes": 33769
+    },
+    "software_version": {
+      "compact_bytes": 10
+    },
+    "source_coverage": {
+      "count": 2027,
+      "compact_bytes": 514442
+    },
+    "topics": {
+      "count": 2018,
+      "compact_bytes": 631154
+    }
+  },
+  "metrics": {
+    "annotations_sha256": {
+      "compact_bytes": 66
+    },
+    "conflicts": {
+      "count": 8,
+      "compact_bytes": 1242
+    },
+    "contract_version": {
+      "compact_bytes": 7
+    },
+    "coverage": {
+      "compact_bytes": 127
+    },
+    "findings": {
+      "count": 6708,
+      "compact_bytes": 10903108
+    },
+    "input_sha256": {
+      "compact_bytes": 66
+    },
+    "measures": {
+      "count": 17640,
+      "compact_bytes": 73392399
+    },
+    "panels": {
+      "count": 5750,
+      "compact_bytes": 3959068
+    },
+    "records": {
+      "count": 2098,
+      "compact_bytes": 809168
+    },
+    "records_sha256": {
+      "compact_bytes": 66
+    },
+    "release_status": {
+      "compact_bytes": 18
+    },
+    "review": {
+      "compact_bytes": 516
+    },
+    "reviewed_series": {
+      "count": 64,
+      "compact_bytes": 2128051
+    },
+    "series": {
+      "count": 12472,
+      "compact_bytes": 15918934
+    },
+    "software_version": {
+      "compact_bytes": 10
+    },
+    "source_snapshot_sha256": {
+      "compact_bytes": 66
+    },
+    "window": {
+      "compact_bytes": 146
+    }
+  },
+  "field_totals": {
+    "evidence": {
+      "quote": {
+        "count": 51775,
+        "value_bytes": 52150753
+      },
+      "quote_sha256": {
+        "count": 51775,
+        "value_bytes": 3417150
+      },
+      "source_text_sha256": {
+        "count": 51775,
+        "value_bytes": 3417150
+      },
+      "section": {
+        "count": 51775,
+        "value_bytes": 3178079
+      },
+      "id": {
+        "count": 51775,
+        "value_bytes": 1812125
+      },
+      "record_id": {
+        "count": 51775,
+        "value_bytes": 1668366
+      },
+      "offset_basis": {
+        "count": 51775,
+        "value_bytes": 1605025
+      },
+      "document_id": {
+        "count": 51775,
+        "value_bytes": 1553250
+      },
+      "end": {
+        "count": 51775,
+        "value_bytes": 228509
+      },
+      "start": {
+        "count": 51775,
+        "value_bytes": 220040
+      },
+      "claim_index": {
+        "count": 51775,
+        "value_bytes": 90725
+      },
+      "page": {
+        "count": 51775,
+        "value_bytes": 74558
+      },
+      "quote_index": {
+        "count": 51775,
+        "value_bytes": 74050
+      }
+    },
+    "assertions": {
+      "eligibility": {
+        "count": 31850,
+        "value_bytes": 4624765
+      },
+      "text": {
+        "count": 31850,
+        "value_bytes": 3051838
+      },
+      "evidence_ids": {
+        "count": 31850,
+        "value_bytes": 1882286
+      },
+      "observation_date": {
+        "count": 31850,
+        "value_bytes": 1248893
+      },
+      "value": {
+        "count": 31850,
+        "value_bytes": 1234680
+      },
+      "id": {
+        "count": 31850,
+        "value_bytes": 1146600
+      },
+      "record_id": {
+        "count": 31850,
+        "value_bytes": 1025715
+      },
+      "document_id": {
+        "count": 31850,
+        "value_bytes": 955500
+      },
+      "review_state": {
+        "count": 31850,
+        "value_bytes": 667160
+      },
+      "measure_id": {
+        "count": 31850,
+        "value_bytes": 638960
+      },
+      "quoted_authority_status": {
+        "count": 31850,
+        "value_bytes": 477750
+      },
+      "kind": {
+        "count": 31850,
+        "value_bytes": 291909
+      },
+      "claim_index": {
+        "count": 31850,
+        "value_bytes": 40313
+      }
+    },
+    "records": {
+      "assertion_ids": {
+        "count": 2098,
+        "value_bytes": 1180548
+      },
+      "location_membership_ids": {
+        "count": 2098,
+        "value_bytes": 257034
+      },
+      "title": {
+        "count": 2098,
+        "value_bytes": 106647
+      },
+      "topic_id": {
+        "count": 2098,
+        "value_bytes": 89741
+      },
+      "id": {
+        "count": 2098,
+        "value_bytes": 68459
+      },
+      "document_id": {
+        "count": 2098,
+        "value_bytes": 62940
+      },
+      "capture": {
+        "count": 2098,
+        "value_bytes": 60842
+      },
+      "publication": {
+        "count": 2098,
+        "value_bytes": 45032
+      },
+      "publication_basis": {
+        "count": 2098,
+        "value_bytes": 44015
+      },
+      "geographic_review": {
+        "count": 2098,
+        "value_bytes": 42620
+      },
+      "flagged_issue_review": {
+        "count": 2098,
+        "value_bytes": 27259
+      },
+      "channel_id": {
+        "count": 2098,
+        "value_bytes": 22892
+      },
+      "claim_indexes": {
+        "count": 2098,
+        "value_bytes": 16468
+      },
+      "comparison_ids": {
+        "count": 2098,
+        "value_bytes": 6399
+      }
+    },
+    "metrics.measures": {
+      "evidence_references": {
+        "count": 17640,
+        "value_bytes": 26450761
+      },
+      "evidence": {
+        "count": 17640,
+        "value_bytes": 4089303
+      },
+      "semantic_note": {
+        "count": 17640,
+        "value_bytes": 3332954
+      },
+      "source_reference": {
+        "count": 17640,
+        "value_bytes": 2268781
+      },
+      "source_url": {
+        "count": 17640,
+        "value_bytes": 1597627
+      },
+      "population": {
+        "count": 17640,
+        "value_bytes": 1371981
+      },
+      "annotation_key": {
+        "count": 17640,
+        "value_bytes": 1083317
+      },
+      "case_definition": {
+        "count": 17640,
+        "value_bytes": 999107
+      },
+      "origin_authority": {
+        "count": 17640,
+        "value_bytes": 895641
+      },
+      "geography": {
+        "count": 17640,
+        "value_bytes": 813226
+      },
+      "period_label": {
+        "count": 17640,
+        "value_bytes": 808873
+      },
+      "denominator_population": {
+        "count": 17640,
+        "value_bytes": 803344
+      },
+      "disease": {
+        "count": 17640,
+        "value_bytes": 787663
+      },
+      "track_id": {
+        "count": 17640,
+        "value_bytes": 760263
+      },
+      "cumulative_baseline": {
+        "count": 17640,
+        "value_bytes": 758304
+      },
+      "pathogen": {
+        "count": 17640,
+        "value_bytes": 736435
+      },
+      "stratum": {
+        "count": 17640,
+        "value_bytes": 707102
+      },
+      "period_end": {
+        "count": 17640,
+        "value_bytes": 696556
+      },
+      "period_start": {
+        "count": 17640,
+        "value_bytes": 687592
+      },
+      "as_of": {
+        "count": 17640,
+        "value_bytes": 684091
+      },
+      "host": {
+        "count": 17640,
+        "value_bytes": 657371
+      },
+      "context_id": {
+        "count": 17640,
+        "value_bytes": 599760
+      },
+      "measure_id": {
+        "count": 17640,
+        "value_bytes": 582120
+      },
+      "context_references": {
+        "count": 17640,
+        "value_bytes": 559637
+      },
+      "label": {
+        "count": 17640,
+        "value_bytes": 519856
+      },
+      "capture": {
+        "count": 17640,
+        "value_bytes": 511560
+      },
+      "publication": {
+        "count": 17640,
+        "value_bytes": 457823
+      },
+      "review_status": {
+        "count": 17640,
+        "value_bytes": 388080
+      },
+      "numeric_evidence_review": {
+        "count": 17640,
+        "value_bytes": 362668
+      },
+      "publication_basis": {
+        "count": 17640,
+        "value_bytes": 338996
+      },
+      "source_id": {
+        "count": 17640,
+        "value_bytes": 319337
+      },
+      "ratio_basis": {
+        "count": 17640,
+        "value_bytes": 285290
+      },
+      "denominator_status": {
+        "count": 17640,
+        "value_bytes": 257326
+      },
+      "observation_date_status": {
+        "count": 17640,
+        "value_bytes": 215084
+      },
+      "count_kind": {
+        "count": 17640,
+        "value_bytes": 190207
+      },
+      "case_class": {
+        "count": 17640,
+        "value_bytes": 177862
+      },
+      "value_status": {
+        "count": 17640,
+        "value_bytes": 172646
+      },
+      "transmission_role": {
+        "count": 17640,
+        "value_bytes": 158898
+      },
+      "acquisition": {
+        "count": 17640,
+        "value_bytes": 158393
+      },
+      "date_basis": {
+        "count": 17640,
+        "value_bytes": 145015
+      },
+      "unit": {
+        "count": 17640,
+        "value_bytes": 138956
+      },
+      "metric": {
+        "count": 17640,
+        "value_bytes": 135949
+      },
+      "qualifier": {
+        "count": 17640,
+        "value_bytes": 135739
+      },
+      "observation_date": {
+        "count": 17640,
+        "value_bytes": 134312
+      },
+      "superseded": {
+        "count": 17640,
+        "value_bytes": 88200
+      },
+      "source_date_warning": {
+        "count": 17640,
+        "value_bytes": 86717
+      },
+      "conflict_set": {
+        "count": 17640,
+        "value_bytes": 70946
+      },
+      "revision_reason": {
+        "count": 17640,
+        "value_bytes": 70560
+      },
+      "denominator": {
+        "count": 17640,
+        "value_bytes": 68870
+      },
+      "value": {
+        "count": 17640,
+        "value_bytes": 41857
+      },
+      "proposal_candidates": {
+        "count": 17640,
+        "value_bytes": 35442
+      },
+      "supersedes": {
+        "count": 17640,
+        "value_bytes": 35280
+      },
+      "priority": {
+        "count": 17640,
+        "value_bytes": 17640
+      }
+    },
+    "metrics.series": {
+      "context": {
+        "count": 12472,
+        "value_bytes": 11876901
+      },
+      "reason": {
+        "count": 12472,
+        "value_bytes": 1559000
+      },
+      "measure_ids": {
+        "count": 12472,
+        "value_bytes": 612232
+      },
+      "context_id": {
+        "count": 12472,
+        "value_bytes": 424048
+      },
+      "comparability_status": {
+        "count": 12472,
+        "value_bytes": 212024
+      },
+      "connect_points": {
+        "count": 12472,
+        "value_bytes": 62360
+      }
+    },
+    "metrics.panels": {
+      "measure_ids": {
+        "count": 5750,
+        "value_bytes": 1273361
+      },
+      "card_groups": {
+        "count": 5750,
+        "value_bytes": 873594
+      },
+      "support": {
+        "count": 5750,
+        "value_bytes": 584631
+      },
+      "finding_ids": {
+        "count": 5750,
+        "value_bytes": 544295
+      },
+      "id": {
+        "count": 5750,
+        "value_bytes": 217576
+      },
+      "kind": {
+        "count": 5750,
+        "value_bytes": 51610
+      }
+    },
+    "metrics.findings": {
+      "evidence": {
+        "count": 6708,
+        "value_bytes": 8890239
+      },
+      "text": {
+        "count": 6708,
+        "value_bytes": 1315236
+      },
+      "finding_id": {
+        "count": 6708,
+        "value_bytes": 228072
+      },
+      "review_status": {
+        "count": 6708,
+        "value_bytes": 114036
+      }
+    },
+    "metrics.reviewed_series": {
+      "evidence": {
+        "count": 64,
+        "value_bytes": 1543178
+      },
+      "connections": {
+        "count": 64,
+        "value_bytes": 270562
+      },
+      "members": {
+        "count": 64,
+        "value_bytes": 214996
+      },
+      "limitations": {
+        "count": 64,
+        "value_bytes": 46212
+      },
+      "reason": {
+        "count": 64,
+        "value_bytes": 18288
+      },
+      "scope": {
+        "count": 64,
+        "value_bytes": 8114
+      },
+      "label": {
+        "count": 64,
+        "value_bytes": 3283
+      },
+      "series_id": {
+        "count": 64,
+        "value_bytes": 2728
+      },
+      "reviewed_by": {
+        "count": 64,
+        "value_bytes": 2252
+      },
+      "comparability_status": {
+        "count": 64,
+        "value_bytes": 1920
+      },
+      "reviewed_at": {
+        "count": 64,
+        "value_bytes": 1856
+      },
+      "operation": {
+        "count": 64,
+        "value_bytes": 1733
+      },
+      "review_status": {
+        "count": 64,
+        "value_bytes": 1408
+      }
+    }
+  },
+  "quotations": {
+    "evidence": {
+      "count": 51775,
+      "unique_count": 7697,
+      "value_bytes": 52150753,
+      "unique_value_bytes": 8908206,
+      "repeated_value_bytes": 43242547
+    },
+    "metric_references": {
+      "count": 33077,
+      "unique_count": 2849,
+      "value_bytes": 20760548,
+      "unique_value_bytes": 2640164,
+      "repeated_value_bytes": 18120384
+    },
+    "evidence_and_metrics": {
+      "count": 84852,
+      "unique_count": 7846,
+      "value_bytes": 72911301,
+      "unique_value_bytes": 9180958,
+      "repeated_value_bytes": 63730343
+    },
+    "map_claims": {
+      "count": 9547,
+      "unique_count": 5806,
+      "value_bytes": 7191724,
+      "unique_value_bytes": 3565781,
+      "repeated_value_bytes": 3625943
+    }
+  },
+  "proposal": {
+    "variant": "complete_one_health_and_places",
+    "core_bytes": 17560654,
+    "map_core_bytes": 2479274,
+    "total_bytes": 20039928,
+    "core_collections": {
+      "contract_version": 7,
+      "snapshot": 33769,
+      "channels": 307,
+      "organizations": 128,
+      "documents": 66334,
+      "areas": 4738,
+      "diseases": 1354,
+      "source_coverage": 75165,
+      "reviewed_chains": 54898,
+      "records": 104900,
+      "topics": 54275,
+      "places": 336622,
+      "location_memberships": 202474,
+      "relationships": 37164,
+      "disease_reviews": 54525,
+      "comparisons": 1589,
+      "assertions": 740580,
+      "one_health_reviews": 192149,
+      "one_health_nodes": 923824,
+      "one_health_relations": 54778,
+      "one_health_timings": 801497,
+      "one_health_sampling_assessments": 497961,
+      "one_health_contexts": 1296101,
+      "metrics": 4724670,
+      "strings": 7285404,
+      "eligibility_record_sets": 14992
+    },
+    "metric_collections": {
+      "contract_version": 7,
+      "coverage": 127,
+      "panels": 322306,
+      "series": 243113,
+      "reviewed_series": 492218,
+      "measures": 3666815
+    },
+    "string_count": 142445,
+    "eligibility_set_count": 2116,
+    "compact_figure_count": 7284,
+    "selector_projection_fields": {
+      "records": "id document_id topic_id channel_id capture publication location_membership_ids",
+      "topics": "id label place_ids",
+      "places": "appearance area_codes geographic_review id label latitude location_membership_ids longitude precision record_ids relationship_ids topic_ids",
+      "location_memberships": "id record_id area_code role eligibility",
+      "relationships": "id from_place_id to_place_id eligibility",
+      "disease_reviews": "record_id disease_ids kind eligibility",
+      "comparisons": "id kind status participant_ids lineage eligibility",
+      "assertions": "id record_id measure_id eligibility",
+      "one_health_reviews": "eligibility evidence_ids id outcome pending_items reason record_id review_state reviewed_at reviewed_by reviewed_sections scope",
+      "one_health_nodes": "agent agent_kind assertion_ids date_basis date_note document_ids domain eligibility entity_kind evidence_ids finding id key label location_note material measure_ids observation_date period_end period_label period_start place_ids record_id record_ids roles sampling scope taxon topic_ids uncertainty",
+      "one_health_relations": "assertion_ids basis date_basis date_note directed direction_basis document_ids eligibility evidence_ids evidence_types from_node_id id key kind label observation_date period_end period_label period_start reason record_ids review_state reviewed_at reviewed_by scope source_assertion_id source_certainty to_node_id uncertainty",
+      "one_health_timings": "assertion_ids document_ids eligibility evidence_ids id key node_id reason record_id record_ids review_state reviewed_at reviewed_by source_assertion_id time",
+      "one_health_sampling_assessments": "assertion_ids clustering display display_reason document_ids eligibility evidence_ids frame id key method node_id pair_status pooling population positive_measure_id proportion reason record_id record_ids repeated_sampling review_state reviewed_at reviewed_by source_assertion_id target tested_measure_id time unit",
+      "one_health_contexts": "assertion_ids document_ids eligibility evidence_ids id key kind label linkage_note measure_ids method node_ids place_ids reason record_id record_ids review_state reviewed_at reviewed_by source_assertion_id time variable"
+    },
+    "measure_fields": [
+      "measure_id",
+      "context_id",
+      "label",
+      "metric",
+      "value",
+      "value_status",
+      "unit",
+      "observation_date",
+      "priority",
+      "source_id",
+      "track_id",
+      "superseded",
+      "conflict_set",
+      "geography",
+      "disease",
+      "count_kind",
+      "period_label",
+      "source_date_warning",
+      "publication",
+      "source_record_id",
+      "evidence_record_ids",
+      "compact_figure_id"
+    ],
+    "checks": {
+      "source_checksums": true,
+      "table_round_trip": true,
+      "full_selector_parity": "requires producer selector and full detail reconstruction"
+    }
+  }
+}

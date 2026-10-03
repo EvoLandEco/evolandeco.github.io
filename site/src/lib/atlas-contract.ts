@@ -6,7 +6,10 @@ import type { AtlasSiteBundle as Version13 } from "./atlas-vendor/1.3/site-types
 import type { AtlasSiteBundle as Version14 } from "./atlas-vendor/1.4/site-types";
 import type { AtlasSiteBundle as Version15, AtlasSelectedOneHealth as Health15 } from "./atlas-vendor/1.5/site-types";
 import type { AtlasSelectedOneHealth as Health14 } from "./atlas-vendor/1.4/site-types";
+import type { AtlasBrowserData, AtlasBrowserMap } from "./atlas-vendor/browser/browser.mjs";
 export type AtlasSiteBundle = Version10 | Version11 | Version12 | Version13 | Version14 | Version15;
+export type AtlasData = AtlasSiteBundle | AtlasBrowserData;
+export type AtlasMap = import("./atlas-vendor/site-types").AtlasMapSnapshot | AtlasBrowserMap;
 export type AtlasSelectedOneHealth = Health14 | Health15;
 export type { AtlasObservationTime, AtlasOneHealthPanelReview, AtlasOneHealthTiming, AtlasOneHealthSamplingAssessment, AtlasOneHealthContext, AtlasSelectedOneHealthPanel } from "./atlas-vendor/1.5/site-types";
 export type { AtlasOneHealthNode, AtlasOneHealthRelation, AtlasOneHealthOptions, AtlasOneHealthDomain, AtlasDiseaseComposition } from "./atlas-vendor/1.4/site-types";

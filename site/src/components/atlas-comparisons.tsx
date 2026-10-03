@@ -1,4 +1,6 @@
 import { AtlasScope } from "./atlas-scope";
+import { AtlasDisclosure } from "./atlas-disclosure";
+import { AtlasDetailStatus, useAtlasDetails } from "./atlas-detail";
 import { EvidenceSummary } from "./atlas-evidence-summary";
 import { CountryText } from "./atlas-location-badges";
 import { useAtlas } from "./atlas-context";
@@ -19,14 +21,19 @@ export function ComparisonBadge({ comparison: c }: { comparison: Comparison }) {
 }
 
 export function SourceComparisons({ recordIds, reportIds, onReport }: { recordIds: Set<string>; reportIds: string[]; onReport: (ids: string[]) => void }) {
-  const { assertions, channels, atlasDocuments: documents, evidence, reportComparisons, measures } = useAtlas();
+  const { channels, atlasDocuments: documents, reportComparisons, measures } = useAtlas();
   const comparisons = reportComparisons(recordIds, reportIds);
+  const { data, error, retry } = useAtlasDetails([
+    ...comparisons.map(c => ({ collection: "comparisons" as const, id: c.id })),
+    ...[...new Set(comparisons.flatMap(c => c.participant_ids))].map(id => ({ collection: "assertions" as const, id })),
+  ]);
   if (!comparisons.length) return null;
-  return <div className="atlas-comparisons">{comparisons.map(c => <section key={c.id} className="atlas-comparison" data-kind={c.kind} aria-label={labels[c.kind]}>
+  if (!data) return <AtlasDetailStatus error={error} retry={retry} />;
+  return <div className="atlas-comparisons">{comparisons.map(summary => data.get("comparisons", summary.id)).map(c => <section key={c.id} className="atlas-comparison" data-kind={c.kind} aria-label={labels[c.kind]}>
     <header><span className="atlas-status" data-tone={c.status === "unresolved" ? "warning" : "info"}>{c.status === "unresolved" ? <CircleHelp size={13} aria-hidden /> : <BadgeCheck size={13} aria-hidden />}{c.status === "unresolved" ? "Unresolved" : "Documented"}</span><AtlasScope label="Comparison scope" title={labels[c.kind]}><div className="atlas-measure-details"><p><CountryText>{c.scope_review}</CountryText></p><small>ATLAS source review · {formatDate(c.reviewed_at)} · Editorial review pending</small></div></AtlasScope></header>
     <p className="atlas-comparison-reason"><CountryText>{c.reason}</CountryText></p>
     <div className="atlas-comparison-branches">{c.participant_ids.map(id => {
-      const a = assertions.get(id)!, document = documents.get(a.document_id)!;
+      const a = data.get("assertions", id), document = documents.get(a.document_id)!;
       const measure = a.measure_id ? measures.get(a.measure_id)! : null;
       const value = measure ? metricValue(measure) : a.kind === "date" && a.value.value ? formatDate(a.value.value) : a.value.value;
       return <div key={id} className="atlas-assertion" data-kind={a.kind}>
@@ -35,11 +42,17 @@ export function SourceComparisons({ recordIds, reportIds, onReport }: { recordId
         {!measure && <p><CountryText>{a.text}</CountryText></p>}
         {measure && <small><CountryText>{measure.geography.value}</CountryText> · <CountryText>{measure.period_label}</CountryText></small>}
         <button className="atlas-assertion-report" onClick={() => onReport([a.record_id])}>{channels.get(document.channel_id)!.name} · {formatDate(document.publication)} <ExternalLink size={12} aria-hidden /></button>
-        <details className="atlas-assertion-evidence"><EvidenceSummary kind="source" />{a.evidence_ids.map((eid: string) => {
-          const e = evidence.get(eid)!;
-          return <div key={eid}><small><CountryText>{e.section}</CountryText>{e.page !== null && ` · page ${e.page}`}</small><blockquote><CountryText>{e.quote}</CountryText></blockquote></div>;
-        })}<a href={document.content_url} target="_blank" rel="noopener noreferrer">Read source <ExternalLink size={12} aria-hidden /></a></details>
+        <AtlasDisclosure unmountOnClose className="atlas-assertion-evidence" summary={<EvidenceSummary kind="source" />}>{() => <><AssertionEvidence ids={a.evidence_ids} /><a href={document.content_url} target="_blank" rel="noopener noreferrer">Read source <ExternalLink size={12} aria-hidden /></a></>}</AtlasDisclosure>
       </div>;
     })}</div>
   </section>)}</div>;
+}
+
+function AssertionEvidence({ ids }: { ids: string[] }) {
+  const { data, error, retry } = useAtlasDetails(ids.map(id => ({ collection: "evidence", id })));
+  if (!data) return <AtlasDetailStatus error={error} retry={retry} />;
+  return ids.map(id => {
+    const evidence = data.get("evidence", id);
+    return <div key={id}><small><CountryText>{evidence.section}</CountryText>{evidence.page !== null && ` · page ${evidence.page}`}</small><blockquote><CountryText>{evidence.quote}</CountryText></blockquote></div>;
+  });
 }

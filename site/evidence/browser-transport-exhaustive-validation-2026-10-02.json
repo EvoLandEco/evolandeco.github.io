@@ -1,0 +1,12 @@
+{
+  "source_export_id": "e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48",
+  "asset_count": 463,
+  "source_files_compared": [
+    "site",
+    "map"
+  ],
+  "reconstruction": true,
+  "selection_cases": 2186,
+  "pinned_selector_parity": true,
+  "all_records_individually": true
+}

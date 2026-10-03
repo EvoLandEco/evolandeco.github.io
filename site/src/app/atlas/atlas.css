@@ -1,3 +1,4 @@
+html:has(.atlas-page) { scrollbar-gutter: stable; }
 html[data-atlas-transition] .globe-interaction > .globe-frame, html[data-atlas-transition] .atlas-globe-frame { view-transition-name: atlas-globe; }
 html[data-atlas-transition]::view-transition-group(atlas-globe) { animation-duration: .8s; animation-timing-function: cubic-bezier(.22,.8,.2,1); }
 html[data-atlas-transition]::view-transition-old(atlas-globe), html[data-atlas-transition]::view-transition-new(atlas-globe) { height: 100%; mix-blend-mode: normal; }
@@ -30,7 +31,12 @@ html[data-atlas-transition]::view-transition-new(root) { animation: atlas-fade .
 .atlas-link-legend[data-playing="true"] .atlas-legend-arrow { animation: atlas-legend-travel 5s linear infinite; }
 @keyframes atlas-legend-travel { from { transform: translateX(-28.5714%); opacity: 0; } 12%, 88% { opacity: 1; } to { transform: translateX(28.5714%); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .atlas-legend-arrow { animation: none !important; } }
-.atlas-globe-pins { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; touch-action: pan-y; }
+.atlas-globe-pins { --atlas-marker: #2f60ac; --atlas-marker-halo: #62968e; --atlas-marker-spark: #f2fffa; --atlas-rim: #71938e; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; touch-action: pan-y; }
+.dark .atlas-globe-pins { --atlas-marker: #ffd080; --atlas-marker-halo: var(--foreground); --atlas-marker-spark: #fff8e7; --atlas-rim: #e8bd87; }
+.atlas-globe-pins > :is(svg, canvas) { position: absolute; inset: 0; width: 100%; height: 100%; }
+.atlas-globe-pins:not([data-renderer="gpu"]) .atlas-marker-canvas { visibility: hidden; }
+.atlas-globe-pins:not([data-route-renderer="gpu"]) .atlas-route-canvas { visibility: hidden; }
+.atlas-globe-pins[data-route-renderer="gpu"] :is(.atlas-route, .atlas-route *) { visibility: hidden !important; }
 .atlas-globe-pin, .atlas-link-target { cursor: var(--cursor-pointer, pointer); pointer-events: auto; outline: none; }
 .atlas-globe-pins[data-dragging], .atlas-globe-pins[data-dragging] :is(.atlas-globe-pin, .atlas-link-target) { cursor: var(--cursor-grabbing, grabbing); }
 .atlas-globe-hit { fill: transparent; }
@@ -295,11 +301,9 @@ html[data-atlas-transition]::view-transition-new(atlas-globe):only-child { anima
   .atlas-report-date small { margin: 0; }
 }
 
-.atlas-event-marker { color: #b65c10; pointer-events: none; }
-.dark .atlas-event-marker { color: #ffd080; }
+.atlas-event-marker { color: var(--atlas-marker); pointer-events: none; }
 .atlas-globe-pin[data-occluded="true"] .atlas-event-marker { display: none; }
-.atlas-rim-arrow { display: none; color: #a9703c; pointer-events: none; }
-.dark .atlas-rim-arrow { color: #e8bd87; }
+.atlas-rim-arrow { display: none; color: var(--atlas-rim); pointer-events: none; }
 .atlas-globe-pin[data-occluded="true"] .atlas-rim-arrow { display: block; }
 .atlas-rim-arrow path { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
 .atlas-rim-chevron { stroke-width: 1.7; opacity: .5; }
@@ -308,12 +312,15 @@ html[data-atlas-transition]::view-transition-new(atlas-globe):only-child { anima
 .atlas-globe-pin:is(:hover, :focus-visible, [data-selected="true"]) .atlas-rim-glow { opacity: .18; }
 .atlas-event-ring { fill: var(--background); fill-opacity: .9; stroke: currentColor; stroke-width: 1.7; }
 .atlas-event-core { fill: currentColor; }
-.atlas-event-spark { fill: #fff8e7; }
+.atlas-event-spark { fill: var(--atlas-marker-spark); }
 .atlas-event-pulse { fill: none; stroke: currentColor; stroke-width: 1.2; opacity: .25; transform-origin: 0 0; }
 .atlas-globe-pins[data-playing="true"] .atlas-event-pulse { animation: atlas-event-ripple 3.6s ease-out infinite; }
 @keyframes atlas-event-ripple { from { transform: scale(.7); opacity: .65; } to { transform: scale(1.65); opacity: 0; } }
 .atlas-globe-pin:is(:hover, :focus-visible, [data-selected="true"]) .atlas-event-ring { r: 8.5; stroke-width: 2; }
 .atlas-globe-pin:is(:hover, :focus-visible, [data-selected="true"]) .atlas-event-halo { r: 24; }
+.atlas-globe-pins[data-renderer="gpu"] :is(.atlas-event-marker, .atlas-rim-arrow) { display: none; }
+.atlas-globe-pins[data-renderer="gpu"] .atlas-event-pulse { animation: none; }
+.atlas-globe-pins[data-renderer="gpu"] .atlas-globe-hit { stroke-opacity: 0; }
 .atlas-route { --atlas-beam: #397c83; color: #468e96; pointer-events: none; transition: opacity .18s; }
 .atlas-globe-pins:has(.atlas-route[data-active="true"]) .atlas-route:not([data-active="true"]) { opacity: .3; }
 .dark .atlas-route { --atlas-beam: #c4e9e5; color: #85c5be; }

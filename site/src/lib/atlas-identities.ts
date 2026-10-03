@@ -1,11 +1,11 @@
-import type { AtlasSiteBundle, AtlasMapSnapshot } from "./atlas-contract";
+import type { AtlasData, AtlasMap } from "./atlas-contract";
 import type { AtlasLink, AtlasRecord } from "./atlas";
 export const logos: Record<string, string> = {
   who: "who.png", ecdc: "ecdc.svg", efsa: "efsa.svg", fao: "fao.svg",
   ncdc: "ncdc.svg", paho: "paho.ico", rivm: "rivm.svg", ukhsa: "ukhsa.svg",
 };
 
-export function createIdentities(bundle: AtlasSiteBundle, atlas: AtlasMapSnapshot) {
+export function createIdentities(bundle: AtlasData, atlas: AtlasMap) {
   const organizations = new Map(bundle.organizations.map(o => [o.id, o]));
   const reportOrganizations = Object.fromEntries(bundle.channels.map(channel => [channel.snapshot_source, {
     name: organizations.get(channel.organization_id)!.name, logo: logos[channel.organization_id],

@@ -198,10 +198,19 @@ export function separateGlobeRoutes(routes: { id: string; from: [number, number]
   // ponytail: pairwise curve checks suit small maps; use a spatial index for hundreds of routes.
   for (let i = 0; i < routes.length; i++) for (let j = 0; j < i; j++) {
     const a = curves[i], b = curves[j];
-    const close = a.points.filter((point, k) => b.points.some((other, n) =>
-      Math.hypot(...point.map((v, axis) => v - other[axis])) < .075 &&
-      Math.abs(a.tangents[k].reduce((dot, v, axis) => dot + v * b.tangents[n][axis], 0)) > Math.cos(Math.PI / 9)));
-    if (close.length >= 2) { neighbours[i].add(j); neighbours[j].add(i); }
+    let close = 0;
+    for (let k = 0; k < a.points.length && close < 2; k++) {
+      const point = a.points[k], tangent = a.tangents[k];
+      for (let n = 0; n < b.points.length; n++) {
+        const other = b.points[n], direction = b.tangents[n];
+        if (Math.hypot(point[0] - other[0], point[1] - other[1], point[2] - other[2]) < .075 &&
+            Math.abs(tangent[0] * direction[0] + tangent[1] * direction[1] + tangent[2] * direction[2]) > Math.cos(Math.PI / 9)) {
+          close++;
+          break;
+        }
+      }
+    }
+    if (close === 2) { neighbours[i].add(j); neighbours[j].add(i); }
   }
   const laneLimits = new Map<number, { count: number; step: number }>();
   for (let i = 0; i < routes.length; i++) {
@@ -250,55 +259,104 @@ export function separateGlobeRoutes(routes: { id: string; from: [number, number]
   return curves.map((curve, i) => curve.direction.map(v => v * lanes.get(i)! * laneLimits.get(i)!.step) as Vec3);
 }
 
+const anchorSamples = Array.from({ length: 97 }, (_, i) => i)
+  .sort((a, b) => Math.abs(a / 96 - .5) - Math.abs(b / 96 - .5));
+
 export function prepareGlobeArc(from: [number, number], to: [number, number], geographic = true, bend?: Vec3) {
   const a = globePoint(from), b = globePoint(to);
   const curve = geographic ? geographicArc(a, b) : quadraticArc(a, b, .4);
   const pointAt = (t: number) => curve(t, bend);
   const points = Array.from({ length: 97 }, (_, i) => pointAt(i / 96));
   type Projection = ReturnType<typeof globeProjection>;
-  function path(project: Projection, start = 0, end = 1) {
-    let path = "", connected = false;
+  type ProjectedPoint = ReturnType<Projection>;
+  let sampledProjection: Projection | undefined;
+  let samples: ProjectedPoint[] = [];
+  function path(project: Projection, start?: number, end?: number, tail?: ProjectedPoint, head?: ProjectedPoint): string;
+  function path(project: Projection, start: number, end: number, tail: ProjectedPoint | undefined, head: ProjectedPoint | undefined, output: Float32Array): number;
+  function path(project: Projection, start = 0, end = 1, tail?: ProjectedPoint, head?: ProjectedPoint, output?: Float32Array) {
+    let path = "", connected = false, count = 0, x = 0, y = 0;
+    const full = start === 0 && end === 1;
+    if (full && sampledProjection !== project) {
+      samples = points.map(project);
+      sampledProjection = project;
+    }
     const steps = Math.max(1, Math.ceil(96 * (end - start)));
     for (let i = 0; i <= steps; i++) {
-      const p = project(start === 0 && end === 1 ? points[i] : pointAt(start + (end - start) * i / steps));
+      let p: ProjectedPoint;
+      if (full) p = samples[i];
+      else {
+        const t = start + (end - start) * i / steps;
+        p = i === 0 && tail ? tail : i === steps && t === end && head ? head : project(pointAt(t));
+      }
       if (!p.visible) { connected = false; continue; }
-      path += `${connected ? "L" : "M"}${(500 + p.x * 480).toFixed(2)},${(500 - p.y * 480).toFixed(2)} `;
+      const nextX = 500 + p.x * 480, nextY = 500 - p.y * 480;
+      if (output) {
+        if (connected) {
+          const offset = count++ * 4;
+          output[offset] = x; output[offset + 1] = y;
+          output[offset + 2] = nextX; output[offset + 3] = nextY;
+        }
+      } else path += `${connected ? "L" : "M"}${nextX.toFixed(2)},${nextY.toFixed(2)} `;
+      x = nextX; y = nextY;
       connected = true;
     }
-    return path;
+    return output ? count : path;
+  }
+  function trail(project: Projection, progress: number, length?: number): { path: string; x1: number; y1: number; x2: number; y2: number };
+  function trail(project: Projection, progress: number, length: number, output: Float32Array, gradient: Float32Array): number;
+  function trail(project: Projection, progress: number, length = .22, output?: Float32Array, gradient?: Float32Array) {
+    const start = Math.min(1, Math.max(0, progress - length));
+    const end = Math.min(1, Math.max(0, progress));
+    const tail = project(pointAt(start)), head = project(pointAt(end));
+    // The path stops at the destination while its gradient continues past it.
+    const beyond = end > start ? Math.max(0, progress - end) / (end - start) : 0;
+    const x1 = 500 + tail.x * 480, y1 = 500 - tail.y * 480;
+    const x2 = 500 + (head.x + (head.x - tail.x) * beyond) * 480;
+    const y2 = 500 - (head.y + (head.y - tail.y) * beyond) * 480;
+    if (output && gradient) {
+      gradient[0] = x1; gradient[1] = y1; gradient[2] = x2; gradient[3] = y2;
+      return end > start ? path(project, start, end, tail, head, output) : 0;
+    }
+    return { path: end > start ? path(project, start, end, tail, head) : "", x1, y1, x2, y2 };
+  }
+  function arrow(project: Projection, progress?: number): string;
+  function arrow(project: Projection, progress: number, output: Float32Array): number;
+  function arrow(project: Projection, progress = .91, output?: Float32Array): string | number {
+    const tip = project(pointAt(progress)), tail = project(pointAt(Math.max(0, progress - .01)));
+    if (!tip.visible || !tail.visible) return output ? 0 : "";
+    const x = 500 + tip.x * 480, y = 500 - tip.y * 480;
+    const dx = tip.x - tail.x, dy = tail.y - tip.y;
+    const length = Math.hypot(dx, dy);
+    if (!length) return output ? 0 : "";
+    const ux = dx / length, uy = dy / length;
+    const x1 = x - ux * 13 - uy * 6, y1 = y - uy * 13 + ux * 6;
+    const x2 = x - ux * 13 + uy * 6, y2 = y - uy * 13 - ux * 6;
+    if (output) {
+      output[0] = x1; output[1] = y1; output[2] = x; output[3] = y;
+      output[4] = x; output[5] = y; output[6] = x2; output[7] = y2;
+      return 2;
+    }
+    return `M${x1},${y1} L${x},${y} L${x2},${y2}`;
   }
   return {
     path,
+    pathSegments(project: Projection, output: Float32Array, start = 0, end = 1) {
+      return path(project, start, end, undefined, undefined, output);
+    },
     anchor(project: Projection) {
-      let anchor: ReturnType<Projection> | null = null, nearest = Infinity;
-      for (let i = 0; i <= 96; i++) {
-        const point = project(points[i]), distance = Math.abs(i / 96 - .5);
-        if (point.visible && distance < nearest) { anchor = point; nearest = distance; }
+      for (const i of anchorSamples) {
+        const point = sampledProjection === project ? samples[i] : project(points[i]);
+        if (point.visible) return point;
       }
-      return anchor;
+      return null;
     },
-    trail(project: Projection, progress: number, length = .22) {
-      const start = Math.min(1, Math.max(0, progress - length));
-      const end = Math.min(1, Math.max(0, progress));
-      const tail = project(pointAt(start)), head = project(pointAt(end));
-      // The path stops at the destination while its gradient continues past it.
-      const beyond = end > start ? Math.max(0, progress - end) / (end - start) : 0;
-      return {
-        path: end > start ? path(project, start, end) : "",
-        x1: 500 + tail.x * 480, y1: 500 - tail.y * 480,
-        x2: 500 + (head.x + (head.x - tail.x) * beyond) * 480,
-        y2: 500 - (head.y + (head.y - tail.y) * beyond) * 480,
-      };
+    trail,
+    trailSegments(project: Projection, output: Float32Array, gradient: Float32Array, progress: number, length = .22) {
+      return trail(project, progress, length, output, gradient);
     },
-    arrow(project: Projection, progress = .91) {
-      const tip = project(pointAt(progress)), tail = project(pointAt(Math.max(0, progress - .01)));
-      if (!tip.visible || !tail.visible) return "";
-      const x = 500 + tip.x * 480, y = 500 - tip.y * 480;
-      const dx = tip.x - tail.x, dy = tail.y - tip.y;
-      const length = Math.hypot(dx, dy);
-      if (!length) return "";
-      const ux = dx / length, uy = dy / length;
-      return `M${x - ux * 13 - uy * 6},${y - uy * 13 + ux * 6} L${x},${y} L${x - ux * 13 + uy * 6},${y - uy * 13 - ux * 6}`;
+    arrow,
+    arrowSegments(project: Projection, output: Float32Array, progress = .91) {
+      return arrow(project, progress, output);
     },
   };
 }

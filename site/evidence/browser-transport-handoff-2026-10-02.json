@@ -1,0 +1,67 @@
+{
+  "created_at": "2026-10-02T06:40:25.046706+00:00",
+  "status": "producer_validated_consumer_checks_pending",
+  "source_export_id": "e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48",
+  "candidate_directory": "browser-transport-e5f3-20261002-v4",
+  "manifest": {
+    "path": "browser-transport-e5f3-20261002-v4/manifest.json",
+    "sha256": "b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057",
+    "bytes": 870451
+  },
+  "transport_version": "0.1.0",
+  "scientific_contract": "1.5.0",
+  "validation": {
+    "source_export_id": "e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48",
+    "asset_count": 463,
+    "source_files_compared": [
+      "site",
+      "map"
+    ],
+    "reconstruction": true,
+    "selection_cases": 122,
+    "pinned_selector_parity": true,
+    "all_records_individually": false
+  },
+  "exhaustive_validation_reuse": {
+    "receipt": ".local/browser-transport-e5f3-20261002-v2.validation.json",
+    "receipt_sha256": "e408019991eab5d6864585ee8536647e4c889ceb0e3053d61580a1d7cd02a593",
+    "cases": 2186,
+    "unchanged_inputs": [
+      {
+        "path": "core.json",
+        "sha256": "92860a895e6a17a2f13ed4eb78ea6d44640ae83628c4f62ee81b9ffbf04b71b0"
+      },
+      {
+        "path": "map-core.json",
+        "sha256": "8aafa28e1bbe35c8e51435ffb22c114a062982addd2671066c3e83a27b9aca1f"
+      },
+      {
+        "path": "browser_transport.js",
+        "sha256": "0b659ae492e7d3ca8d4a82ac06f94206c0033aa1502524cd9d6d37dc53e3b814"
+      },
+      {
+        "path": "browser_tables.js",
+        "sha256": "80d72be4968bc7e865595b7cfda9e1cd49e633a50d8d2a6df119225c4661bddc"
+      },
+      {
+        "path": "site_view.js",
+        "sha256": "52e8459a8a3e90d0e55216fc2fef286f30e8a1de1801050bc4d71c2d6d4a3cb6"
+      }
+    ]
+  },
+  "measurements": "browser-transport-e5f3-20261002-v4.measurements.json",
+  "unit_tests": {
+    "full_suite_passed": 280,
+    "targeted_fixture_passed_after_verifier_changes": true,
+    "typescript_declarations_checked": true,
+    "core_schema_validated": true,
+    "manifest_schema_validated": true
+  },
+  "consumer_adoption": false,
+  "publication_authorized": false,
+  "pending": [
+    "Consumer exact entity loading, missing/corrupt asset rejection, cancellation and cache eviction checks",
+    "Browser interaction, rendering, memory and actual HTTP compression measurements",
+    "Matching publication authorization and release descriptor validation"
+  ]
+}

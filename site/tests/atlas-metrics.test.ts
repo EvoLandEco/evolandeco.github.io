@@ -77,6 +77,7 @@ test("Reviewed series retain only explicit connections with complete visible sup
   const partial = research.selectedResearch(new Set([...all].filter(id => id !== hidden)));
   assert.equal(partial.reviewed_series[0].members.length, 3);
   assert.equal(partial.reviewed_series[0].connections.length, 0);
+  assert("evidence" in partial.reviewed_series[0]);
   assert(!partial.reviewed_series[0].evidence.some(e => e.record_id === hidden));
   assert.equal(partial.numeric_coverage!.reviewed_connection_count, 0);
   assert.equal(partial.numeric_coverage!.records_with_measures + partial.numeric_coverage!.records_without_reviewed_measures, partial.numeric_coverage!.record_count);

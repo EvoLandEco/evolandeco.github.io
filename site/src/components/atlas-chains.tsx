@@ -1,5 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { EvidenceSummary } from "./atlas-evidence-summary";
+import { AtlasDisclosure } from "./atlas-disclosure";
+import { AtlasDetailStatus, useAtlasDetails } from "./atlas-detail";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { ArrowRight, CalendarDays, ChevronDown, FileText, GitBranch, MapPin, MapPinOff, X } from "lucide-react";
 import { useAtlas, useAtlasPanelState } from "./atlas-context";
@@ -32,7 +34,7 @@ export function AtlasChains({ chains, onReport }: { chains: AtlasSelectedChain[]
 }
 
 function ChainFigure({ chain, onReport }: { chain: AtlasSelectedChain; onReport: (ids: string[]) => void }) {
-  const { bundle, evidence, atlasDocuments } = useAtlas();
+  const { bundle } = useAtlas();
   const arrow = useId();
   const reducedMotion = useReducedMotion();
   const transition = { duration: reducedMotion ? 0 : .55, ease: "easeInOut" as const };
@@ -52,7 +54,7 @@ function ChainFigure({ chain, onReport }: { chain: AtlasSelectedChain; onReport:
   };
   const hoverProps = (id: string, figure = false) => ({
     "data-highlighted": hovered === id || focused === id || undefined,
-    onPointerMove: () => figure ? hoverFigure(id) : setHovered(id), onPointerLeave: () => setHovered(current => current === id ? "" : current),
+    onPointerEnter: () => figure ? hoverFigure(id) : setHovered(id), onPointerLeave: () => setHovered(current => current === id ? "" : current),
     onFocus: () => { if (figure) hoverFigure(id, true); else { setFocused(id); setHovered(""); } }, onBlur: () => setFocused(current => current === id ? "" : current),
   });
   const [selectionChain, setSelectionChain] = useState(chain.id);
@@ -126,10 +128,7 @@ function ChainFigure({ chain, onReport }: { chain: AtlasSelectedChain; onReport:
     {"place_id" in item && <p className="atlas-chart-note">{[item.coordinate_precision, item.location_note, item.date_note].filter(Boolean).join(" · ")}</p>}
     {item.uncertainty && <p className="atlas-chart-note">{item.uncertainty}</p>}
     <button onClick={() => onReport(item.record_ids)}><FileText size={14} aria-hidden />View reports</button>
-    <details><EvidenceSummary kind="source" />{item.evidence_ids.map(id => {
-      const entry = evidence.get(id)!, report = atlasDocuments.get(entry.document_id)!;
-      return <blockquote key={id}><p>{entry.quote}</p><a href={report.url} target="_blank" rel="noopener noreferrer">{report.title} · {formatDate(report.publication)}</a></blockquote>;
-    })}</details>
+    <AtlasDisclosure unmountOnClose summary={<EvidenceSummary kind="source" />}>{() => <ChainSourceEvidence ids={item.evidence_ids} />}</AtlasDisclosure>
   </div>;
   return <figure className="atlas-chain-figure" data-kind={chain.kind} aria-label={chain.label}>
     {!chain.selection_complete && <figcaption><span className="atlas-status">Partial selection</span></figcaption>}
@@ -188,6 +187,16 @@ function ChainFigure({ chain, onReport }: { chain: AtlasSelectedChain; onReport:
     </details>
     </motion.div>
   </figure>;
+}
+
+function ChainSourceEvidence({ ids }: { ids: string[] }) {
+  const { atlasDocuments } = useAtlas();
+  const { data, error, retry } = useAtlasDetails(ids.map(id => ({ collection: "evidence", id })));
+  if (!data) return <AtlasDetailStatus error={error} retry={retry} />;
+  return ids.map(id => {
+    const entry = data.get("evidence", id), report = atlasDocuments.get(entry.document_id)!;
+    return <blockquote key={id}><p>{entry.quote}</p><a href={report.url} target="_blank" rel="noopener noreferrer">{report.title} · {formatDate(report.publication)}</a></blockquote>;
+  });
 }
 
 

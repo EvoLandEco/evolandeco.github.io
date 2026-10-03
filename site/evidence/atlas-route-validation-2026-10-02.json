@@ -1,0 +1,234 @@
+{
+  "date": "2026-10-02",
+  "scope": "Browser interaction, resource lifetime and visual comparison for the ATLAS route renderer.",
+  "dataset_fixture": "fc22216e5448c103e91ddddb47a044ac3d39a6bd8a89b4a02638edb8da6a363d",
+  "artifact": "Production export served at http://127.0.0.1:3006/atlas/.",
+  "engines": {
+    "chromium_metal": {
+      "configuration": "Headed Chromium with ANGLE Metal; ATLAS_EXPECT_GPU=true.",
+      "focused_tests": {
+        "passed": 13,
+        "failed": 0,
+        "seconds": 46.5
+      },
+      "native_arrival_restart": {
+        "passed": 1,
+        "failed": 0
+      }
+    },
+    "playwright_webkit": {
+      "configuration": "Playwright WebKit; ATLAS_EXPECT_GPU=true. This is desktop WebKit, not a physical iPhone run.",
+      "focused_tests": {
+        "initial_passed": 12,
+        "initial_failed": 1,
+        "settled_idle_rerun_passed": 1,
+        "settled_idle_rerun_failed": 0
+      },
+      "initial_failure": "The idle sample included one hover-exit repaint: one marker draw and three route passes. The test waits for tooltip removal and the following paint before sampling idle work.",
+      "native_arrival_restart": {
+        "passed": 1,
+        "failed": 0
+      }
+    }
+  },
+  "coverage": [
+    "Pointer clicks, overlay dragging, keyboard selection and centering.",
+    "Far-side rim arrows and marker context restoration.",
+    "Route context identity and resource counts across date windows, a topic with zero links, themes and selections.",
+    "Native route paths match interaction paths after context loss; restored contexts hide the native visual subtree.",
+    "Controlled route texture-size limit and unavailable accelerated contexts preserve native geometry and selection without page errors.",
+    "Route and marker backing dimensions follow device-pixel density without context replacement. Chromium emulation uses a viewport change to deliver the resolution-query event.",
+    "Rendered travel beams animate, then stop under reduced motion; offscreen rendering stops.",
+    "Native travel beams finish entering the destination before restarting."
+  ],
+  "visual_review": {
+    "status": "Accepted for the tested desktop engines and fixtures",
+    "finding": "Manual inspection at device-pixel densities 1 and 2 confirms matching paths, movement tails, count badges, mixed-route crossings and group dimming. The remaining pixel differences come from stroke, glyph and filter rasterization.",
+    "method": "Reduced motion fixes route phase. Capture the GPU layer, lose its context, then capture the native SVG at the same orientation. Compare light and dark themes at rest and with other routes dimmed. Include count badges and mixed-route crossings.",
+    "metric": "Mean absolute RGB channel error and total absolute RGB error divided by native foreground energy. Foreground energy is the sum of channel distances from the solid page background.",
+    "comparisons": [
+      {
+        "engine": "chromium_metal",
+        "state": "light-resting",
+        "meanError": 0.29298825256975036,
+        "foregroundError": 0.14111417624893002,
+        "gpuEnergy": 3109474,
+        "nativeEnergy": 2884409,
+        "device_pixel_ratio": 1
+      },
+      {
+        "engine": "chromium_metal",
+        "state": "light-dimmed",
+        "meanError": 0.11304886124787654,
+        "foregroundError": 0.14840334959245113,
+        "gpuEnergy": 1141234,
+        "nativeEnergy": 1058278,
+        "device_pixel_ratio": 1
+      },
+      {
+        "engine": "chromium_metal",
+        "state": "dark-resting",
+        "meanError": 0.3988576487863868,
+        "foregroundError": 0.12276534586209295,
+        "gpuEnergy": 4772315,
+        "nativeEnergy": 4513562,
+        "device_pixel_ratio": 1
+      },
+      {
+        "engine": "chromium_metal",
+        "state": "dark-dimmed",
+        "meanError": 0.14215542310903803,
+        "foregroundError": 0.11979424467413985,
+        "gpuEnergy": 1737460,
+        "nativeEnergy": 1648560,
+        "device_pixel_ratio": 1
+      },
+      {
+        "engine": "playwright_webkit",
+        "state": "light-resting",
+        "meanError": 0.26604762316086494,
+        "foregroundError": 0.12713081984388808,
+        "gpuEnergy": 3098033,
+        "nativeEnergy": 2907273,
+        "device_pixel_ratio": 1
+      },
+      {
+        "engine": "playwright_webkit",
+        "state": "light-dimmed",
+        "meanError": 0.10193415104661542,
+        "foregroundError": 0.1338719939043816,
+        "gpuEnergy": 1130594,
+        "nativeEnergy": 1057809,
+        "device_pixel_ratio": 1
+      },
+      {
+        "engine": "playwright_webkit",
+        "state": "dark-resting",
+        "meanError": 0.5218270421237511,
+        "foregroundError": 0.17184950204765892,
+        "gpuEnergy": 4759469,
+        "nativeEnergy": 4218476,
+        "device_pixel_ratio": 1
+      },
+      {
+        "engine": "playwright_webkit",
+        "state": "dark-dimmed",
+        "meanError": 0.17996746422504392,
+        "foregroundError": 0.1620495589652649,
+        "gpuEnergy": 1725587,
+        "nativeEnergy": 1542849,
+        "device_pixel_ratio": 1
+      },
+      {
+        "engine": "chromium_metal",
+        "state": "light-resting",
+        "device_pixel_ratio": 2,
+        "meanError": 0.15998261639457545,
+        "foregroundError": 0.07600451641148931,
+        "gpuEnergy": 12014748,
+        "nativeEnergy": 11696897
+      },
+      {
+        "engine": "chromium_metal",
+        "state": "light-dimmed",
+        "device_pixel_ratio": 2,
+        "meanError": 0.07079266361463822,
+        "foregroundError": 0.09174322196434302,
+        "gpuEnergy": 4424356,
+        "nativeEnergy": 4287968
+      },
+      {
+        "engine": "chromium_metal",
+        "state": "dark-resting",
+        "device_pixel_ratio": 2,
+        "meanError": 0.2074206040712908,
+        "foregroundError": 0.06350722849638857,
+        "gpuEnergy": 18405448,
+        "nativeEnergy": 18149556
+      },
+      {
+        "engine": "chromium_metal",
+        "state": "dark-dimmed",
+        "device_pixel_ratio": 2,
+        "meanError": 0.08094749647289165,
+        "foregroundError": 0.06803932595656526,
+        "gpuEnergy": 6707534,
+        "nativeEnergy": 6611206
+      },
+      {
+        "engine": "playwright_webkit",
+        "state": "light-resting",
+        "device_pixel_ratio": 2,
+        "meanError": 0.16759037315366676,
+        "foregroundError": 0.07996097483575808,
+        "gpuEnergy": 12013043,
+        "nativeEnergy": 11646844
+      },
+      {
+        "engine": "playwright_webkit",
+        "state": "light-dimmed",
+        "device_pixel_ratio": 2,
+        "meanError": 0.06477768420143387,
+        "foregroundError": 0.08443937553233938,
+        "gpuEnergy": 4398718,
+        "nativeEnergy": 4263023
+      },
+      {
+        "engine": "playwright_webkit",
+        "state": "dark-resting",
+        "device_pixel_ratio": 2,
+        "meanError": 0.3675756168840517,
+        "foregroundError": 0.12068021332468064,
+        "gpuEnergy": 18411652,
+        "nativeEnergy": 16925749
+      },
+      {
+        "engine": "playwright_webkit",
+        "state": "dark-dimmed",
+        "device_pixel_ratio": 2,
+        "meanError": 0.12696852235754802,
+        "foregroundError": 0.11395744921403393,
+        "gpuEnergy": 6683152,
+        "nativeEnergy": 6191425
+      }
+    ],
+    "raw_capture_directory": "/tmp/atlas-routes-parity",
+    "acceptance": "Full frames and count/crossing crops were inspected alongside foreground-normalized metrics. The apparent short-tail differences at density 1 did not show lost foreground energy and were absent as geometric differences in the density 2 captures.",
+    "thresholds": {
+      "mean_channel_error": 0.7,
+      "foreground_error": 0.22,
+      "dimming_ratio_difference": 0.01
+    },
+    "retina_parity_runs": {
+      "chromium_metal": {
+        "passed": 1,
+        "failed": 0
+      },
+      "playwright_webkit": {
+        "passed": 1,
+        "failed": 0
+      }
+    },
+    "diagnostic_checks": [
+      "SVG gradients with duplicate offset-zero stops produce zero alpha outside the start in both tested engines, matching the shader.",
+      "The two questioned density-1 tail regions contained 3.3% more GPU foreground energy than SVG; the difference was pixel distribution rather than missing segments."
+    ],
+    "calibration": "Across 16 captures, foreground-normalized error ranged from 0.0635 to 0.1719, mean RGB channel error from 0.0648 to 0.5219 on a 0\u2013255 scale, and dimming-ratio disagreement stayed below 0.0032. The test limits include room for rasterization differences without using blank canvas area as the sole acceptance metric.",
+    "isolated_routes": {
+      "method": "Render one frozen native route at a time with the same path segments and gradient endpoints.",
+      "routes": [
+        9,
+        15,
+        41,
+        97
+      ],
+      "result": "The right-side curves and diagonal routes retain their geometry and beam tails. Peak RGB channel differences were 18\u201328; mean error over changed channels was 1.12\u20131.52.",
+      "raw_results": "/tmp/atlas-route-isolate.json"
+    },
+    "threshold_validation": "The calibrated error limits pass all 16 saved capture comparisons."
+  },
+  "limits": [
+    "These functional runs do not measure CPU use, GPU use, frame rate or memory growth.",
+    "The forced native branch tests preserve the existing SVG rendering; they do not approximate unavailable effects."
+  ]
+}

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { memo, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Activity, CalendarDays, Check, ChevronDown, GitBranch, Layers3, MapPin, Search, Network, Grid2X2, ChartNoAxesCombined, FlaskConical, Leaf } from "lucide-react";
 
 const badgeIcons = { disease: Activity, place: MapPin, period: CalendarDays, kind: GitBranch, count: Layers3, network: Network, evidence: Grid2X2, timeline: ChartNoAxesCombined, sampling: FlaskConical, environment: Leaf };
@@ -18,7 +18,7 @@ type SelectProps = {
 } & ({ multiple: true; value: string[]; onChange: (value: string[]) => void }
   | { multiple?: false; value: string; onChange: (value: string) => void });
 
-export function AtlasSelect(props: SelectProps) {
+export const AtlasSelect = memo(function AtlasSelect(props: SelectProps) {
   const { label, value, items, searchable = false, multiple = false } = props;
   const selected = Array.isArray(value) ? value : [value];
   const selectedLabels = items.filter(item => selected.includes(item.value)).map(item => item.label);
@@ -93,4 +93,4 @@ export function AtlasSelect(props: SelectProps) {
       {open && choices.length === 0 && <p className="atlas-select-empty" role="status">No matches</p>}
     </div>
   </details>;
-}
+});

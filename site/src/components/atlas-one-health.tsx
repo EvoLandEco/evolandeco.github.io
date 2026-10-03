@@ -1,5 +1,5 @@
 "use client";
-import { memo, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowUp, ArrowDown, ArrowUpDown, RotateCcw, ArrowRight, ChevronDown, ExternalLink, FileText, Network, Grid2X2, Rows3, BookOpen, Check, SlidersHorizontal, Activity, CalendarDays, Microscope, Info, TriangleAlert, UserRound, PawPrint, Leaf, Wheat, CircleHelp, MapPin } from "lucide-react";
 import { createPortal } from "react-dom";
 import { ReportPagination } from "./atlas-pagination";
@@ -7,6 +7,8 @@ import { revealAtlasEntries } from "@/lib/atlas-detail-scroll";
 import { useAtlas, useAtlasPanelState } from "./atlas-context";
 import { useElementSize } from "./use-element-size";
 import { AtlasScope } from "./atlas-scope";
+import { AtlasDetailStatus, useAtlasDetails } from "./atlas-detail";
+import { AtlasDisclosure } from "./atlas-disclosure";
 import { AtlasHealthPanels } from "./atlas-one-health-panels";
 import { AtlasSelect, type AtlasSelectItem } from "./atlas-select";
 import { LocationBadges } from "./atlas-location-badges";
@@ -16,6 +18,7 @@ import { healthOverviewEvidence, compareHealthEvidence, healthEntryIndex, health
 import { healthLayout } from "@/lib/atlas-health-layout";
 import { fitChainMap, chainLandDots } from "@/lib/atlas-chain-map";
 import type { AtlasOneHealthNode as Node, AtlasOneHealthDomain as Domain, AtlasSelectedOneHealth } from "@/lib/atlas-contract";
+import type { AtlasDetailRef } from "@/lib/atlas-browser";
 
 type HealthMode = "network" | "evidence" | "overview" | "timeline" | "sampling" | "environment";
 const panelModes = [...healthViews.slice(0,2),{value:"overview" as const,label:"Overview"},...healthViews.slice(2)];
@@ -56,18 +59,39 @@ export const AtlasOneHealth = memo(function AtlasOneHealth({ rows, onReport, foo
     if (mergedTimeline) for (const entry of index.values()) entry.counts.timeline += entry.counts.environment;
     return index;
   },[view,mergedTimeline]);
-  const reports = useMemo(() => [...entryIndex].map(([id,entry])=>{
-    const record=bundle.records.find(r=>r.id===id)!;
-    return {id,entry,topic:bundle.topics.find(t=>t.id===record.topic_id)!.label,document:atlasDocuments.get(record.document_id)!};
-  }),[entryIndex,atlasDocuments,bundle]);
-  const matching=reports.filter(r=>matchesHealthEntry(r.entry,entryFilters));
+  const reports = useMemo(() => {
+    const records = new Map(bundle.records.map(record => [record.id, record]));
+    const topics = new Map(bundle.topics.map(topic => [topic.id, topic.label]));
+    return [...entryIndex].map(([id,entry])=>{
+      const record=records.get(id)!;
+      return {id,entry,topic:topics.get(record.topic_id)!,document:atlasDocuments.get(record.document_id)!};
+    });
+  },[entryIndex,atlasDocuments,bundle]);
+  const matching=useMemo(()=>reports.filter(r=>matchesHealthEntry(r.entry,entryFilters)),[reports,entryFilters]);
   const current = matching.find(r => r.id === report) ?? matching[0];
-  const overviewRows=entryFilters.length ? rows.filter(r=>matching.some(m=>m.id===r.id)) : rows;
+  const overviewRows=useMemo(()=>{
+    if (!entryFilters.length) return rows;
+    const matchingIds = new Set(matching.map(entry=>entry.id));
+    return rows.filter(row=>matchingIds.has(row.id));
+  },[entryFilters,rows,matching]);
   const selectedIds=current?.entry.nodeIds;
-  const nodes=view?.nodes.filter(n=>selectedIds?.has(n.id)) ?? [];
-  const undated=view?.undated_nodes.filter(n=>selectedIds?.has(n.id)) ?? [];
-  const relations=view?.relations.filter(r=>selectedIds?.has(r.from_node_id)&&selectedIds.has(r.to_node_id)) ?? [];
-  const diagramNodes=nodes.filter(n=>n.scope!=="background");
+  const { relations, diagramNodes, items, surveillance } = useMemo(()=>{
+    const nodes=view?.nodes.filter(n=>selectedIds?.has(n.id)) ?? [];
+    const undated=view?.undated_nodes.filter(n=>selectedIds?.has(n.id)) ?? [];
+    return { items:[...nodes,...undated],
+      relations:view?.relations.filter(r=>selectedIds?.has(r.from_node_id)&&selectedIds.has(r.to_node_id)) ?? [],
+      diagramNodes:nodes.filter(n=>n.scope!=="background"), surveillance:nodes.filter(n=>n.scope==="surveillance") };
+  },[view,selectedIds]);
+  const reportItems=useMemo<AtlasSelectItem[]>(()=>{
+    const views=healthViews.filter(v=>(!mergedTimeline || v.value!=="environment") && (view && "timings" in view || v.value==='network' || v.value==='evidence'));
+    return matching.map(r => ({ value:r.id, label:`${r.topic} · ${r.document.title}`, title:r.topic,
+      badges:[{kind:"period",label:formatDate(r.document.publication)},...views.map(v=>({kind:v.value,label:`${v.label} ${r.entry.counts[v.value]}`,empty:r.entry.counts[v.value]===0}))] }));
+  },[matching,mergedTimeline,view]);
+  const selectReport=useCallback((value:string)=>{setReport(value);setSelection("");},[setReport,setSelection]);
+  const modeItems=useMemo<AtlasSelectItem[]>(()=>panelModes.filter(m => !mergedTimeline || m.value !== "environment").map(m=>({value:m.value,label:m.label,title:m.label,badges:m.value==='overview' ? [{kind:'count',label:`${overviewRows.length} entries`}] : [
+    {kind:m.value,label:current ? `${current.entry.counts[m.value]} in this entry` : 'No entry selected',empty:!current?.entry.counts[m.value]},
+    {kind:'count',label:`${matching.filter(r=>r.entry.counts[m.value]>0).length} entries available`},
+  ]})),[mergedTimeline,overviewRows.length,current,matching]);
   const highlighted=hover.report===current?.id ? hover.id : "";
   const highlight=(id:string,fromFigure=false)=>{
     setHover({report:current?.id ?? "",id});
@@ -81,12 +105,7 @@ export const AtlasOneHealth = memo(function AtlasOneHealth({ rows, onReport, foo
   };
   const clearHighlight=()=>setHover({report:"",id:""});
   if (!view) return <p className="atlas-empty">This dataset does not contain One Health reviews.</p>;
-  const modeItems:AtlasSelectItem[]=panelModes.filter(m => !mergedTimeline || m.value !== "environment").map(m=>({value:m.value,label:m.label,title:m.label,badges:m.value==='overview' ? [{kind:'count',label:`${overviewRows.length} entries`}] : [
-    {kind:m.value,label:current ? `${current.entry.counts[m.value]} in this entry` : 'No entry selected',empty:!current?.entry.counts[m.value]},
-    {kind:'count',label:`${matching.filter(r=>r.entry.counts[m.value]>0).length} entries available`},
-  ]}));
   const ModeIcon = { network: Network, evidence: Grid2X2, overview: Rows3, timeline: CalendarDays, sampling: Microscope, environment: Leaf }[mode];
-  const items = [...nodes, ...undated];
   const selected = mode === "evidence" ? relations.find(r => r.id === selection) ?? relations[0] : items.find(n => n.id === selection) ?? relations.find(r => r.id === selection) ?? items[0];
   const review = view.reviews.find(r => r.record_id === current?.id);
   const reviewHelp = review && current && <AtlasScope label="Review scope" title={current.document.title}><p>{words(review.outcome)} review</p><p>{review.scope}</p><p>{review.reason}</p>{!relations.some(r=>r.kind==="cross_species_transmission") && <p>No supported cross-species transmission relationship in this selection.</p>}<ul>{review.pending_items.map(item=><li key={item}>{item}</li>)}</ul></AtlasScope>;
@@ -97,7 +116,7 @@ export const AtlasOneHealth = memo(function AtlasOneHealth({ rows, onReport, foo
   }}>
     <h2 className="sr-only">One Health evidence</h2>
     <div className="atlas-oh-tools atlas-panel-tools">{"timings" in view ? <div className="atlas-oh-view-select"><AtlasSelect label="One Health view" summaryLabel={<span className="atlas-oh-mode-label"><ModeIcon size={14} aria-hidden /><span>{modeItems.find(item => item.value === mode)?.label}</span></span>} value={mode} items={modeItems} onChange={value=>setMode(value as HealthMode)} /></div> : <div className="atlas-oh-views" role="group" aria-label="One Health view">{([{id:"network",label:"Network",Icon:Network},{id:"evidence",label:"Evidence",Icon:Grid2X2},{id:"overview",label:"Overview",Icon:Rows3}] as const).map(({id,label,Icon})=><button key={id} aria-pressed={mode===id} onClick={()=>setMode(id)}><Icon size={14} aria-hidden />{label}</button>)}</div>}
-    {mode !== "overview" && current && <AtlasSelect label="One Health report" searchable value={current.id} onChange={value => { setReport(value); setSelection(""); }} items={matching.map(r => ({ value:r.id, label:`${r.topic} · ${r.document.title}`, title:r.topic, badges:[{kind:"period",label:formatDate(r.document.publication)},...healthViews.filter(v=>(!mergedTimeline || v.value!=="environment") && ("timings" in view || v.value==='network' || v.value==='evidence')).map(v=>({kind:v.value,label:`${v.label} ${r.entry.counts[v.value]}`,empty:r.entry.counts[v.value]===0}))] }))} />}
+    {mode !== "overview" && current && <AtlasSelect label="One Health report" searchable value={current.id} onChange={selectReport} items={reportItems} />}
     {mode === "overview" && <div ref={setOverviewTools} className="atlas-oh-overview-tools" />}
     <details ref={entryFilterMenu} className="atlas-oh-entry-filters"><summary aria-label={`Filter One Health entries${entryFilters.length ? `: ${entryFilters.length} active` : ''}`} title="Filter entries"><SlidersHorizontal size={16} aria-hidden />{entryFilters.length>0 && <b>{entryFilters.length}</b>}</summary>
       <div className="atlas-oh-filter-menu"><header><strong>Find entries</strong><span aria-live="polite">{matching.length} / {reports.length}</span><button type="button" disabled={!entryFilters.length} onClick={()=>setEntryFilters([])}>Clear</button></header>
@@ -119,7 +138,7 @@ export const AtlasOneHealth = memo(function AtlasOneHealth({ rows, onReport, foo
           {mode === "network" && <><section className="atlas-oh-observations" aria-label="Observation list">
             <div className="atlas-oh-list-title"><h4><FileText size={14} aria-hidden />Observation list</h4>{reviewHelp}</div>
             <div className="atlas-oh-entry-panels">
-              <section aria-label="Observation nodes"><div ref={nodeEntries} className="atlas-oh-node-entries"><HealthObservationList nodes={items} networkNodes={diagramNodes} selected={selected?.id} highlighted={highlighted} onHover={highlight} onLeave={clearHighlight} onSelect={select} /><SurveillancePanels nodes={nodes.filter(n=>n.scope==="surveillance")} /></div></section>
+              <section aria-label="Observation nodes"><div ref={nodeEntries} className="atlas-oh-node-entries"><HealthObservationList nodes={items} networkNodes={diagramNodes} selected={selected?.id} highlighted={highlighted} onHover={highlight} onLeave={clearHighlight} onSelect={select} /><SurveillancePanels nodes={surveillance} /></div></section>
               <section aria-label="Observation connections">
                 <div ref={relationEntries} className="atlas-oh-relations" role="group" aria-label="One Health relationships">{relations.length ? relations.map(r=>{
                   const from=diagramNodes.findIndex(n=>n.id===r.from_node_id), to=diagramNodes.findIndex(n=>n.id===r.to_node_id);
@@ -264,12 +283,23 @@ function HealthObservationList({ nodes, networkNodes, selected, highlighted, onH
   })}</ul>;
 }
 
-function HealthDetails({item,nodes,onReport}:{item:Node|Relation;nodes:Node[];onReport:(ids:string[],expand?:boolean)=>void}) {
-  const {bundle,evidence,atlasDocuments,measures,assertions}=useAtlas();
+const HealthDetails = memo(function HealthDetails({item,nodes,onReport}:{item:Node|Relation;nodes:Node[];onReport:(ids:string[],expand?:boolean)=>void}) {
+  const {bundle,atlasDocuments}=useAtlas();
+  const refs=useMemo<AtlasDetailRef[]>(()=>{
+    const requested:AtlasDetailRef[]=item.evidence_ids.map(id=>({collection:"evidence",id}));
+    if ("domain" in item) requested.push(...item.measure_ids.map(id=>({collection:"metrics.measures" as const,id})));
+    else {
+      const assertionIds=new Set([item.source_assertion_id,...item.comparison_ids.flatMap(id=>bundle.comparisons.find(comparison=>comparison.id===id)!.participant_ids)]);
+      requested.push(...[...assertionIds].map(id=>({collection:"assertions" as const,id})));
+    }
+    return requested;
+  },[item,bundle.comparisons]);
+  const {data,error,retry}=useAtlasDetails(refs);
+  if (!data) return <AtlasDetailStatus error={error} retry={retry} />;
   const node='domain' in item?item:null;
   const relation='kind' in item?item:null;
   const DomainIcon=node ? domainIcons[node.domain] : Network;
-  const values=node?.measure_ids.map(id=>measures.get(id)!) ?? [];
+  const values=node?.measure_ids.map(id=>data.get("metrics.measures",id)) ?? [];
   const places=bundle.places.filter(p=>node?.place_ids.includes(p.id));
   const fields:Record<string,string>={
     ...(node?{"Finding":findings[node.finding],"Organism or agent":node.agent.value??words(node.agent.status),"Agent type":words(node.agent_kind),"Host or taxon":node.taxon.value??words(node.taxon.status),"Material":node.material.value??words(node.material.status),"Sample unit":node.sampling.sample_unit.value??words(node.sampling.sample_unit.status),"Sampling frame":node.sampling.frame.value??words(node.sampling.frame.status),"Collection method":node.sampling.collection_method.value??words(node.sampling.collection_method.status),"Test method":node.sampling.test_method.value??words(node.sampling.test_method.status)}:{}),
@@ -282,12 +312,12 @@ function HealthDetails({item,nodes,onReport}:{item:Node|Relation;nodes:Node[];on
     <details className="atlas-oh-methods"><summary><Microscope size={14} aria-hidden />Sampling, dates & methods<ChevronDown size={14} aria-hidden /></summary><dl>{Object.entries(fields).filter(([key])=>["Sample unit", "Sampling frame", "Collection method", "Test method", "Material", "Agent type", "Period", "Date basis"].includes(key)).map(([key,value])=><div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></details>
     {item.uncertainty && <section className="atlas-oh-detail-note"><h4><Info size={14} aria-hidden />Limits & interpretation</h4><p>{item.uncertainty}</p></section>}
     {item.date_note && <section className="atlas-oh-detail-note"><h4><CalendarDays size={14} aria-hidden />Date context</h4><p>{item.date_note}</p></section>}
-    {relation && <><p>{relation.reason}</p><p>{relation.scope}</p><blockquote>{assertions.get(relation.source_assertion_id)?.text}</blockquote>{relation.comparison_ids.map(id=>{const c=bundle.comparisons.find(c=>c.id===id)!;return <details key={id}><summary>{words(c.kind)} · comparison evidence</summary>{c.participant_ids.map(id=><p key={id}>{assertions.get(id)?.text}</p>)}</details>;})}<p>{words(relation.review_state)} · reviewed {formatDate(relation.reviewed_at)}</p></>}
+    {relation && <><p>{relation.reason}</p><p>{relation.scope}</p><blockquote>{data.get("assertions",relation.source_assertion_id).text}</blockquote>{relation.comparison_ids.map(id=>{const c=bundle.comparisons.find(c=>c.id===id)!;return <details key={id}><summary>{words(c.kind)} · comparison evidence</summary>{c.participant_ids.map(id=><p key={id}>{data.get("assertions",id).text}</p>)}</details>;})}<p>{words(relation.review_state)} · reviewed {formatDate(relation.reviewed_at)}</p></>}
     {values.map(m=><article className="atlas-oh-measure" key={m.measure_id}><strong>{metricValue(m)} <small>{words(m.unit)}</small></strong><b>{m.label}</b><span>{m.geography.value} · {m.period_label}</span><span>{words(m.count_kind)} · {m.as_of.value ? `As of ${m.as_of.value}` : words(m.date_basis)}</span><span>Denominator: {m.denominator??words(m.denominator_status)}{m.denominator_population.value?` · ${m.denominator_population.value}`:''}</span><p>{m.semantic_note}</p></article>)}
     {node && <><h4><MapPin size={14} aria-hidden />Reviewed locations</h4><ReviewedPlaces placeIds={node.place_ids} /><LocationBadges codes={[...new Set(places.flatMap(p=>p.area_codes))]} /><p>{node.location_note}</p></>}
-    <h4><FileText size={14} aria-hidden />Source evidence</h4>{relation && <p className="atlas-oh-note">These passages support the relationship as a whole. The export does not assign individual passages to evidence types.</p>}{item.evidence_ids.map(id=>{const e=evidence.get(id)!;const d=atlasDocuments.get(e.document_id)!;return <div className="atlas-oh-source" key={id}><a href={d.url} target="_blank" rel="noopener noreferrer">{d.title}<ExternalLink size={12} aria-hidden /></a><small>Published {formatDate(d.publication)} · Captured {formatDate(d.capture)}{e.page!==null?` · Page ${e.page}`:''}{e.section?` · ${e.section}`:''}</small><blockquote>{e.quote}</blockquote></div>;})}
+    <h4><FileText size={14} aria-hidden />Source evidence</h4>{relation && <p className="atlas-oh-note">These passages support the relationship as a whole. The export does not assign individual passages to evidence types.</p>}{item.evidence_ids.map(id=>{const e=data.get("evidence",id);const d=atlasDocuments.get(e.document_id)!;return <div className="atlas-oh-source" key={id}><a href={d.url} target="_blank" rel="noopener noreferrer">{d.title}<ExternalLink size={12} aria-hidden /></a><small>Published {formatDate(d.publication)} · Captured {formatDate(d.capture)}{e.page!==null?` · Page ${e.page}`:''}{e.section?` · ${e.section}`:''}</small><blockquote>{e.quote}</blockquote></div>;})}
   </>;
-}
+});
 function ReviewedPlaces({placeIds}:{placeIds:string[]}) {
   const {bundle}=useAtlas();const places=useMemo(()=>bundle.places.filter(p=>placeIds.includes(p.id)),[bundle,placeIds]);
   const frame=useMemo(()=>fitChainMap(places,460,250),[places]);const dots=useMemo(()=>frame?chainLandDots(frame):'', [frame]);
@@ -295,6 +325,12 @@ function ReviewedPlaces({placeIds}:{placeIds:string[]}) {
   return <><svg viewBox="0 0 460 250" role="img" aria-label="Reviewed reference locations; no inferred routes"><path className="atlas-chain-land" d={dots}/>{places.map((p,i)=>{const point=frame.project(p);return <g key={p.id}><circle cx={point.x} cy={point.y} r="7" fill="var(--primary)"/><text x={point.x+11} y={point.y+4} fill="var(--foreground)" fontSize="13">{i+1}</text></g>;})}</svg><ol>{places.map(p=><li key={p.id}>{p.label} · {words(p.precision)}</li>)}</ol></>;
 }
 function SurveillancePanels({nodes}:{nodes:Node[]}) {
-  const {measures}=useAtlas();if(!nodes.length)return null;
-  return <details className="atlas-oh-surveillance"><summary>Source measurements by population</summary><p>Each population retains its units and reporting period. Animal observations have no approved longitudinal connections.</p><div>{nodes.map(n=><article key={n.id} data-domain={n.domain}><h4>{n.taxon.value??n.label}</h4>{n.measure_ids.map(id=>{const m=measures.get(id)!;return <p key={id}><strong>{metricValue(m)}</strong> {m.label}<small>{words(m.unit)} · {m.geography.value} · {m.period_label}{m.as_of.value?` · As of ${m.as_of.value}`:''}</small></p>;})}</article>)}</div></details>;
+  if(!nodes.length)return null;
+  return <AtlasDisclosure className="atlas-oh-surveillance" unmountOnClose summary={<summary>Source measurements by population</summary>}>{()=><SurveillanceDetails nodes={nodes} />}</AtlasDisclosure>;
+}
+function SurveillanceDetails({nodes}:{nodes:Node[]}) {
+  const refs=useMemo<AtlasDetailRef[]>(()=>[...new Set(nodes.flatMap(node=>node.measure_ids))].map(id=>({collection:"metrics.measures",id})),[nodes]);
+  const {data,error,retry}=useAtlasDetails(refs);
+  if (!data) return <AtlasDetailStatus error={error} retry={retry} />;
+  return <><p>Each population retains its units and reporting period. Animal observations have no approved longitudinal connections.</p><div>{nodes.map(n=><article key={n.id} data-domain={n.domain}><h4>{n.taxon.value??n.label}</h4>{n.measure_ids.map(id=>{const m=data.get("metrics.measures",id);return <p key={id}><strong>{metricValue(m)}</strong> {m.label}<small>{words(m.unit)} · {m.geography.value} · {m.period_label}{m.as_of.value?` · As of ${m.as_of.value}`:''}</small></p>;})}</article>)}</div></>;
 }

@@ -1,7 +1,9 @@
 import { z } from "zod";
-import { JSONParser } from "@streamparser/json";
+import { parseAtlasJson, verifiedBytes } from "./atlas-json";
+export { parseAtlasJson, verifiedBytes } from "./atlas-json";
 import hosting from "../content-data/atlas-hosting.json";
 import { selectorHashes, type AtlasMapSnapshot, type AtlasSiteBundle } from "./atlas-contract";
+import type { AtlasBrowserCore, AtlasBrowserMap } from "./atlas-browser";
 
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 const asset = z.object({ sha256: digest, bytes: z.number().int().positive() });
@@ -12,56 +14,17 @@ export const releaseSchema = z.object({
   assets: z.object({ "atlas-site.json": asset, "map.json": asset, "metrics.json": asset, "network-transport.json": asset.optional() }),
   correction: z.object({ replaces_export_id: digest, authorization_sha256: digest }).optional(),
   intelligence: z.object({ experiment_id: digest, schema_version: z.literal("0.2.0"), asset }).optional(),
+  browser: z.object({ transport_version: z.literal("0.1.0"), manifest: asset }).optional(),
 });
 export type AtlasRelease = z.infer<typeof releaseSchema>;
 export type AtlasLoadProgress = { phase: "release" | "download" | "verify" | "prepare"; loaded: number; total: number };
 export const atlasOrigin = process.env.NEXT_PUBLIC_ATLAS_DATA_ORIGIN ?? hosting.origin;
 export function releaseRoot(release: AtlasRelease) { return `${atlasOrigin}/releases/${release.export_id}`; }
-
-export async function verifiedBytes(response: Response, expected: { sha256: string; bytes: number }, onProgress?: (loaded: number) => void) {
-  if (!response.ok) throw new Error(`ATLAS download failed (${response.status})`);
-  let bytes: ArrayBuffer;
-  if (onProgress && response.body) {
-    const buffer = new Uint8Array(expected.bytes);
-    const reader = response.body.getReader();
-    let loaded = 0;
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (loaded + value.byteLength > expected.bytes) {
-          await reader.cancel();
-          throw new Error("ATLAS download checksum mismatch");
-        }
-        buffer.set(value, loaded);
-        loaded += value.byteLength;
-        onProgress(loaded);
-      }
-    } finally { reader.releaseLock(); }
-    if (loaded !== expected.bytes) throw new Error("ATLAS download checksum mismatch");
-    bytes = buffer.buffer;
-  } else bytes = await response.arrayBuffer();
-  const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)), b => b.toString(16).padStart(2, "0")).join("");
-  if (bytes.byteLength !== expected.bytes || hash !== expected.sha256) throw new Error("ATLAS download checksum mismatch");
-  return bytes;
-}
-
-export async function parseAtlasJson(bytes: ArrayBuffer, signal?: AbortSignal) {
-  // Bound decoded text allocations and let the browser handle input between chunks.
-  const parser = new JSONParser({ paths: ["$"], stringBufferSize: 64 * 1024 });
-  let result: unknown;
-  parser.onValue = ({ value }) => { result = value; };
-  const chunkSize = 1024 * 1024;
-  for (let offset = 0; offset < bytes.byteLength; offset += chunkSize) {
-    await new Promise(resolve => setTimeout(resolve, 0));
-    signal?.throwIfAborted();
-    parser.write(new Uint8Array(bytes, offset, Math.min(chunkSize, bytes.byteLength - offset)));
-  }
-  signal?.throwIfAborted();
-  if (!parser.isEnded) parser.end();
-  if (result === undefined) throw new SyntaxError("ATLAS JSON contains no value");
-  return result;
-}
+export const browserSelectorHashes = {
+  "browser_transport.js": "0b659ae492e7d3ca8d4a82ac06f94206c0033aa1502524cd9d6d37dc53e3b814",
+  "browser_tables.js": "80d72be4968bc7e865595b7cfda9e1cd49e633a50d8d2a6df119225c4661bddc",
+  "site_view.js": "52e8459a8a3e90d0e55216fc2fef286f30e8a1de1801050bc4d71c2d6d4a3cb6",
+};
 
 export async function fetchAtlasData(signal?: AbortSignal, onProgress?: (progress: AtlasLoadProgress) => void) {
   signal?.throwIfAborted();
@@ -71,13 +34,39 @@ export async function fetchAtlasData(signal?: AbortSignal, onProgress?: (progres
   const release = releaseSchema.parse(await response.json());
   if (release.selector_sha256 !== selectorHashes[release.contract_version]) throw new Error("ATLAS selector requires a compatibility review");
   const root = releaseRoot(release);
+  if (release.browser) {
+    const { fetchBrowserManifest, prepareBrowserView, createAtlasDetailStore } = await import("./atlas-browser");
+    const browserRoot = `${root}/browser/${release.browser.manifest.sha256}`;
+    const manifest = await fetchBrowserManifest(browserRoot, release.browser.manifest, release, browserSelectorHashes, signal);
+    const [coreBytes, mapBytes] = await downloadAssets(browserRoot, [manifest.core, manifest.map_core], manifest.assets, signal, onProgress);
+    const core = await parseAtlasJson(coreBytes, signal) as AtlasBrowserCore;
+    const snapshot = await parseAtlasJson(mapBytes, signal) as AtlasBrowserMap;
+    signal?.throwIfAborted();
+    const { data: bundle, select } = prepareBrowserView(core, release.export_id);
+    if (bundle.contract_version !== release.contract_version || bundle.snapshot.source_snapshot_sha256 !== release.assets["map.json"].sha256 ||
+        bundle.snapshot.metrics_sha256 !== manifest.source.metrics_sha256 || snapshot.transport_version !== release.browser.transport_version || snapshot.source_export_id !== release.export_id)
+      throw new Error("ATLAS browser data does not match its release");
+    return { bundle, snapshot, release, browser: { select, details: createAtlasDetailStore(browserRoot, manifest, { signal }) } };
+  }
   const names = ["atlas-site.json", "map.json"] as const;
-  const total = names.reduce((sum, name) => sum + release.assets[name].bytes, 0);
+  const [bundleBytes, mapBytes] = await downloadAssets(root, names, release.assets, signal, onProgress);
+  // Published bytes have passed ATLAS schema and evidence validation before the release pointer is written.
+  const bundle = await parseAtlasJson(bundleBytes, signal) as AtlasSiteBundle;
+  const snapshot = await parseAtlasJson(mapBytes, signal) as AtlasMapSnapshot;
+  await new Promise(resolve => setTimeout(resolve, 0));
+  signal?.throwIfAborted();
+  if (bundle.contract_version !== release.contract_version || bundle.snapshot.source_snapshot_sha256 !== release.assets["map.json"].sha256)
+    throw new Error("ATLAS release does not match its map input");
+  return { bundle, snapshot, release, browser: undefined };
+}
+
+async function downloadAssets(root: string, names: readonly [string, string], assets: Record<string, { bytes: number; sha256: string }>, signal?: AbortSignal, onProgress?: (progress: AtlasLoadProgress) => void) {
+  const total = names.reduce((sum, name) => sum + assets[name].bytes, 0);
   const received = [0, 0];
   let lastPercent = 0;
   onProgress?.({ phase: "download", loaded: 0, total });
-  const [bundleBytes, mapBytes] = await Promise.all(names.map(async (name, index) =>
-    verifiedBytes(await fetch(`${root}/${name}`, { signal }), release.assets[name], onProgress ? loaded => {
+  const downloaded = await Promise.all(names.map(async (name, index) =>
+    verifiedBytes(await fetch(`${root}/${name}`, { signal }), assets[name], onProgress ? loaded => {
       if (signal?.aborted) return;
       received[index] = loaded;
       const sum = received[0] + received[1];
@@ -89,12 +78,5 @@ export async function fetchAtlasData(signal?: AbortSignal, onProgress?: (progres
     } : undefined)));
   signal?.throwIfAborted();
   onProgress?.({ phase: "prepare", loaded: total, total });
-  // Published bytes have passed ATLAS schema and evidence validation before the release pointer is written.
-  const bundle = await parseAtlasJson(bundleBytes, signal) as AtlasSiteBundle;
-  const snapshot = await parseAtlasJson(mapBytes, signal) as AtlasMapSnapshot;
-  await new Promise(resolve => setTimeout(resolve, 0));
-  signal?.throwIfAborted();
-  if (bundle.contract_version !== release.contract_version || bundle.snapshot.source_snapshot_sha256 !== release.assets["map.json"].sha256)
-    throw new Error("ATLAS release does not match its map input");
-  return { bundle, snapshot, release };
+  return downloaded;
 }

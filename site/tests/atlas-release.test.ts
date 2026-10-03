@@ -70,10 +70,12 @@ test("Download progress counts decoded stream bytes and preserves checksum valid
   assert.deepEqual(progress, [4, bytes.length]);
   await assert.rejects(verifiedBytes(new Response(bytes.slice(0, -1)), expected, () => {}), /checksum/);
   await assert.rejects(verifiedBytes(new Response(new Uint8Array(bytes.length)), expected, () => {}), /checksum/);
-  let cancelled = false;
-  const oversized = new ReadableStream<Uint8Array>({ start(controller) { controller.enqueue(new Uint8Array(bytes.length + 1)); }, cancel() { cancelled = true; } });
-  await assert.rejects(verifiedBytes(new Response(oversized), expected, () => {}), /checksum/);
-  assert(cancelled);
+  for (const report of [undefined, () => {}]) {
+    let cancelled = false;
+    const oversized = new ReadableStream<Uint8Array>({ start(controller) { controller.enqueue(new Uint8Array(bytes.length + 1)); }, cancel() { cancelled = true; } });
+    await assert.rejects(verifiedBytes(new Response(oversized), expected, report), /checksum/);
+    assert(cancelled);
+  }
 });
 
 test("Corrections require authorization for the exact published release", () => {
