@@ -1,10 +1,10 @@
-import type { AtlasSiteBundle } from "./atlas-contract";
+import type { AtlasData } from "./atlas-contract";
 import type { AtlasRecord } from "./atlas";
 
 export type ReportingFilters = { places: string[]; diseases: string[]; topics: string[]; sources: string[]; includeContext: boolean };
 type Choice = { value: string; label: string; count: number; searchText?: string };
 
-export function reportingFacets(bundle: AtlasSiteBundle, rows: AtlasRecord[], filters: ReportingFilters) {
+export function reportingFacets(bundle: AtlasData, rows: AtlasRecord[], filters: ReportingFilters) {
   const scope = new Set(rows.map(row => row.id));
   const supported = (eligibility: { record_ids: string[] }) => eligibility.record_ids.every(id => scope.has(id));
   const places = new Map<string, Set<string>>();

@@ -25,11 +25,15 @@ export function AtlasRemote({ experiment }: { experiment?: AtlasExperiment } = {
   useEffect(() => {
     if (arriving) return;
     const controller = new AbortController();
-    fetchAtlasData(controller.signal, value => { if (!controller.signal.aborted) setProgress(value); }).then(async ({ snapshot, bundle, release }) => {
+    let store: AtlasStore | undefined;
+    fetchAtlasData(controller.signal, value => { if (!controller.signal.aborted) setProgress(value); }).then(async ({ snapshot, bundle, release, browser }) => {
       const analysis = experiment ?? await import("@/lib/atlas-intelligence").then(module => module.fetchAtlasIntelligence(release, controller.signal)).catch(() => ({ error: "Analysis could not be verified. Reload to try again." }));
-      if (!controller.signal.aborted) setData({ store: createAtlasStore(snapshot, bundle), root: releaseRoot(release), release, analysis });
+      if (!controller.signal.aborted) {
+        store = createAtlasStore(snapshot, bundle, browser);
+        setData({ store, root: releaseRoot(release), release, analysis });
+      }
     }).catch(() => { if (!controller.signal.aborted) { controller.abort(); setError(true); } });
-    return () => controller.abort();
+    return () => { controller.abort(); store?.details.dispose(); };
   }, [attempt, arriving, experiment]);
   if (data) {
     const analysis = data.analysis;

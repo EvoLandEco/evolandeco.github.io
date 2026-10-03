@@ -1,0 +1,844 @@
+{
+  "date": "2026-10-02T07:28:25.689Z",
+  "baseURL": "http://127.0.0.1:3006",
+  "cpuRate": 4,
+  "runCount": 3,
+  "data": "compact-http",
+  "machine": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M4 Max"
+  },
+  "scope": "Production browser lab; reduced motion isolates data and panel work. Fresh browser context per run. CDP samples JavaScript heap, not total process or GPU memory.",
+  "runs": [
+    {
+      "longTasks": [
+        {
+          "start": 217.5,
+          "ms": 82
+        },
+        {
+          "start": 379.7000000476837,
+          "ms": 76
+        },
+        {
+          "start": 595.1000001430511,
+          "ms": 57
+        },
+        {
+          "start": 882.4000000953674,
+          "ms": 74
+        },
+        {
+          "start": 960.9000000953674,
+          "ms": 73
+        },
+        {
+          "start": 1038.9000000953674,
+          "ms": 61
+        },
+        {
+          "start": 1105.2999999523163,
+          "ms": 56
+        },
+        {
+          "start": 1167.2000000476837,
+          "ms": 55
+        },
+        {
+          "start": 1226.5,
+          "ms": 69
+        },
+        {
+          "start": 1300.1000001430511,
+          "ms": 59
+        },
+        {
+          "start": 1363.2000000476837,
+          "ms": 88
+        },
+        {
+          "start": 1458.9000000953674,
+          "ms": 51
+        },
+        {
+          "start": 1628.5,
+          "ms": 197
+        },
+        {
+          "start": 1840.5,
+          "ms": 65
+        },
+        {
+          "start": 1905.7999999523163,
+          "ms": 660
+        },
+        {
+          "start": 2719.7000000476837,
+          "ms": 116
+        },
+        {
+          "start": 2973.2999999523163,
+          "ms": 229
+        },
+        {
+          "start": 3573.2000000476837,
+          "ms": 54
+        },
+        {
+          "start": 3762.7999999523163,
+          "ms": 79
+        },
+        {
+          "start": 3959.9000000953674,
+          "ms": 86
+        }
+      ],
+      "ready": 2566.5,
+      "elements": 5589,
+      "resources": [
+        {
+          "name": "http://127.0.0.1:3009/current.json",
+          "start": 325.60000014305115,
+          "end": 326.7000000476837,
+          "duration": 1.0999999046325684,
+          "encoded": 764,
+          "decoded": 1355
+        },
+        {
+          "name": "http://127.0.0.1:3009/releases/e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48/browser/b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057/manifest.json",
+          "start": 471,
+          "end": 473.2000000476837,
+          "duration": 2.200000047683716,
+          "encoded": 221021,
+          "decoded": 870451
+        },
+        {
+          "name": "http://127.0.0.1:3009/releases/e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48/browser/b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057/map-core.json",
+          "start": 534.9000000953674,
+          "end": 561.9000000953674,
+          "duration": 27,
+          "encoded": 333650,
+          "decoded": 2479389
+        },
+        {
+          "name": "http://127.0.0.1:3009/releases/e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48/browser/b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057/core.json",
+          "start": 534.9000000953674,
+          "end": 594.2999999523163,
+          "duration": 59.39999985694885,
+          "encoded": 4015170,
+          "decoded": 17559669
+        },
+        {
+          "name": "http://127.0.0.1:3009/intelligence/565479b0942b0cf58b61b0ef31888a518174421174f172bfeec31fa49cdcd29b/intelligence.json",
+          "start": 1832.2000000476837,
+          "end": 1834.2000000476837,
+          "duration": 2,
+          "encoded": 102320,
+          "decoded": 2446073
+        },
+        {
+          "name": "http://127.0.0.1:3009/releases/e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48/browser/b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057/detail-index.json",
+          "start": 3260.600000143051,
+          "end": 3287.4000000953674,
+          "duration": 26.799999952316284,
+          "encoded": 2493389,
+          "decoded": 7226177
+        }
+      ],
+      "switches": [
+        {
+          "name": "One Health",
+          "ms": 492.6152500000003
+        },
+        {
+          "name": "Reports",
+          "ms": 358.53595799999994
+        },
+        {
+          "name": "Analysis",
+          "ms": 196.51491699999997
+        },
+        {
+          "name": "Trends",
+          "ms": 238.08687499999996
+        }
+      ],
+      "errors": [],
+      "startupHeap": {
+        "usedSize": 70425876,
+        "totalSize": 133840896,
+        "embedderHeapUsedSize": 28612544,
+        "backingStorageSize": 35415243
+      },
+      "heap": [
+        {
+          "at": 1790926093470,
+          "usedSize": 6966500,
+          "totalSize": 10289152,
+          "embedderHeapUsedSize": 3428720,
+          "backingStorageSize": 1489785
+        },
+        {
+          "at": 1790926093714,
+          "usedSize": 11295732,
+          "totalSize": 18939904,
+          "embedderHeapUsedSize": 4809440,
+          "backingStorageSize": 3109331
+        },
+        {
+          "at": 1790926093952,
+          "usedSize": 13719812,
+          "totalSize": 22429696,
+          "embedderHeapUsedSize": 6894680,
+          "backingStorageSize": 46381425
+        },
+        {
+          "at": 1790926094202,
+          "usedSize": 31813972,
+          "totalSize": 49479680,
+          "embedderHeapUsedSize": 8699912,
+          "backingStorageSize": 50418442
+        },
+        {
+          "at": 1790926094464,
+          "usedSize": 45514312,
+          "totalSize": 65732608,
+          "embedderHeapUsedSize": 11933728,
+          "backingStorageSize": 50468762
+        },
+        {
+          "at": 1790926094679,
+          "usedSize": 55403404,
+          "totalSize": 82690048,
+          "embedderHeapUsedSize": 4627392,
+          "backingStorageSize": 51024955
+        },
+        {
+          "at": 1790926094995,
+          "usedSize": 58914396,
+          "totalSize": 113623040,
+          "embedderHeapUsedSize": 7677712,
+          "backingStorageSize": 30466222
+        },
+        {
+          "at": 1790926095774,
+          "usedSize": 85533964,
+          "totalSize": 134250496,
+          "embedderHeapUsedSize": 21365272,
+          "backingStorageSize": 35374289
+        },
+        {
+          "at": 1790926095774,
+          "usedSize": 85533964,
+          "totalSize": 134250496,
+          "embedderHeapUsedSize": 21365272,
+          "backingStorageSize": 35374289
+        },
+        {
+          "at": 1790926095783,
+          "usedSize": 85952840,
+          "totalSize": 134250496,
+          "embedderHeapUsedSize": 21680112,
+          "backingStorageSize": 35375394
+        },
+        {
+          "at": 1790926096012,
+          "usedSize": 70405704,
+          "totalSize": 133840896,
+          "embedderHeapUsedSize": 28397776,
+          "backingStorageSize": 35415088
+        },
+        {
+          "at": 1790926096373,
+          "usedSize": 86153344,
+          "totalSize": 134889472,
+          "embedderHeapUsedSize": 29745296,
+          "backingStorageSize": 35481811
+        },
+        {
+          "at": 1790926096441,
+          "usedSize": 86844204,
+          "totalSize": 134889472,
+          "embedderHeapUsedSize": 33393576,
+          "backingStorageSize": 35484745
+        },
+        {
+          "at": 1790926096695,
+          "usedSize": 106303896,
+          "totalSize": 145850368,
+          "embedderHeapUsedSize": 36222896,
+          "backingStorageSize": 44454163
+        },
+        {
+          "at": 1790926097025,
+          "usedSize": 101508584,
+          "totalSize": 151879680,
+          "embedderHeapUsedSize": 47732728,
+          "backingStorageSize": 44510193
+        },
+        {
+          "at": 1790926097240,
+          "usedSize": 55301980,
+          "totalSize": 135512064,
+          "embedderHeapUsedSize": 22197072,
+          "backingStorageSize": 40348182
+        }
+      ]
+    },
+    {
+      "longTasks": [
+        {
+          "start": 210.40000009536743,
+          "ms": 82
+        },
+        {
+          "start": 366.90000009536743,
+          "ms": 79
+        },
+        {
+          "start": 587.7999999523163,
+          "ms": 57
+        },
+        {
+          "start": 867.5,
+          "ms": 75
+        },
+        {
+          "start": 946.9000000953674,
+          "ms": 74
+        },
+        {
+          "start": 1026.5,
+          "ms": 61
+        },
+        {
+          "start": 1092.2999999523163,
+          "ms": 58
+        },
+        {
+          "start": 1154.9000000953674,
+          "ms": 56
+        },
+        {
+          "start": 1215,
+          "ms": 70
+        },
+        {
+          "start": 1289.2000000476837,
+          "ms": 60
+        },
+        {
+          "start": 1354.0999999046326,
+          "ms": 90
+        },
+        {
+          "start": 1450.2000000476837,
+          "ms": 54
+        },
+        {
+          "start": 1623.5,
+          "ms": 194
+        },
+        {
+          "start": 1831.5999999046326,
+          "ms": 66
+        },
+        {
+          "start": 1898.5,
+          "ms": 659
+        },
+        {
+          "start": 2716.2000000476837,
+          "ms": 126
+        },
+        {
+          "start": 2972,
+          "ms": 229
+        },
+        {
+          "start": 3566.4000000953674,
+          "ms": 52
+        },
+        {
+          "start": 3745.9000000953674,
+          "ms": 79
+        },
+        {
+          "start": 3945.2000000476837,
+          "ms": 87
+        }
+      ],
+      "ready": 2557.9000000953674,
+      "elements": 5589,
+      "resources": [
+        {
+          "name": "http://127.0.0.1:3009/current.json",
+          "start": 318.40000009536743,
+          "end": 319.2999999523163,
+          "duration": 0.8999998569488525,
+          "encoded": 764,
+          "decoded": 1355
+        },
+        {
+          "name": "http://127.0.0.1:3009/releases/e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48/browser/b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057/manifest.json",
+          "start": 462.59999990463257,
+          "end": 464.7999999523163,
+          "duration": 2.200000047683716,
+          "encoded": 221021,
+          "decoded": 870451
+        },
+        {
+          "name": "http://127.0.0.1:3009/releases/e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48/browser/b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057/map-core.json",
+          "start": 528.5999999046326,
+          "end": 550,
+          "duration": 21.40000009536743,
+          "encoded": 333650,
+          "decoded": 2479389
+        },
+        {
+          "name": "http://127.0.0.1:3009/releases/e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48/browser/b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057/core.json",
+          "start": 528.5999999046326,
+          "end": 585.9000000953674,
+          "duration": 57.30000019073486,
+          "encoded": 4015170,
+          "decoded": 17559669
+        },
+        {
+          "name": "http://127.0.0.1:3009/intelligence/565479b0942b0cf58b61b0ef31888a518174421174f172bfeec31fa49cdcd29b/intelligence.json",
+          "start": 1823.2000000476837,
+          "end": 1824.5999999046326,
+          "duration": 1.3999998569488525,
+          "encoded": 102320,
+          "decoded": 2446073
+        },
+        {
+          "name": "http://127.0.0.1:3009/releases/e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48/browser/b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057/detail-index.json",
+          "start": 3259.2999999523163,
+          "end": 3285.0999999046326,
+          "duration": 25.799999952316284,
+          "encoded": 2493389,
+          "decoded": 7226177
+        }
+      ],
+      "switches": [
+        {
+          "name": "One Health",
+          "ms": 459.4257090000001
+        },
+        {
+          "name": "Reports",
+          "ms": 387.24004199999945
+        },
+        {
+          "name": "Analysis",
+          "ms": 193.6800000000003
+        },
+        {
+          "name": "Trends",
+          "ms": 237.01708400000098
+        }
+      ],
+      "errors": [],
+      "startupHeap": {
+        "usedSize": 69212540,
+        "totalSize": 134365184,
+        "embedderHeapUsedSize": 28145536,
+        "backingStorageSize": 35415169
+      },
+      "heap": [
+        {
+          "at": 1790926097643,
+          "usedSize": 6945244,
+          "totalSize": 10289152,
+          "embedderHeapUsedSize": 3438232,
+          "backingStorageSize": 1489785
+        },
+        {
+          "at": 1790926097887,
+          "usedSize": 11315380,
+          "totalSize": 18939904,
+          "embedderHeapUsedSize": 4792384,
+          "backingStorageSize": 3171003
+        },
+        {
+          "at": 1790926098123,
+          "usedSize": 13660396,
+          "totalSize": 22429696,
+          "embedderHeapUsedSize": 6769648,
+          "backingStorageSize": 46381425
+        },
+        {
+          "at": 1790926098371,
+          "usedSize": 31669284,
+          "totalSize": 50266112,
+          "embedderHeapUsedSize": 8574904,
+          "backingStorageSize": 50418442
+        },
+        {
+          "at": 1790926098635,
+          "usedSize": 45404268,
+          "totalSize": 65732608,
+          "embedderHeapUsedSize": 11806096,
+          "backingStorageSize": 50468762
+        },
+        {
+          "at": 1790926098889,
+          "usedSize": 62747260,
+          "totalSize": 82427904,
+          "embedderHeapUsedSize": 5271560,
+          "backingStorageSize": 29993283
+        },
+        {
+          "at": 1790926099167,
+          "usedSize": 58739668,
+          "totalSize": 113885184,
+          "embedderHeapUsedSize": 7516384,
+          "backingStorageSize": 30466148
+        },
+        {
+          "at": 1790926099949,
+          "usedSize": 84409464,
+          "totalSize": 134512640,
+          "embedderHeapUsedSize": 21331440,
+          "backingStorageSize": 35374215
+        },
+        {
+          "at": 1790926099956,
+          "usedSize": 84816356,
+          "totalSize": 134512640,
+          "embedderHeapUsedSize": 21549592,
+          "backingStorageSize": 35375308
+        },
+        {
+          "at": 1790926099957,
+          "usedSize": 84828744,
+          "totalSize": 134512640,
+          "embedderHeapUsedSize": 21549592,
+          "backingStorageSize": 35375320
+        },
+        {
+          "at": 1790926100195,
+          "usedSize": 69212540,
+          "totalSize": 134365184,
+          "embedderHeapUsedSize": 28145536,
+          "backingStorageSize": 35415169
+        },
+        {
+          "at": 1790926100554,
+          "usedSize": 84888048,
+          "totalSize": 134889472,
+          "embedderHeapUsedSize": 29649232,
+          "backingStorageSize": 35481737
+        },
+        {
+          "at": 1790926100628,
+          "usedSize": 85861392,
+          "totalSize": 134889472,
+          "embedderHeapUsedSize": 33245792,
+          "backingStorageSize": 35484685
+        },
+        {
+          "at": 1790926100874,
+          "usedSize": 105479860,
+          "totalSize": 146112512,
+          "embedderHeapUsedSize": 36005304,
+          "backingStorageSize": 44454089
+        },
+        {
+          "at": 1790926101194,
+          "usedSize": 100849128,
+          "totalSize": 152141824,
+          "embedderHeapUsedSize": 47611424,
+          "backingStorageSize": 44510179
+        },
+        {
+          "at": 1790926101405,
+          "usedSize": 55307480,
+          "totalSize": 135512064,
+          "embedderHeapUsedSize": 22157720,
+          "backingStorageSize": 40348108
+        }
+      ]
+    },
+    {
+      "longTasks": [
+        {
+          "start": 61,
+          "ms": 50
+        },
+        {
+          "start": 209.39999985694885,
+          "ms": 81
+        },
+        {
+          "start": 362.7999999523163,
+          "ms": 75
+        },
+        {
+          "start": 580.2000000476837,
+          "ms": 58
+        },
+        {
+          "start": 867.7999999523163,
+          "ms": 70
+        },
+        {
+          "start": 942.3999998569489,
+          "ms": 75
+        },
+        {
+          "start": 1021.5999999046326,
+          "ms": 57
+        },
+        {
+          "start": 1084.3999998569489,
+          "ms": 57
+        },
+        {
+          "start": 1146.0999999046326,
+          "ms": 57
+        },
+        {
+          "start": 1207.2000000476837,
+          "ms": 72
+        },
+        {
+          "start": 1284.2999999523163,
+          "ms": 59
+        },
+        {
+          "start": 1348.3999998569489,
+          "ms": 93
+        },
+        {
+          "start": 1447.7999999523163,
+          "ms": 53
+        },
+        {
+          "start": 1618.7999999523163,
+          "ms": 192
+        },
+        {
+          "start": 1825.0999999046326,
+          "ms": 66
+        },
+        {
+          "start": 1891.5,
+          "ms": 662
+        },
+        {
+          "start": 2703.0999999046326,
+          "ms": 127
+        },
+        {
+          "start": 2973.2000000476837,
+          "ms": 230
+        },
+        {
+          "start": 3573.0999999046326,
+          "ms": 52
+        },
+        {
+          "start": 3762.2999999523163,
+          "ms": 79
+        },
+        {
+          "start": 3976.7999999523163,
+          "ms": 86
+        }
+      ],
+      "ready": 2553.5,
+      "elements": 5589,
+      "resources": [
+        {
+          "name": "http://127.0.0.1:3009/current.json",
+          "start": 315.59999990463257,
+          "end": 316.7999999523163,
+          "duration": 1.2000000476837158,
+          "encoded": 764,
+          "decoded": 1355
+        },
+        {
+          "name": "http://127.0.0.1:3009/releases/e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48/browser/b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057/manifest.json",
+          "start": 455.89999985694885,
+          "end": 458.59999990463257,
+          "duration": 2.700000047683716,
+          "encoded": 221021,
+          "decoded": 870451
+        },
+        {
+          "name": "http://127.0.0.1:3009/releases/e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48/browser/b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057/core.json",
+          "start": 521.5,
+          "end": 578,
+          "duration": 56.5,
+          "encoded": 4015170,
+          "decoded": 17559669
+        },
+        {
+          "name": "http://127.0.0.1:3009/releases/e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48/browser/b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057/map-core.json",
+          "start": 521.7999999523163,
+          "end": 542.8999998569489,
+          "duration": 21.09999990463257,
+          "encoded": 333650,
+          "decoded": 2479389
+        },
+        {
+          "name": "http://127.0.0.1:3009/intelligence/565479b0942b0cf58b61b0ef31888a518174421174f172bfeec31fa49cdcd29b/intelligence.json",
+          "start": 1816.7999999523163,
+          "end": 1818.2000000476837,
+          "duration": 1.4000000953674316,
+          "encoded": 102320,
+          "decoded": 2446073
+        },
+        {
+          "name": "http://127.0.0.1:3009/releases/e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48/browser/b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057/detail-index.json",
+          "start": 3259.2000000476837,
+          "end": 3285.399999856949,
+          "duration": 26.199999809265137,
+          "encoded": 2493389,
+          "decoded": 7226177
+        }
+      ],
+      "switches": [
+        {
+          "name": "One Health",
+          "ms": 499.10545900000034
+        },
+        {
+          "name": "Reports",
+          "ms": 361.5810420000016
+        },
+        {
+          "name": "Analysis",
+          "ms": 204.3979589999999
+        },
+        {
+          "name": "Trends",
+          "ms": 245.0266670000001
+        }
+      ],
+      "errors": [],
+      "startupHeap": {
+        "usedSize": 71206648,
+        "totalSize": 135151616,
+        "embedderHeapUsedSize": 28488408,
+        "backingStorageSize": 35415353
+      },
+      "heap": [
+        {
+          "at": 1790926101804,
+          "usedSize": 6953928,
+          "totalSize": 10289152,
+          "embedderHeapUsedSize": 3400040,
+          "backingStorageSize": 1489785
+        },
+        {
+          "at": 1790926102041,
+          "usedSize": 11229408,
+          "totalSize": 18415616,
+          "embedderHeapUsedSize": 4788400,
+          "backingStorageSize": 3171003
+        },
+        {
+          "at": 1790926102282,
+          "usedSize": 13420584,
+          "totalSize": 22216704,
+          "embedderHeapUsedSize": 6883496,
+          "backingStorageSize": 46381425
+        },
+        {
+          "at": 1790926102529,
+          "usedSize": 23963140,
+          "totalSize": 57196544,
+          "embedderHeapUsedSize": 8688704,
+          "backingStorageSize": 50418442
+        },
+        {
+          "at": 1790926102792,
+          "usedSize": 37026888,
+          "totalSize": 81313792,
+          "embedderHeapUsedSize": 11983200,
+          "backingStorageSize": 50468762
+        },
+        {
+          "at": 1790926103016,
+          "usedSize": 56482592,
+          "totalSize": 99729408,
+          "embedderHeapUsedSize": 4626872,
+          "backingStorageSize": 51025065
+        },
+        {
+          "at": 1790926103324,
+          "usedSize": 59218044,
+          "totalSize": 113098752,
+          "embedderHeapUsedSize": 7806144,
+          "backingStorageSize": 30466332
+        },
+        {
+          "at": 1790926104105,
+          "usedSize": 86304020,
+          "totalSize": 135823360,
+          "embedderHeapUsedSize": 21591328,
+          "backingStorageSize": 35374399
+        },
+        {
+          "at": 1790926104105,
+          "usedSize": 86304020,
+          "totalSize": 135823360,
+          "embedderHeapUsedSize": 21591328,
+          "backingStorageSize": 35374399
+        },
+        {
+          "at": 1790926104115,
+          "usedSize": 86723308,
+          "totalSize": 135823360,
+          "embedderHeapUsedSize": 21809192,
+          "backingStorageSize": 35375504
+        },
+        {
+          "at": 1790926104349,
+          "usedSize": 71353652,
+          "totalSize": 135151616,
+          "embedderHeapUsedSize": 28401520,
+          "backingStorageSize": 35415353
+        },
+        {
+          "at": 1790926104718,
+          "usedSize": 86862600,
+          "totalSize": 135413760,
+          "embedderHeapUsedSize": 29879008,
+          "backingStorageSize": 35481921
+        },
+        {
+          "at": 1790926104774,
+          "usedSize": 87537288,
+          "totalSize": 135413760,
+          "embedderHeapUsedSize": 32881720,
+          "backingStorageSize": 35484855
+        },
+        {
+          "at": 1790926105041,
+          "usedSize": 107135596,
+          "totalSize": 146112512,
+          "embedderHeapUsedSize": 36350448,
+          "backingStorageSize": 44454273
+        },
+        {
+          "at": 1790926105368,
+          "usedSize": 102319944,
+          "totalSize": 151093248,
+          "embedderHeapUsedSize": 47982056,
+          "backingStorageSize": 44510260
+        },
+        {
+          "at": 1790926105583,
+          "usedSize": 52861940,
+          "totalSize": 139182080,
+          "embedderHeapUsedSize": 22417984,
+          "backingStorageSize": 40346583
+        }
+      ]
+    }
+  ]
+}

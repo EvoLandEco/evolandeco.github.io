@@ -1,0 +1,127 @@
+{
+  "date": "2026-10-02",
+  "status": "Prototype measurement; not a production acceptance receipt",
+  "platform": "Physical iPhone Safari connected to Web Inspector",
+  "dataset_export_id": "e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48",
+  "prototype_sha256": "bdecf8d4a89c1e597a6d9e96a8648ef0f376d5b9616369fbb8e906fc7c405eaa",
+  "method": {
+    "viewport_css_pixels": [
+      440,
+      796
+    ],
+    "device_pixel_ratio": 3,
+    "reporting_window": "All dates",
+    "routes": 124,
+    "visible_beam_paths_at_inspection": 92,
+    "orientation": "9.58960",
+    "orientation_control": "An existing node received keyboard focus, holding the globe orientation while travel links and marker pulses kept animating.",
+    "order": [
+      "native",
+      "gpu",
+      "native"
+    ],
+    "warmup_seconds_per_sample": 3,
+    "sample_seconds": 15,
+    "memory_profiler_recording": false
+  },
+  "samples": [
+    {
+      "renderer": "native",
+      "raf_callbacks": 357,
+      "median_interval_ms": 42,
+      "p95_interval_ms": 45,
+      "angle_start": "9.58960",
+      "angle_end": "9.58960"
+    },
+    {
+      "renderer": "gpu",
+      "raf_callbacks": 900,
+      "median_interval_ms": 17,
+      "p95_interval_ms": 17,
+      "angle_start": "9.58960",
+      "angle_end": "9.58960",
+      "atlas_texture_bytes": 10485760,
+      "active_tile_pixels_at_end": 641229,
+      "nonempty_beam_paths_at_end": 92,
+      "gl_error": 0
+    },
+    {
+      "renderer": "native",
+      "raf_callbacks": 356,
+      "median_interval_ms": 42,
+      "p95_interval_ms": 45,
+      "angle_start": "9.58960",
+      "angle_end": "9.58960"
+    }
+  ],
+  "limits": [
+    "These are requestAnimationFrame callback intervals, not measured display presentation or hardware GPU utilization.",
+    "The prototype replaces travel beam visuals only; full route ordering and group opacity require separate integration checks.",
+    "Native and GPU samples use the same page and fixed orientation. Beam phases continue across samples; each interval covers three complete five-second cycles.",
+    "Atlas bytes describe two allocated working textures, not total graphics or process memory.",
+    "This is one physical device and one dense stationary view. Rotation, dragging, filtering, resize, lifecycle and production memory need separate checks."
+  ],
+  "full_route_texture_stress": {
+    "prototype_sha256": "e8045af1e753158887f368958fe549f9a64911a0ba18a83ca4a94d8571504ca3",
+    "orientation": "5.61504",
+    "routes": 124,
+    "nonempty_beam_paths": 98,
+    "atlas_texture_bytes": 67108864,
+    "atlas_dimensions": [
+      2048,
+      4096
+    ],
+    "gl_error": 0,
+    "warmup_seconds_per_sample": 3,
+    "sample_seconds": 15,
+    "samples": [
+      {
+        "renderer": "native",
+        "raf_callbacks": 343,
+        "median_interval_ms": 44,
+        "p95_interval_ms": 48,
+        "angle_start": "5.61504",
+        "angle_end": "5.61504"
+      },
+      {
+        "renderer": "gpu",
+        "raf_callbacks": 900,
+        "median_interval_ms": 17,
+        "p95_interval_ms": 17,
+        "angle_start": "5.61504",
+        "angle_end": "5.61504"
+      },
+      {
+        "renderer": "native",
+        "raf_callbacks": 355,
+        "median_interval_ms": 43,
+        "p95_interval_ms": 47,
+        "angle_start": "5.61504",
+        "angle_end": "5.61504"
+      }
+    ],
+    "limits": [
+      "Two RGBA8 textures cover full route bounds; the shader fills full route quads but rasterizes only beams. Native base paths and count badges still render.",
+      "All samples retain the allocated textures. This tests fill cost and allocation size, not a native-versus-GPU process memory comparison.",
+      "No page reload occurred during the three samples. This short test does not establish long-run memory safety."
+    ],
+    "memory_recording": {
+      "raw_sha256": "9d287f3a53d14844197f997ce767a403c919c5ca409f5200dac039b4c5657dd4",
+      "duration_seconds": 187.20786187500926,
+      "memory_samples": 372,
+      "first_total_bytes": 456084480,
+      "minimum_total_bytes": 450513920,
+      "peak_total_bytes": 473500672,
+      "last_total_bytes": 463358976,
+      "cpu_usage_median_percent": 16.999998092651367,
+      "cpu_usage_peak_percent": 39.099998474121094,
+      "discontinuities": 0,
+      "memory_pressure_events": 0,
+      "limits": [
+        "This separate recording follows the timing samples and holds the same dense view with GPU beams and full route-sized textures.",
+        "Inspector memory categories are not a complete account of device RAM or GPU memory. CPU usage describes the inspected page; it does not measure hardware GPU utilization.",
+        "The retained prototype includes native base paths and count badges. This is a three-minute allocation stress check, not final production acceptance or a leak proof."
+      ]
+    }
+  }
+}

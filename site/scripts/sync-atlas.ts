@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
+import { readFile, writeFile, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -11,6 +11,7 @@ import hosting from "../src/content-data/atlas-hosting.json";
 import { releaseSchema, verifiedBytes, releaseRoot, type AtlasRelease } from "../src/lib/atlas-release";
 import type { AtlasPublicationHandoff, AtlasFileReference, AtlasExportReference } from "../src/lib/atlas-vendor/site-types";
 import { validateAtlas } from "./validate-atlas-metrics";
+import { prepareBrowserCandidate, stageBrowserAsset } from "./publish-atlas-browser";
 
 const site = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const hash = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
@@ -100,17 +101,34 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
     assert(!initial || !existing, "Initial publication cannot replace an existing release");
     assert(!existing?.cycle || existing.cycle <= cycle, "Cannot publish an older weekly cycle");
     const assets = { "atlas-site.json": bundleBytes, "map.json": mapBytes, "metrics.json": Buffer.from(JSON.stringify(bundle.metrics)) };
-    const release: AtlasRelease = releaseSchema.parse({ version: 1, export_id: candidate.export_id, published_at: new Date().toISOString(),
+    let release: AtlasRelease = releaseSchema.parse({ version: 1, export_id: candidate.export_id, published_at: new Date().toISOString(),
       cycle: correctionPath ? existing!.cycle : initial ? null : cycle, mode: correctionPath ? existing!.mode : initial ? "initial" : "weekly", contract_version: candidate.contract_version,
       ...("export" in first ? { correction: { replaces_export_id: first.replaces_export_id, authorization_sha256: first.authorization_sha256 } } : {}),
       selector_sha256: candidate.selector.sha256, assets: Object.fromEntries(Object.entries(assets).map(([name, bytes]) => [name, { sha256: hash(bytes), bytes: bytes.length }])) });
-    const put = (key: string, path: string, compressed: boolean) => execFileSync(process.execPath, [resolve(site, "node_modules/wrangler/bin/wrangler.js"), "r2", "object", "put", `${hosting.bucket}/${key}`, "--file", path, "--remote", "--content-type", "application/json", ...(compressed ? ["--content-encoding", "gzip"] : [])], { cwd: site, stdio: "inherit" });
+    const browserDirectory = await mkdtemp(resolve(cache, `browser-${candidate.export_id}-`));
+    const browserOut = resolve(browserDirectory, "assets"), browserHandoffPath = resolve(browserDirectory, "handoff.json");
+    execFileSync(process.execPath, ["scripts/export_browser_transport.mjs", "--site", candidate.structured_data.path, "--map", candidate.map_snapshot.path, "--export-id", candidate.export_id, "--out", browserOut], { cwd: project, stdio: "inherit" });
+    execFileSync(process.execPath, ["scripts/verify_browser_transport.mjs", "--directory", browserOut, "--site", candidate.structured_data.path, "--map", candidate.map_snapshot.path, "--every-record", "--out", browserHandoffPath], { cwd: project, stdio: "inherit" });
+    const browserHandoffBytes = await readFile(browserHandoffPath);
+    const browserReference = { path: browserHandoffPath, bytes: browserHandoffBytes.length, sha256: hash(browserHandoffBytes) };
+    const browser = await prepareBrowserCandidate(browserReference, release);
+    assert.deepEqual({ sha256: browser.manifest.source.manifest.sha256, bytes: browser.manifest.source.manifest.bytes }, { sha256: candidate.manifest.sha256, bytes: candidate.manifest.bytes });
+    release = releaseSchema.parse({ ...release, browser: { transport_version: "0.1.0", manifest: browser.descriptor } });
+    const put = (key: string, path: string, compressed: boolean) => execFileSync(process.execPath, [resolve(site, "node_modules/wrangler/bin/wrangler.js"), "r2", "object", "put", `${hosting.bucket}/${key}`, "--file", path, "--remote", "--content-type", /\.(?:mjs|js)\.gz$/.test(key) ? "text/javascript" : /\.d\.(?:mts|ts)\.gz$/.test(key) ? "text/plain" : "application/json", ...(compressed ? ["--content-encoding", "gzip"] : [])], { cwd: site, stdio: "inherit" });
     for (const [name, bytes] of Object.entries(assets)) {
       const path = resolve(cache, name + ".gz");
       await writeFile(path, gzipSync(bytes, { level: 9 }));
       put(`releases/${release.export_id}/${name}.gz`, path, true);
       await verifiedBytes(await fetch(`${releaseRoot(release)}/${name}`, { cache: "no-cache" }), release.assets[name as keyof typeof assets]);
     }
+    const readBrowserAsset = async (key: string) => {
+      const response = await fetch(`${hosting.origin}/${key}`, { cache: "no-cache" });
+      assert(response.status !== 429, `Browser asset verification hit the public read limit; Retry-After=${response.headers.get("Retry-After") ?? "unspecified"}. The published release has not changed.`);
+      return response;
+    };
+    for (const ref of browser.files) await stageBrowserAsset(ref.key, await checkedFile(ref), browserDirectory, readBrowserAsset, put);
+    await checkedFile(browserReference);
+    await checkedFile(browser.handoff.browser.manifest);
     const final = correctionPath ? await correction() : await handoff();
     if ("export" in final) assert.deepEqual(final, first, "Correction authorization changed during upload");
     else {
@@ -123,13 +141,13 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
     const releasePath = resolve(cache, "current.json");
     await writeFile(releasePath, JSON.stringify(release));
     if (stageOnly) {
-      await writeFile(resolve(cache, `staged-${release.export_id}.json`), JSON.stringify({ release, handoff: final }, null, 2));
+      await writeFile(resolve(cache, `staged-${release.export_id}.json`), JSON.stringify({ release, handoff: final, browser_handoff: browserReference }, null, 2));
       console.log(JSON.stringify({ status: "staged", export_id: release.export_id, url: releaseRoot(release), activation_pending: true }));
       return;
     }
     put("current.json", releasePath, false);
     assert.deepEqual(await currentRelease(), release);
-    await writeFile(resolve(cache, `${correctionPath ? `correction-${release.export_id}` : initial ? "initial" : cycle}.json`), JSON.stringify({ release, handoff: final }, null, 2));
+    await writeFile(resolve(cache, `${correctionPath ? `correction-${release.export_id}` : initial ? "initial" : cycle}.json`), JSON.stringify({ release, handoff: final, browser_handoff: browserReference }, null, 2));
     console.log(JSON.stringify({ status: "published", mode: correctionPath ? "correction" : release.mode, cycle: release.cycle, export_id: release.export_id, url: hosting.origin }));
   } finally { await rm(lock, { recursive: true }); }
 }

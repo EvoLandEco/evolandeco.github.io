@@ -5,6 +5,9 @@
   "compatibility_date": "2026-09-26",
   "workers_dev": true,
   "r2_buckets": [{ "binding": "ATLAS", "bucket_name": "qtj-atlas" }],
-  "ratelimits": [{ "name": "READ_LIMIT", "namespace_id": "2026092601", "simple": { "limit": 60, "period": 60 } }],
+  "ratelimits": [
+    { "name": "READ_LIMIT", "namespace_id": "2026092601", "simple": { "limit": 60, "period": 60 } },
+    { "name": "BROWSER_READ_LIMIT", "namespace_id": "2026100201", "simple": { "limit": 120, "period": 60 } }
+  ],
   "observability": { "enabled": true, "head_sampling_rate": 0.1 }
 }

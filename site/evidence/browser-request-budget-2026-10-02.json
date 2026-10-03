@@ -1,0 +1,34 @@
+{
+  "captured_on": "2026-10-02",
+  "source_export_id": "e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48",
+  "manifest_sha256": "b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057",
+  "source_trace": {
+    "path": "/tmp/atlas-report-burst.json",
+    "sha256": "39e91dbabdcbd731fbd52ea83aa5e799093146718da9e67ddb79954bb95ead1d"
+  },
+  "scenario": "Local HTTP visit followed by 24 report openings and closings across two pages",
+  "measurement": "Request counts; automated interaction timing does not establish production browsing speed",
+  "report_entries_opened": 24,
+  "report_pages": 2,
+  "atlas_service_requests": 31,
+  "startup_requests": 5,
+  "detail_index_requests": 1,
+  "detail_partition_requests": 25,
+  "unique_detail_partitions": 25,
+  "browser_transport_requests": 29,
+  "other_atlas_requests": 2,
+  "errors": [],
+  "policy": {
+    "BROWSER_READ_LIMIT": {
+      "requests": 120,
+      "period_seconds": 60,
+      "scope": "Validated browser transport paths per IP"
+    },
+    "READ_LIMIT": {
+      "requests": 60,
+      "period_seconds": 60,
+      "scope": "Other permitted ATLAS paths per IP"
+    }
+  },
+  "interpretation": "At the observed partition rate, a fast six-page browse can exceed 60 service requests. A separate browser budget of 120 requests permits several report pages per minute without enlarging the scientific download budget. This is a capacity choice, not a measured performance gain."
+}

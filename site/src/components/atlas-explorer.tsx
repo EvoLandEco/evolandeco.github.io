@@ -4,11 +4,14 @@ import type { AtlasRelease } from '@/lib/atlas-release';
 import { coveragePositions } from "@/lib/atlas-coverage-layout";
 import { atlasUI } from "@/lib/atlas-ui";
 import { EvidenceSummary } from "./atlas-evidence-summary";
+import { AtlasDisclosure } from "./atlas-disclosure";
+import { AtlasDetailStatus, useAtlasDetails } from "./atlas-detail";
 import { memo, useCallback, useId, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type MouseEvent } from "react";
 import { flushSync } from "react-dom";
 import { Building2, SlidersHorizontal, GitBranch, ShieldCheck, FlaskConical, HeartHandshake, Maximize2, Minimize2, ChartNoAxesCombined, Activity, ArrowRight, CalendarDays, ChevronRight, ArrowLeftRight, MapPin, Download, ExternalLink, FileText, Globe2, Info, Network, RefreshCw, RotateCcw, ScanLine, TriangleAlert, ChevronDown, ChevronsUp, X } from "lucide-react";
 import { groupGeographicLinks, dayDate, dayNumber, monthsBefore, formatDate, linkLabels, supported, topicIds, sourceName, reportsPerPage, type AtlasRecord, type AtlasTrack, type AtlasLink, type AtlasAssessment, type DateBasis } from "@/lib/atlas";
 import { Globe, type GlobeLink, type GlobeHover, type GlobeAnchor } from "./magicui/globe";
+import { GlobeDragHint } from "./magicui/globe-navigation";
 import { AuroraText } from "./magicui/aurora-text";
 import { Settings, usePanelMotion } from "./motion-policy";
 import { useAtlasNavigation } from "./atlas-navigation";
@@ -50,11 +53,12 @@ function collapseEntry(event: MouseEvent<HTMLButtonElement>) {
 }
 
 function Evidence({ support, onReport }: { support: (string | number)[][]; onReport: (ids: string[]) => void }) {
-  const { lookup } = useAtlas();
+  const { data, error, retry } = useAtlasDetails([...new Set(support.map(([id]) => String(id)))].map(id => ({ collection: "map.records", id })));
+  if (!data) return <AtlasDetailStatus error={error} retry={retry} />;
   return <div className="atlas-evidence">{support.map(([id, index]) => {
-    const record = lookup.get(String(id));
-    const claim = record?.claims.find(c => c.claim_index === index);
-    if (!record || !claim) return null;
+    const record = data.get("map.records", String(id));
+    const claim = record.claims.find(c => c.claim_index === index);
+    if (!claim) throw new Error("ATLAS source claim is missing");
     return <div key={`${id}:${index}`}><a href={record.url} target="_blank" rel="noopener noreferrer">{sourceName(record.source)} · {formatDate(record.publication)} <ExternalLink size={13} aria-hidden /></a>
       <p>{claim.text}</p>{claim.quotes.map((quote, i) => <blockquote key={i}>{quote}</blockquote>)}<button onClick={() => onReport([record.id])}>View report <ArrowRight size={13} aria-hidden /></button></div>;
   })}</div>;
@@ -91,6 +95,7 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
   const viewTransition = useRef<ViewTransition | null>(null);
   const [wide, setWide] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [dragHint, setDragHint] = useState<number | null>(0);
   const [surfaceHover, setSurfaceHover] = useState(false);
   useEffect(() => {
     const query = matchMedia("(min-width: 1180px)");
@@ -124,9 +129,9 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
     delete document.documentElement.dataset.atlasWorkspaceTransition;
   }, []);
   function changeFullscreen(value: boolean) {
-    if (value && (!wide || arriving)) return;
+    if (value === fullscreen || value && (!wide || arriving)) return;
     const height = page.current?.offsetHeight ?? 0;
-    const update = () => { if (value) setPageHeight(height); setSurfaceHover(false); setFullscreen(value); };
+    const update = () => { if (value) setPageHeight(height); setSurfaceHover(false); setFullscreen(value); setDragHint(current => value ? (current ?? 0) + 1 : null); };
     viewTransition.current?.skipTransition();
     if (!document.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) { update(); return; }
     document.documentElement.dataset.atlasWorkspaceTransition = "active";
@@ -196,7 +201,7 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
   const calloutPoint = useMotionValue<GlobeAnchor>(null);
   const moveCallout = useCallback((point: GlobeAnchor) => calloutPoint.set(point), [calloutPoint]);
   const [focus, setFocus] = useState<[number, number]>();
-  const [min, max] = dateBounds(basis);
+  const [min, max] = useMemo(() => dateBounds(basis), [dateBounds, basis]);
   const globeLayout = useMemo<GlobeLink[]>(() => groupGeographicLinks(atlas.map_links, lookup).map(group => {
     const link = group.entries.at(-1)!.link;
     return { id: link.id, groupId: group.id, label: link.label, type: link.type, directed: link.directed,
@@ -434,9 +439,10 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
       <div className="atlas-globe-space"><div className="atlas-globe-frame globe-frame" data-testid="atlas-globe" data-expand-hint={wide && !fullscreen && surfaceHover && !hover || undefined} onPointerMove={overSurface} onPointerLeave={event => { if (!(event.relatedTarget instanceof Node) || !entrance.current?.contains(event.relatedTarget)) setSurfaceHover(false); }} onClick={event => {
         if (!event.defaultPrevented && onGlobeSurface(event)) changeFullscreen(true);
       }}>
-        <Globe playing={motion.playing} rotating={!fullscreen && !topic.length && !selectedLink} visible={motion.visible || arriving}
+        <Globe fullscreen={fullscreen} playing={motion.playing} rotating={!fullscreen && !topic.length && !selectedLink} visible={motion.visible || arriving} onDragStart={() => setDragHint(null)}
           nodes={arriving ? undefined : globeNodes} links={arriving ? undefined : globeLinks} layoutLinks={arriving ? undefined : globeLayout}
           selected={selectedNode?.id} focus={focus} onSelect={choosePoint} onLink={chooseLink} onHover={setHover} annotation={calloutTarget} onAnnotationMove={moveCallout} />
+        {!arriving && dragHint !== null && (dragHint === 0 || fullscreen) && <GlobeDragHint key={dragHint} visible={motion.visible} onComplete={() => setDragHint(null)} />}
       </div></div>
       {calloutTarget && (calloutNode || calloutLink) && <GlobeCallout key={calloutGroup?.id ?? `${calloutTarget.kind}:${calloutTarget.id}`} point={calloutPoint} targetKey={`${calloutTarget.kind}:${calloutTarget.id}`} pinned={!hover}>
         {!hover && <button aria-label="Clear globe selection" onClick={() => { clearSelection(); (fullscreen ? exit : entrance).current?.focus({ preventScroll: true }); }}><X size={14} /></button>}
@@ -670,8 +676,8 @@ const AssessmentEntry = memo(function AssessmentEntry({ assessment: a, selected,
   return <article className="atlas-connection" data-assessment-id={a.id} data-selected={selected}>
             <header id={`atlas-assessment-${a.id}`} className="atlas-entry-heading" tabIndex={-1}><div className="atlas-item-meta"><span className="atlas-status"><Info size={14} aria-hidden />{a.status}</span><button onClick={() => onLocate(a.track)}><ScanLine size={16} />Locate</button></div>
             <div className="atlas-entry-title"><h3>{tracks.get(a.track)?.label}</h3><button className="atlas-collapse-entry" onClick={collapseEntry} aria-label={`Collapse details for ${tracks.get(a.track)?.label}`}><ChevronsUp size={15} aria-hidden /><span>Collapse</span></button></div></header><p className="atlas-assessment-dates">{a.from} → {a.to}</p><p>{a.basis}</p><MetricFigures kind="assessment" ids={[a.id]} recordIds={recordIds} />
-            {a.updates?.map((u, i) => supported(u.support, recordIds) && <div className="atlas-assessment-update" key={i}><strong>Later assessment</strong><p>{u.text}</p><MetricFigures kind="assessment_update" ids={[`${a.id}:${i}`]} recordIds={recordIds} /><details><EvidenceSummary kind="source" /><Evidence support={u.support} onReport={onReport} /></details></div>)}
-            <details><EvidenceSummary kind="scope" /><p>{a.limit}</p><Evidence support={a.support} onReport={onReport} /></details>
+            {a.updates?.map((u, i) => supported(u.support, recordIds) && <div className="atlas-assessment-update" key={i}><strong>Later assessment</strong><p>{u.text}</p><MetricFigures kind="assessment_update" ids={[`${a.id}:${i}`]} recordIds={recordIds} /><AtlasDisclosure unmountOnClose summary={<EvidenceSummary kind="source" />}>{() => <Evidence support={u.support} onReport={onReport} />}</AtlasDisclosure></div>)}
+            <AtlasDisclosure unmountOnClose summary={<EvidenceSummary kind="scope" />}>{() => <><p>{a.limit}</p><Evidence support={a.support} onReport={onReport} /></>}</AtlasDisclosure>
           </article>;
 });
 
@@ -682,7 +688,7 @@ const GeographicEntry = memo(function GeographicEntry({ link, group, selected, r
   return <article data-link-id={link.id} className="atlas-connection" data-kind={link.type} data-selected={selected}>
             <header className="atlas-entry-heading" tabIndex={-1}><div className="atlas-item-meta"><span className="atlas-status" data-tone={link.type === "hypothesis" ? "warning" : undefined}>{link.type === "hypothesis" ? <TriangleAlert size={14} aria-hidden /> : link.directed ? <ArrowRight size={14} aria-hidden /> : <Network size={14} aria-hidden />}{linkLabels[link.type]}</span><button onClick={() => onLocate(link.id)} aria-label={`Locate ${link.label}`}><ScanLine size={16} />Locate</button></div>
             <div className="atlas-entry-title"><h3 className="atlas-link-subject">{link.label}</h3><button className="atlas-collapse-entry" onClick={collapseEntry} aria-label={`Collapse details for ${link.label}`}><ChevronsUp size={15} aria-hidden /><span>Collapse</span></button></div></header><GeographicRoute link={link} /><LinkHistory group={group} selected={link.id} onChange={onLocate} />
-            <p>{link.basis}</p><MetricFigures kind="geographic_link" ids={[link.id]} recordIds={recordIds} /><details open={selected}><EvidenceSummary kind="location" /><p>{link.limit}</p><p className="atlas-precision">{link.from.precision}<br />{link.to.precision}</p><Evidence support={link.support} onReport={onReport} /></details>
+            <p>{link.basis}</p><MetricFigures kind="geographic_link" ids={[link.id]} recordIds={recordIds} /><AtlasDisclosure unmountOnClose open={selected} summary={<EvidenceSummary kind="location" />}>{() => <><p>{link.limit}</p><p className="atlas-precision">{link.from.precision}<br />{link.to.precision}</p><Evidence support={link.support} onReport={onReport} /></>}</AtlasDisclosure>
           </article>;
 });
 
@@ -705,7 +711,7 @@ function GeographicRoute({ link }: { link: AtlasLink }) {
 
 
 const Report = memo(function Report({ records, basis, highlighted, recordIds, onReport, relationships, riskRecords, onAssessment, onRisk }: { relationships: Map<string, AtlasAssessment[]>; riskRecords: Set<string>; onAssessment: (id: string) => void; onRisk: (id: string) => void; records: AtlasRecord[]; basis: DateBasis; highlighted: boolean; recordIds: Set<string>; onReport: (ids: string[]) => void }) {
-  const { atlasDocuments, reportOrganizations, reportComparisons, assertions, tracks } = useAtlas();
+  const { atlasDocuments, reportOrganizations, reportComparisons, assertions } = useAtlas();
   const [open, setOpen] = useAtlasPanelState(`report.${records[0].document_id}.open`, false);
   const [loaded, setLoaded] = useState(open);
   const first = records[0];
@@ -717,19 +723,27 @@ const Report = memo(function Report({ records, basis, highlighted, recordIds, on
     <summary onClick={event => { if (event.currentTarget.parentElement?.hasAttribute("open")) keepHeadingVisible(event.currentTarget); }}><span className="atlas-timeline-node institution-logo atlas-source-logo"><Image src={`/logos/atlas/${organization.logo}`} alt={organization.name} width={32} height={32} unoptimized /></span><span className="atlas-report-date">{formatDate(document[basis])}<small>{sourceName(first.source)}</small></span>
       <span className="atlas-report-summary">{highlighted && <span className="sr-only">Relevant report. </span>}<strong>{document.title}</strong>
         {comparisons.filter((c, i) => comparisons.findIndex(other => other.kind === c.kind) === i).map(c => <ComparisonBadge key={c.kind} comparison={c} />)}</span><span className="atlas-expand" aria-hidden><ChevronDown size={17} /></span></summary>
-    {loaded && <ReportCountryFlags value={true}><div className="atlas-report-body"><div className="atlas-item-meta atlas-report-meta"><span><CalendarDays size={14} aria-hidden />{basis === "publication" ? `Captured ${formatDate(document.capture)}` : `Published ${formatDate(document.publication)}`}</span><a href={document.url} target="_blank" rel="noopener noreferrer">Read source <ExternalLink size={14} aria-hidden /></a></div>
+    {loaded && <ReportBody records={records} basis={basis} recordIds={recordIds} onReport={onReport} relationships={relationships} riskRecords={riskRecords} onAssessment={onAssessment} onRisk={onRisk} comparedMeasures={comparedMeasures} />}
+  </details>;
+});
+
+function ReportBody({ records, basis, recordIds, onReport, relationships, riskRecords, onAssessment, onRisk, comparedMeasures }: { records: AtlasRecord[]; basis: DateBasis; recordIds: Set<string>; onReport: (ids: string[]) => void; relationships: Map<string, AtlasAssessment[]>; riskRecords: Set<string>; onAssessment: (id: string) => void; onRisk: (id: string) => void; comparedMeasures: Set<string> }) {
+  const { atlasDocuments, tracks } = useAtlas();
+  const document = atlasDocuments.get(records[0].document_id)!;
+  const { data, error, retry } = useAtlasDetails(records.map(record => ({ collection: "map.records", id: record.id })));
+  if (!data) return <AtlasDetailStatus error={error} retry={retry} />;
+  return <ReportCountryFlags value={true}><div className="atlas-report-body"><div className="atlas-item-meta atlas-report-meta"><span><CalendarDays size={14} aria-hidden />{basis === "publication" ? `Captured ${formatDate(document.capture)}` : `Published ${formatDate(document.publication)}`}</span><a href={document.url} target="_blank" rel="noopener noreferrer">Read source <ExternalLink size={14} aria-hidden /></a></div>
       <SourceComparisons recordIds={recordIds} reportIds={records.map(r => r.id)} onReport={onReport} />
-      {records.map(record => <div key={record.id}><h3><CountryText>{tracks.get(record.track)?.label}</CountryText></h3>
+      {records.map(summary => data.get("map.records", summary.id)).map(record => <div key={record.id}><h3><CountryText>{tracks.get(record.track)?.label}</CountryText></h3>
         {(relationships.has(record.id) || riskRecords.has(record.id)) && <div className="atlas-report-assessment-links">
           {relationships.has(record.id) && <details><EvidenceSummary kind="relationships" count={relationships.get(record.id)!.length} />
             <ol>{relationships.get(record.id)!.map(assessment => <li key={assessment.id}><button data-assessment-id={assessment.id} onClick={() => onAssessment(assessment.id)}><span><strong>{assessment.status}</strong>{(assessment.from || assessment.to) && <small>{[assessment.from, assessment.to].filter(Boolean).join(" → ")}</small>}</span><ArrowRight size={14} aria-hidden /></button></li>)}</ol>
           </details>}
           {riskRecords.has(record.id) && <button onClick={() => onRisk(record.id)}><ShieldCheck size={14} aria-hidden />Source risk assessment<ArrowRight size={14} aria-hidden /></button>}
         </div>}
-        <MetricFigures kind="record" ids={[record.id]} recordIds={recordIds} exclude={comparedMeasures} />{record.claims.map(claim => <div className="atlas-claim" key={claim.claim_index}><p><CountryText>{claim.text}</CountryText></p>{claim.quotes.length > 0 && <details><EvidenceSummary kind="quotation" />{claim.quotes.map((q, i) => <blockquote key={i}><CountryText>{q}</CountryText></blockquote>)}</details>}</div>)}</div>)}
-    </div></ReportCountryFlags>}
-  </details>;
-});
+        <MetricFigures kind="record" ids={[record.id]} recordIds={recordIds} exclude={comparedMeasures} />{record.claims.map(claim => <div className="atlas-claim" key={claim.claim_index}><p><CountryText>{claim.text}</CountryText></p>{claim.quotes.length > 0 && <AtlasDisclosure summary={<EvidenceSummary kind="quotation" />}>{() => claim.quotes.map((q, i) => <blockquote key={i}><CountryText>{q}</CountryText></blockquote>)}</AtlasDisclosure>}</div>)}</div>)}
+    </div></ReportCountryFlags>;
+}
 
 const SourceNetwork = memo(function SourceNetwork({ rows, topics, onSource, onTopic, onConnection }: {
   rows: AtlasRecord[]; topics: AtlasTrack[]; onSource: (source: string) => void; onTopic: (id: string) => void; onConnection: (source: string, topic: string) => void;

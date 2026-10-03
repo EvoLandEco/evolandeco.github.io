@@ -14,11 +14,13 @@ const worker = {
     const releaseAsset = /^\/releases\/[a-f0-9]{64}\/(?:(?:atlas-site|map|metrics|network-transport|release)\.json|view\.mjs)$/.test(path);
     const networkAsset = /^\/network-analysis\/[a-f0-9]{64}\/(network-analysis|network-analysis\.schema|coverage-ledger)\.json$/.test(path);
     const intelligenceAsset = /^\/intelligence\/[a-f0-9]{64}\/(intelligence|contract\.schema)\.json$/.test(path);
-    if (!current && !releaseAsset && !networkAsset && !intelligenceAsset)
+    const browserAsset = /^\/releases\/[a-f0-9]{64}\/browser\/[a-f0-9]{64}\/(?:(?:manifest|release|core|map-core|detail-index|browser-transport\.schema|browser-manifest\.schema)\.json|(?:browser_transport|browser_tables|site_view)\.js|browser\.d\.mts|atlas\.d\.ts|details\/part-\d{5}\.json)$/.test(path);
+    if (!current && !releaseAsset && !networkAsset && !intelligenceAsset && !browserAsset)
       return new Response("Not found", { status: 404, headers });
     const ip = request.headers.get("CF-Connecting-IP");
     if (!ip) return new Response("Forbidden", { status: 403, headers });
-    if (!(await env.READ_LIMIT.limit({ key: ip })).success) {
+    const limiter = browserAsset ? env.BROWSER_READ_LIMIT : env.READ_LIMIT;
+    if (!(await limiter.limit({ key: ip })).success) {
       headers.set("Retry-After", "60");
       headers.set("Cache-Control", "no-store");
       return new Response("Too many requests", { status: 429, headers });
@@ -28,7 +30,7 @@ const worker = {
       ? await env.ATLAS.head(key)
       : await env.ATLAS.get(key, { onlyIf: request.headers });
     if (!object) return new Response("Not found", { status: 404, headers });
-    headers.set("Content-Type", path.endsWith(".mjs") ? "text/javascript; charset=utf-8" : "application/json; charset=utf-8");
+    headers.set("Content-Type", /\.(?:mjs|js)$/.test(path) ? "text/javascript; charset=utf-8" : /\.d\.(?:mts|ts)$/.test(path) ? "text/plain; charset=utf-8" : "application/json; charset=utf-8");
     headers.set("Cache-Control", current ? "public, max-age=60, must-revalidate" : "public, max-age=31536000, immutable");
     headers.set("ETag", object.httpEtag);
     if (!current) headers.set("Content-Encoding", "gzip");

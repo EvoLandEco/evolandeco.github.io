@@ -1,0 +1,360 @@
+{
+  "date": "2026-10-02",
+  "platform": "Physical iPhone Safari with Web Inspector recording",
+  "source_recording_sha256": "503c3605ac6dbce0fefa708b9f90b1b21eda7783e1522a4298975d6c94af7312",
+  "scope": {
+    "website": "Local HTTPS preview",
+    "dataset": "Live public ATLAS browser transport",
+    "workload": "Loaded page with a rotating globe and no interaction",
+    "timeline_duration_seconds": 204.798,
+    "recording_discontinuities": [
+      {
+        "from_seconds": 0.004,
+        "until_seconds": 46.224
+      }
+    ],
+    "cpu_sample_interval_seconds": [
+      46.236,
+      204.798
+    ],
+    "cpu_sample_span_seconds": 158.561,
+    "memory_sample_interval_seconds": [
+      46.236,
+      204.293
+    ],
+    "memory_sample_span_seconds": 158.056,
+    "memory_samples_exported": 316,
+    "memory_samples_summarized": 315,
+    "cpu_samples": 316,
+    "memory_pressure_events": 0,
+    "excluded_sample": {
+      "elapsed_seconds": 45.736,
+      "category_sum_bytes": 0,
+      "reason": "This zero-valued memory sample falls inside the recording discontinuity."
+    },
+    "measurement_limits": [
+      "Startup is outside the sampled interval. The timeline retains initial page navigation and load markers before the recording resumes.",
+      "Safari memory categories are not total operating-system memory, total device RAM or a separate GPU-memory measurement.",
+      "Zero image and layer categories in this export do not establish zero graphics-memory use.",
+      "Safari category sums are not directly comparable with Chromium JavaScript heap or CDP backing-storage measurements.",
+      "This idle animation capture and the compact-data interactive capture have different workloads; they do not form a controlled comparison.",
+      "Absolute timestamps, device names, raw URLs, headers, cookies and thread names are excluded."
+    ]
+  },
+  "observer_report": {
+    "renderer": "gpu",
+    "renderer_confirmation": "The page exposed data-renderer=gpu, and the operator confirmed ready=true at approximately 30 seconds after reload.",
+    "visible_alerts": 0,
+    "observed_errors": 0,
+    "unexpected_reloads": 0,
+    "interactions_during_sampled_interval": 0,
+    "source": "Page inspection and visible outcome supplied by the operator"
+  },
+  "memory": {
+    "definition": "Sum of the six exported Safari categories at each sample outside recording discontinuities; MiB is 1,048,576 bytes",
+    "first_sample": {
+      "elapsed_seconds": 46.236,
+      "category_sum_bytes": 493701376,
+      "category_sum_mib": 470.83,
+      "categories_bytes": {
+        "javascript": 145273024,
+        "jit": 11468800,
+        "images": 0,
+        "layers": 0,
+        "page": 320100416,
+        "other": 16859136
+      }
+    },
+    "minimum_sample": {
+      "elapsed_seconds": 47.239,
+      "category_sum_bytes": 432572672,
+      "category_sum_mib": 412.533,
+      "categories_bytes": {
+        "javascript": 144990191,
+        "jit": 11436032,
+        "images": 0,
+        "layers": 0,
+        "page": 259303697,
+        "other": 16842752
+      }
+    },
+    "peak_sample": {
+      "elapsed_seconds": 95.572,
+      "category_sum_bytes": 507857152,
+      "category_sum_mib": 484.33,
+      "categories_bytes": {
+        "javascript": 165174185,
+        "jit": 11436032,
+        "images": 0,
+        "layers": 0,
+        "page": 314551639,
+        "other": 16695296
+      }
+    },
+    "final_sample": {
+      "elapsed_seconds": 204.293,
+      "category_sum_bytes": 464062720,
+      "category_sum_mib": 442.565,
+      "categories_bytes": {
+        "javascript": 151768565,
+        "jit": 11436032,
+        "images": 0,
+        "layers": 0,
+        "page": 283474699,
+        "other": 17383424
+      }
+    },
+    "downward_steps_over_30_mib": [
+      {
+        "elapsed_seconds": 47.239,
+        "category_sum_decrease_bytes": 40583168,
+        "page_category_decrease_bytes": 42620474
+      },
+      {
+        "elapsed_seconds": 96.575,
+        "category_sum_decrease_bytes": 65765376,
+        "page_category_decrease_bytes": 66693843
+      },
+      {
+        "elapsed_seconds": 143.892,
+        "category_sum_decrease_bytes": 57327616,
+        "page_category_decrease_bytes": 58713410
+      },
+      {
+        "elapsed_seconds": 180.647,
+        "category_sum_decrease_bytes": 47955968,
+        "page_category_decrease_bytes": 47822398
+      }
+    ],
+    "interpretation": "The category sum rises between downward steps, largely in the page category. Successive later drops return the sum to roughly 417–419 MiB. The final value is below the peak and the first valid sample. This short capture shows repeated release of memory, but does not establish long-term stability or identify the allocation source."
+  },
+  "cpu": {
+    "units": "Safari exported CPU usage values, without normalization to total device capacity",
+    "mean_usage": 26.782,
+    "median_usage": 26.3,
+    "peak_usage": 43.8,
+    "peak_elapsed_seconds": 46.739,
+    "mean_main_thread_usage": 25.85,
+    "final_30_seconds_mean_usage": 26.462,
+    "interpretation": "The globe remains visibly animated. These values describe this single loaded-page recording, without an idle full-archive or static-globe control."
+  },
+  "network": {
+    "record_count": 1,
+    "response_status_counts": {
+      "200": 1
+    },
+    "fetch_type_counts": {
+      "Network Load": 1
+    },
+    "local_website_navigation_requests": 1,
+    "atlas_origin_requests_in_export": 0,
+    "page_markers_before_sampled_interval": {
+      "dom-content-event": 1,
+      "load-event": 1
+    },
+    "page_markers_within_sampled_interval": {},
+    "interpretation": "The export retains one local page navigation response. Dataset loading is outside the sampled interval, so these records do not measure startup downloads or total session traffic."
+  },
+  "ten_second_summary": {
+    "columns": [
+      "from_seconds",
+      "until_seconds",
+      "memory_samples",
+      "category_sum_min_bytes",
+      "category_sum_max_bytes",
+      "category_sum_end_bytes",
+      "javascript_end_bytes",
+      "page_end_bytes",
+      "mean_cpu_usage"
+    ],
+    "rows": [
+      [
+        40,
+        50,
+        8,
+        432572672,
+        493701376,
+        435144960,
+        145157374,
+        261643266,
+        29.387
+      ],
+      [
+        50,
+        60,
+        20,
+        435849472,
+        455608576,
+        455608576,
+        152292272,
+        274873680,
+        29.225
+      ],
+      [
+        60,
+        70,
+        20,
+        453200128,
+        469272832,
+        469272832,
+        155950397,
+        285338563,
+        25.57
+      ],
+      [
+        70,
+        80,
+        20,
+        469616896,
+        483215616,
+        483215616,
+        159092148,
+        296123212,
+        25.7
+      ],
+      [
+        80,
+        90,
+        19,
+        483559680,
+        499927296,
+        499927296,
+        163285335,
+        308576169,
+        25.389
+      ],
+      [
+        90,
+        100,
+        20,
+        437176576,
+        507857152,
+        442206464,
+        149751618,
+        264225214,
+        25.72
+      ],
+      [
+        100,
+        110,
+        20,
+        443549952,
+        456493312,
+        456493312,
+        151270289,
+        276796783,
+        25.995
+      ],
+      [
+        110,
+        120,
+        20,
+        455575808,
+        466536704,
+        466536704,
+        153321095,
+        284756601,
+        29.395
+      ],
+      [
+        120,
+        130,
+        20,
+        466815232,
+        477350144,
+        477350144,
+        155630050,
+        293130014,
+        27.445
+      ],
+      [
+        130,
+        140,
+        20,
+        477989120,
+        497256704,
+        497256704,
+        161320857,
+        307165543,
+        28.845
+      ],
+      [
+        140,
+        150,
+        20,
+        438847744,
+        503630080,
+        447498496,
+        149814640,
+        268667792,
+        26.675
+      ],
+      [
+        150,
+        160,
+        19,
+        447809792,
+        461359360,
+        461359360,
+        152678093,
+        279665203,
+        26.232
+      ],
+      [
+        160,
+        170,
+        20,
+        461392128,
+        476039424,
+        476039424,
+        156859455,
+        290262209,
+        25.695
+      ],
+      [
+        170,
+        180,
+        20,
+        477333760,
+        492882176,
+        492882176,
+        160824271,
+        303107377,
+        24.82
+      ],
+      [
+        180,
+        190,
+        20,
+        437209344,
+        492587264,
+        449710336,
+        150111704,
+        270582568,
+        26.81
+      ],
+      [
+        190,
+        200,
+        20,
+        449743104,
+        459344128,
+        459344128,
+        150862615,
+        279662057,
+        28.065
+      ],
+      [
+        200,
+        204.798,
+        9,
+        459950336,
+        464062720,
+        464062720,
+        151768565,
+        283474699,
+        24.856
+      ]
+    ]
+  }
+}

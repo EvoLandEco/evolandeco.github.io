@@ -5,7 +5,7 @@ import { useAtlas, useAtlasPanelState } from "./atlas-context";
 import { AtlasChains } from "./atlas-chains";
 import { AtlasSelect } from "./atlas-select";
 import { ObservationPlot } from "./atlas-metrics";
-import { visibleMeasure } from "@/lib/atlas-metrics";
+import { visibleMeasure, measureEvidenceRecords } from "@/lib/atlas-metrics";
 import type { AtlasRecord } from "@/lib/atlas";
 
 export const AtlasTrends = memo(function AtlasTrends({ rows, window, onReport }: { rows: AtlasRecord[]; window: [string, string]; onReport: (ids: string[], expand?: boolean) => void }) {
@@ -19,7 +19,7 @@ export const AtlasTrends = memo(function AtlasTrends({ rows, window, onReport }:
     const reviewed = view.reviewed_series;
     const reviewedIds = new Set(reviewed.flatMap(s => s.members.map(m => m.measure_id)));
     const selected = metrics.measures.filter(m => eligible.has(m.measure_id) && visibleMeasure(m, ids) && !m.superseded);
-    const measured = new Set(selected.flatMap(m => m.evidence_references.map(ref => ref.record_id)));
+    const measured = new Set(selected.flatMap(measureEvidenceRecords));
     const unreviewed = metrics.series.map(s => ({ id: s.context_id, review: undefined, items: s.measure_ids.map(id => measures.get(id)!).filter(m => !reviewedIds.has(m.measure_id) && eligible.has(m.measure_id) && visibleMeasure(m, ids) && !m.superseded && m.value !== null && m.observation_date !== null).sort((a, b) => a.observation_date!.localeCompare(b.observation_date!)) }))
       .filter(s => new Set(s.items.map(m => m.observation_date)).size > 1);
     const series = [...reviewed.map(review => ({ id: review.series_id, review, items: review.members.map(m => measures.get(m.measure_id)!) })), ...unreviewed];

@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-02",
+  "scope": "Three fresh Chromium contexts per transport; 4x CPU throttle, reduced motion, identical scientific release and analysis, precompressed assets served over loopback HTTP. These measurements exclude internet latency and total process/GPU memory.",
+  "release": "e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48",
+  "manifest": "b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057",
+  "archive": {
+    "median_ready_ms": 11829.700000047684,
+    "median_startup_js_heap_bytes": 159860276,
+    "median_startup_backing_storage_bytes": 343581768,
+    "median_sampled_peak_js_heap_bytes": 178308440,
+    "longest_task_ms": 948,
+    "errors": []
+  },
+  "compact": {
+    "median_ready_ms": 2557.9000000953674,
+    "median_startup_js_heap_bytes": 70425876,
+    "median_startup_backing_storage_bytes": 35415243,
+    "median_sampled_peak_js_heap_bytes": 106303896,
+    "longest_task_ms": 662,
+    "errors": []
+  },
+  "interpretation": "Panel shell timings include any concurrent detail downloads or parsing from the preceding selection; they are not isolated tab render benchmarks."
+}

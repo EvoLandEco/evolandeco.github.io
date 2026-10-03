@@ -1,0 +1,144 @@
+{
+  "date": "2026-10-02",
+  "dataset_export_id": "e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48",
+  "method": "Same page, fixed globe orientation, All dates, native/GPU/native/GPU route rendering; GPU markers retained in every sample.",
+  "warmup_ms": 1500,
+  "duration_ms": 5000,
+  "samples": [
+    {
+      "mode": "svg",
+      "cpu_ms": {
+        "LayoutDuration": 16.832999999999988,
+        "RecalcStyleDuration": 187.56099999999992,
+        "ScriptDuration": 211.04200000000006,
+        "TaskDuration": 942.2670000000002,
+        "process_browser": 17.355999999999927,
+        "process_renderer": 1407.7490000000007,
+        "process_GPU": 3534.4100000000003,
+        "process_network.mojom.NetworkService": 4.5479999999999965,
+        "process_storage.mojom.StorageService": 0.08299999999999974
+      },
+      "frames": {
+        "callbacks": 500,
+        "median_ms": 10,
+        "p95_ms": 10.5,
+        "startAngle": "4.19602",
+        "endAngle": "4.19602"
+      }
+    },
+    {
+      "mode": "gpu",
+      "cpu_ms": {
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 27.69900000000003,
+        "ScriptDuration": 153.14000000000004,
+        "TaskDuration": 531.701,
+        "process_browser": 15.027000000000012,
+        "process_renderer": 847.2219999999995,
+        "process_GPU": 2562.347999999999,
+        "process_network.mojom.NetworkService": 4.097000000000017,
+        "process_storage.mojom.StorageService": 0
+      },
+      "frames": {
+        "callbacks": 500,
+        "median_ms": 10,
+        "p95_ms": 10.5,
+        "startAngle": "4.19602",
+        "endAngle": "4.19602"
+      }
+    },
+    {
+      "mode": "svg",
+      "cpu_ms": {
+        "LayoutDuration": 15.601000000000004,
+        "RecalcStyleDuration": 189.27699999999993,
+        "ScriptDuration": 204.49399999999994,
+        "TaskDuration": 902.4990000000001,
+        "process_browser": 11.658999999999974,
+        "process_renderer": 1312.2540000000004,
+        "process_GPU": 3393.374999999999,
+        "process_network.mojom.NetworkService": 3.532000000000007,
+        "process_storage.mojom.StorageService": 0.08700000000000027
+      },
+      "frames": {
+        "callbacks": 500,
+        "median_ms": 10,
+        "p95_ms": 10.200000000000728,
+        "startAngle": "4.19602",
+        "endAngle": "4.19602"
+      }
+    },
+    {
+      "mode": "gpu",
+      "cpu_ms": {
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 27.60499999999999,
+        "ScriptDuration": 160.609,
+        "TaskDuration": 545.0939999999997,
+        "process_browser": 14.288999999999996,
+        "process_renderer": 858.4220000000009,
+        "process_GPU": 2579.0589999999993,
+        "process_network.mojom.NetworkService": 6.256000000000012,
+        "process_storage.mojom.StorageService": 0
+      },
+      "frames": {
+        "callbacks": 500,
+        "median_ms": 10,
+        "p95_ms": 10.5,
+        "startAngle": "4.19602",
+        "endAngle": "4.19602"
+      }
+    }
+  ],
+  "limitations": [
+    "CPU counters are process time, not hardware GPU utilization.",
+    "Animation-frame intervals measure callback scheduling, not display presentation.",
+    "Two samples per renderer at one fixed orientation. This does not characterize rotation, dragging, every window size or long-run memory use.",
+    "The Mac session was locked during these automated browser measurements."
+  ],
+  "graphics": [
+    {
+      "vendorString": "Google Inc. (Apple)",
+      "deviceString": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Max, Version 15.6.1 (Build 24G90))"
+    }
+  ],
+  "routes": 124,
+  "gl_error": 0,
+  "scope": "Production route renderer on desktop Chromium with ANGLE Metal. Physical iPhone verification is pending.",
+  "viewport_css_pixels": [
+    1440,
+    1000
+  ],
+  "device_pixel_ratio": 2,
+  "source_sha256": {
+    "globe.tsx": "681290589fd94117a539954c4bd77afd206b4b276e89151738a52776aab76338",
+    "globe-routes.ts": "43ec8800518b1d02e59386ada978bef62f9036608c0ced59e23f04315d64f500",
+    "globe-effects.ts": "ff402fb93b96785ee8c2bfdf38ab59d93f31fcd6b367e82d8474b90e9f914726"
+  },
+  "median_cpu_ms_per_sample": {
+    "svg": {
+      "TaskDuration": 922.3830000000002,
+      "ScriptDuration": 207.768,
+      "LayoutDuration": 16.216999999999995,
+      "RecalcStyleDuration": 188.41899999999993,
+      "process_renderer": 1360.0015000000005,
+      "process_GPU": 3463.8925
+    },
+    "gpu": {
+      "TaskDuration": 538.3974999999998,
+      "ScriptDuration": 156.8745,
+      "LayoutDuration": 0.0,
+      "RecalcStyleDuration": 27.652000000000008,
+      "process_renderer": 852.8220000000002,
+      "process_GPU": 2570.703499999999
+    }
+  },
+  "cpu_reduction_percent": {
+    "TaskDuration": 41.62972431191818,
+    "ScriptDuration": 24.495350583342955,
+    "LayoutDuration": 100.0,
+    "RecalcStyleDuration": 85.32419766584049,
+    "process_renderer": 37.29256916260755,
+    "process_GPU": 25.785702067832673
+  }
+}

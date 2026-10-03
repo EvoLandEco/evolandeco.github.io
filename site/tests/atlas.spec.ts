@@ -28,6 +28,10 @@ async function showPageControl(page: Page) {
   await page.locator('.atlas-toolbar').evaluate(el => window.scrollTo(0, window.scrollY + el.getBoundingClientRect().top + 80));
 }
 
+async function controlBottom(page: Page) {
+  return page.locator('.atlas-toolbar, .atlas-panel-tools').evaluateAll(elements => Math.max(...elements.map(element => element.getBoundingClientRect()).filter(box => box.width && box.height).map(box => box.bottom)));
+}
+
 async function select(page: Page, label: string, choice: string) {
   if (label.endsWith("page, side")) await showPageControl(page);
   await page.locator(`summary[aria-label="${label}"]`).click();
@@ -242,13 +246,44 @@ test("ATLAS surface interactions, smooth centering and shared range handles", as
 });
 
 test("Far-side events use subtle rim arrows that follow rotation", async ({ page }) => {
+  const { default: sharp } = await import("sharp");
+  await page.addInitScript(() => {
+    const draw = WebGL2RenderingContext.prototype.drawArraysInstanced;
+    WebGL2RenderingContext.prototype.drawArraysInstanced = function (...args) {
+      draw.apply(this, args);
+      if (this.canvas instanceof HTMLCanvasElement && this.canvas.classList.contains("atlas-marker-canvas"))
+        Object.assign(window, { markerPixels: this.canvas.toDataURL() });
+    };
+  });
   await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
   await page.goto("/atlas/");
+  await expect(page.locator(".atlas-globe-pins")).toHaveAttribute("data-renderer", /gpu|svg/);
+  const gpu = await page.locator(".atlas-globe-pins").getAttribute("data-renderer") === "gpu";
   const hidden = page.locator('.atlas-globe-pin[data-occluded="true"]');
   await expect(hidden.first()).toBeVisible();
   await expect(hidden.first()).toHaveAttribute("tabindex", "0");
-  await expect(hidden.first().locator(".atlas-rim-arrow")).toBeVisible();
+  if (gpu) await expect(hidden.first().locator(".atlas-rim-arrow")).toBeHidden();
+  else await expect(hidden.first().locator(".atlas-rim-arrow")).toBeVisible();
   await expect(hidden.first().locator(".atlas-event-marker")).toBeHidden();
+  const center = await hidden.first().evaluate(el => {
+    const matrix = (el as SVGGElement).transform.baseVal.consolidate()!.matrix;
+    return { x: matrix.e, y: matrix.f };
+  });
+  const arrowAlpha = async () => {
+    const url = await page.evaluate(() => (window as unknown as { markerPixels: string }).markerPixels);
+    const { data, info } = await sharp(Buffer.from(url.split(",")[1], "base64")).raw().toBuffer({ resolveWithObject: true });
+    let alpha = 0;
+    for (let y = Math.floor((center.y - 10) / 1000 * info.height); y < Math.ceil((center.y + 10) / 1000 * info.height); y++)
+      for (let x = Math.floor((center.x - 10) / 1000 * info.width); x < Math.ceil((center.x + 10) / 1000 * info.width); x++)
+        alpha += data[(y * info.width + x) * info.channels + 3];
+    return alpha;
+  };
+  const resting = gpu ? await arrowAlpha() : 0;
+  if (gpu) expect(resting).toBeGreaterThan(0);
+  await hidden.first().hover({ force: true });
+  if (gpu) expect(await arrowAlpha()).toBeGreaterThan(resting);
+  else await expect(hidden.first().locator(".atlas-rim-chevron")).toHaveCSS("opacity", "0.95");
+  await page.mouse.move(5, 5);
   const rimPosition = await hidden.first().getAttribute("transform");
   const rimId = await hidden.first().getAttribute("aria-label");
   const visible = page.locator('.atlas-globe-pin[data-occluded="false"]');
@@ -295,7 +330,7 @@ for (const width of [390, 1280]) test(`ATLAS captures a painted globe before loa
   try {
     await expect(page.locator("html")).toHaveAttribute("data-captured-globe", "9");
     await expect(page.locator("html")).not.toHaveAttribute("data-atlas-transition");
-    if (width === 1280) await expect(page.getByRole("status")).toContainText("Loading reports");
+    if (width === 1280) await expect(page.getByRole("status")).toContainText("Checking the latest release…");
   } finally { release(); }
   await expect(page.locator(".atlas-page")).toHaveAttribute("data-ready", "true");
   expect(requestedDuringTransition).toBe(false);
@@ -438,7 +473,7 @@ test("View evidence scrolls to matching reports and highlights their support", a
     await expect(highlighted.first().locator('summary').first()).toBeFocused();
     const logo = await highlighted.first().locator('.atlas-source-logo').boundingBox();
     expect(Math.abs(logo!.x + logo!.width / 2 - (await highlighted.first().boundingBox())!.x)).toBeLessThan(2);
-    await expect.poll(async () => Math.abs((await highlighted.first().boundingBox())!.y - 96)).toBeLessThan(1);
+    await expect.poll(async () => Math.abs((await highlighted.first().boundingBox())!.y - await controlBottom(page) - 24)).toBeLessThan(1);
 
     await showPageControl(page);
     await page.getByRole("navigation", { includeHidden: true, name: "Report pages, side" }).getByRole("button", { name: "Next report page" }).click();
@@ -454,7 +489,7 @@ test("View evidence scrolls to matching reports and highlights their support", a
     await expect(highlighted).toHaveAttribute("id", "atlas-report-doc_4b8a9787326794ee4ae84824");
     await expect.poll(async () => {
       const box = (await highlighted.boundingBox())!;
-      return box.y >= 95 && box.y + box.height < 1000;
+      return box.y >= await controlBottom(page) && box.y + box.height < 1000;
     }).toBe(true);
     await expect(highlighted.locator('summary').first()).toBeFocused();
     await page.getByRole("button", { name: "Reset all", exact: true }).click();
@@ -658,38 +693,58 @@ test("Source coverage highlights connected logos, locations and paths", async ({
 
 test("ATLAS keeps compact surface markers and pauses globe rendering during inspection", async ({ page }) => {
   await page.addInitScript(() => {
-    const stats = { draws: 0, shaders: 0 };
+    const stats = { draws: 0, markers: 0, routes: 0, shaders: 0 };
     Object.defineProperty(window, 'globeRenderStats', { value: stats });
     for (const prototype of [WebGLRenderingContext.prototype, WebGL2RenderingContext.prototype]) {
       const draw = prototype.drawArrays, shader = prototype.createShader;
       prototype.drawArrays = function (...args) { stats.draws++; return draw.apply(this, args); };
       prototype.createShader = function (...args) { stats.shaders++; return shader.apply(this, args); };
     }
+    const draw = WebGL2RenderingContext.prototype.drawArraysInstanced;
+    WebGL2RenderingContext.prototype.drawArraysInstanced = function (...args) {
+      if (this.canvas instanceof HTMLCanvasElement) {
+        if (this.canvas.classList.contains("atlas-marker-canvas")) stats.markers++;
+        if (this.canvas.classList.contains("atlas-route-canvas")) stats.routes++;
+      }
+      return draw.apply(this, args);
+    };
   });
   await page.emulateMedia({ reducedMotion: 'no-preference', colorScheme: 'dark' });
   await page.goto('/atlas/');
   const globe = page.locator('.atlas-globe-frame');
-  await expect(globe.locator('canvas')).toHaveCount(1);
+  await expect(globe.locator('canvas')).toHaveCount(3);
+  await expect(globe.locator('.atlas-globe-pins')).toHaveAttribute('data-renderer', /gpu|svg/);
+  await expect(globe.locator('.atlas-globe-pins')).toHaveAttribute('data-route-renderer', /gpu|svg/);
+  const gpu = await globe.locator('.atlas-globe-pins').getAttribute('data-renderer') === 'gpu';
+  const gpuRoutes = await globe.locator('.atlas-globe-pins').getAttribute('data-route-renderer') === 'gpu';
   const marker = globe.locator('.atlas-globe-pin[data-occluded="false"]').first();
-  await expect(marker.locator('.atlas-event-marker')).toHaveAttribute('transform', /rotate\(.*\) scale\(.*,1\)/);
+  await expect(marker.locator('.atlas-event-marker')).toHaveCSS('display', gpu ? 'none' : 'inline');
   await expect(marker.locator('.atlas-event-ring')).toHaveAttribute('r', '7');
-  await expect(marker.locator('.atlas-event-pulse')).toHaveCSS('animation-name', 'atlas-event-ripple');
+  await expect(marker.locator('.atlas-event-pulse')).toHaveCSS('animation-name', gpu ? 'none' : 'atlas-event-ripple');
   await expect(globe.locator('.atlas-route[data-kind="movement"]')).toHaveCount(routeGroups.filter(group => group.entries.at(-1)!.link.type === 'movement').length);
   await expect(globe.locator('.atlas-route[data-kind="shared_event"] .atlas-route-line').first()).toHaveCSS('stroke-dasharray', '10px, 5px');
   await expect(globe.locator('.atlas-route[data-kind="hypothesis"] .atlas-route-line').first()).toHaveCSS('stroke-dasharray', '1px, 5px');
   const markerBox = (await marker.boundingBox())!;
   await page.mouse.move(markerBox.x + markerBox.width / 2, markerBox.y + markerBox.height / 2);
   await expect(page.getByRole('tooltip')).toBeVisible();
-  const stats = () => page.evaluate(() => ({ ...(window as unknown as { globeRenderStats: { draws: number; shaders: number } }).globeRenderStats }));
+  const stats = () => page.evaluate(() => ({ ...(window as unknown as { globeRenderStats: { draws: number; markers: number; routes: number; shaders: number } }).globeRenderStats }));
   const inspected = await stats();
   await page.waitForTimeout(250);
-  expect(await stats()).toEqual(inspected);
+  expect((await stats()).draws).toEqual(inspected.draws);
+  expect((await stats()).shaders).toEqual(inspected.shaders);
+  if (gpu) expect((await stats()).markers).toBeGreaterThan(inspected.markers);
+  else expect((await stats()).markers).toBe(0);
+  if (gpuRoutes) expect((await stats()).routes).toBeGreaterThan(inspected.routes);
+  else expect((await stats()).routes).toBe(0);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(globe.locator('.atlas-globe-pins')).toHaveAttribute('data-playing', 'false');
   await expect(marker.locator('.atlas-event-pulse')).toHaveCSS('animation-name', 'none');
   await page.mouse.move(5, 5);
+  await expect(page.getByRole('tooltip')).toBeHidden();
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  const reduced = await stats();
   await page.waitForTimeout(250);
-  expect(await stats()).toEqual(inspected);
+  expect(await stats()).toEqual(reduced);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await expect.poll(async () => (await stats()).draws).toBeGreaterThan(inspected.draws);
   expect((await stats()).shaders).toBe(inspected.shaders);
@@ -699,6 +754,365 @@ test("ATLAS keeps compact surface markers and pauses globe rendering during insp
   const offscreen = await stats();
   await page.waitForTimeout(250);
   expect(await stats()).toEqual(offscreen);
+});
+
+test("Globe marker resources survive selections and recover from context loss", async ({ page, browserName }) => {
+  await page.addInitScript(() => {
+    const resources = { programs: 0, buffers: 0 };
+    Object.defineProperty(window, "markerResources", { value: resources });
+    const prototype = WebGL2RenderingContext.prototype;
+    const createProgram = prototype.createProgram, createBuffer = prototype.createBuffer;
+    const isMarker = (gl: WebGL2RenderingContext) => gl.canvas instanceof HTMLCanvasElement && gl.canvas.classList.contains("atlas-marker-canvas");
+    prototype.createProgram = function () { if (isMarker(this)) resources.programs++; return createProgram.call(this); };
+    prototype.createBuffer = function () { if (isMarker(this)) resources.buffers++; return createBuffer.call(this); };
+  });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/atlas/");
+  const layer = page.locator(".atlas-globe-pins");
+  await expect(layer).toHaveAttribute("data-renderer", /gpu|svg/);
+  const gpu = await layer.getAttribute("data-renderer") === "gpu";
+  if (process.env.ATLAS_EXPECT_GPU) expect(gpu).toBe(process.env.ATLAS_EXPECT_GPU === "true");
+  const resources = () => page.evaluate(() => ({ ...(window as unknown as { markerResources: { programs: number; buffers: number } }).markerResources }));
+  const initial = await resources();
+  for (let i = 0; i < 4; i++) {
+    const marker = layer.locator('.atlas-globe-pin[data-occluded="false"]').first();
+    await marker.focus();
+    await page.keyboard.press("Enter");
+    await expect(layer.locator('[data-selected="true"]')).toHaveCount(1);
+    await page.getByRole("button", { name: "Reset all", exact: true }).click();
+  }
+  expect(await resources()).toEqual(initial);
+  if (!gpu) {
+    await expect(layer.locator('.atlas-globe-pin[data-occluded="false"] .atlas-event-marker').first()).toHaveCSS("display", "inline");
+    await expect(layer.locator(".atlas-marker-canvas")).toBeHidden();
+    return;
+  }
+  const palette = () => layer.evaluate(element => {
+    const gl = element.querySelector<HTMLCanvasElement>(".atlas-marker-canvas")!.getContext("webgl2")!;
+    const program = gl.getParameter(gl.CURRENT_PROGRAM) as WebGLProgram;
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 1;
+    const paint = canvas.getContext("2d")!;
+    const expected: Record<string, number[]> = {}, actual: Record<string, number[]> = {};
+    for (const [uniform, selector, property] of [
+      ["markerColor", ".atlas-event-core", "fill"],
+      ["background", ".atlas-event-ring", "fill"],
+      ["haloColor", "radialGradient stop", "stop-color"],
+      ["rimColor", ".atlas-rim-chevron", "stroke"],
+      ["focusColor", ".atlas-globe-pin:focus-visible .atlas-globe-hit", "stroke"],
+      ["sparkColor", ".atlas-event-spark", "fill"],
+    ]) {
+      paint.clearRect(0, 0, 1, 1);
+      paint.fillStyle = getComputedStyle(element.querySelector(selector)!).getPropertyValue(property);
+      paint.fillRect(0, 0, 1, 1);
+      expected[uniform] = [...paint.getImageData(0, 0, 1, 1).data].slice(0, 3);
+      const location = gl.getUniformLocation(program, uniform);
+      if (!location) throw new Error(`Missing marker palette uniform: ${uniform}`);
+      actual[uniform] = [...gl.getUniform(program, location) as Float32Array].map(value => Math.round(value * 255));
+    }
+    return { expected, actual };
+  });
+  for (const theme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme: theme });
+    if (theme === "dark") await expect(page.locator("html")).toHaveClass(/dark/);
+    else await expect(page.locator("html")).not.toHaveClass(/dark/);
+    await page.keyboard.press("Tab");
+    await layer.locator('.atlas-globe-pin[data-occluded="false"]').first().focus();
+    const expected = (await palette()).expected;
+    if (theme === "light") expect(expected.background).toEqual([255, 255, 255]);
+    await expect.poll(async () => (await palette()).actual).toEqual(expected);
+  }
+  expect(await resources()).toEqual(initial);
+  await layer.locator(".atlas-marker-canvas").evaluate(canvas => {
+    const extension = (canvas as HTMLCanvasElement).getContext("webgl2")!.getExtension("WEBGL_lose_context")!;
+    Object.defineProperty(window, "markerContext", { value: extension });
+    extension.loseContext();
+  });
+  await expect(layer).toHaveAttribute("data-renderer", "svg");
+  const native = layer.locator('.atlas-globe-pin[data-occluded="false"] .atlas-event-marker').first();
+  await expect(native).toHaveCSS("display", "inline");
+  await expect(native).toHaveAttribute("transform", /rotate\(.*\) scale\(.*,1\)/);
+  await page.evaluate(() => (window as unknown as { markerContext: WEBGL_lose_context }).markerContext.restoreContext());
+  await expect(layer).toHaveAttribute("data-renderer", "gpu");
+  await expect(native).toHaveCSS("display", "none");
+  expect(await resources()).toEqual({ programs: initial.programs + 1, buffers: initial.buffers + 2 });
+  if (browserName === "chromium") {
+    const session = await page.context().newCDPSession(page);
+    const beforeResize = await resources();
+    const cssWidth = await layer.locator(".atlas-marker-canvas").evaluate(el => getComputedStyle(el).width);
+    await page.evaluate(() => {
+      const events: number[] = [];
+      Object.assign(window, { markerDensityEvents: events });
+      for (const density of [1, 3]) matchMedia(`(resolution: ${density}dppx)`).addEventListener("change", () => events.push(density));
+    });
+    for (const density of [3, 1]) {
+      const viewport = page.viewportSize()!;
+      // A viewport change makes CDP deliver native resolution-query events.
+      await session.send("Emulation.setDeviceMetricsOverride", { ...viewport, width: viewport.width + Number(density === 3), deviceScaleFactor: density, mobile: false });
+      await expect.poll(() => layer.locator(".atlas-marker-canvas").evaluate(el =>
+        (el as HTMLCanvasElement).width === Math.round(parseFloat(getComputedStyle(el).width) * devicePixelRatio))).toBe(true);
+      await expect(layer.locator(".atlas-marker-canvas")).toHaveCSS("width", cssWidth);
+      expect(await resources()).toEqual(beforeResize);
+    }
+    expect(await page.evaluate(() => (window as unknown as { markerDensityEvents: number[] }).markerDensityEvents)).toEqual([1, 3, 1, 3]);
+    await session.detach();
+  }
+});
+
+test("Globe route resources survive filters, themes and context loss", async ({ page, browserName }) => {
+  await page.addInitScript(() => {
+    const resources = { programs: 0, buffers: 0, textures: 0, frames: 0, arrays: 0 };
+    Object.assign(window, { routeResources: resources });
+    const prototype = WebGL2RenderingContext.prototype;
+    const isRoute = (gl: WebGL2RenderingContext) => gl.canvas instanceof HTMLCanvasElement && gl.canvas.classList.contains("atlas-route-canvas");
+    const program = prototype.createProgram, buffer = prototype.createBuffer, texture = prototype.createTexture;
+    const frame = prototype.createFramebuffer, array = prototype.createVertexArray;
+    prototype.createProgram = function () { if (isRoute(this)) resources.programs++; return program.call(this); };
+    prototype.createBuffer = function () { if (isRoute(this)) resources.buffers++; return buffer.call(this); };
+    prototype.createTexture = function () { if (isRoute(this)) resources.textures++; return texture.call(this); };
+    prototype.createFramebuffer = function () { if (isRoute(this)) resources.frames++; return frame.call(this); };
+    prototype.createVertexArray = function () { if (isRoute(this)) resources.arrays++; return array.call(this); };
+  });
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "light" });
+  await page.goto("/atlas/");
+  await expect(page.locator(".atlas-page")).toHaveAttribute("data-ready", "true");
+  const layer = page.locator(".atlas-globe-pins"), canvas = layer.locator(".atlas-route-canvas");
+  await expect(layer).toHaveAttribute("data-route-renderer", /gpu|svg/);
+  const gpu = await layer.getAttribute("data-route-renderer") === "gpu";
+  if (process.env.ATLAS_EXPECT_GPU) expect(gpu).toBe(process.env.ATLAS_EXPECT_GPU === "true");
+  await page.evaluate(() => document.fonts.ready);
+  const resources = () => page.evaluate(() => ({ ...(window as unknown as { routeResources: Record<string, number> }).routeResources }));
+  const initial = await resources();
+  if (gpu) await canvas.evaluate(el => Object.assign(window, { routeContext: (el as HTMLCanvasElement).getContext("webgl2") }));
+  for (const name of ["3 months", "All dates", "6 months", "All dates"]) {
+    await page.getByRole("button", { name, exact: true }).click();
+    await expect(layer.locator(".atlas-link-target").first()).toHaveAttribute("d", /^M/);
+    await expect(layer).toHaveAttribute("data-route-renderer", gpu ? "gpu" : "svg");
+  }
+  await select(page, "Reporting topic", "Lassa fever · Nigeria");
+  await expect(layer.locator(".atlas-link-target")).toHaveCount(0);
+  await page.getByRole("button", { name: "Reset all", exact: true }).click();
+  await expect(layer.locator(".atlas-link-target")).toHaveCount(routeGroups.length);
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect(page.locator("html")).not.toHaveClass(/dark/);
+  expect(await resources()).toEqual(initial);
+  const link = layer.locator(".atlas-link-target").first();
+  await link.focus();
+  await expect(layer.locator('.atlas-route[data-active="true"]')).toHaveCount(1);
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".atlas-callout-card")).toBeVisible();
+  if (!gpu) {
+    await expect(canvas).toBeHidden();
+    await expect(layer.locator(".atlas-route-line").first()).toBeVisible();
+    return;
+  }
+  await canvas.evaluate(el => {
+    const gl = (el as HTMLCanvasElement).getContext("webgl2")!;
+    if (gl !== (window as unknown as { routeContext: WebGL2RenderingContext }).routeContext) throw new Error("Route context changed during filtering");
+    Object.assign(window, { routeContextExtension: gl.getExtension("WEBGL_lose_context")! });
+    gl.getExtension("WEBGL_lose_context")!.loseContext();
+  });
+  await expect(layer).toHaveAttribute("data-route-renderer", "svg");
+  await expect(canvas).toBeHidden();
+  await expect(layer.locator(".atlas-route-line").first()).toBeVisible();
+  expect(await layer.evaluate(el => {
+    const hits = [...el.querySelectorAll(".atlas-link-target")];
+    return [...el.querySelectorAll(".atlas-route-line")].every((path, i) => path.getAttribute("d") === hits[i].getAttribute("d"));
+  })).toBe(true);
+  await page.getByRole("button", { name: "Reset all", exact: true }).click();
+  await link.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".atlas-callout-card")).toBeVisible();
+  await page.evaluate(() => (window as unknown as { routeContextExtension: WEBGL_lose_context }).routeContextExtension.restoreContext());
+  await expect(layer).toHaveAttribute("data-route-renderer", "gpu");
+  await expect(layer.locator(".atlas-route").first()).toHaveCSS("visibility", "hidden");
+  await expect(layer.locator(".atlas-route-count").first()).toBeHidden();
+  expect(await resources()).toEqual(Object.fromEntries(Object.entries(initial).map(([name, count]) => [name, count * 2])));
+  if (browserName === "chromium") {
+    const session = await page.context().newCDPSession(page), beforeResize = await resources();
+    const cssWidth = await canvas.evaluate(el => getComputedStyle(el).width);
+    for (const density of [3, 1]) {
+      const viewport = page.viewportSize()!;
+      await session.send("Emulation.setDeviceMetricsOverride", { ...viewport, width: viewport.width + Number(density === 3), deviceScaleFactor: density, mobile: false });
+      await expect.poll(() => canvas.evaluate(el => (el as HTMLCanvasElement).width === Math.round(parseFloat(getComputedStyle(el).width) * devicePixelRatio))).toBe(true);
+      await expect(canvas).toHaveCSS("width", cssWidth);
+      expect(await resources()).toEqual(beforeResize);
+    }
+    await session.detach();
+  }
+});
+
+test("GPU route visuals retain native ordering and group dimming", async ({ page }, testInfo) => {
+  const { default: sharp } = await import("sharp");
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "light" });
+  await page.goto("/atlas/");
+  await expect(page.locator(".atlas-page")).toHaveAttribute("data-ready", "true");
+  await page.evaluate(() => document.fonts.ready);
+  const layer = page.locator(".atlas-globe-pins"), canvas = layer.locator(".atlas-route-canvas");
+  await expect(layer).toHaveAttribute("data-route-renderer", /gpu|svg/);
+  const gpu = await layer.getAttribute("data-route-renderer") === "gpu";
+  if (process.env.ATLAS_EXPECT_GPU) expect(gpu).toBe(process.env.ATLAS_EXPECT_GPU === "true");
+  if (!gpu) {
+    await expect(layer.locator(".atlas-route-line").first()).toBeVisible();
+    await layer.locator(".atlas-link-target").first().focus();
+    await expect(layer.locator('.atlas-route:not([data-active="true"])').first()).toHaveCSS("opacity", "0.3");
+    return;
+  }
+  await page.addStyleTag({ content: ".atlas-globe-frame canvas[data-markers], .atlas-marker-canvas, .atlas-globe-pin, .atlas-callout-card, .atlas-callout-connector { visibility: hidden !important; } .atlas-link-target { stroke-opacity: 0 !important; } .atlas-globe-pins { background: var(--background); }" });
+  const energy: Record<string, number[]> = {};
+  for (const theme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme: theme });
+    if (theme === "dark") await expect(page.locator("html")).toHaveClass(/dark/);
+    else await expect(page.locator("html")).not.toHaveClass(/dark/);
+    const background = await layer.evaluate(el => getComputedStyle(el).backgroundColor.match(/[\d.]+/g)!.slice(0, 3).map(Number));
+    for (const state of ["resting", "dimmed"] as const) {
+      if (state === "dimmed") await layer.locator(".atlas-link-target").first().focus();
+      else await page.getByRole("button", { name: "All dates", exact: true }).focus();
+      await expect(layer.locator('.atlas-route:not([data-active="true"])').first()).toHaveCSS("opacity", state === "dimmed" ? "0.3" : "1");
+      await layer.evaluate(async el => { await Promise.allSettled(el.getAnimations({ subtree: true }).map(animation => animation.finished)); });
+      await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => resolve())));
+      const accelerated = await layer.screenshot();
+      await canvas.evaluate(el => {
+        const extension = (el as HTMLCanvasElement).getContext("webgl2")!.getExtension("WEBGL_lose_context")!;
+        Object.assign(window, { routeVisualContext: extension });
+        extension.loseContext();
+      });
+      await expect(layer).toHaveAttribute("data-route-renderer", "svg");
+      const native = await layer.screenshot();
+      await testInfo.attach(`${theme}-${state}-gpu`, { body: accelerated, contentType: "image/png" });
+      await testInfo.attach(`${theme}-${state}-svg`, { body: native, contentType: "image/png" });
+      const a = await sharp(accelerated).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+      const b = await sharp(native).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+      expect(a.info).toEqual(b.info);
+      let difference = 0, gpuEnergy = 0, nativeEnergy = 0;
+      for (let i = 0; i < a.data.length; i++) {
+        difference += Math.abs(a.data[i] - b.data[i]);
+        gpuEnergy += Math.abs(a.data[i] - background[i % 3]);
+        nativeEnergy += Math.abs(b.data[i] - background[i % 3]);
+      }
+      expect(nativeEnergy).toBeGreaterThan(0);
+      expect(gpuEnergy).toBeGreaterThan(0);
+      // SVG edge coverage and filter rasterization differ between engines.
+      await testInfo.attach(`${theme}-${state}-comparison`, { contentType: "application/json", body: Buffer.from(JSON.stringify({ meanError: difference / a.data.length, foregroundError: difference / nativeEnergy, gpuEnergy, nativeEnergy })) });
+      expect.soft(difference / a.data.length).toBeLessThan(.7);
+      expect.soft(difference / nativeEnergy).toBeLessThan(.22);
+      const crops = await layer.evaluate(el => {
+        const bounds = el.getBoundingClientRect(), regions: { label: string; x: number; y: number }[] = [];
+        for (const badge of [...el.querySelectorAll<SVGGElement>(".atlas-route-count")].filter(item => getComputedStyle(item).visibility === "visible").slice(0, 3)) {
+          const box = badge.getBoundingClientRect();
+          regions.push({ label: `count-${badge.textContent}`, x: (box.x + box.width / 2 - bounds.x) / bounds.width, y: (box.y + box.height / 2 - bounds.y) / bounds.height });
+        }
+        const groups = [...el.querySelectorAll(".atlas-route")];
+        const paths = [...el.querySelectorAll<SVGPathElement>(".atlas-link-target")].map((path, i) => {
+          const points = [...(path.getAttribute("d") ?? "").matchAll(/([ML])(-?[\d.]+),(-?[\d.]+)/g)].map(match => ({ move: match[1] === "M", x: Number(match[2]), y: Number(match[3]) }));
+          return { kind: groups[i].getAttribute("data-kind"), segments: points.slice(1).flatMap((point, index) => point.move ? [] : [{ a: points[index], b: point }]) };
+        });
+        let crossings = 0;
+        for (let i = 0; i < paths.length && crossings < 3; i++) for (let j = i + 1; j < paths.length && crossings < 3; j++) {
+          if (paths[i].kind === paths[j].kind) continue;
+          for (let k = 0; k < paths[i].segments.length && crossings < 3; k++) for (let n = 0; n < paths[j].segments.length && crossings < 3; n++) {
+            const { a, b } = paths[i].segments[k], { a: c, b: d } = paths[j].segments[n];
+            const rx = b.x - a.x, ry = b.y - a.y, sx = d.x - c.x, sy = d.y - c.y, determinant = rx * sy - ry * sx;
+            if (Math.abs(determinant) < .000001) continue;
+            const t = ((c.x - a.x) * sy - (c.y - a.y) * sx) / determinant, u = ((c.x - a.x) * ry - (c.y - a.y) * rx) / determinant;
+            if (t <= 0 || t >= 1 || u <= 0 || u >= 1) continue;
+            const x = (a.x + t * rx) / 1000, y = (a.y + t * ry) / 1000;
+            if (x < .05 || x > .95 || y < .05 || y > .95 || regions.some(region => Math.hypot(x - region.x, y - region.y) < .05)) continue;
+            regions.push({ label: `overlap-${crossings++}`, x, y });
+          }
+        }
+        return regions;
+      });
+      expect(crops.some(crop => crop.label.startsWith("count-"))).toBe(true);
+      expect(crops.some(crop => crop.label.startsWith("overlap-"))).toBe(true);
+      for (const crop of crops) {
+        const size = Math.round(a.info.width * .07);
+        const region = { left: Math.max(0, Math.min(a.info.width - size, Math.round(crop.x * a.info.width - size / 2))), top: Math.max(0, Math.min(a.info.height - size, Math.round(crop.y * a.info.height - size / 2))), width: size, height: size };
+        await testInfo.attach(`${theme}-${state}-${crop.label}-gpu`, { body: await sharp(accelerated).extract(region).png().toBuffer(), contentType: "image/png" });
+        await testInfo.attach(`${theme}-${state}-${crop.label}-svg`, { body: await sharp(native).extract(region).png().toBuffer(), contentType: "image/png" });
+      }
+      energy[`${theme}-${state}`] = [gpuEnergy, nativeEnergy];
+      await page.evaluate(() => (window as unknown as { routeVisualContext: WEBGL_lose_context }).routeVisualContext.restoreContext());
+      await expect(layer).toHaveAttribute("data-route-renderer", "gpu");
+    }
+    const resting = energy[`${theme}-resting`], dimmed = energy[`${theme}-dimmed`];
+    expect(dimmed[0]).toBeLessThan(resting[0]);
+    expect(dimmed[1]).toBeLessThan(resting[1]);
+    expect.soft(Math.abs(dimmed[0] / resting[0] - dimmed[1] / resting[1])).toBeLessThan(.01);
+  }
+});
+
+test("Route texture limits preserve native geometry and selection", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.addInitScript(() => {
+    Object.assign(window, { routeTextureLimitQueries: 0 });
+    const get = WebGL2RenderingContext.prototype.getParameter;
+    WebGL2RenderingContext.prototype.getParameter = function (parameter: number) {
+      if (parameter === this.MAX_TEXTURE_SIZE && this.canvas instanceof HTMLCanvasElement && this.canvas.classList.contains("atlas-route-canvas")) {
+        (window as unknown as { routeTextureLimitQueries: number }).routeTextureLimitQueries++;
+        return 32;
+      }
+      return get.call(this, parameter);
+    };
+  });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/atlas/");
+  await expect(page.locator(".atlas-page")).toHaveAttribute("data-ready", "true");
+  if (process.env.ATLAS_EXPECT_GPU === "true") expect(await page.evaluate(() => (window as unknown as { routeTextureLimitQueries: number }).routeTextureLimitQueries)).toBeGreaterThan(0);
+  const layer = page.locator(".atlas-globe-pins");
+  await expect(layer).toHaveAttribute("data-route-renderer", "svg");
+  await expect(layer.locator(".atlas-route-canvas")).toBeHidden();
+  await expect(layer.locator(".atlas-route-line").first()).toBeVisible();
+  expect(await layer.evaluate(el => {
+    const targets = [...el.querySelectorAll(".atlas-link-target")];
+    return [...el.querySelectorAll(".atlas-route-line")].every((path, index) => path.getAttribute("d") === targets[index].getAttribute("d"));
+  })).toBe(true);
+  await layer.locator(".atlas-link-target").first().focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".atlas-callout-card")).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("Unavailable accelerated globe contexts retain native interactions", async ({ page }) => {
+  await page.addInitScript(() => {
+    const get = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, ...args: Parameters<typeof get>) {
+      if (this.classList.contains("atlas-marker-canvas") || this.classList.contains("atlas-route-canvas")) return null;
+      return get.apply(this, args);
+    } as typeof get;
+  });
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/atlas/");
+  const layer = page.locator(".atlas-globe-pins");
+  await expect(layer).toHaveAttribute("data-renderer", "svg");
+  await expect(layer).toHaveAttribute("data-route-renderer", "svg");
+  await expect(layer.locator(".atlas-marker-canvas")).toBeHidden();
+  await expect(layer.locator(".atlas-route-canvas")).toBeHidden();
+  const marker = layer.locator('.atlas-globe-pin[data-occluded="false"]').first();
+  await marker.focus();
+  await expect(marker.locator(".atlas-event-marker")).toBeVisible();
+  await expect(marker.locator(".atlas-event-pulse")).toHaveCSS("animation-name", "atlas-event-ripple");
+  await expect(marker.locator(".atlas-globe-hit")).toHaveCSS("stroke-width", "2px");
+  await page.keyboard.press("Enter");
+  await expect(layer.locator('[data-selected="true"]')).toHaveCount(1);
+  await page.getByRole("button", { name: "Reset all", exact: true }).click();
+  const rim = layer.locator('.atlas-globe-pin[data-occluded="true"]').first();
+  await rim.focus();
+  await expect(rim.locator(".atlas-rim-arrow")).toBeVisible();
+  const link = layer.locator(".atlas-link-target").first();
+  await link.focus();
+  await expect(layer.locator('.atlas-route[data-active="true"]')).toBeVisible();
+  await expect(layer.locator('.atlas-route[data-active="true"] .atlas-route-line')).toHaveAttribute("d", /^M/);
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".atlas-callout-card")).toBeVisible();
+  await expect.poll(() => layer.locator('.atlas-travel-beam > path').first().getAttribute("d")).toMatch(/^M/);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(layer.locator(".atlas-event-pulse").first()).toHaveCSS("animation-name", "none");
 });
 
 test("ATLAS assertion branches show section evidence and respect partial windows", async ({ page }) => {
@@ -745,7 +1159,7 @@ test("Six-month findings paginate in coverage and unlocated topics stay off the 
   const unlocated = bundle.topics.find(t => !t.place_ids.length && t.id.startsWith("report-item:") && bundle.topics.filter(other => other.label === t.label).length === 1)!;
   await select(page, "Reporting topic", unlocated.label);
   await expect(topics).toHaveCount(1);
-  await page.getByRole("tab", { name: "Reports", exact: true }).click();
+  await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Reports", exact: true }).click();
   await expect(page.locator(".atlas-report").first()).toBeVisible();
   await expect(page.locator('.atlas-globe-pin[data-selected="true"]')).toHaveCount(0);
   await expect(page.locator('.atlas-callout-card')).toHaveCount(0);
@@ -783,15 +1197,24 @@ test("Home-style travel beams animate while hovering and stop for reduced motion
     return [...svg.querySelectorAll(".atlas-route")].every(route => Boolean(lastNode.compareDocumentPosition(route) & Node.DOCUMENT_POSITION_FOLLOWING));
   })).toBe(true);
 
-  await expect(arrow).not.toHaveAttribute("d", "");
-  const before = await arrow.getAttribute("d");
-  await expect.poll(() => arrow.getAttribute("d")).not.toBe(before);
+  const gpu = await page.locator(".atlas-globe-pins").getAttribute("data-route-renderer") === "gpu";
+  const canvas = page.locator(".atlas-route-canvas");
+  if (gpu) {
+    await page.addStyleTag({ content: ".atlas-route-canvas { background: var(--background); } .atlas-callout-card, .atlas-callout-connector { visibility: hidden !important; }" });
+    const before = await canvas.screenshot();
+    await expect.poll(async () => (await canvas.screenshot()).equals(before)).toBe(false);
+  } else {
+    await expect(arrow).not.toHaveAttribute("d", "");
+    const before = await arrow.getAttribute("d");
+    await expect.poll(() => arrow.getAttribute("d")).not.toBe(before);
+  }
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(legendBeam).toHaveCSS("animation-name", "none");
   await page.waitForTimeout(700);
-  const still = await arrow.getAttribute("d");
+  const visual = async () => gpu ? (await canvas.screenshot()).toString("base64") : arrow.getAttribute("d");
+  const still = await visual();
   await page.waitForTimeout(150);
-  await expect(arrow).toHaveAttribute("d", still!);
+  expect(await visual()).toBe(still);
   for (const width of [360, 1280]) {
     await page.setViewportSize({ width, height: 1000 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -877,7 +1300,7 @@ for (const width of [390, 1280]) test(`Expanded evidence headings stay reachable
   await quote.locator("summary").click();
   await expect(quote).toHaveAttribute("open", "");
   await report.evaluate(entry => window.scrollTo({ top: scrollY + entry.getBoundingClientRect().top + 180, behavior: "instant" }));
-  await expect.poll(async () => Math.round((await report.locator(":scope > summary").boundingBox())!.y)).toBe(0);
+  await expect.poll(async () => Math.abs((await report.locator(":scope > summary").boundingBox())!.y - await controlBottom(page) - 8)).toBeLessThan(1);
   await report.locator(":scope > summary").click();
   await expect(report).not.toHaveAttribute("open", "");
   await expect.poll(async () => (await report.locator(":scope > summary").boundingBox())!.y).toBeGreaterThanOrEqual(-1);
@@ -890,7 +1313,7 @@ for (const width of [390, 1280]) test(`Expanded evidence headings stay reachable
     await expect(disclosure).toHaveAttribute("open", "");
     const heading = entry.locator(":scope > .atlas-entry-heading");
     await entry.evaluate(element => window.scrollTo({ top: scrollY + element.getBoundingClientRect().top + 160, behavior: "instant" }));
-    await expect.poll(async () => Math.round((await heading.boundingBox())!.y)).toBe(0);
+    await expect.poll(async () => Math.abs((await heading.boundingBox())!.y - await controlBottom(page) - (name === "Assessments" ? 8 : 0))).toBeLessThan(1);
     await heading.getByRole("button", { name: /Collapse details/ }).click();
     await expect(entry.locator("details[open]")).toHaveCount(0);
     await expect(heading).toBeFocused();
@@ -1360,9 +1783,11 @@ for (const [width, height, workspace] of [[390, 850, false], [1280, 950, false],
   const toggle = page.getByRole('group', { name: 'Report content' });
   const reports = toggle.getByRole('button', { name: 'Reports', exact: true });
   const assessments = toggle.getByRole('button', { name: 'Assessments', exact: true });
-  const position = workspace ? 'bottom' : 'top';
-  const reportPages = page.getByRole('navigation', { name: `Report pages, ${position}` });
-  const assessmentPages = page.getByRole('navigation', { name: `Assessment pages, ${position}` });
+  const coverage = toggle.getByRole('button', { name: 'Source coverage', exact: true });
+  const category = page.getByRole('group', { name: 'Assessment category' });
+  const position = workspace ? 'bottom' : 'side';
+  const reportPages = page.getByRole('navigation', { includeHidden: true, name: `Report pages, ${position}` });
+  const assessmentPages = page.getByRole('navigation', { includeHidden: true, name: `Assessment pages, ${position}` });
   await expect(reports).toHaveAttribute('aria-pressed', 'true');
   const dates = page.locator('.atlas-timeline-next');
   const tools = page.locator('.atlas-report-tools');
@@ -1384,43 +1809,51 @@ for (const [width, height, workspace] of [[390, 850, false], [1280, 950, false],
   if (workspace) {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await assessments.click();
-    expect(await dates.evaluate(el => el.getAnimations().some(animation => animation instanceof CSSTransition && animation.transitionProperty === 'margin-left'))).toBe(true);
-    await expect(dates).toHaveCSS('margin-left', '0px');
+    await expect(page.locator('.atlas-report-context')).toHaveCSS('animation-name', 'atlas-report-context-in');
+    await expect(category).toBeVisible();
+    await expect(dates).toHaveCount(0);
+    await coverage.click();
+    await expect(page.locator('.atlas-report-context')).toHaveCSS('animation-name', 'atlas-report-context-in');
+    await expect(dates).toBeVisible();
+    await expect(tools).toHaveAttribute('data-coverage', 'true');
     await reports.click();
-    await expect(dates).toHaveCSS('margin-left', '48px');
+    await expect(page.locator('.atlas-report-context')).toHaveCSS('animation-name', 'atlas-report-context-in');
+    await expect(dates).toBeVisible();
     await page.emulateMedia({ reducedMotion: 'reduce' });
   }
+  if (!workspace) await showPageControl(page);
   await reportPages.getByRole('button', { name: 'Next report page' }).click();
   await expect(dates).toBeVisible();
   await expect(dates.locator('time')).toHaveText(['26 Sept 2026', '30 Sept 2026']);
   await expect(tools).toHaveAttribute('data-timeline', 'true');
   expect(await page.locator('.atlas-report-prelude').evaluate(el => getComputedStyle(el, '::before').borderLeftWidth)).toBe('1px');
   await assessments.click();
-  await expect(dates).toBeVisible();
-  await expect(dates.locator('time')).toHaveText(['26 Sept 2026', '30 Sept 2026']);
+  await expect(category).toBeVisible();
+  await expect(category.getByRole('button', { name: 'Report relationships', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(dates).toHaveCount(0);
   await expect(tools).not.toHaveAttribute('data-timeline');
   expect(await tools.evaluate(el => getComputedStyle(el, '::before').opacity)).toBe('0');
-  await expect(dates).toHaveCSS('margin-left', '0px');
   const assessmentTop = (await page.locator('.atlas-connection > .atlas-entry-heading').first().boundingBox())!.y;
   const switchBottom = (await toggle.boundingBox())!.y + (await toggle.boundingBox())!.height;
   expect(assessmentTop - switchBottom).toBeLessThanOrEqual(workspace ? 22 : 70);
   await toggle.scrollIntoViewIfNeeded();
   await page.screenshot({ path: `/tmp/atlas-assessment-spacing-${width}.png` });
+  if (!workspace) await showPageControl(page);
   await assessmentPages.getByRole('button', { name: 'Next assessment page' }).click();
   await assessments.focus();
   await assessments.press('ArrowLeft');
   await expect(reports).toBeFocused();
-  await expect(reportPages).toContainText('Page 2 of');
+  await expect(reportPages.locator('summary > span')).toHaveAttribute('title', /^Page 2 of/);
   await reports.press('ArrowRight');
   await expect(assessments).toBeFocused();
-  await expect(assessmentPages).toContainText('Page 2 of');
+  await expect(assessmentPages.locator('summary > span')).toHaveAttribute('title', /^Page 2 of/);
   await page.getByRole('tab', { name: 'Trends', exact: true }).click();
   await page.getByRole('tab', { name: 'Reports', exact: true }).click();
   await expect(assessments).toHaveAttribute('aria-pressed', 'true');
-  await expect(assessmentPages).toContainText('Page 2 of');
+  await expect(assessmentPages.locator('summary > span')).toHaveAttribute('title', /^Page 2 of/);
   await page.getByRole('button', { name: '3 months', exact: true }).click();
   await expect(assessments).toHaveAttribute('aria-pressed', 'true');
-  await expect(assessmentPages).toContainText('Page 1 of');
+  await expect(assessmentPages.locator('summary > span')).toHaveAttribute('title', /^Page 1 of/);
   if (workspace) {
     const switchY = (await toggle.boundingBox())!.y;
     const pagerY = (await assessmentPages.boundingBox())!.y;

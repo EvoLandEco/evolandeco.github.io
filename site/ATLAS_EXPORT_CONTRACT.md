@@ -12,6 +12,8 @@ The publication target is contract 1.5.0 with reviewed journeys, connections and
 
 The structured bundle owns canonical entities, identities and research figures. The byte-preserved map input must match `snapshot.source_snapshot_sha256`. The measurements download contains the bundle's embedded metrics.
 
+The release's `browser` descriptor binds a compact display and selection core plus independently fetched evidence details. The complete scientific downloads retain their identities and checksums. [Browser transport](ATLAS_BROWSER_TRANSPORT.md) specifies the projection, reconstruction, integrity checks and consumer cache. Browser assets use immutable paths beneath `releases/<export_id>/browser/<manifest_sha256>/`.
+
 From `site/`, run:
 
 ```sh
@@ -21,6 +23,8 @@ pnpm atlas:sync --project /Users/tianjian/Documents/ChatGPT/EpiWeekly
 The command chooses the latest Wednesday in Europe/Amsterdam. Use `--cycle YYYY-MM-DD` to retain an intended cycle when a job is delayed. It regenerates ATLAS's handoff, requires completed review, production and inbox receipts for that cycle, and checks the final reviewed export. ATLAS validates receipt dependencies, the ledger, explicit decisions and export integrity. Missing or incomplete receipts leave the public release unchanged. A local writer lock prevents concurrent sync processes.
 
 The sync checks contract versions, selector identity, every manifest checksum, the map binding, record identity, geographic memberships, local logos, measurements, assertions and evidence references. It rechecks the handoff before publishing. A failed check stops publication; scientific fields must be corrected in ATLAS. Unanswered editorial questions remain visible as review states and do not count as failed execution.
+
+For each new export, sync invokes ATLAS's browser transport exporter and verifier against the exact scientific site and map files. The stable handoff must confirm complete reconstruction, every-record selection parity and producer readiness. The website checks its pinned runtime and type files, uploads and verifies the browser assets, and attaches their manifest to the release under the same writer lock. These steps prepare transport and do not run the scientific review jobs. A failed browser check leaves the public pointer intact. Stage receipts include the browser descriptor and handoff reference.
 
 `--initial` publishes the validated six-month candidate only when no public release exists. This mode does not count as weekly completion. The initial source is `reports/six-month/compact-figures-v1/structured` and its map input is `.local/six-month/export-inputs/snapshot.json` within the ATLAS checkout.
 
@@ -32,7 +36,7 @@ The Codex heartbeat runs every Wednesday at 14:00 Europe/Amsterdam, after ATLAS'
 
 Wrangler uses the signed-in account's renewable OAuth credentials from the operating system's Wrangler configuration directory. No API secret belongs in the repository, website or automation prompt. Normal publication uses the CLI without a browser. Revoked credentials require signing in again.
 
-The Worker accepts only GET and HEAD for the release paths. It limits each IP to 60 requests per minute before reading R2, uses browser caching for immutable assets, and streams compressed objects. The bucket has no public R2 endpoint. Rate limiting reduces abuse; it is not an account spending cap. The Workers development domain does not provide Cache API edge caching. Monitor storage and requests in Cloudflare; stored release versions remain available for rollback.
+The Worker accepts only GET and HEAD for the release paths. Each IP has a separate limit of 120 browser transport requests per minute and 60 requests per minute for the current pointer, scientific downloads, network analysis and Intelligence assets. Both limits apply before reading R2. The service uses browser caching for immutable assets and streams compressed objects. The bucket has no public R2 endpoint. Rate limiting reduces abuse; it is not an account spending cap. The Workers development domain does not provide Cache API edge caching. Monitor storage and requests in Cloudflare; stored release versions remain available for rollback.
 
 Deploy the data service with `pnpm exec wrangler deploy --config atlas-worker/wrangler.jsonc`. Run `pnpm atlas:worker:check`, `pnpm test`, `pnpm build` and `pnpm exec playwright test tests/atlas.spec.ts` for integration checks. Tests download a pinned, checksum-verified fixture into `.cache/atlas-fixture/`; production builds need no dataset or Cloudflare credentials.
 

@@ -1,10 +1,18 @@
 import { test, expect } from '@playwright/test';
 
 test('Reported travel beams finish entering their destination before restarting', async ({ page }) => {
+  await page.addInitScript(() => {
+    const get = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, ...args: Parameters<typeof get>) {
+      if (this.classList.contains('atlas-route-canvas')) return null;
+      return get.apply(this, args);
+    } as typeof get;
+  });
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/atlas/');
   await expect(page.locator('.atlas-page[data-ready="true"]')).toBeVisible({ timeout: 120000 });
+  await expect(page.locator('.atlas-globe-pins')).toHaveAttribute('data-route-renderer', 'svg');
   await page.locator('.atlas-link-target').first().press('Enter');
   await page.mouse.move(0, 0);
   const route = page.locator('.atlas-globe-pins .atlas-route[data-kind="movement"]').first();

@@ -1,0 +1,51 @@
+{
+  "status": "published",
+  "release": {
+    "version": 1,
+    "export_id": "e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48",
+    "published_at": "2026-10-01T07:17:12.786Z",
+    "cycle": null,
+    "mode": "initial",
+    "contract_version": "1.5.0",
+    "selector_sha256": "80f15b7fda19c2fd1aed5d92a6317733fe5b69aa66c5fa0e386b403a61b21e0c",
+    "assets": {
+      "atlas-site.json": {
+        "sha256": "e38711ca76cd622cad2c669e9f1bb7f2a23c57b9e9725e741eae19745627a91d",
+        "bytes": 295294778
+      },
+      "map.json": {
+        "sha256": "2822e2d86308ff6c52d5c78ef4f85ee28e907f0690f344688ddd2519feaa2f6b",
+        "bytes": 15521467
+      },
+      "metrics.json": {
+        "sha256": "6da3b86daaef26e827cc069941d312a34fce42a8fe8d3284c6a0f8bd4cc114ed",
+        "bytes": 107113318
+      },
+      "network-transport.json": {
+        "sha256": "35f95357c6df17f52106be4bf74deda1133cda49cd4f6b09918427f5cf9927a3",
+        "bytes": 1838
+      }
+    },
+    "correction": {
+      "replaces_export_id": "9d712c4f57ee47774b0dc69931594bf1ef6b5813429211faddf304351824b2af",
+      "authorization_sha256": "29e41cfdfef7d48b7ee5250ed7aa4d7d7047f797098e300d08d4dcbde134d07c"
+    },
+    "intelligence": {
+      "experiment_id": "565479b0942b0cf58b61b0ef31888a518174421174f172bfeec31fa49cdcd29b",
+      "schema_version": "0.2.0",
+      "asset": {
+        "sha256": "4c1216f715040f7d466123aa04b5ceb55bad6500e5a3f7c388bf0cc4b69b2d51",
+        "bytes": 2446073
+      }
+    },
+    "browser": {
+      "transport_version": "0.1.0",
+      "manifest": {
+        "sha256": "b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057",
+        "bytes": 870451
+      }
+    }
+  },
+  "authorization_sha256": "7fab6dbe4b67d6f6ef84fb39b79018865113e6e84d529eb8105751a2bc61cdb7",
+  "activation_pending": false
+}

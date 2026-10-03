@@ -12,6 +12,7 @@ import { intelligenceSchema, validateIntelligenceRelease } from '../src/lib/atla
 import { releaseSchema, releaseRoot, verifiedBytes } from '../src/lib/atlas-release';
 import { validateNetworkTransport, parseNetworkAnalysis } from '../src/lib/atlas-network-analysis';
 import { correctionSchema } from './sync-atlas';
+import { requireCurrentBrowserDescriptor } from './publish-atlas-browser';
 
 const site = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const hash = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
@@ -88,6 +89,7 @@ async function main() {
     assert.equal(before.export_id, correction.replaces_export_id, 'Publication target changed');
     assert.equal(release.mode, before.mode);
     assert.equal(release.cycle, before.cycle);
+    requireCurrentBrowserDescriptor(before, release);
     if (before.export_id === release.export_id && before.intelligence) assert.deepEqual(before.intelligence, release.intelligence, 'An intervening Intelligence release requires review');
     const directory = resolve(cache, `intelligence-${data.experiment_id}`);
     await mkdir(directory, { recursive: true });

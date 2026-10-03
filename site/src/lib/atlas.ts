@@ -1,7 +1,7 @@
-import type { AtlasSiteBundle, AtlasMapSnapshot, AtlasSelectionView } from "./atlas-contract";
+import type { AtlasData, AtlasMap, AtlasMapSnapshot, AtlasSelectionView } from "./atlas-contract";
 
-export type AtlasRecord = AtlasMapSnapshot["records"][number];
-export type AtlasTrack = AtlasMapSnapshot["tracks"][number];
+export type AtlasRecord = Omit<AtlasMapSnapshot["records"][number], "claims">;
+export type AtlasTrack = AtlasMap["tracks"][number];
 export type AtlasLink = AtlasMapSnapshot["map_links"][number];
 export type Support = [string, number][];
 export type AtlasAssessment = {
@@ -49,7 +49,7 @@ export function sourceName(source: string) {
   return ({ ECDC_CDTR: "ECDC", WHO_DON: "WHO · DON", FAO_AIV: "FAO · AIV" } as Record<string, string>)[source] ?? source;
 }
 
-export function createAtlas(snapshot: AtlasMapSnapshot, bundle: AtlasSiteBundle) {
+export function createAtlas<S extends AtlasMap, B extends AtlasData>(snapshot: S, bundle: B) {
   const atlas = { ...snapshot, snapshot: bundle.snapshot };
   const atlasDocuments = new Map(bundle.documents.map(d => [d.id, d]));
   const mappedTracks = atlas.tracks.filter((t): t is AtlasTrack & { lat: number; lon: number } => Number.isFinite(t.lat) && Number.isFinite(t.lon));

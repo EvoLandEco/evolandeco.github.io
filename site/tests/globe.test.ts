@@ -13,6 +13,8 @@ import {
   rimIndicator,
   separateGlobeRoutes,
   geographicArc,
+  prepareGlobeArc,
+  globeProjection,
 } from "../src/components/magicui/globe-effects";
 test("Globe effects share spherical coordinates, arc endpoints and occlusion", () => {
   const a = globePoint([52, 5]),
@@ -92,6 +94,58 @@ test("Link callout anchors stay on the visible geographic curve", () => {
   const path = projectArcPath(from, to, camera.phi, true, camera.theta);
   assert(path.includes(`${(500 + anchor.x * 480).toFixed(2)},${(500 - anchor.y * 480).toFixed(2)}`));
   assert.equal(projectArcAnchor([0, 170], [0, -170], -Math.PI / 2, 0), null);
+});
+
+test("Globe anchors stop at the nearest visible sample without changing occlusion", () => {
+  for (const [from, to] of [
+    [[4, 21], [48, 2]], [[0, 0], [0, 1]], [[-41, 175], [52, 5]],
+  ] as [[number, number], [number, number]][]) {
+    const curve = geographicArc(globePoint(from), globePoint(to));
+    const prepared = prepareGlobeArc(from, to);
+    for (let i = 0; i < 72; i++) {
+      const project = globeProjection(i * Math.PI / 36, .22);
+      const samples = Array.from({ length: 97 }, (_, index) => ({
+        point: project(curve(index / 96)), distance: Math.abs(index / 96 - .5),
+      }));
+      let connected = false;
+      const path = samples.map(({ point }) => {
+        if (!point.visible) { connected = false; return ""; }
+        const command = connected ? "L" : "M";
+        connected = true;
+        return `${command}${(500 + point.x * 480).toFixed(2)},${(500 - point.y * 480).toFixed(2)} `;
+      }).join("");
+      const visible = samples.filter(({ point }) => point.visible).sort((a, b) => a.distance - b.distance);
+      let calls = 0;
+      const counted: typeof project = point => { calls++; return project(point); };
+      assert.equal(prepared.path(counted), path);
+      assert.deepEqual(prepared.anchor(counted), visible[0]?.point ?? null);
+      assert.equal(prepared.path(counted), path);
+      assert.equal(calls, 97);
+    }
+    const center = curve(.5);
+    const target = focusOrientation([
+      Math.asin(center[1] / Math.hypot(...center)) * 180 / Math.PI,
+      Math.atan2(center[2], -center[0]) * 180 / Math.PI + 180,
+    ], 0);
+    const project = globeProjection(target.phi, target.theta);
+    let calls = 0;
+    prepared.anchor(point => { calls++; return project(point); });
+    assert.equal(calls, 1);
+  }
+});
+
+test("Beam paths reuse endpoint projections with identical gradient coordinates", () => {
+  const from: [number, number] = [4, 20], to: [number, number] = [50, 3];
+  const prepared = prepareGlobeArc(from, to);
+  const curve = geographicArc(globePoint(from), globePoint(to));
+  const camera = focusOrientation(from, 0);
+  const project = globeProjection(camera.phi, camera.theta);
+  let calls = 0;
+  const trail = prepared.trail(point => { calls++; return project(point); }, .9, .45);
+  assert.equal(calls, 45);
+  assert.equal(trail.path, prepared.path(project, .45, .9));
+  const tail = project(curve(.45)), head = project(curve(.9));
+  assert.deepEqual([trail.x1, trail.y1, trail.x2, trail.y2], [500 + tail.x * 480, 500 - tail.y * 480, 500 + head.x * 480, 500 - head.y * 480]);
 });
 
 test("Short geographic links form compact outward arcs with aligned callouts and arrows", () => {
@@ -222,4 +276,128 @@ test("Travel beams enter the destination until the full tail has passed", () => 
     assert.equal(trail.path, "");
     assert([trail.x1, trail.y1, trail.x2, trail.y2].every(Number.isFinite));
   }
+});
+
+test("Segment buffers preserve path samples, visibility breaks, trails and directed arrows", () => {
+  const routes = [
+    { id: "long", from: [4, 21], to: [48, 2], geographic: true },
+    { id: "lane", from: [4, 21], to: [51, 10], geographic: true },
+    { id: "short", from: [0, 0], to: [0, 1], geographic: true },
+    { id: "loop", from: [0, 0], to: [0, 0], geographic: true },
+    { id: "rim", from: [-41, 175], to: [52, 5], geographic: true },
+    { id: "home", from: [35, 139], to: [52, 5], geographic: false },
+  ] as { id: string; from: [number, number]; to: [number, number]; geographic: boolean }[];
+  const bends = separateGlobeRoutes(routes);
+  assert(bends.some(bend => Math.hypot(...bend) > 0));
+  const output = new Float32Array(96 * 4), arrow = new Float32Array(8), gradient = new Float32Array(4);
+  let hidden = 0, partial = 0, visible = 0;
+  const compareSvg = (buffer: Float32Array, count: number, path: string) => {
+    const expected: number[] = [];
+    let x = 0, y = 0;
+    for (const match of path.matchAll(/([ML])([^, ]+),([^ ]+)/g)) {
+      const nextX = Number(match[2]), nextY = Number(match[3]);
+      if (match[1] === "L") expected.push(x, y, nextX, nextY);
+      x = nextX; y = nextY;
+    }
+    assert.equal(count * 4, expected.length);
+    for (let i = 0; i < expected.length; i++) assert(Math.abs(buffer[i] - expected[i]) < .0051);
+  };
+  for (const [index, route] of routes.entries()) {
+    const a = globePoint(route.from), b = globePoint(route.to), bend = bends[index];
+    const curve = route.geographic ? geographicArc(a, b) : (t: number, lane?: [number, number, number]) => arcPoint(a, b, t, .4, lane);
+    const prepared = prepareGlobeArc(route.from, route.to, route.geographic, bend);
+    for (const theta of [-.65, .22, .9]) for (let turn = 0; turn < 24; turn++) {
+      const project = globeProjection(turn * Math.PI / 12, theta);
+      const reference = (start: number, end: number) => {
+        const expected: number[] = [];
+        const steps = Math.max(1, Math.ceil(96 * (end - start)));
+        let previous: ReturnType<typeof project> | null = null;
+        for (let i = 0; i <= steps; i++) {
+          const point = project(curve(start + (end - start) * i / steps, bend));
+          if (point.visible && previous) expected.push(
+            500 + previous.x * 480, 500 - previous.y * 480,
+            500 + point.x * 480, 500 - point.y * 480,
+          );
+          previous = point.visible ? point : null;
+        }
+        return expected.map(Math.fround);
+      };
+      output.fill(NaN);
+      const count = prepared.pathSegments(project, output);
+      const path = prepared.path(project);
+      assert.deepEqual(Array.from(output.subarray(0, count * 4)), reference(0, 1));
+      compareSvg(output, count, path);
+      if (!count) hidden++; else if (count === 96) visible++; else partial++;
+      assert(output.subarray(count * 4).every(Number.isNaN));
+      for (const progress of [0, .05, .5, .99, 1, 1.25, 1.449, 1.45, 1.6]) {
+        const length = .45;
+        const start = Math.min(1, Math.max(0, progress - length)), end = Math.min(1, Math.max(0, progress));
+        output.fill(NaN);
+        const count = prepared.trailSegments(project, output, gradient, progress, length);
+        assert.deepEqual(Array.from(output.subarray(0, count * 4)), end > start ? reference(start, end) : []);
+        const trail = prepared.trail(project, progress, length);
+        compareSvg(output, count, trail.path);
+        assert.deepEqual(Array.from(gradient), [trail.x1, trail.y1, trail.x2, trail.y2].map(Math.fround));
+        assert(output.subarray(count * 4).every(Number.isNaN));
+        if (progress <= 1) {
+          arrow.fill(NaN);
+          const count = prepared.arrowSegments(project, arrow, progress);
+          compareSvg(arrow, count, prepared.arrow(project, progress));
+          const tip = project(curve(progress, bend)), tail = project(curve(Math.max(0, progress - .01), bend));
+          const dx = tip.x - tail.x, dy = tail.y - tip.y, size = Math.hypot(dx, dy);
+          const x = 500 + tip.x * 480, y = 500 - tip.y * 480;
+          const ux = dx / size, uy = dy / size;
+          const expected = tip.visible && tail.visible && size ? [
+            x - ux * 13 - uy * 6, y - uy * 13 + ux * 6, x, y,
+            x, y, x - ux * 13 + uy * 6, y - uy * 13 - ux * 6,
+          ] : [];
+          assert.deepEqual(Array.from(arrow.subarray(0, count * 4)), expected.map(Math.fround));
+          assert(arrow.subarray(count * 4).every(Number.isNaN));
+        }
+      }
+    }
+  }
+  assert(hidden > 0 && partial > 0 && visible > 0);
+});
+
+test("Segment buffers leave gaps and isolated visible samples disconnected", () => {
+  const from: [number, number] = [4, 21], to: [number, number] = [48, 2];
+  const prepared = prepareGlobeArc(from, to), curve = geographicArc(globePoint(from), globePoint(to));
+  const projection = globeProjection(-1.8, .22), output = new Float32Array(96 * 4);
+  const samples = Array.from({ length: 97 }, (_, i) => projection(curve(i / 96)));
+  let index = 0;
+  const project: typeof projection = point => {
+    const i = index++;
+    return { ...projection(point), visible: i < 15 || i >= 35 && i <= 65 || i === 80 };
+  };
+  const count = prepared.pathSegments(project, output);
+  const expected: number[] = [];
+  for (const i of [...Array.from({ length: 14 }, (_, i) => i + 1), ...Array.from({ length: 30 }, (_, i) => i + 36)]) {
+    const a = samples[i - 1], b = samples[i];
+    expected.push(500 + a.x * 480, 500 - a.y * 480, 500 + b.x * 480, 500 - b.y * 480);
+  }
+  assert.equal(count, 44);
+  assert.deepEqual(Array.from(output.subarray(0, count * 4)), expected.map(Math.fround));
+  assert.equal([...prepared.path(project).matchAll(/M/g)].length, 3);
+  assert.equal(index, 97);
+});
+
+test("SVG and segment paths share projected samples in either call order", () => {
+  const prepared = prepareGlobeArc([4, 21], [48, 2]);
+  const output = new Float32Array(96 * 4), gradient = new Float32Array(4);
+  for (const bufferFirst of [true, false]) {
+    let calls = 0;
+    const projection = globeProjection(-1.8, .22);
+    const project: typeof projection = point => { calls++; return projection(point); };
+    if (bufferFirst) prepared.pathSegments(project, output); else prepared.path(project);
+    prepared.pathSegments(project, output);
+    prepared.path(project);
+    prepared.anchor(project);
+    assert.equal(calls, 97);
+  }
+  let calls = 0;
+  const projection = globeProjection(-1.8, .22);
+  const count = prepared.trailSegments(point => { calls++; return projection(point); }, output, gradient, .9, .45);
+  assert(count > 0);
+  assert.equal(calls, 45);
 });

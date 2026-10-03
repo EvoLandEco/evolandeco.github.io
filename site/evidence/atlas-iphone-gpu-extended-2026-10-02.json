@@ -1,0 +1,655 @@
+{
+  "date": "2026-10-02",
+  "platform": "Physical iPhone Safari with Web Inspector recording",
+  "source_recording_sha256": "a0a3f39df1ff08f02d7112f908f763fb79d91b33bbedb5a408b52a7fac7eb667",
+  "transport": {
+    "source_export_id": "e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48",
+    "manifest_sha256": "b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057"
+  },
+  "scope": {
+    "website": "Local HTTPS preview",
+    "dataset": "Live public ATLAS browser transport",
+    "workload": "Extended session containing reporting-window changes, animation-frame diagnostics and an intentional developer reload",
+    "timeline_duration_seconds": 989.934,
+    "recording_discontinuities": 0,
+    "memory_sample_interval_seconds": [
+      -0.487,
+      989.06
+    ],
+    "memory_sample_span_seconds": 989.548,
+    "memory_samples": 1966,
+    "cpu_sample_interval_seconds": [
+      0.013,
+      989.565
+    ],
+    "cpu_sample_span_seconds": 989.552,
+    "cpu_samples": 1966,
+    "memory_pressure_events": 0,
+    "sample_time_origin": "Seconds relative to recording start; one leading memory sample precedes that boundary.",
+    "relationship_to_earlier_gpu_recording": {
+      "evidence_file": "atlas-iphone-gpu-2026-10-02.json",
+      "overlapping_samples": false,
+      "interval_gap_seconds": 445.326,
+      "description": "This is a separate later recording, rather than an extension or duplicate of the earlier sampled interval."
+    },
+    "measurement_limits": [
+      "Safari category sums are not total device RAM, total process memory or separate GPU-memory measurements.",
+      "Zero image and layer categories do not establish zero graphics-memory use.",
+      "The session contains several workloads and a reload. It is not a controlled single-workload benchmark.",
+      "The reporting-window diagnostic markers overlap and some start markers lack an end marker. They cannot define mutually exclusive comparison phases.",
+      "The export does not establish viewport dimensions or the timing of every interface state.",
+      "Absolute timestamps, private device identity, raw URLs, headers, cookies and thread names are excluded."
+    ]
+  },
+  "observer_report": {
+    "intentional_developer_reload_count": 1,
+    "diagnostic_reporting_windows": [
+      "3 months",
+      "6 months",
+      "All dates"
+    ],
+    "source": "The operator identified the intentional reload and the diagnostic activity."
+  },
+  "timeline_annotations": [
+    {
+      "elapsed_seconds": 49.64,
+      "type": "timestamp",
+      "label": "3 months start"
+    },
+    {
+      "elapsed_seconds": 69.647,
+      "type": "timestamp",
+      "label": "3 months end"
+    },
+    {
+      "elapsed_seconds": 74.653,
+      "type": "timestamp",
+      "label": "6 months start"
+    },
+    {
+      "elapsed_seconds": 77.378,
+      "type": "timestamp",
+      "label": "3 months start"
+    },
+    {
+      "elapsed_seconds": 94.665,
+      "type": "timestamp",
+      "label": "6 months end"
+    },
+    {
+      "elapsed_seconds": 97.385,
+      "type": "timestamp",
+      "label": "3 months end"
+    },
+    {
+      "elapsed_seconds": 99.665,
+      "type": "timestamp",
+      "label": "All dates start"
+    },
+    {
+      "elapsed_seconds": 102.394,
+      "type": "timestamp",
+      "label": "6 months start"
+    },
+    {
+      "elapsed_seconds": 112.869,
+      "type": "dom-content-event"
+    },
+    {
+      "elapsed_seconds": 113.178,
+      "type": "load-event"
+    }
+  ],
+  "memory": {
+    "definition": "Sum of the six exported Safari categories at each sample; MiB is 1,048,576 bytes.",
+    "first_sample": {
+      "elapsed_seconds": -0.487,
+      "category_sum_bytes": 507463936,
+      "category_sum_mib": 483.955,
+      "categories_bytes": {
+        "javascript": 159810561,
+        "jit": 12599296,
+        "images": 0,
+        "layers": 0,
+        "page": 317801727,
+        "other": 17252352
+      }
+    },
+    "minimum_sample": {
+      "elapsed_seconds": 308.2,
+      "category_sum_bytes": 429312256,
+      "category_sum_mib": 409.424,
+      "categories_bytes": {
+        "javascript": 125426306,
+        "jit": 13221888,
+        "images": 0,
+        "layers": 0,
+        "page": 273182334,
+        "other": 17481728
+      }
+    },
+    "peak_sample": {
+      "elapsed_seconds": 99.202,
+      "category_sum_bytes": 733038848,
+      "category_sum_mib": 699.08,
+      "categories_bytes": {
+        "javascript": 259573594,
+        "jit": 13058048,
+        "images": 0,
+        "layers": 0,
+        "page": 442761638,
+        "other": 17645568
+      }
+    },
+    "final_sample": {
+      "elapsed_seconds": 989.06,
+      "category_sum_bytes": 534743296,
+      "category_sum_mib": 509.971,
+      "categories_bytes": {
+        "javascript": 171565495,
+        "jit": 13320192,
+        "images": 0,
+        "layers": 0,
+        "page": 332359497,
+        "other": 17498112
+      }
+    },
+    "downward_steps_over_30_mib": {
+      "columns": [
+        "elapsed_seconds",
+        "category_sum_decrease_bytes",
+        "javascript_decrease_bytes",
+        "page_decrease_bytes",
+        "category_sum_after_bytes",
+        "gc_events_ending_since_previous_sample",
+        "full_gc_events_ending_since_previous_sample"
+      ],
+      "rows": [
+        [
+          47.861,
+          38633472,
+          -543555,
+          39177027,
+          502892800,
+          2,
+          1
+        ],
+        [
+          70.006,
+          69206016,
+          -2514974,
+          71720990,
+          549046528,
+          2,
+          0
+        ],
+        [
+          95.175,
+          72400896,
+          3243210,
+          68944694,
+          589367552,
+          3,
+          1
+        ],
+        [
+          99.707,
+          145915904,
+          48034106,
+          97849030,
+          587122944,
+          2,
+          0
+        ],
+        [
+          112.796,
+          103322112,
+          -6428928,
+          111258368,
+          487747072,
+          2,
+          1
+        ],
+        [
+          113.801,
+          55164928,
+          -23159729,
+          78291889,
+          459589888,
+          7,
+          1
+        ],
+        [
+          115.306,
+          86753280,
+          -3196773,
+          90048357,
+          458344704,
+          2,
+          0
+        ],
+        [
+          162.146,
+          39993344,
+          3116792,
+          36876552,
+          485460224,
+          2,
+          1
+        ],
+        [
+          162.651,
+          38060032,
+          1389573,
+          36621307,
+          447400192,
+          2,
+          0
+        ],
+        [
+          200.422,
+          56213504,
+          -3528117,
+          59741621,
+          452577536,
+          3,
+          1
+        ],
+        [
+          255.82,
+          55296000,
+          53740126,
+          1572258,
+          499517696,
+          0,
+          0
+        ],
+        [
+          374.168,
+          41713664,
+          -876692,
+          42557588,
+          435947776,
+          3,
+          1
+        ],
+        [
+          406.894,
+          32619776,
+          2631706,
+          29906150,
+          454281472,
+          2,
+          0
+        ],
+        [
+          445.651,
+          41451520,
+          2062647,
+          39388873,
+          451922176,
+          1,
+          0
+        ],
+        [
+          476.868,
+          72187904,
+          32348160,
+          39806976,
+          536201472,
+          4,
+          1
+        ],
+        [
+          477.373,
+          39485440,
+          16256103,
+          23180185,
+          496716032,
+          0,
+          0
+        ],
+        [
+          502.033,
+          36470784,
+          1562386,
+          34826478,
+          472664320,
+          3,
+          1
+        ],
+        [
+          542.326,
+          56983552,
+          1006112,
+          55928288,
+          470190336,
+          2,
+          1
+        ],
+        [
+          590.677,
+          47841280,
+          -2757922,
+          50599202,
+          475564288,
+          2,
+          0
+        ],
+        [
+          688.395,
+          78544896,
+          4134001,
+          74410895,
+          470812928,
+          2,
+          1
+        ],
+        [
+          730.213,
+          56950784,
+          1417422,
+          55533362,
+          474761472,
+          2,
+          1
+        ],
+        [
+          774.021,
+          53444608,
+          1403657,
+          52040951,
+          472762624,
+          2,
+          0
+        ],
+        [
+          812.8,
+          39862272,
+          1754803,
+          38173005,
+          473172224,
+          1,
+          0
+        ],
+        [
+          855.093,
+          45219840,
+          60903,
+          45158937,
+          473909504,
+          2,
+          1
+        ],
+        [
+          904.461,
+          55525376,
+          3318815,
+          52206561,
+          481446144,
+          2,
+          1
+        ],
+        [
+          944.251,
+          43155456,
+          686578,
+          42468878,
+          467847424,
+          2,
+          0
+        ]
+      ],
+      "note": "Negative category decreases denote increases. Event counts describe the same sample interval; they do not assign all reclaimed memory to garbage collection. The steps around 113 seconds also overlap the intentional reload."
+    },
+    "interpretation": "Memory rises between repeated downward steps. The peak occurs before the intentional reload. Later low points are higher than the minimum near 308 seconds, while repeated drops after 600 seconds return to roughly 446–459 MiB. The mixed workload prevents attributing this difference to a leak; the recording does not demonstrate indefinite growth or establish long-term stability."
+  },
+  "garbage_collection": {
+    "recorded_events": 3315,
+    "event_counts_by_type": {
+      "partial": 3288,
+      "full": 27
+    },
+    "sum_recorded_duration_ms": 4049.474,
+    "longest_event_ms": 39.584,
+    "longest_event_elapsed_seconds": 476.74,
+    "measurement_note": "Garbage-collection records contain timings and partial/full labels, without reclaimed-byte counts. Safari page-category drops therefore cannot all be labeled JavaScript garbage collection."
+  },
+  "cpu": {
+    "units": "Safari exported CPU usage values, without normalization to total device capacity",
+    "mean_usage": 27.583,
+    "median_usage": 27.2,
+    "peak_usage": 192,
+    "peak_elapsed_seconds": 113.801,
+    "mean_main_thread_usage": 25.958,
+    "final_60_seconds_mean_usage": 29.561,
+    "interpretation": "The aggregate includes diagnostic scripts, window changes, a page reload and animation. It is not an idle CPU comparison."
+  },
+  "network": {
+    "record_count": 60,
+    "request_counts_by_role": {
+      "local_website_asset": 52,
+      "atlas_current_pointer": 1,
+      "external_website_asset": 3,
+      "atlas_browser_manifest_or_core": 3,
+      "atlas_intelligence": 1
+    },
+    "response_status_counts": {
+      "200": 20,
+      "304": 40
+    },
+    "fetch_type_counts": {
+      "Network Load": 24,
+      "Memory Cache": 30,
+      "Disk Cache": 6
+    },
+    "local_website_navigation_requests": 1,
+    "page_load_markers": {
+      "dom-content-event": 1,
+      "load-event": 1
+    },
+    "interpretation": "The one navigation request and one page-load marker pair correspond to the intentional reload. Counts include responses served from browser caches; transfer sizes are not inferred from those counts."
+  },
+  "sixty_second_summary": {
+    "columns": [
+      "from_seconds",
+      "until_seconds",
+      "memory_samples",
+      "category_sum_min_bytes",
+      "category_sum_max_bytes",
+      "category_sum_end_bytes",
+      "javascript_end_bytes",
+      "page_end_bytes",
+      "mean_cpu_usage"
+    ],
+    "rows": [
+      [
+        0,
+        60,
+        120,
+        501336320,
+        561121536,
+        509446400,
+        161671327,
+        317677665,
+        19.799
+      ],
+      [
+        60,
+        120,
+        119,
+        455756032,
+        733038848,
+        459278592,
+        157207484,
+        273317188,
+        34.316
+      ],
+      [
+        120,
+        180,
+        119,
+        446236928,
+        527485184,
+        479119616,
+        153972753,
+        295704815,
+        31.275
+      ],
+      [
+        180,
+        240,
+        119,
+        452577536,
+        509102336,
+        509102336,
+        161819296,
+        317136480,
+        27.751
+      ],
+      [
+        240,
+        300,
+        119,
+        433604864,
+        554813696,
+        458983680,
+        137546608,
+        290717072,
+        23.906
+      ],
+      [
+        300,
+        360,
+        119,
+        429312256,
+        471632128,
+        471632128,
+        139121931,
+        301888501,
+        19.103
+      ],
+      [
+        360,
+        420,
+        120,
+        432507136,
+        488098048,
+        472418560,
+        151242467,
+        290472477,
+        24.153
+      ],
+      [
+        420,
+        480,
+        119,
+        451447040,
+        608389376,
+        471927040,
+        156063056,
+        284799920,
+        29.235
+      ],
+      [
+        480,
+        540,
+        119,
+        472664320,
+        536234240,
+        522635520,
+        168642855,
+        323125209,
+        30.815
+      ],
+      [
+        540,
+        600,
+        119,
+        470190336,
+        535595264,
+        487262464,
+        160415688,
+        295995704,
+        29.535
+      ],
+      [
+        600,
+        660,
+        119,
+        467831040,
+        523979008,
+        512641280,
+        166830898,
+        314992078,
+        28.232
+      ],
+      [
+        660,
+        720,
+        119,
+        470812928,
+        551438592,
+        509380864,
+        164975145,
+        313652951,
+        29.119
+      ],
+      [
+        720,
+        780,
+        119,
+        472123648,
+        536725760,
+        477858048,
+        158299608,
+        288805672,
+        27.632
+      ],
+      [
+        780,
+        840,
+        120,
+        472271104,
+        520472832,
+        509708544,
+        165325283,
+        313597725,
+        28.634
+      ],
+      [
+        840,
+        900,
+        119,
+        470911232,
+        532449536,
+        532449536,
+        171127977,
+        330568791,
+        28.675
+      ],
+      [
+        900,
+        960,
+        119,
+        467699968,
+        539003136,
+        489408768,
+        159631416,
+        299057352,
+        29.546
+      ],
+      [
+        960,
+        989.934,
+        58,
+        489343232,
+        534743296,
+        534743296,
+        171565495,
+        332359497,
+        26.934
+      ]
+    ]
+  }
+}

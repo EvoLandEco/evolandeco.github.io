@@ -1,0 +1,1438 @@
+{
+  "date": "2026-10-02",
+  "baseline_commit": "de31a898cd471d631283ce2b50139287fc2c603e",
+  "dataset_release": "e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48",
+  "method": "Chromium production export, 1440 by 1000 viewport, device scale factor 2, dark theme. Median of three 3-second windows per state, sampled sequentially without other benchmarks or builds. SVG writes and WebGL draws are instrumented.",
+  "scope": "Browser main-thread time excludes total process CPU and GPU utilization. Draw counts measure renderer submissions, not display presentation. This comparison does not establish performance across all devices.",
+  "baseline": [
+    {
+      "route": "/",
+      "state": "rotating",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 558.79,
+        "ScriptDuration": 55.17,
+        "LayoutDuration": 4.27,
+        "RecalcStyleDuration": 26.88,
+        "draws": 90,
+        "attributes": 8600
+      }
+    },
+    {
+      "route": "/",
+      "state": "offscreen",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 17.3,
+        "ScriptDuration": 0.26,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 4.04,
+        "draws": 0,
+        "attributes": 0
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "rotating",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 3023.63,
+        "ScriptDuration": 375.5,
+        "LayoutDuration": 34.98,
+        "RecalcStyleDuration": 551.07,
+        "draws": 85,
+        "attributes": 132202
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "workspace",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 908.58,
+        "ScriptDuration": 134.97,
+        "LayoutDuration": 20.73,
+        "RecalcStyleDuration": 188.16,
+        "draws": 0,
+        "attributes": 62992
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "reduced-motion",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 0.69,
+        "ScriptDuration": 0,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 0,
+        "draws": 0,
+        "attributes": 0
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "offscreen",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 15.3,
+        "ScriptDuration": 0.21,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 2.83,
+        "draws": 0,
+        "attributes": 0
+      }
+    }
+  ],
+  "optimized": [
+    {
+      "route": "/",
+      "state": "rotating",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 462.6,
+        "ScriptDuration": 53.04,
+        "LayoutDuration": 4.34,
+        "RecalcStyleDuration": 27.3,
+        "draws": 90,
+        "attributes": 8640
+      }
+    },
+    {
+      "route": "/",
+      "state": "offscreen",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 14.2,
+        "ScriptDuration": 0.27,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 3.21,
+        "draws": 0,
+        "attributes": 0
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "rotating",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 2580.04,
+        "ScriptDuration": 354.52,
+        "LayoutDuration": 37.73,
+        "RecalcStyleDuration": 557.53,
+        "draws": 90,
+        "attributes": 135993
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "workspace",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 931.99,
+        "ScriptDuration": 139.01,
+        "LayoutDuration": 22.82,
+        "RecalcStyleDuration": 196.55,
+        "draws": 0,
+        "attributes": 63228
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "reduced-motion",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 0.28,
+        "ScriptDuration": 0,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 0,
+        "draws": 0,
+        "attributes": 0
+      }
+    },
+    {
+      "route": "/atlas/",
+      "state": "offscreen",
+      "windowMs": 3000,
+      "median": {
+        "TaskDuration": 24.07,
+        "ScriptDuration": 0.27,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 4.07,
+        "draws": 0,
+        "attributes": 0
+      }
+    }
+  ],
+  "geometry": {
+    "routes": 124,
+    "geometryIdentical": true,
+    "layoutMs": {
+      "before": 103.107,
+      "after": 76.565
+    },
+    "anchorsMs": {
+      "before": 6.619,
+      "after": 0.446
+    }
+  },
+  "pixels": {
+    "chromium": {
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "width": 1360,
+      "height": 1362,
+      "compared_rgb_bytes_per_theme": 5556960,
+      "changed_bytes": 0,
+      "route_geometry_and_style_records_per_theme": 687,
+      "route_records_identical": true
+    },
+    "webkit": {
+      "true-light": {
+        "attributes": {
+          "alpha": true,
+          "antialias": true,
+          "depth": false,
+          "failIfMajorPerformanceCaveat": false,
+          "powerPreference": "default",
+          "premultipliedAlpha": true,
+          "preserveDrawingBuffer": false,
+          "stencil": false
+        },
+        "samples": 4,
+        "width": 1020,
+        "height": 1020
+      },
+      "true-dark": {
+        "attributes": {
+          "alpha": true,
+          "antialias": true,
+          "depth": false,
+          "failIfMajorPerformanceCaveat": false,
+          "powerPreference": "default",
+          "premultipliedAlpha": true,
+          "preserveDrawingBuffer": false,
+          "stencil": false
+        },
+        "samples": 4,
+        "width": 1020,
+        "height": 1020
+      },
+      "false-light": {
+        "attributes": {
+          "alpha": true,
+          "antialias": false,
+          "depth": false,
+          "failIfMajorPerformanceCaveat": false,
+          "powerPreference": "default",
+          "premultipliedAlpha": true,
+          "preserveDrawingBuffer": false,
+          "stencil": false
+        },
+        "samples": 0,
+        "width": 1020,
+        "height": 1020
+      },
+      "false-dark": {
+        "attributes": {
+          "alpha": true,
+          "antialias": false,
+          "depth": false,
+          "failIfMajorPerformanceCaveat": false,
+          "powerPreference": "default",
+          "premultipliedAlpha": true,
+          "preserveDrawingBuffer": false,
+          "stencil": false
+        },
+        "samples": 0,
+        "width": 1020,
+        "height": 1020
+      },
+      "light": {
+        "max": 0,
+        "mean": 0,
+        "changedBytes": 0,
+        "bytes": 7409280
+      },
+      "dark": {
+        "max": 0,
+        "mean": 0,
+        "changedBytes": 0,
+        "bytes": 7409280
+      }
+    }
+  },
+  "checks": {
+    "unit_tests_passed": 13,
+    "chromium_globe_tests_passed": 8,
+    "webkit_globe_tests_passed": 8,
+    "lint": "passed",
+    "typecheck": "passed"
+  },
+  "rejected_experiments": {
+    "shared_svg_geometry": {
+      "workspace_task_ms": 980.5,
+      "baseline_workspace_task_ms": 908.58,
+      "result": "Fewer attribute writes increased style and layout work. Shared SVG geometry is excluded from the implementation."
+    },
+    "native_svg_pulses": {
+      "css_task_ms": 921.681,
+      "svg_task_ms": 1561.001,
+      "css_return_task_ms": 949.99,
+      "result": "Native SVG pulses increased idle rendering work and were excluded."
+    },
+    "canvas_node_primitives": {
+      "samples": [
+        {
+          "mode": "svg",
+          "windowMs": 3000,
+          "median": {
+            "TaskDuration": 800.336,
+            "ScriptDuration": 120.494,
+            "LayoutDuration": 18.014,
+            "RecalcStyleDuration": 169.977
+          }
+        },
+        {
+          "mode": "canvas",
+          "windowMs": 3000,
+          "median": {
+            "TaskDuration": 1174.626,
+            "ScriptDuration": 156.657,
+            "LayoutDuration": 10.301,
+            "RecalcStyleDuration": 101.428
+          }
+        },
+        {
+          "mode": "svg-return",
+          "windowMs": 3000,
+          "median": {
+            "TaskDuration": 882.48,
+            "ScriptDuration": 128.503,
+            "LayoutDuration": 20.667,
+            "RecalcStyleDuration": 190.126
+          }
+        }
+      ],
+      "result": "Drawing node circles and gradients in Canvas2D increased main-thread work. The experiment is excluded from the implementation."
+    },
+    "canvas_node_sprites": {
+      "samples": [
+        {
+          "mode": "svg",
+          "windowMs": 3000,
+          "median": {
+            "TaskDuration": 761.133,
+            "ScriptDuration": 127.246,
+            "LayoutDuration": 16.431,
+            "RecalcStyleDuration": 166.869
+          }
+        },
+        {
+          "mode": "canvas",
+          "windowMs": 3000,
+          "median": {
+            "TaskDuration": 1015.434,
+            "ScriptDuration": 159.931,
+            "LayoutDuration": 10.105,
+            "RecalcStyleDuration": 102.406
+          }
+        },
+        {
+          "mode": "svg-return",
+          "windowMs": 3000,
+          "median": {
+            "TaskDuration": 749.733,
+            "ScriptDuration": 128.782,
+            "LayoutDuration": 16.887,
+            "RecalcStyleDuration": 165.442
+          }
+        }
+      ],
+      "result": "Caching static halo and core sprites also increased main-thread work. Pulses kept continuous radii and easing. The experiment is excluded from the implementation."
+    }
+  },
+  "stationary_layer_audit": {
+    "method": "Median of three 3-second Chromium windows per state. Each temporary layer exclusion isolates rendering cost; these exclusions are absent from the implementation.",
+    "samples": [
+      {
+        "mode": "baseline",
+        "windowMs": 3000,
+        "median": {
+          "TaskDuration": 855.449,
+          "ScriptDuration": 130.05,
+          "LayoutDuration": 18.675,
+          "RecalcStyleDuration": 182.887
+        }
+      },
+      {
+        "mode": "no-pulse-animation",
+        "windowMs": 3000,
+        "median": {
+          "TaskDuration": 478.757,
+          "ScriptDuration": 125.265,
+          "LayoutDuration": 10.832,
+          "RecalcStyleDuration": 100.863
+        }
+      },
+      {
+        "mode": "no-beam-filter",
+        "windowMs": 3000,
+        "median": {
+          "TaskDuration": 798.583,
+          "ScriptDuration": 129.22,
+          "LayoutDuration": 19.654,
+          "RecalcStyleDuration": 178.445
+        }
+      },
+      {
+        "mode": "frozen-beam-paths",
+        "windowMs": 3000,
+        "median": {
+          "TaskDuration": 622.484,
+          "ScriptDuration": 71.85,
+          "LayoutDuration": 11.745,
+          "RecalcStyleDuration": 79.23
+        }
+      },
+      {
+        "mode": "frozen-pulses-and-beams",
+        "windowMs": 3000,
+        "median": {
+          "TaskDuration": 357.673,
+          "ScriptDuration": 140.773,
+          "LayoutDuration": 0,
+          "RecalcStyleDuration": 11.768
+        }
+      },
+      {
+        "mode": "hidden-svg",
+        "windowMs": 3000,
+        "median": {
+          "TaskDuration": 739.712,
+          "ScriptDuration": 133.505,
+          "LayoutDuration": 20.337,
+          "RecalcStyleDuration": 189.861
+        }
+      },
+      {
+        "mode": "baseline-return",
+        "windowMs": 3000,
+        "median": {
+          "TaskDuration": 846.846,
+          "ScriptDuration": 127.889,
+          "LayoutDuration": 19.537,
+          "RecalcStyleDuration": 180.558
+        }
+      }
+    ]
+  },
+  "browser_renderer": "Headless Chromium used SwiftShader with software compositing and rasterization. These timings establish relative main-thread behavior in that test configuration; hardware GPU behavior requires a separate comparison.",
+  "gpu_markers": {
+    "method": "Production marker renderer, All reporting dates, stationary full screen globe, 1440 by 1000 viewport, device scale factor 2, dark theme. Median of three 3-second windows, GPU / exact SVG / GPU sequence. Chromium uses ANGLE Metal on Apple M4 Max; WebKit uses its native GPU process. No other desktop browser benchmark or build ran during sampling.",
+    "scope": "Process CPU is processor time consumed by browser processes, not hardware GPU utilization. Sequential resident-memory samples include browser caches and cannot establish retained allocation on their own.",
+    "chromium": [
+      {
+        "mode": "gpu",
+        "windowMs": 3000,
+        "median": {
+          "TaskDuration": 578.933,
+          "ScriptDuration": 126.5,
+          "LayoutDuration": 10.01,
+          "RecalcStyleDuration": 110.68,
+          "processCpu:browser": 8.961,
+          "processCpu:renderer": 906.06,
+          "processCpu:GPU": 2249.114,
+          "processCpu:network.mojom.NetworkService": 2.789,
+          "processCpu:storage.mojom.StorageService": 0.027
+        }
+      },
+      {
+        "mode": "svg",
+        "windowMs": 3000,
+        "median": {
+          "TaskDuration": 1314.801,
+          "ScriptDuration": 126.913,
+          "LayoutDuration": 33.476,
+          "RecalcStyleDuration": 255.662,
+          "processCpu:browser": 6.308,
+          "processCpu:renderer": 2024.954,
+          "processCpu:GPU": 2742.334,
+          "processCpu:network.mojom.NetworkService": 1.766,
+          "processCpu:storage.mojom.StorageService": 0
+        }
+      },
+      {
+        "mode": "gpu-return",
+        "windowMs": 3000,
+        "median": {
+          "TaskDuration": 566.062,
+          "ScriptDuration": 125.499,
+          "LayoutDuration": 9.391,
+          "RecalcStyleDuration": 111.234,
+          "processCpu:browser": 15.844,
+          "processCpu:renderer": 829.976,
+          "processCpu:GPU": 2231.524,
+          "processCpu:network.mojom.NetworkService": 2.632,
+          "processCpu:storage.mojom.StorageService": 0
+        }
+      }
+    ],
+    "webkit": [
+      {
+        "mode": "gpu",
+        "totalProcessCpuMs": 2680,
+        "rssKiB": 1057664
+      },
+      {
+        "mode": "svg",
+        "totalProcessCpuMs": 5090,
+        "rssKiB": 1066816
+      },
+      {
+        "mode": "gpu-return",
+        "totalProcessCpuMs": 2850,
+        "rssKiB": 1073488
+      }
+    ],
+    "lifecycle": {
+      "method": "Reduced motion, 30 reporting-window and node-selection cycles in Chromium Metal; five offscreen/return cycles. JavaScript heap collected after explicit garbage collection. Resident memory sampled with ps.",
+      "samples": [
+        {
+          "label": "start",
+          "heapBytes": 41346528,
+          "dom": {
+            "documents": 7,
+            "nodes": 6435,
+            "jsEventListeners": 1159
+          },
+          "resources": {
+            "programs": 1,
+            "buffers": 2,
+            "arrays": 1,
+            "draws": 3
+          },
+          "processes": [
+            {
+              "type": "renderer",
+              "rssKiB": 85424
+            },
+            {
+              "type": "renderer",
+              "rssKiB": 409136
+            },
+            {
+              "type": "renderer",
+              "rssKiB": 169824
+            },
+            {
+              "type": "GPU",
+              "rssKiB": 183648
+            }
+          ]
+        },
+        {
+          "label": "after 10 filter/selection cycles",
+          "heapBytes": 42244148,
+          "dom": {
+            "documents": 10,
+            "nodes": 5100,
+            "jsEventListeners": 795
+          },
+          "resources": {
+            "programs": 1,
+            "buffers": 2,
+            "arrays": 1,
+            "draws": 113
+          },
+          "processes": [
+            {
+              "type": "renderer",
+              "rssKiB": 85440
+            },
+            {
+              "type": "renderer",
+              "rssKiB": 433568
+            },
+            {
+              "type": "renderer",
+              "rssKiB": 170080
+            },
+            {
+              "type": "GPU",
+              "rssKiB": 194736
+            }
+          ]
+        },
+        {
+          "label": "after 20 filter/selection cycles",
+          "heapBytes": 42465900,
+          "dom": {
+            "documents": 10,
+            "nodes": 5100,
+            "jsEventListeners": 795
+          },
+          "resources": {
+            "programs": 1,
+            "buffers": 2,
+            "arrays": 1,
+            "draws": 223
+          },
+          "processes": [
+            {
+              "type": "renderer",
+              "rssKiB": 85392
+            },
+            {
+              "type": "renderer",
+              "rssKiB": 451616
+            },
+            {
+              "type": "renderer",
+              "rssKiB": 170048
+            },
+            {
+              "type": "GPU",
+              "rssKiB": 196336
+            }
+          ]
+        },
+        {
+          "label": "after 30 filter/selection cycles",
+          "heapBytes": 43056436,
+          "dom": {
+            "documents": 10,
+            "nodes": 5100,
+            "jsEventListeners": 795
+          },
+          "resources": {
+            "programs": 1,
+            "buffers": 2,
+            "arrays": 1,
+            "draws": 333
+          },
+          "processes": [
+            {
+              "type": "renderer",
+              "rssKiB": 85408
+            },
+            {
+              "type": "renderer",
+              "rssKiB": 516672
+            },
+            {
+              "type": "renderer",
+              "rssKiB": 170048
+            },
+            {
+              "type": "GPU",
+              "rssKiB": 193072
+            }
+          ]
+        },
+        {
+          "label": "after 5 offscreen/return cycles",
+          "heapBytes": 43536104,
+          "dom": {
+            "documents": 9,
+            "nodes": 5095,
+            "jsEventListeners": 953
+          },
+          "resources": {
+            "programs": 1,
+            "buffers": 2,
+            "arrays": 1,
+            "draws": 344
+          },
+          "processes": [
+            {
+              "type": "renderer",
+              "rssKiB": 85424
+            },
+            {
+              "type": "renderer",
+              "rssKiB": 504112
+            },
+            {
+              "type": "renderer",
+              "rssKiB": 170048
+            },
+            {
+              "type": "GPU",
+              "rssKiB": 198256
+            }
+          ]
+        }
+      ],
+      "result": "Live marker resources remain one program, two buffers and one vertex array. DOM count plateaus after the first ten cycles. JavaScript heap grows by 1.7 MB across thirty cycles, while renderer resident memory grows by 105 MiB. GPU resident memory fluctuates around 190 MiB after warm-up; the samples do not establish flat total process memory."
+    },
+    "pixels": {
+      "method": "Production GPU and exact SVG screenshots with reduced motion at the same orientation, selection and theme. Small antialiasing and fractional-boundary compositing differences remain. Visual inspection confirmed the accepted marker appearance.",
+      "samples": [
+        {
+          "engine": "chromium",
+          "state": "default",
+          "max": 109,
+          "mean": 0.16562716431818467,
+          "changedBytes": 144119,
+          "bytes": 3176520,
+          "labelCount": 204,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "chromium",
+          "state": "hover-front",
+          "max": 100,
+          "mean": 0.10046025209978215,
+          "changedBytes": 92478,
+          "bytes": 3176520,
+          "labelCount": 204,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "chromium",
+          "state": "keyboard-focus",
+          "max": 100,
+          "mean": 0.10079835795146891,
+          "changedBytes": 92307,
+          "bytes": 3176520,
+          "labelCount": 204,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "chromium",
+          "state": "rim-hover",
+          "max": 109,
+          "mean": 0.07189754826036039,
+          "changedBytes": 61810,
+          "bytes": 3176520,
+          "labelCount": 204,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "chromium",
+          "state": "rim-focus",
+          "max": 115,
+          "mean": 0.10101337312530694,
+          "changedBytes": 86548,
+          "bytes": 3176520,
+          "labelCount": 204,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "chromium",
+          "state": "link-focus",
+          "max": 100,
+          "mean": 0.11619256293050256,
+          "changedBytes": 101072,
+          "bytes": 3176520,
+          "labelCount": 204,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "chromium",
+          "state": "link-hover",
+          "max": 100,
+          "mean": 0.11640380038532734,
+          "changedBytes": 101825,
+          "bytes": 3176520,
+          "labelCount": 204,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "chromium",
+          "state": "selected",
+          "max": 70,
+          "mean": 0.0034251319053555463,
+          "changedBytes": 2775,
+          "bytes": 3176520,
+          "labelCount": 3,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "chromium",
+          "state": "dragged",
+          "max": 1,
+          "mean": 1.196277687532268e-05,
+          "changedBytes": 38,
+          "bytes": 3176520,
+          "labelCount": 3,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "chromium",
+          "state": "light-selected",
+          "max": 1,
+          "mean": 0.00013159054562854948,
+          "changedBytes": 418,
+          "bytes": 3176520,
+          "labelCount": 3,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "webkit",
+          "state": "default",
+          "max": 233,
+          "mean": 0.9372329624872502,
+          "changedBytes": 237696,
+          "bytes": 4235360,
+          "labelCount": 204,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "webkit",
+          "state": "hover-front",
+          "max": 229,
+          "mean": 0.5796340806920781,
+          "changedBytes": 172346,
+          "bytes": 4235360,
+          "labelCount": 204,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "webkit",
+          "state": "keyboard-focus",
+          "max": 229,
+          "mean": 0.5802326130482415,
+          "changedBytes": 170876,
+          "bytes": 4235360,
+          "labelCount": 204,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "webkit",
+          "state": "rim-hover",
+          "max": 233,
+          "mean": 0.42933280760077064,
+          "changedBytes": 149230,
+          "bytes": 4235360,
+          "labelCount": 204,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "webkit",
+          "state": "rim-focus",
+          "max": 233,
+          "mean": 0.5830555135808998,
+          "changedBytes": 181504,
+          "bytes": 4235360,
+          "labelCount": 204,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "webkit",
+          "state": "link-focus",
+          "max": 229,
+          "mean": 0.6493849401231536,
+          "changedBytes": 181890,
+          "bytes": 4235360,
+          "labelCount": 204,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "webkit",
+          "state": "link-hover",
+          "max": 229,
+          "mean": 0.6501933719919912,
+          "changedBytes": 182255,
+          "bytes": 4235360,
+          "labelCount": 204,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "webkit",
+          "state": "selected",
+          "max": 196,
+          "mean": 0.02677812511805372,
+          "changedBytes": 6192,
+          "bytes": 4235360,
+          "labelCount": 3,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "webkit",
+          "state": "dragged",
+          "max": 6,
+          "mean": 0.0004561595708511201,
+          "changedBytes": 1654,
+          "bytes": 4235360,
+          "labelCount": 3,
+          "labelsUnchanged": true,
+          "errors": []
+        },
+        {
+          "engine": "webkit",
+          "state": "light-selected",
+          "max": 7,
+          "mean": 0.0003994937856522232,
+          "changedBytes": 1291,
+          "bytes": 4235360,
+          "labelCount": 3,
+          "labelsUnchanged": true,
+          "errors": []
+        }
+      ]
+    },
+    "checks": {
+      "chromium_globe_tests": 9,
+      "webkit_globe_tests": 9,
+      "context_loss_and_restoration": "passed",
+      "stable_resources_across_selection": "passed",
+      "native_css_pulse_suppression": "passed",
+      "reduced_motion_and_offscreen_draws": "zero",
+      "rim_arrow_pixels_brighten_on_hover": "passed",
+      "typecheck": "passed",
+      "lint": "passed",
+      "density_backing_resize": "passed: 1 to 3 to 1 device pixels per CSS pixel, unchanged globe CSS width and GPU resource counts"
+    },
+    "software_prototype_comparison": {
+      "method": "Headless Chromium SwiftShader prototype, median of three 3-second stationary windows. This run is separate from the production hardware comparison.",
+      "samples": [
+        {
+          "mode": "svg",
+          "windowMs": 3000,
+          "median": {
+            "TaskDuration": 745.853,
+            "ScriptDuration": 125.647,
+            "LayoutDuration": 16.266,
+            "RecalcStyleDuration": 159.974,
+            "processCpu:browser": 0.345,
+            "processCpu:renderer": 2191.672,
+            "processCpu:GPU": 1104.823,
+            "processCpu:network.mojom.NetworkService": 0
+          }
+        },
+        {
+          "mode": "gpu",
+          "windowMs": 3000,
+          "median": {
+            "TaskDuration": 1099.243,
+            "ScriptDuration": 121.581,
+            "LayoutDuration": 10.198,
+            "RecalcStyleDuration": 100.588,
+            "processCpu:browser": 0.278,
+            "processCpu:renderer": 1843.977,
+            "processCpu:GPU": 7672.734,
+            "processCpu:network.mojom.NetworkService": 0
+          }
+        },
+        {
+          "mode": "svg-return",
+          "windowMs": 3000,
+          "median": {
+            "TaskDuration": 744.008,
+            "ScriptDuration": 129.653,
+            "LayoutDuration": 16.558,
+            "RecalcStyleDuration": 161.264,
+            "processCpu:browser": 0.396,
+            "processCpu:renderer": 2169.116,
+            "processCpu:GPU": 1132.658,
+            "processCpu:network.mojom.NetworkService": 0.032
+          }
+        }
+      ],
+      "result": "The unrestricted WebGL prototype uses more CPU under SwiftShader. The production context request uses the standard major-performance-caveat capability flag; native SVG supplies identical visual effects when accelerated context creation is refused."
+    },
+    "density_test_scope": "Chromium CDP device emulation needs a viewport change to deliver native resolution-query events. The test varies viewport width by one pixel while the globe remains fixed at 680 CSS pixels, records both resolution queries changing, and verifies the marker backing grows from 680 to 2040 pixels and returns to 680. This does not test moving a physical window between displays.",
+    "capability_request": {
+      "attribute": "failIfMajorPerformanceCaveat: true",
+      "reference": "https://registry.khronos.org/webgl/specs/latest/1.0/#5.2",
+      "behavior": "The browser may reject a context whose software rasterization or readback path has a severe performance cost. The native SVG marker implementation preserves appearance, animation and interaction when the context is unavailable. No vendor or user-agent detection is used.",
+      "unavailable_context_regression": {
+        "chromium": "1 passed",
+        "webkit": "1 passed",
+        "checks": "Marker context creation is explicitly rejected in the test. Native SVG markers, pulse animation, keyboard focus stroke, Enter selection, reset, rim arrows and reduced motion remain available.",
+        "scope": "This test uses the retained production artifact and emulates context refusal. The context capability attribute still requires a rebuilt artifact for accelerated-path validation."
+      }
+    }
+  },
+  "reporting_window_scaling": {
+    "method": "Production GPU markers on Chromium ANGLE Metal, 1440 by 1000, device scale factor 2. One 3-second sample per window and state. Attribute instrumentation counts all writes. Frame submissions are not presented display frames.",
+    "samples": [
+      {
+        "state": "rotation",
+        "preset": "3 months",
+        "nodes": 156,
+        "routes": 40,
+        "beams": 32,
+        "counts": 7,
+        "elapsed": 3001.946667,
+        "metrics": {
+          "TaskDuration": 713.6750000000001,
+          "ScriptDuration": 155.71,
+          "LayoutDuration": 12.677000000000001,
+          "RecalcStyleDuration": 283.2370000000001,
+          "processCpu:browser": 18.47500000000002,
+          "processCpu:renderer": 1024.4250000000004,
+          "processCpu:GPU": 893.8570000000001,
+          "processCpu:network.mojom.NetworkService": 3.041999999999989,
+          "processCpu:storage.mojom.StorageService": 0.13699999999999823
+        },
+        "ops": {
+          "land": 90,
+          "markers": 300,
+          "paths": 19167,
+          "transforms": 14670,
+          "gradients": 11516
+        }
+      },
+      {
+        "state": "rotation",
+        "preset": "6 months",
+        "nodes": 197,
+        "routes": 105,
+        "beams": 88,
+        "counts": 20,
+        "elapsed": 3002.4598750000005,
+        "metrics": {
+          "TaskDuration": 971.9130000000002,
+          "ScriptDuration": 278.6749999999999,
+          "LayoutDuration": 23.236000000000008,
+          "RecalcStyleDuration": 386.859,
+          "processCpu:browser": 15.372000000000053,
+          "processCpu:renderer": 1278.3640000000016,
+          "processCpu:GPU": 1271.3439999999996,
+          "processCpu:network.mojom.NetworkService": 3.5600000000000076,
+          "processCpu:storage.mojom.StorageService": 0.027000000000002716
+        },
+        "ops": {
+          "land": 90,
+          "markers": 300,
+          "paths": 51192,
+          "transforms": 19530,
+          "gradients": 31152
+        }
+      },
+      {
+        "state": "rotation",
+        "preset": "All dates",
+        "nodes": 204,
+        "routes": 124,
+        "beams": 105,
+        "counts": 31,
+        "elapsed": 3002.7222500000007,
+        "metrics": {
+          "TaskDuration": 1075.1340000000002,
+          "ScriptDuration": 312.036,
+          "LayoutDuration": 26.231000000000005,
+          "RecalcStyleDuration": 431.6549999999999,
+          "processCpu:browser": 13.953999999999912,
+          "processCpu:renderer": 1393.877999999999,
+          "processCpu:GPU": 1472.9349999999997,
+          "processCpu:network.mojom.NetworkService": 2.2660000000000178,
+          "processCpu:storage.mojom.StorageService": 0
+        },
+        "ops": {
+          "land": 90,
+          "markers": 300,
+          "paths": 60189,
+          "transforms": 21150,
+          "gradients": 36812
+        }
+      },
+      {
+        "state": "stationary",
+        "preset": "3 months",
+        "nodes": 156,
+        "routes": 40,
+        "beams": 32,
+        "counts": 7,
+        "elapsed": 3002.037625000001,
+        "metrics": {
+          "TaskDuration": 361.27500000000003,
+          "ScriptDuration": 53.52199999999985,
+          "LayoutDuration": 5.564999999999987,
+          "RecalcStyleDuration": 55.24200000000001,
+          "processCpu:browser": 11.797999999999975,
+          "processCpu:renderer": 569.2249999999995,
+          "processCpu:GPU": 1152.8139999999994,
+          "processCpu:network.mojom.NetworkService": 2.150000000000013,
+          "processCpu:storage.mojom.StorageService": 0
+        },
+        "ops": {
+          "land": 0,
+          "markers": 300,
+          "paths": 8640,
+          "transforms": 0,
+          "gradients": 11520
+        }
+      },
+      {
+        "state": "stationary",
+        "preset": "6 months",
+        "nodes": 197,
+        "routes": 105,
+        "beams": 88,
+        "counts": 20,
+        "elapsed": 3002.678582999997,
+        "metrics": {
+          "TaskDuration": 570.0270000000005,
+          "ScriptDuration": 116.36500000000005,
+          "LayoutDuration": 10.035000000000016,
+          "RecalcStyleDuration": 104.55699999999979,
+          "processCpu:browser": 12.004000000000016,
+          "processCpu:renderer": 913.0739999999981,
+          "processCpu:GPU": 1646.3980000000013,
+          "processCpu:network.mojom.NetworkService": 2.4069999999999925,
+          "processCpu:storage.mojom.StorageService": 0.009999999999999593
+        },
+        "ops": {
+          "land": 0,
+          "markers": 300,
+          "paths": 22776,
+          "transforms": 0,
+          "gradients": 30352
+        }
+      },
+      {
+        "state": "stationary",
+        "preset": "All dates",
+        "nodes": 204,
+        "routes": 124,
+        "beams": 105,
+        "counts": 31,
+        "elapsed": 3002.024125,
+        "metrics": {
+          "TaskDuration": 605.7500000000005,
+          "ScriptDuration": 130.4989999999999,
+          "LayoutDuration": 11.279000000000039,
+          "RecalcStyleDuration": 112.16999999999987,
+          "processCpu:browser": 11.365999999999987,
+          "processCpu:renderer": 934.8220000000005,
+          "processCpu:GPU": 2089.9649999999992,
+          "processCpu:network.mojom.NetworkService": 2.940999999999999,
+          "processCpu:storage.mojom.StorageService": 0
+        },
+        "ops": {
+          "land": 0,
+          "markers": 300,
+          "paths": 27354,
+          "transforms": 0,
+          "gradients": 36444
+        }
+      }
+    ],
+    "beam_isolation": [
+      {
+        "mode": "baseline",
+        "runs": [
+          {
+            "LayoutDuration": 6.426000000000015,
+            "RecalcStyleDuration": 73.936,
+            "ScriptDuration": 83.10699999999999,
+            "TaskDuration": 390.5740000000002,
+            "process:browser": 4.6319999999999695,
+            "process:renderer": 639.1319999999996,
+            "process:GPU": 1374.3550000000005,
+            "process:network.mojom.NetworkService": 1.59200000000001,
+            "process:storage.mojom.StorageService": 0
+          },
+          {
+            "LayoutDuration": 6.427999999999989,
+            "RecalcStyleDuration": 72.88,
+            "ScriptDuration": 83.50400000000002,
+            "TaskDuration": 357.58899999999994,
+            "process:browser": 7.561999999999958,
+            "process:renderer": 504.17500000000047,
+            "process:GPU": 1396.6719999999998,
+            "process:network.mojom.NetworkService": 1.8339999999999745,
+            "process:storage.mojom.StorageService": 0.12699999999999864
+          }
+        ]
+      },
+      {
+        "mode": "freeze-path",
+        "runs": [
+          {
+            "LayoutDuration": 0,
+            "RecalcStyleDuration": 10.001999999999956,
+            "ScriptDuration": 70.09999999999994,
+            "TaskDuration": 267.60899999999975,
+            "process:browser": 3.814000000000095,
+            "process:renderer": 409.81299999999976,
+            "process:GPU": 1404.4320000000007,
+            "process:network.mojom.NetworkService": 1.4540000000000108,
+            "process:storage.mojom.StorageService": 0
+          },
+          {
+            "LayoutDuration": 0,
+            "RecalcStyleDuration": 10.495000000000033,
+            "ScriptDuration": 70.93599999999999,
+            "TaskDuration": 273.56500000000005,
+            "process:browser": 7.676999999999934,
+            "process:renderer": 416.47500000000014,
+            "process:GPU": 1395.699999999999,
+            "process:network.mojom.NetworkService": 2.7800000000000047,
+            "process:storage.mojom.StorageService": 0.04200000000000037
+          }
+        ]
+      },
+      {
+        "mode": "freeze-all",
+        "runs": [
+          {
+            "LayoutDuration": 0,
+            "RecalcStyleDuration": 10.67800000000002,
+            "ScriptDuration": 60.84,
+            "TaskDuration": 221.62499999999997,
+            "process:browser": 4.577000000000053,
+            "process:renderer": 348.8350000000002,
+            "process:GPU": 975.1700000000003,
+            "process:network.mojom.NetworkService": 1.9630000000000203,
+            "process:storage.mojom.StorageService": 0
+          },
+          {
+            "LayoutDuration": 0,
+            "RecalcStyleDuration": 10.556999999999983,
+            "ScriptDuration": 61.69800000000003,
+            "TaskDuration": 221.28599999999966,
+            "process:browser": 15.360999999999958,
+            "process:renderer": 346.8599999999995,
+            "process:GPU": 959.2790000000005,
+            "process:network.mojom.NetworkService": 1.4959999999999973,
+            "process:storage.mojom.StorageService": 0
+          }
+        ]
+      },
+      {
+        "mode": "hide-beam",
+        "runs": [
+          {
+            "LayoutDuration": 6.989999999999997,
+            "RecalcStyleDuration": 91.76099999999992,
+            "ScriptDuration": 98.43199999999996,
+            "TaskDuration": 344.6229999999999,
+            "process:browser": 21.706000000000003,
+            "process:renderer": 466.63600000000025,
+            "process:GPU": 957.0889999999998,
+            "process:network.mojom.NetworkService": 1.456999999999986,
+            "process:storage.mojom.StorageService": 0
+          },
+          {
+            "LayoutDuration": 7.012999999999991,
+            "RecalcStyleDuration": 86.99600000000007,
+            "ScriptDuration": 96.74500000000008,
+            "TaskDuration": 338.31900000000024,
+            "process:browser": 5.290000000000017,
+            "process:renderer": 462.75599999999974,
+            "process:GPU": 949.0639999999999,
+            "process:network.mojom.NetworkService": 1.1760000000000104,
+            "process:storage.mojom.StorageService": 0
+          }
+        ]
+      },
+      {
+        "mode": "hide-routes",
+        "runs": [
+          {
+            "LayoutDuration": 6.369999999999987,
+            "RecalcStyleDuration": 81.23100000000005,
+            "ScriptDuration": 87.26999999999995,
+            "TaskDuration": 325.8299999999998,
+            "process:browser": 28.567999999999927,
+            "process:renderer": 438.01299999999975,
+            "process:GPU": 851.4239999999998,
+            "process:network.mojom.NetworkService": 1.597000000000015,
+            "process:storage.mojom.StorageService": 0
+          },
+          {
+            "LayoutDuration": 6.4530000000000145,
+            "RecalcStyleDuration": 83.21499999999993,
+            "ScriptDuration": 89.17400000000009,
+            "TaskDuration": 358.6640000000001,
+            "process:browser": 4.198000000000035,
+            "process:renderer": 561.7049999999999,
+            "process:GPU": 895.9450000000011,
+            "process:network.mojom.NetworkService": 1.2159999999999949,
+            "process:storage.mojom.StorageService": 0
+          }
+        ]
+      },
+      {
+        "mode": "return",
+        "runs": [
+          {
+            "LayoutDuration": 6.964000000000025,
+            "RecalcStyleDuration": 73.1630000000001,
+            "ScriptDuration": 82.00199999999991,
+            "TaskDuration": 356.6279999999997,
+            "process:browser": 4.378999999999911,
+            "process:renderer": 499.2630000000009,
+            "process:GPU": 1412.265999999999,
+            "process:network.mojom.NetworkService": 2.0519999999999983,
+            "process:storage.mojom.StorageService": 0
+          },
+          {
+            "LayoutDuration": 6.4069999999999965,
+            "RecalcStyleDuration": 72.944,
+            "ScriptDuration": 82.70400000000011,
+            "TaskDuration": 381.06099999999986,
+            "process:browser": 4.569000000000045,
+            "process:renderer": 612.3890000000004,
+            "process:GPU": 1373.5719999999994,
+            "process:network.mojom.NetworkService": 1.1270000000000169,
+            "process:storage.mojom.StorageService": 0
+          }
+        ]
+      }
+    ],
+    "compositing_experiments": [
+      {
+        "mode": "baseline",
+        "runs": [
+          {
+            "LayoutDuration": 6.972000000000006,
+            "RecalcStyleDuration": 75.99100000000003,
+            "ScriptDuration": 88.02799999999999,
+            "TaskDuration": 379.10999999999984,
+            "process:browser": 5.419000000000063,
+            "process:renderer": 545.1949999999997,
+            "process:GPU": 1458.5609999999995,
+            "process:network.mojom.NetworkService": 1.5680000000000138,
+            "process:storage.mojom.StorageService": 0
+          },
+          {
+            "LayoutDuration": 7.263999999999992,
+            "RecalcStyleDuration": 78.80999999999999,
+            "ScriptDuration": 87.61099999999999,
+            "TaskDuration": 418.68300000000016,
+            "process:browser": 9.830000000000005,
+            "process:renderer": 685.3580000000009,
+            "process:GPU": 1496.0510000000004,
+            "process:network.mojom.NetworkService": 1.7810000000000048,
+            "process:storage.mojom.StorageService": 0.16399999999999748
+          }
+        ]
+      },
+      {
+        "mode": "svg-layers",
+        "runs": [
+          {
+            "LayoutDuration": 6.2830000000000386,
+            "RecalcStyleDuration": 71.04799999999994,
+            "ScriptDuration": 80.78300000000004,
+            "TaskDuration": 349.6219999999997,
+            "process:browser": 4.078999999999944,
+            "process:renderer": 482.2280000000001,
+            "process:GPU": 1359.3310000000001,
+            "process:network.mojom.NetworkService": 1.7790000000000028,
+            "process:storage.mojom.StorageService": 0
+          },
+          {
+            "LayoutDuration": 6.429999999999991,
+            "RecalcStyleDuration": 73.25599999999999,
+            "ScriptDuration": 84.82400000000001,
+            "TaskDuration": 360.47399999999993,
+            "process:browser": 7.105999999999946,
+            "process:renderer": 500.91599999999926,
+            "process:GPU": 1373.1679999999997,
+            "process:network.mojom.NetworkService": 2.800999999999998,
+            "process:storage.mojom.StorageService": 0.022000000000001185
+          }
+        ]
+      },
+      {
+        "mode": "beam-layers",
+        "runs": [
+          {
+            "LayoutDuration": 6.9429999999999765,
+            "RecalcStyleDuration": 73.17399999999996,
+            "ScriptDuration": 81.94499999999994,
+            "TaskDuration": 388.21400000000006,
+            "process:browser": 29.37699999999999,
+            "process:renderer": 775.824000000001,
+            "process:GPU": 2893.3760000000016,
+            "process:network.mojom.NetworkService": 1.1690000000000034,
+            "process:storage.mojom.StorageService": 0
+          },
+          {
+            "LayoutDuration": 6.678000000000017,
+            "RecalcStyleDuration": 70.91100000000006,
+            "ScriptDuration": 82.20699999999992,
+            "TaskDuration": 350.7849999999997,
+            "process:browser": 6.9270000000000165,
+            "process:renderer": 647.2979999999993,
+            "process:GPU": 2862.465,
+            "process:network.mojom.NetworkService": 1.3279999999999959,
+            "process:storage.mojom.StorageService": 0
+          }
+        ]
+      },
+      {
+        "mode": "no-filter",
+        "runs": [
+          {
+            "LayoutDuration": 7.176000000000016,
+            "RecalcStyleDuration": 85.10399999999996,
+            "ScriptDuration": 93.642,
+            "TaskDuration": 415.36300000000017,
+            "process:browser": 4.29400000000002,
+            "process:renderer": 653.4269999999998,
+            "process:GPU": 973.6379999999994,
+            "process:network.mojom.NetworkService": 1.3160000000000116,
+            "process:storage.mojom.StorageService": 0
+          },
+          {
+            "LayoutDuration": 7.1029999999999704,
+            "RecalcStyleDuration": 84.11200000000008,
+            "ScriptDuration": 93.35300000000002,
+            "TaskDuration": 415.42499999999995,
+            "process:browser": 4.466999999999999,
+            "process:renderer": 655.8470000000013,
+            "process:GPU": 974.869,
+            "process:network.mojom.NetworkService": 1.2839999999999796,
+            "process:storage.mojom.StorageService": 0
+          }
+        ]
+      },
+      {
+        "mode": "return",
+        "runs": [
+          {
+            "LayoutDuration": 6.684999999999997,
+            "RecalcStyleDuration": 73.41199999999992,
+            "ScriptDuration": 81.91199999999998,
+            "TaskDuration": 378.22400000000033,
+            "process:browser": 4.4199999999999795,
+            "process:renderer": 606.84,
+            "process:GPU": 1393.4899999999998,
+            "process:network.mojom.NetworkService": 1.6549999999999898,
+            "process:storage.mojom.StorageService": 0
+          },
+          {
+            "LayoutDuration": 6.515999999999966,
+            "RecalcStyleDuration": 71.41200000000003,
+            "ScriptDuration": 80.41199999999992,
+            "TaskDuration": 351.2050000000002,
+            "process:browser": 3.885999999999945,
+            "process:renderer": 494.14099999999905,
+            "process:GPU": 1347.9840000000004,
+            "process:network.mojom.NetworkService": 1.0720000000000174,
+            "process:storage.mojom.StorageService": 0
+          }
+        ]
+      }
+    ],
+    "interpretation": "Animated SVG beam paths, gradients and shadow filters remain a scaling cost. Temporary exclusions and layer promotion isolate that cost; they are absent from production source."
+  }
+}

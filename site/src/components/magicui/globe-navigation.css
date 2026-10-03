@@ -1,0 +1,50 @@
+.globe-camera-viewport, .globe-camera-scene { position: absolute; inset: 0; }
+.globe-camera-scene { transform-origin: center; }
+.globe-camera-scene > canvas { position: absolute; inset: 0; }
+.atlas-page[data-fullscreen] :is(.globe-camera-scene canvas, .atlas-globe-pins) { touch-action: none; }
+.atlas-page[data-fullscreen] .globe-tilt-reset {
+  position: absolute; left: 50%; bottom: 2%; z-index: 6; transform: translateX(-50%);
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  min-height: 40px; padding: 8px 14px; border: 1px solid transparent; border-radius: 999px;
+  color: var(--primary-foreground); background: var(--primary);
+  font-size: 12px; font-weight: 550; line-height: 1.2; white-space: nowrap;
+  box-shadow: 0 3px 13px color-mix(in srgb, var(--primary) 18%, transparent);
+  pointer-events: auto; transition: background .18s;
+}
+.atlas-page[data-fullscreen] .globe-tilt-reset:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--primary) 88%, var(--foreground)); }
+.atlas-page[data-fullscreen] .globe-tilt-reset:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.globe-tilt-reset svg { width: 16px; height: 16px; }
+@media (prefers-reduced-motion: reduce) { .atlas-page[data-fullscreen] .globe-tilt-reset { transition: none; } }
+.globe-drag-hint {
+  position: absolute; inset: 0; z-index: 5; pointer-events: none;
+  container-type: inline-size; color: var(--primary);
+  animation: globe-hint-lifetime 4.5s linear both;
+}
+.globe-hint-capsule {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  padding: 11px 18px;
+  border: 1px solid color-mix(in srgb, var(--primary) 26%, transparent); border-radius: 999px;
+  background: linear-gradient(125deg, color-mix(in srgb, var(--background) 92%, transparent), color-mix(in srgb, var(--atlas-green) 16%, var(--background)));
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--primary) 18%, transparent);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  font-size: clamp(14px, 3.2cqw, 17px); font-weight: 600; line-height: 1.25; white-space: nowrap;
+  animation: globe-hint-pulse 1.6s .3s 2 both;
+}
+.globe-drag-hint[data-active="false"], .globe-drag-hint[data-active="false"] * { animation-play-state: paused; }
+@keyframes globe-hint-lifetime {
+  from { opacity: 0; }
+  8%, 86% { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes globe-hint-pulse {
+  from, to { opacity: .55; }
+  45%, 60% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .globe-drag-hint { animation-timing-function: step-end; }
+  .globe-hint-capsule { animation: none; }
+  @keyframes globe-hint-lifetime {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+}
