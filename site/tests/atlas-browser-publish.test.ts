@@ -44,6 +44,8 @@ test("Same-export publication rejects a stale receipt that loses or changes brow
 
 test("Stable producer handoffs require exact source bindings, reconstruction and every-record parity", async () => {
   const handoff = JSON.parse(await readFile(new URL("../evidence/browser-transport-stable-handoff-2026-10-02.json", import.meta.url), "utf8"));
+  handoff.browser.directory = join(tmpdir(), "atlas-browser-handoff");
+  handoff.browser.manifest.path = join(handoff.browser.directory, "manifest.json");
   const assets = Object.fromEntries(Array.from({ length: handoff.asset_count }, (_, i) => [`details/synthetic-${i}.json`, { bytes: 1, sha256: "a".repeat(64), kind: "detail" }]));
   const manifest = { source_export_id: handoff.source_export_id, source: handoff.browser.source, assets } as AtlasBrowserManifest;
   const check = (candidate = handoff, ref = handoff.browser.manifest) => checkBrowserHandoff(candidate, manifest, ref);
@@ -55,8 +57,10 @@ test("Stable producer handoffs require exact source bindings, reconstruction and
   changed.browser.source.site.sha256 = "a".repeat(64);
   assert.throws(() => check(changed), /source identities/);
   const moved = structuredClone(handoff);
-  moved.browser.directory = "/a/different/directory";
+  moved.browser.directory = join(tmpdir(), "atlas-browser-other");
   assert.throws(() => check(moved));
+  moved.browser.directory = "relative/browser";
+  assert.throws(() => check(moved), /directory/);
 });
 
 test("Browser staging compresses absent objects, verifies public bytes and rejects incompatible existing assets", async () => {
