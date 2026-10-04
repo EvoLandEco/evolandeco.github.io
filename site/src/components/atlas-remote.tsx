@@ -1,6 +1,7 @@
 "use client";
 import { memo, useEffect, useRef, useState } from "react";
 import { Activity, FileText, RefreshCw } from "lucide-react";
+import Image from "next/image";
 import { createAtlasStore, type AtlasStore } from "@/lib/atlas-store";
 import { fetchAtlasData, releaseRoot, type AtlasRelease, type AtlasLoadProgress } from "@/lib/atlas-release";
 import { AtlasContext } from "./atlas-context";
@@ -46,7 +47,7 @@ export function AtlasRemote({ experiment }: { experiment?: AtlasExperiment } = {
   const phase = { release: "Checking the latest release…", download: "Downloading reports and map…", verify: "Checking downloaded data…", prepare: "Preparing reports and source evidence…" }[progress.phase];
   return <div className="atlas-page atlas-loading" data-ready="false">
     <header className="atlas-heading">
-      <div><p className="atlas-eyebrow"><Activity size={14} aria-hidden />Outbreak intelligence</p><h1><AuroraText colors={["var(--primary)", "#639b91", "var(--foreground)"]} speed={0.45}>ATLAS</AuroraText></h1></div>
+      <div><p className="atlas-eyebrow"><Activity size={14} aria-hidden />Outbreak intelligence</p><h1><Image className="atlas-title-logo" src="/atlas-logo.svg" alt="" width={132} height={132} loading="eager" /><AuroraText colors={["var(--primary)", "#639b91", "var(--foreground)"]} speed={0.45}>ATLAS</AuroraText></h1></div>
       <p>Follow the reports.<br /><span>Explore the connections.</span></p>
     </header>
     <section ref={panel} className="atlas-observatory" aria-label="Loading ATLAS">

@@ -431,7 +431,7 @@ export function AtlasExplorer({ downloadRoot, release, experiment }: { downloadR
 
     <header className="atlas-heading">
       <div><p className="atlas-eyebrow"><Activity size={14} aria-hidden /> Outbreak intelligence</p>
-        <h1><AuroraText colors={["var(--primary)", "#639b91", "var(--foreground)"]} speed={0.45}>ATLAS</AuroraText></h1></div>
+        <h1><Image className="atlas-title-logo" src="/atlas-logo.svg" alt="" width={132} height={132} loading="eager" /><AuroraText colors={["var(--primary)", "#639b91", "var(--foreground)"]} speed={0.45}>ATLAS</AuroraText></h1></div>
     {fullscreen && <button ref={exit} className="atlas-fullscreen-exit" onClick={() => changeFullscreen(false)}><Minimize2 size={17} aria-hidden />Exit full screen<span>Esc</span></button>}
       <p>Follow the reports.<br /><span>Explore the connections.</span></p>
     </header>

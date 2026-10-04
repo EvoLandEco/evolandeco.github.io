@@ -14,7 +14,8 @@ html[data-atlas-transition]::view-transition-new(root) { animation: atlas-fade .
 .atlas-load-status { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 70px; color: var(--muted-foreground); font-size: 14px; }
 .dark .atlas-page { --atlas-green: #9acdb9; --atlas-coral: #e7ac98; }
 .atlas-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 6px 8px 0; }
-.atlas-heading h1 { font-size: clamp(42px, 7vw, 60px); line-height: 1; letter-spacing: -.06em; margin: 10px 0 0; font-weight: 650; }
+.atlas-heading h1 { display: flex; align-items: center; gap: .2em; font-size: clamp(42px, 7vw, 60px); line-height: 1; letter-spacing: -.06em; margin: 10px 0 0; font-weight: 650; }
+.atlas-title-logo { display: block; flex-shrink: 0; width: .88em; height: .88em; }
 .atlas-eyebrow { display: flex; align-items: center; gap: 7px; font-size: 12px; text-transform: uppercase; letter-spacing: .13em; color: var(--primary); margin: 0; }
 .atlas-heading > p { margin: 18px 0 0; font-size: clamp(15px, 2.5vw, 19px); letter-spacing: -.025em; line-height: 1.5; }
 .atlas-heading > p span { color: var(--muted-foreground); }
