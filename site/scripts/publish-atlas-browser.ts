@@ -11,6 +11,7 @@ import { z } from "zod";
 import hosting from "../src/content-data/atlas-hosting.json";
 import { browserSelectorHashes, releaseSchema, verifiedBytes, type AtlasRelease } from "../src/lib/atlas-release";
 import { validateBrowserManifest, type AtlasBrowserManifest } from "../src/lib/atlas-browser";
+import { verifyPublishedSourceSupplement } from "./publish-atlas-supplement";
 
 const site = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const hash = (bytes: Uint8Array | string) => createHash("sha256").update(bytes).digest("hex");
@@ -37,9 +38,9 @@ async function checkedJson(ref: FileReference) {
   assert.deepEqual(fingerprint(bytes), { bytes: ref.bytes, sha256: ref.sha256 }, ref.path);
   return JSON.parse(bytes.toString());
 }
-export function attachBrowserDescriptor(base: Record<string, unknown>, descriptor: { sha256: string; bytes: number }) {
+export function attachBrowserDescriptor(base: Record<string, unknown>, descriptor: { sha256: string; bytes: number }, version: "0.3.0" = "0.3.0") {
   releaseSchema.parse(base);
-  const browser = { transport_version: "0.1.0" as const, manifest: descriptor };
+  const browser = { transport_version: version, manifest: descriptor };
   if (base.browser) assert.deepEqual(base.browser, browser, "Replacing a browser transport requires a separate review");
   const release = { ...base, browser };
   releaseSchema.parse(release);
@@ -53,12 +54,13 @@ const browserHandoffSchema = z.object({
   browser_handoff_version: z.literal("0.1.0"), source_export_id: digest, asset_count: z.number().int().positive(),
   producer_ready: z.literal(true), reconstruction: z.literal(true), all_records_individually: z.literal(true), pinned_selector_parity: z.literal(true),
   source_files_compared: z.tuple([z.literal("site"), z.literal("map")]), selection_cases: z.number().int().positive(),
-  browser: z.object({ transport_version: z.literal("0.1.0"), source_export_id: digest, scientific_contract: z.string(), directory: z.string().refine(isAbsolute), manifest: file, source: z.record(z.string(), z.unknown()) }),
+  browser: z.object({ transport_version: z.literal("0.3.0"), source_export_id: digest, scientific_contract: z.string(), directory: z.string().refine(isAbsolute), manifest: file, source: z.record(z.string(), z.unknown()) }),
 });
 export function checkBrowserHandoff(handoff: unknown, manifest: AtlasBrowserManifest, reference: FileReference) {
   const parsed = browserHandoffSchema.parse(handoff);
   assert.equal(parsed.source_export_id, manifest.source_export_id);
   assert.equal(parsed.browser.source_export_id, manifest.source_export_id);
+  assert.equal(parsed.browser.transport_version, manifest.transport_version, "Browser handoff transport version differs");
   assert.equal(parsed.asset_count, Object.keys(manifest.assets).length);
   assert.equal(parsed.browser.scientific_contract, manifest.source.site_contract_version);
   assert.deepEqual(parsed.browser.source, manifest.source, "Browser handoff source identities differ");
@@ -70,7 +72,9 @@ export function checkBrowserHandoff(handoff: unknown, manifest: AtlasBrowserMani
 export async function prepareBrowserCandidate(handoffReference: FileReference, release: AtlasRelease) {
   const handoff = browserHandoffSchema.parse(await checkedJson(handoffReference));
   const reference = handoff.browser.manifest;
-  const manifest = validateBrowserManifest(await checkedJson(reference), release, browserSelectorHashes);
+  const version = handoff.browser.transport_version;
+  const pins = browserSelectorHashes[version];
+  const manifest = validateBrowserManifest(await checkedJson(reference), release, pins);
   checkBrowserHandoff(handoff, manifest, reference);
   assert.equal(hash(JSON.stringify({ manifest_sha256: manifest.source.manifest.sha256, map_snapshot_sha256: manifest.source.map.sha256 })), release.export_id, "Scientific export identity mismatch");
   const descriptor = { sha256: reference.sha256, bytes: reference.bytes };
@@ -78,8 +82,8 @@ export async function prepareBrowserCandidate(handoffReference: FileReference, r
   const prefix = `releases/${release.export_id}/browser/${descriptor.sha256}`;
   const files = Object.entries(manifest.assets).map(([name, expected]) => ({ key: `${prefix}/${name}`, ...expected, path: resolve(directory, name) }));
   for (const ref of files) await checkedFile(ref);
-  for (const name of [...Object.keys(browserSelectorHashes), "browser.d.mts", "atlas.d.ts"]) {
-    const bytes = await readFile(resolve(site, "src/lib/atlas-vendor/browser", name));
+  for (const name of [...Object.keys(pins), "browser.d.mts", "atlas.d.ts"]) {
+    const bytes = await readFile(resolve(site, "src/lib/atlas-vendor/browser", "0.3", name));
     assert.equal(hash(bytes), manifest.assets[name]?.sha256, `Bundled browser runtime or type mismatch: ${name}`);
   }
   const core = await checkedJson({ path: resolve(directory, manifest.core), ...manifest.assets[manifest.core] });
@@ -111,7 +115,7 @@ export async function prepareBrowserPublication(authorizationPath: string) {
   const sealed = await checkedJson(authorization.source.manifest);
   assert.equal(sealed.files["atlas-site.json"], prepared.manifest.source.site.sha256);
   assert.equal(sealed.files["view.mjs"], prepared.manifest.source.selector.sha256);
-  const release = attachBrowserDescriptor(base, prepared.descriptor);
+  const release = attachBrowserDescriptor(base, prepared.descriptor, prepared.manifest.transport_version);
   return { authorization, authorizationBytes, base, checkedRelease, ...prepared, release };
 }
 
@@ -174,6 +178,7 @@ export async function publishBrowserTransport(authorizationPath: string, mode: "
     await stageBrowserAsset(`${plan.prefix}/release.json`, Buffer.from(JSON.stringify(plan.release)), directory, read, put);
     for (const ref of [plan.authorization.release, plan.authorization.handoff, ...Object.values(plan.authorization.source), plan.authorization.browser.manifest]) await checkedFile(ref);
     assert.deepEqual(await readFile(authorizationPath), plan.authorizationBytes, "Publication authorization changed");
+    await verifyPublishedSourceSupplement(plan.checkedRelease, read);
     assert.deepEqual(await current(), before, "Public release changed during upload");
     const path = resolve(directory, "current.json");
     await writeFile(path, JSON.stringify(plan.release));

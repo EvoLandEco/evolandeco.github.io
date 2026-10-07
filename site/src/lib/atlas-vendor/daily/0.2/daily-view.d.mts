@@ -1,0 +1,2 @@
+import type { DailyData } from "./daily";
+export function selectDaily(data: DailyData, from: string, until: string, basis?: "publication" | "capture", knowledgeCutoff?: string | null, sourceIds?: string[] | null, countryCodes?: string[] | null, asOf?: string | null): Pick<DailyData, "documents" | "findings" | "evidence" | "watch_items" | "watch_assessments" | "reconciliations"> & { pending_documents: DailyData["documents"]; overdue_watch_items: DailyData["watch_items"]; watch_assessed_at: string };

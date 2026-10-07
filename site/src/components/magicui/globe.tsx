@@ -409,9 +409,9 @@ export function Globe({
           const visibility = anchor ? "visible" : "hidden";
           if (pin.style.visibility !== visibility) {
             pin.style.visibility = visibility;
+            pin.setAttribute("tabindex", anchor ? "0" : "-1");
+            pin.setAttribute("aria-hidden", String(!anchor));
           }
-          pin.setAttribute("tabindex", anchor ? "0" : "-1");
-          pin.setAttribute("aria-hidden", String(!anchor));
           if (!batch && position.visible) markers.current[i]?.setAttribute("transform", `rotate(${Math.atan2(-position.y, position.x) * 180 / Math.PI}) scale(${Math.abs(position.z) / GLOBE_RADIUS},1)`);
           if (!batch && rim && rimArrows.current[i]) {
             rimArrows.current[i]!.setAttribute("transform", `rotate(${rim.angle})`);

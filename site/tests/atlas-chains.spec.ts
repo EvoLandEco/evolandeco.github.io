@@ -1,27 +1,21 @@
 import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
-import { createHash } from "node:crypto";
-import { chainSelectorSha256 } from "../src/lib/atlas-contract";
+import { routeBrowserFixture } from "./atlas-browser-fixture.mjs";
 import { createResearch } from "../src/lib/atlas-comparisons";
-import type { AtlasSiteBundle } from "../src/lib/atlas-vendor/1.2/site-types";
+import type { AtlasSiteBundle } from "../src/lib/atlas-contract";
 
 for (const width of [390, 1280]) test(`Reviewed chain maps preserve nodes, explicit edges and evidence at ${width}px`, async ({ page }) => {
   test.skip(!process.env.ATLAS_CHAINS_CANDIDATE, "Supply the validated ATLAS chain candidate");
   const path = process.env.ATLAS_CHAINS_CANDIDATE!;
   const bundle: AtlasSiteBundle = JSON.parse(readFileSync(path, "utf8"));
-  const bytes = readFileSync(path), map = readFileSync(new URL("../snapshot.json", `file://${path}`));
-  const asset = (body: Buffer) => ({ bytes: body.length, sha256: createHash("sha256").update(body).digest("hex") });
-  const release = { version: 1, export_id: "0".repeat(64), contract_version: "1.2.0", selector_sha256: chainSelectorSha256,
-    published_at: "2026-09-27T00:00:00Z", mode: "initial", cycle: null, assets: { "atlas-site.json": asset(bytes), "map.json": asset(map), "metrics.json": asset(Buffer.from(JSON.stringify(bundle.metrics))) } };
-  await page.route("https://qtj-atlas.evolandeco-github-io.workers.dev/**", route => {
-    const name = new URL(route.request().url()).pathname.split("/").at(-1);
-    return name === "current.json" ? route.fulfill({ json: release }) : route.fulfill({ contentType: "application/json", body: name === "map.json" ? map : bytes });
-  });
+  await routeBrowserFixture(page, bundle, JSON.parse(readFileSync(new URL("../snapshot.json", `file://${path}`), "utf8")));
   await page.setViewportSize({ width, height: 950 });
   await page.emulateMedia({ reducedMotion: "reduce", colorScheme: width === 390 ? "dark" : "light" });
   await page.goto("/atlas/");
-  const observations = page.locator('.atlas-trend-observations .atlas-select');
+  await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
+  await page.getByRole('button', { name: 'Observations', exact: true }).click();
+  const observations = page.locator('.atlas-select').filter({ has: page.locator('summary[aria-label="Observation series"]') });
   const plot = page.locator('.atlas-trend-observations figure');
   const selectedPoint = plot.locator('.atlas-observation-item').filter({ hasText: '14 Jun 2026' });
   await selectedPoint.getByRole('button', { name: /^Scope & source for/ }).click();
@@ -55,6 +49,7 @@ for (const width of [390, 1280]) test(`Reviewed chain maps preserve nodes, expli
   await option.press('Enter');
   await expect(observations.locator('summary > span')).toHaveAttribute('title', optionLabel!);
   await expect(observations.locator('summary .atlas-select-badge')).toHaveCount(3);
+  await page.getByRole('tab', { name: 'Geographic links', exact: true }).click();
   const figure = page.locator('.atlas-chain-figure');
   const selected = createResearch(bundle).selectedResearch(new Set(bundle.records.map(r => r.id))).reviewed_chains;
   for (const chain of selected) {
@@ -145,6 +140,7 @@ for (const workspace of [false, true]) test(`Chain and observation selection ani
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ reducedMotion: 'no-preference', colorScheme: workspace ? 'dark' : 'light' });
   await page.goto('/atlas/');
+  await page.getByRole('tab', { name: 'Geographic links', exact: true }).click();
   await expect(page.locator('.atlas-chain-pin').first()).toBeVisible();
   if (workspace) {
     const canvas = page.getByTestId('atlas-globe').locator('canvas').first();
@@ -183,7 +179,7 @@ for (const workspace of [false, true]) test(`Chain and observation selection ani
   expect(panelBox.x + panelBox.width - helpBox.x - helpBox.width).toBeCloseTo(10, 0);
   await page.getByRole('region', { name: 'Journey details', exact: true }).screenshot({ path: `/tmp/atlas-journey-panel-${workspace ? 'dark' : 'light'}.png` });
   const map = page.locator('.atlas-chain-map'), chart = page.locator('.atlas-trend-observations .atlas-observation-chart');
-  const mapHandle = await map.elementHandle(), chartHandle = await chart.elementHandle();
+  const mapHandle = await map.elementHandle();
   const pins = map.locator('.atlas-chain-pin');
   const nodeEntries = page.locator('.atlas-chain-nodes .atlas-chain-entry');
   const journeyPane = page.getByRole('region', { name: 'Journey details', exact: true });
@@ -218,6 +214,9 @@ for (const workspace of [false, true]) test(`Chain and observation selection ani
   await page.locator('.atlas-chain-section').screenshot({ path: `/tmp/atlas-chain-hover-${workspace}.png` });
   await page.mouse.move(0, 0);
   await expect(map.locator('[data-highlighted]')).toHaveCount(0);
+  await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
+  await page.getByRole('button', { name: 'Observations', exact: true }).click();
+  const chartHandle = await chart.elementHandle();
   await chart.scrollIntoViewIfNeeded();
   const circles = chart.locator('circle');
   const rows = page.locator('.atlas-trend-observations .atlas-observation-item');

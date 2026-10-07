@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { compareHealthEvidence, healthOverviewEvidence, healthEntryIndex, healthPanelForEntry, matchesHealthEntry } from '../src/lib/atlas-health-entries';
 import { healthPanelsFixture } from './atlas-health-panels-fixture';
-import { selectView } from '../src/lib/atlas-vendor/1.5/view.mjs';
+import { selectView } from '../src/lib/atlas-vendor/browser/0.3/site_view.js';
 
 test('Entry availability and filters retain eligible dated, undated and independent evidence',()=>{
  const b=healthPanelsFixture(),view=selectView(b,'2020-01-01','2030-01-01').one_health!;

@@ -3,12 +3,12 @@ import AxeBuilder from '@axe-core/playwright';
 
 for (const [width, height, workspace] of [[390,950,false], [1280,950,false], [1280,720,true]] as const) {
   test(`Reporting attention infocards at ${width}×${height}, workspace ${workspace}`, async ({page}) => {
-    test.skip(!process.env.ATLAS_ONE_HEALTH_CANDIDATE && !process.env.ATLAS_HEALTH_PARTIAL, 'Requires the private preview');
+    test.skip(!process.env.ATLAS_PRESENTATION_PREVIEW && !process.env.ATLAS_ONE_HEALTH_CANDIDATE && !process.env.ATLAS_HEALTH_PARTIAL, 'Requires the private preview');
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.setViewportSize({width,height});
     await page.emulateMedia({reducedMotion:width===390?'reduce':'no-preference',colorScheme:width===390?'dark':'light'});
-    await page.goto('/atlas/');
+    await page.goto(process.env.ATLAS_PRESENTATION_PREVIEW ?? '/atlas/');
     await expect(page.locator('.atlas-page')).toHaveAttribute('data-ready','true');
     if (workspace) {
       const entrance = page.getByRole('button',{name:'Click to enter full screen'});

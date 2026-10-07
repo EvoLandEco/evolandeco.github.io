@@ -1,5 +1,13 @@
 # ATLAS browser transport
 
+## Transport versions
+
+The UI requires browser transport 0.3.0, site contract 1.8.0 and metrics 0.4.0. Its byte-preserved producer runtime, declarations and selector live in `atlas-vendor/browser/0.3`. Core, map core, detail index, detail partitions and producer handoff must agree with this transport version. The handoff envelope is version 0.1.0.
+
+Measurement summaries carry `qualifier`, including strict, inclusive and approximate bounds. Summary figures and detail views use the same value formatter. No executable asset is fetched for execution; the manifest must match the bundled runtime. Other transport versions and releases without browser transport are rejected before dataset downloads.
+
+Consumer compatibility does not authorize publication. Final adoption requires exact scientific source bindings, reconstruction, every-record selection parity, matching analysis assets and publication authorization. The publication target remains pinned independently in `atlas-hosting.json`.
+
 The browser needs a compact selection index and independently loaded evidence details. The scientific export remains the reconstruction authority. This transport preserves its identities, values, review states, source quotations and eligibility rules; it changes storage and retrieval only.
 
 ## Source and projection study

@@ -1,26 +1,19 @@
+import { browserFixture, routeBrowserFixture } from "./atlas-browser-fixture.mjs";
 import { test, expect, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
-import type { AtlasSiteBundle, AtlasMapSnapshot } from "../src/lib/atlas-vendor/site-types";
-const bundle: AtlasSiteBundle = JSON.parse(readFileSync(".cache/atlas-fixture/atlas-site.json", "utf8"));
+import type { AtlasMapSnapshot } from "../src/lib/atlas-contract";
+import { bundle } from "./atlas-fixture";
 const snapshot: AtlasMapSnapshot = JSON.parse(readFileSync(".cache/atlas-fixture/map.json", "utf8"));
 const documentCount = bundle.documents.length;
 const documentPages = Math.ceil(documentCount / 12);
 import AxeBuilder from "@axe-core/playwright";
-import fixture from "./atlas-fixture.json";
 import { dayNumber, groupGeographicLinks } from "../src/lib/atlas";
 
 const mapRecords = new Map(snapshot.records.map(r => [r.id, r]));
 const routeGroups = groupGeographicLinks(snapshot.map_links, mapRecords);
 
 test.beforeEach(async ({ page }) => {
-  await page.route(/\/(?:current\.json|releases\/)/, async route => {
-    const path = new URL(route.request().url()).pathname;
-    const name = path.split("/").at(-1)!;
-    if (path === "/current.json") return route.fulfill({ json: fixture.release });
-    if (path.startsWith(`/releases/${fixture.export_id}/`) && name in fixture.assets)
-      return route.fulfill({ contentType: "application/json", body: readFileSync(`.cache/atlas-fixture/${name}`) });
-    return route.abort();
-  });
+  await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
 });
 
 
@@ -33,14 +26,17 @@ async function controlBottom(page: Page) {
 }
 
 async function select(page: Page, label: string, choice: string) {
+  if (label === "Observation series") { await page.getByRole("combobox", { name: "Monitored series", exact: true }).selectOption({ label: choice }); return; }
   if (label.endsWith("page, side")) await showPageControl(page);
+  if (label === "Reporting topic") await page.locator(".atlas-rules > summary").click();
   await page.locator(`summary[aria-label="${label}"]`).click();
   if (["Reporting topic", "Reporting source", "Link type"].includes(label)) {
-    const all = { "Reporting topic": "All places & topics", "Reporting source": "All sources", "Link type": "All link types" }[label]!;
+    const all = { "Reporting topic": "All topics", "Reporting source": "All sources", "Link type": "All link types" }[label]!;
     await page.getByRole("checkbox", { name: all, exact: true }).check();
     await page.getByRole("checkbox", { name: choice, exact: true }).check();
     await page.getByRole("checkbox", { name: choice, exact: true }).press("Escape");
   } else await page.getByRole("option", { name: choice, exact: true }).click();
+  if (label === "Reporting topic") await page.locator(".atlas-rules > summary").click();
 }
 
 async function setWindowDate(page: Page, edge: "start" | "end", date: string) {
@@ -93,7 +89,7 @@ test("ATLAS entry, date windows, evidence and source focus", async ({ page }) =>
   await expect(page).toHaveURL(/\/atlas\/$/);
   await expect(page.locator(".atlas-page")).toHaveAttribute("data-ready", "true");
   await expect(page.locator("html")).not.toHaveAttribute("data-atlas-transition");
-  await expect(page.locator(".atlas-trend-activity header > strong")).toContainText(String(documentCount));
+  await expect(page.getByRole("tab", { name: "Reports", exact: true })).toContainText(String(documentCount));
   await expect(page.getByRole("button", { name: "1 month", exact: true })).toHaveCount(0);
   for (const name of ["3 months", "6 months", "1 year"]) {
     await page.getByRole("button", { name, exact: true }).click();
@@ -132,7 +128,7 @@ test("ATLAS entry, date windows, evidence and source focus", async ({ page }) =>
   await page.getByRole("tab", { name: "Reports", exact: true }).click();
   await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Source coverage", exact: true }).click();
   await page.getByRole("button", { name: "Reports from RIVM", exact: true }).click();
-  await expect(page.locator(".atlas-filters summary").nth(1)).toContainText("RIVM");
+  await expect(page.locator('summary[aria-label="Reporting source"]')).toContainText("RIVM");
   await expect(page.locator(".atlas-report")).toHaveCount(12);
   await page.locator(".atlas-report > summary").first().click();
   await expect(page.locator(".atlas-report").first().getByRole("link", { name: "Read source" })).toHaveAttribute("href", /^https:/);
@@ -460,16 +456,18 @@ test("Closing globe selections restores the overview orientation", async ({ page
 });
 
 test("View evidence scrolls to matching reports and highlights their support", async ({ page }) => {
+  const topic = snapshot.tracks.find(track => new Set(snapshot.records.filter(record => record.track === track.id).map(record => record.document_id)).size > 12)!;
+  const total = new Set(snapshot.records.filter(record => record.track === topic.id).map(record => record.document_id)).size;
   for (const width of [1280, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.emulateMedia({ reducedMotion: width === 390 ? "reduce" : "no-preference" });
     await page.goto("/atlas/");
-    await select(page, "Reporting topic", "Bundibugyo imported case · France");
+    await select(page, "Reporting topic", topic.label);
     await page.getByRole("link", { name: "View evidence", exact: true }).click();
     const highlighted = page.locator('.atlas-report[data-evidence="true"]');
     await expect(page.getByRole("tab", { name: /^Reports/ })).toHaveAttribute("aria-selected", "true");
     await expect(highlighted).toHaveCount(12);
-    await expect(page.locator('summary[aria-label="Report page, side"] > span')).toHaveAttribute('title', 'Page 1 of 2 · 12 relevant');
+    await expect(page.locator('summary[aria-label="Report page, side"] > span')).toHaveAttribute('title', `Page 1 of ${Math.ceil(total / 12)} · 12 relevant`);
     await expect(highlighted.first().locator('summary').first()).toBeFocused();
     const logo = await highlighted.first().locator('.atlas-source-logo').boundingBox();
     expect(Math.abs(logo!.x + logo!.width / 2 - (await highlighted.first().boundingBox())!.x)).toBeLessThan(2);
@@ -477,7 +475,7 @@ test("View evidence scrolls to matching reports and highlights their support", a
 
     await showPageControl(page);
     await page.getByRole("navigation", { includeHidden: true, name: "Report pages, side" }).getByRole("button", { name: "Next report page" }).click();
-    await expect(highlighted).toHaveCount(1);
+    await expect(highlighted).toHaveCount(Math.min(12, total - 12));
     await expect(page.getByRole("heading", { name: "Report chronology" })).toBeFocused();
     await page.getByRole("button", { name: "Reset all", exact: true }).click();
     await page.getByRole("button", { name: "Reported return travel · Bundibugyo", exact: true }).focus();
@@ -620,7 +618,7 @@ for (const theme of ['light', 'dark']) test(`Source coverage paints images insid
     await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth > 0)).toBe(true);
     await image.scrollIntoViewIfNeeded();
     await page.mouse.move(0, 0);
-    await expect(graph).toHaveAttribute('data-highlighted', 'false');
+    await expect(graph.locator('[data-active]')).toHaveCount(0);
     await expect(image).toHaveCSS('filter', 'none');
     const { data, info } = await sharp(await image.screenshot()).removeAlpha().raw().toBuffer({ resolveWithObject: true });
     let colored = 0;
@@ -631,64 +629,59 @@ for (const theme of ['light', 'dark']) test(`Source coverage paints images insid
     expect(colored / (info.width * info.height)).toBeGreaterThan(.05);
   }
   await graph.locator('.atlas-coverage-topic').nth(4).focus();
-  const logo = graph.locator('.atlas-coverage-source[data-active="true"] .institution-logo img').first();
+  const logo = graph.locator('.atlas-coverage-source .institution-logo img').first();
   await logo.scrollIntoViewIfNeeded();
   await expect(logo).toHaveCSS('filter', 'none');
   await page.screenshot({ path: `/tmp/atlas-source-labels-${browserName}-${theme}.png` });
 });
 
-test("Source coverage highlights connected logos, locations and paths", async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 1000 });
-  await page.emulateMedia({ reducedMotion: "no-preference", colorScheme: "dark" });
+for (const width of [390, 1466]) test(`Source coverage filters both sides and keeps the graph still at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 832 });
+  await page.emulateMedia({ colorScheme: width === 390 ? 'dark' : 'light', reducedMotion: "reduce" });
   await page.goto("/atlas/");
-  await page.getByRole("tab", { name: "Reports", exact: true }).click();
-  await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Source coverage", exact: true }).click();
-  const graph = page.locator(".atlas-source-network");
-  const edge = graph.locator(".atlas-coverage-edge").filter({ hasText: "RIVM" });
-  await expect(graph.locator(".atlas-coverage-source .institution-logo img")).toHaveCount(bundle.channels.length);
-  await expect(graph.locator(".atlas-coverage-topic .atlas-location-badge").first()).toBeVisible();
-  await edge.scrollIntoViewIfNeeded();
-  await page.mouse.move(5, 5);
-  await edge.focus();
-  await expect(graph.locator('.atlas-coverage-edge[data-active="true"]')).toHaveCount(1);
-  await expect(graph.locator('.atlas-coverage-node[data-active="true"]')).toHaveCount(2);
-  await expect(graph.locator('.atlas-coverage-beam')).toHaveCount(0);
-  await expect(page.locator('.atlas-network-caption')).toHaveCount(0);
-  await expect.poll(() => graph.locator('.atlas-coverage-node[data-active="false"]').first().evaluate(el => Number(getComputedStyle(el).opacity))).toBe(.2);
-  const hoveredEdge = graph.locator('.atlas-coverage-edge').filter({ hasText: 'ECDC · Malaria' });
-  await graph.getByRole("button", { name: "Malaria · Frankfurt", exact: true }).scrollIntoViewIfNeeded();
-  const point = await hoveredEdge.locator('.atlas-coverage-hit').evaluate(el => {
-    const path = el as SVGPathElement;
-    const p = path.getPointAtLength(path.getTotalLength() * .95).matrixTransform(path.getScreenCTM()!);
-    return { x: p.x, y: p.y };
-  });
-  await page.mouse.move(point.x, point.y);
-  await expect(hoveredEdge).toHaveAttribute('data-active', 'true');
-  await expect(graph.locator('.atlas-coverage-edge[data-active="true"]')).toHaveCount(1);
-  await expect(graph.locator('.atlas-coverage-node[data-active="true"]')).toHaveCount(2);
-  const source = graph.getByRole("button", { name: "Reports from ECDC_CDTR", exact: true });
-  await source.hover();
-  expect(await graph.locator('.atlas-coverage-edge[data-active="true"]').count()).toBeGreaterThan(5);
-  await expect(graph.locator('.atlas-coverage-source[data-active="true"]')).toHaveCount(1);
-  await page.mouse.move(5, 5);
-  await expect(graph.locator('.atlas-coverage-edge[data-active="true"]')).toHaveCount(1);
-  await edge.press("Enter");
-  await expect(page.getByRole("tab", { name: /^Reports/ })).toHaveAttribute("aria-selected", "true");
-  await expect(page.locator('.atlas-report[data-evidence="true"]')).toHaveCount(1);
-  await expect(page.locator('.atlas-report > summary')).toBeFocused();
-
-  await page.getByRole("button", { name: "Reset all", exact: true }).click();
-  await page.getByRole("tab", { name: "Reports", exact: true }).click();
-  await page.getByRole("group", { name: "Report content" }).getByRole("button", { name: "Source coverage", exact: true }).click();
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await graph.getByRole("button", { name: "Chikungunya · France", exact: true }).focus();
-  expect(await graph.locator('.atlas-coverage-edge[data-active="true"]').count()).toBeGreaterThan(0);
-  await expect(graph.locator('.atlas-coverage-topic[data-active="true"]')).toHaveCount(1);
-  await expect(graph.locator('.atlas-coverage-beam')).toHaveCount(0);
-  await page.setViewportSize({ width: 360, height: 1000 });
-  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  const axe = await new AxeBuilder({ page }).include('.atlas-network-scroll').analyze();
-  expect(axe.violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.target) }))).toEqual([]);
+  if (width === 1466) await page.getByRole('button', { name: 'Click to enter full screen' }).click();
+  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+  await page.getByRole('group', { name: 'Report content' }).getByRole('button', { name: 'Source coverage', exact: true }).click();
+  const graph = page.locator('.atlas-source-network');
+  await expect(graph).toBeVisible();
+  await page.screenshot({ path: `/tmp/atlas-coverage-heading-${width}.png` });
+  const positions = () => graph.locator('.atlas-coverage-node').evaluateAll(nodes => nodes.map(node => node.getAttribute('transform')));
+  const original = await positions();
+  await graph.getByRole('button', { name: 'Reports from RIVM', exact: true }).hover();
+  expect(await positions()).toEqual(original);
+  await graph.locator('.atlas-coverage-edge').first().focus();
+  expect(await positions()).toEqual(original);
+  await expect(graph.locator('[data-active]')).toHaveCount(0);
+  expect(await graph.locator('.atlas-coverage-node').evaluateAll(nodes => nodes.every(node => getComputedStyle(node).opacity === '1'))).toBe(true);
+  async function pick(label: string, choice: string) {
+    await page.locator(`summary[aria-label="${label}"]`).click();
+    const menu = page.getByRole('dialog', { name: label, exact: true });
+    await menu.getByRole('searchbox').fill(choice);
+    await menu.getByRole('checkbox', { name: choice, exact: true }).check();
+    await menu.getByRole('searchbox').press('Escape');
+  }
+  await pick('Coverage sources', 'RIVM');
+  await expect(graph.locator('.atlas-coverage-source')).toHaveCount(1);
+  await expect(graph.locator('.atlas-coverage-source')).toHaveAttribute('data-source', 'RIVM');
+  await expect(page.locator('summary[aria-label="Reporting source"]')).toContainText('RIVM');
+  const topic = (await graph.locator('.atlas-coverage-topic').first().getAttribute('aria-label'))!;
+  await pick('Coverage topics', topic);
+  await expect(graph.locator('.atlas-coverage-topic')).toHaveCount(1);
+  await expect(graph.locator('.atlas-coverage-edge')).toHaveCount(1);
+  await expect(page.locator('.atlas-rules > summary')).toHaveAttribute('aria-label', 'Active rules: 2');
+  expect((await new AxeBuilder({ page }).include('.atlas-coverage-filters').include('.atlas-network-scroll').analyze()).violations).toEqual([]);
+  await page.screenshot({ path: `/tmp/atlas-coverage-filtered-${width}.png` });
+  await graph.locator('.atlas-coverage-edge').press('Enter');
+  await expect(page.getByRole('group', { name: 'Report content' }).getByRole('button', { name: 'Reports', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.atlas-report[data-evidence="true"]').first()).toBeVisible();
+  await page.getByRole('button', { name: 'Reset all filters and rules', exact: true }).click();
+  await page.getByRole('group', { name: 'Report content' }).getByRole('button', { name: 'Source coverage', exact: true }).click();
+  await expect(graph.locator('.atlas-coverage-source')).toHaveCount(bundle.channels.length);
+  await expect(page.locator('summary[aria-label="Coverage topics"]')).toHaveText('All topics');
+  await pick('Coverage sources', 'RIVM');
+  await pick('Coverage topics', 'Malaria · Frankfurt');
+  await expect(page.locator('.atlas-network-scroll')).toHaveText('No source coverage in this selection.');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
 test("ATLAS keeps compact surface markers and pauses globe rendering during inspection", async ({ page }) => {
@@ -1247,7 +1240,7 @@ for (const width of [390, 1280]) test(`ATLAS shows streamed download progress at
     const fetch = window.fetch.bind(window);
     window.fetch = async (input, init) => {
       const response = await fetch(input, init);
-      if (!String(input).endsWith('/atlas-site.json')) return response;
+      if (!String(input).endsWith('/core.json')) return response;
       const bytes = new Uint8Array(await response.arrayBuffer());
       const split = Math.floor(bytes.length / 4);
       return new Response(new ReadableStream({ start(controller) {
@@ -1261,7 +1254,9 @@ for (const width of [390, 1280]) test(`ATLAS shows streamed download progress at
   await expect.poll(() => bar.evaluate((element: HTMLProgressElement) => element.position)).toBeGreaterThan(0.2);
   expect(await bar.evaluate((element: HTMLProgressElement) => element.position)).toBeLessThan(1);
   await expect(page.getByRole('status')).toContainText('Downloading reports and map');
-  expect(await bar.getAttribute('max')).toBe(String(fixture.release.assets['atlas-site.json'].bytes + fixture.release.assets['map.json'].bytes));
+  const transport = browserFixture(bundle, snapshot);
+  const manifest = JSON.parse((Object.entries(transport.bodies).find(([path]) => path.endsWith('/manifest.json'))![1] as Buffer).toString());
+  expect(await bar.getAttribute('max')).toBe(String(manifest.assets[manifest.core].bytes + manifest.assets[manifest.map_core].bytes));
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await expect(bar).toBeInViewport();
   await page.screenshot({ path: `/tmp/atlas-download-progress-${width}.png` });
@@ -1280,7 +1275,7 @@ test("ATLAS download errors leave a retry that loads verified reports", async ({
   await expect.poll(() => page.locator("#contact").evaluate(element => element.getBoundingClientRect().top >= innerHeight)).toBe(true);
   unavailable = false;
   await page.getByRole("button", { name: "Try again" }).click();
-  await expect(page.locator(".atlas-trend-activity header > strong")).toContainText(String(documentCount));
+  await expect(page.getByRole("tab", { name: "Reports", exact: true })).toContainText(String(documentCount));
   await expect(page.locator(".atlas-page").getByRole("alert")).toHaveCount(0);
 });
 
@@ -1322,33 +1317,32 @@ for (const width of [390, 1280]) test(`Expanded evidence headings stay reachable
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-for (const width of [390, 1280]) test(`Trends filter observations and navigate to evidence at ${width}px`, async ({ page }) => {
+for (const width of [390, 1280]) test(`Models filter observation contexts and navigate to evidence at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 900 });
   await page.emulateMedia({ reducedMotion: "reduce", colorScheme: width === 390 ? "light" : "dark" });
   await page.goto("/atlas/");
   await expect(page.getByRole("tab").first()).toHaveAccessibleName("Trends");
   await expect(page.getByRole("tab", { name: "Trends", exact: true })).toHaveAttribute("aria-selected", "true");
   const trends = page.locator(".atlas-trends");
-  await expect(trends.getByRole("heading", { name: "Reporting activity" })).toBeVisible();
-  const bars = await trends.locator(".atlas-activity-bars").boundingBox();
-  const coverageChart = await trends.locator('.atlas-trend-coverage svg[role="img"]').boundingBox();
-  expect(Math.abs(bars!.height - coverageChart!.height)).toBeLessThan(1);
-  const counts = await trends.locator(".atlas-activity-track b").allTextContents();
-  expect(counts.reduce((sum, count) => sum + Number(count), 0)).toBe(documentCount);
-  await expect(trends.locator('.atlas-trend-coverage svg[role="img"]')).toHaveAttribute("aria-label", /19 of 785 records/);
+  const observations = page.locator(".atlas-analysis-observations");
+  await expect(trends.getByRole("heading", { name: "Outbreak watch" })).toBeVisible();
+  await expect(trends.locator(".atlas-latest-entry")).toHaveCount(5);
+  await page.getByRole("tab", { name: "Analysis", exact: true }).click();
+  await page.getByRole("button", { name: "Models", exact: true }).click();
   await select(page, "Reporting topic", "Lassa fever · Nigeria");
   await select(page, "Observation series", "Lassa fever · Nigeria · Confirmed cases · interval");
-  await expect(trends.locator(".atlas-observation-grid circle")).toHaveCount(4);
-  await expect(trends.locator(".atlas-observation-grid svg polyline")).toHaveCount(0);
-  await expect(trends.locator(".atlas-observation-source strong")).toHaveText(["31", "14", "4", "12"]);
+  await expect(observations.locator(".atlas-observation-grid circle")).toHaveCount(4);
+  await expect(observations.locator(".atlas-observation-grid svg polyline")).toHaveCount(0);
+  await expect(observations.locator(".atlas-observation-source strong")).toHaveText(["31", "14", "4", "12"]);
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await trends.locator(".atlas-observation-source").last().click();
+  await observations.locator(".atlas-observation-source").last().click();
   await expect(page.getByRole("tab", { name: "Reports", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(page.locator('.atlas-report[data-evidence="true"]')).toHaveCount(1);
-  await page.getByRole("tab", { name: "Trends", exact: true }).click();
+  await page.getByRole("tab", { name: "Analysis", exact: true }).click();
   await setWindowDate(page, "end", "2026-07-01");
-  await expect(trends).toContainText("No observations across multiple dates");
-  await expect(trends.locator(".atlas-observation-grid")).toHaveCount(0);
+  await expect(page.getByRole("combobox", { name: "Monitored series", exact: true })).toBeDisabled();
+  await expect(page.getByRole("region", { name: "Experimental analysis" }).getByRole("alert")).toHaveText("No validated analysis is published for this dataset.");
+  await expect(observations.locator(".atlas-observation-grid")).toHaveCount(0);
 });
 
 for (const width of [360, 1280]) test(`Reporting dates follow handles without overlap at ${width}px`, async ({ page }) => {
@@ -1462,10 +1456,11 @@ for (const width of [390, 1280]) test(`Unified filters show and clear every acti
   const panel = page.getByRole("region", { name: "Filters and selections" });
   const reset = panel.getByRole("button", { name: "Reset all", exact: true });
   await expect(reset).toBeDisabled();
+  await openRules();
   await page.locator('summary[aria-label="Reporting topic"]').click();
   const search = page.getByRole("searchbox", { name: "Search reporting topic" });
   await search.fill("Bundibugyo imported case");
-  await expect(page.getByRole("checkbox")).toHaveCount(1);
+  await expect(page.getByRole('dialog', { name: 'Reporting topic', exact: true }).getByRole("checkbox")).toHaveCount(1);
   await search.press("ArrowDown");
   await page.keyboard.press("Enter");
   await page.keyboard.press("Escape");
@@ -1474,20 +1469,24 @@ for (const width of [390, 1280]) test(`Unified filters show and clear every acti
   await expect(panel.getByRole("button", { name: "Remove topic filter" })).toContainText("Bundibugyo imported case · France");
   await expect(reset).toHaveAttribute("data-active", "true");
   await expect(page.locator(".atlas-link-target")).toHaveCount(1);
+  await page.locator(".atlas-rules > summary").press("Escape");
   await select(page, "Link type", "Source hypothesis");
   await openRules();
   await expect(panel.getByRole("button", { name: "Remove route type filter" })).toContainText("Source hypothesis");
   await expect(page.locator(".atlas-link-target")).toHaveCount(0);
   await panel.getByRole("button", { name: "Remove route type filter" }).click();
   await expect(page.locator(".atlas-link-target")).toHaveCount(1);
+  await page.locator(".atlas-rules > summary").press("Escape");
   await page.getByRole("button", { name: "3 months", exact: true }).click();
   await openRules();
   await expect(panel.getByRole("button", { name: "Remove dates filter" })).toBeVisible();
+  await page.locator(".atlas-rules > summary").press("Escape");
   await page.getByRole("button", { name: "Clear globe selection", exact: true }).click();
   await openRules();
   await expect(panel.getByRole("button", { name: "Remove topic filter" })).toHaveCount(0);
   await openRules();
   await expect(panel.getByRole("button", { name: "Remove dates filter" })).toBeVisible();
+  await page.locator(".atlas-rules > summary").press("Escape");
   await reset.click();
   await expect(reset).toBeDisabled();
   await expect(page.getByRole("button", { name: "All dates", exact: true })).toHaveAttribute("aria-pressed", "true");
@@ -1504,11 +1503,14 @@ for (const width of [390, 1280]) test(`Unified filters show and clear every acti
   await expect(page.locator('.atlas-report[data-evidence="true"]')).toHaveCount(0);
   await openRules();
   await expect(panel.getByRole("button", { name: "Remove source filter" })).toBeVisible();
+  await page.locator(".atlas-rules > summary").press("Escape");
   await reset.click();
+  await openRules();
   await page.locator('summary[aria-label="Reporting topic"]').click();
   await search.fill("not-a-real-topic");
   await expect(page.getByText("No matches", { exact: true })).toBeVisible();
   await search.press("Escape");
+  await openRules();
   await page.locator('summary[aria-label="Reporting topic"]').click();
   await expect(search).toHaveValue("");
   await search.press("Escape");
@@ -1525,7 +1527,8 @@ for (const width of [390, 1280]) test(`Checkbox filters combine topics, sources 
   const topics = snapshot.tracks.filter(t => labels.includes(t.label)).map(t => t.id);
   const sources = ["ECDC_CDTR", "WHO_DON"];
   for (const [label, choices, summary] of [["Reporting topic", labels, "2 selected"], ["Reporting source", ["ECDC", "WHO · DON"], "2 sources"], ["Link type", ["Reported travel", "Shared event"], "2 link types"]] as const) {
-    const menu = page.locator(".atlas-select").filter({ has: page.locator(`summary[aria-label="${label}"]`) });
+    if (label === "Reporting topic") await page.locator('.atlas-rules > summary').click();
+    const menu = page.locator(`summary[aria-label="${label}"]`).locator("..");
     await menu.locator("summary").click();
     for (const choice of choices) {
       await menu.getByRole("checkbox", { name: choice, exact: true }).check();
@@ -1534,9 +1537,11 @@ for (const width of [390, 1280]) test(`Checkbox filters combine topics, sources 
     }
     await expect(menu.locator("summary")).toHaveText(summary);
     await menu.getByRole("checkbox", { name: choices[1], exact: true }).press("Escape");
+    if (label === "Reporting topic") await page.locator('.atlas-rules > summary').click();
   }
   const rows = snapshot.records.filter(r => topics.includes(r.track) && sources.includes(r.source));
-  const linkRows = snapshot.map_links.filter(l => ["movement", "shared_event"].includes(l.type) && (topics.includes(l.from.track) || topics.includes(l.to.track)) && l.support.some(([id]) => sources.includes(mapRecords.get(id)!.source)));
+  const selectedIds = new Set(rows.map(row => row.id));
+  const linkRows = snapshot.map_links.filter(l => ["movement", "shared_event"].includes(l.type) && l.support.every(([id]) => selectedIds.has(id)));
   await expect(page.getByRole("tab", { name: "Reports", exact: true }).locator("b")).toHaveText(String(new Set(rows.map(r => r.document_id)).size));
   await expect(page.locator(".atlas-link-target")).toHaveCount(groupGeographicLinks(linkRows, mapRecords).length);
   await page.getByRole("tab", { name: "Reports", exact: true }).click();
@@ -1585,24 +1590,19 @@ for (const width of [390, 1280]) test(`Many filter selections stay compact at ${
 
 
 for (const width of [390, 1280]) test(`Reviewed Trends render only permitted connections at ${width}px`, async ({ page }) => {
-  const { createHash } = await import("node:crypto");
   const { reviewedFixture } = await import("./atlas-reviewed-fixture");
-  const { reviewedSelectorSha256 } = await import("../src/lib/atlas-contract");
   const candidate = reviewedFixture(bundle);
   const { createResearch } = await import("../src/lib/atlas-comparisons");
   const research = createResearch(candidate);
   const visibleSeries = research.selectedResearch(new Set(candidate.records.map(r => r.id))).reviewed_series;
   const series = visibleSeries[0];
-  const bytes = Buffer.from(JSON.stringify(candidate));
   const mapBytes = process.env.ATLAS_REVIEWED_CANDIDATE ? readFileSync(new URL("../snapshot.json", `file://${process.env.ATLAS_REVIEWED_CANDIDATE}`)) : readFileSync(".cache/atlas-fixture/map.json");
-  const release = { ...fixture.release, contract_version: "1.1.0", selector_sha256: reviewedSelectorSha256,
-    assets: { ...fixture.release.assets, "atlas-site.json": { sha256: createHash("sha256").update(bytes).digest("hex"), bytes: bytes.length }, "map.json": { sha256: createHash("sha256").update(mapBytes).digest("hex"), bytes: mapBytes.length } } };
-  await page.route("**/current.json", route => route.fulfill({ json: release }));
-  await page.route("**/atlas-site.json", route => route.fulfill({ contentType: "application/json", body: bytes }));
-  await page.route("**/map.json", route => route.fulfill({ contentType: "application/json", body: mapBytes }));
+  await routeBrowserFixture(page, candidate, JSON.parse(mapBytes.toString()));
   await page.setViewportSize({ width, height: 950 });
   await page.emulateMedia({ reducedMotion: "reduce", colorScheme: width === 390 ? "dark" : "light" });
   await page.goto("/atlas/");
+  await page.getByRole("tab", { name: "Analysis", exact: true }).click();
+  await page.getByRole("button", { name: "Models", exact: true }).click();
   const plot = page.locator('.atlas-trend-observations figure');
   await expect(plot.locator('.atlas-observation-connection')).toHaveCount(series.connections.length);
   await expect(plot.locator('circle')).toHaveCount(series.members.length);
@@ -1621,7 +1621,6 @@ for (const width of [390, 1280]) test(`Reviewed Trends render only permitted con
   await expect(evidence).toContainText(series.reason);
   await expect(evidence).toContainText('Source-checked draft');
   await expect(evidence).toContainText('Published');
-  await expect(page.locator('.atlas-trend-coverage svg[role="img"]')).toHaveAttribute("aria-label", /records have extracted figures/);
   if (process.env.ATLAS_REVIEWED_CANDIDATE) { await plot.scrollIntoViewIfNeeded(); await page.screenshot({ path: `/tmp/atlas-reviewed-trends-${width}.png` }); }
   const hidden = candidate.metrics.reviewed_series[0].members[1].eligibility.record_ids[0];
   const date = candidate.records.find(r => r.id === hidden)!.publication.slice(0, 10);
@@ -2017,8 +2016,10 @@ for (const reducedMotion of ["reduce", "no-preference"] as const) test(`Globe su
     for (const element of elements) {
       const matrix = (element as SVGGraphicsElement).getScreenCTM();
       if (!matrix) continue;
+      const length = element instanceof SVGPathElement ? element.getTotalLength() : 0;
+      if (element instanceof SVGPathElement && length === 0) continue;
       for (const fraction of [.2, .4, .6, .8]) {
-        const local = element instanceof SVGPathElement ? element.getPointAtLength(element.getTotalLength() * fraction) : new DOMPoint(0, 0);
+        const local = element instanceof SVGPathElement ? element.getPointAtLength(length * fraction) : new DOMPoint(0, 0);
         const point = new DOMPoint(local.x, local.y).matrixTransform(matrix);
         const target = document.elementFromPoint(point.x, point.y);
         if (target && element.contains(target)) return { x: point.x, y: point.y };

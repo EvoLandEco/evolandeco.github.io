@@ -60,6 +60,8 @@ Use `0.MINOR.PATCH` during experimental development:
 
 For each UI release, set the metadata, add a dated entry below describing its scope and supported export contracts, and run type, lint and relevant browser checks before publishing. Increment once per release, rather than for every edit.
 
+**0.5.0 · Experimental · 7 October 2026** — Daily report chronology and Outbreak watch, source risk assessments, source quotations and translations, searchable source coverage, and responsive briefing columns. Requires site contract `1.8.0`, metrics `0.4.0` and Browser transport `0.3.0`. See [release checks and push preparation](evidence/release-preflight-0.5.0.md).
+
 **0.4.2 · Experimental · 2 October 2026** — Compact data loading with on-demand evidence, GPU globe markers and routes, free globe rotation with tilt reset in fullscreen, and a brief centered drag hint. Export contracts: `1.0.0` through `1.5.0`; compact loading uses Browser transport `0.1.0`. See [release checks and manual push](evidence/release-preflight-0.4.2.md).
 
 **0.3.1 · Experimental · 1 October 2026** — Searchable Place and Disease filters with multiple selections, report entry counts, shared evidence selection and compact rules. Export contracts: `1.0.0` through `1.5.0`; separate Place and Disease controls require the reviewed disease fields in `1.3.0` or later. See [release checks and manual push](evidence/release-filters-0.3.1.md).

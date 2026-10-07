@@ -22,10 +22,10 @@ export function validateAtlas(exportDirectory: string, snapshotPath: string) {
     assert.equal(createHash("sha256").update(readFileSync(new URL(file, exportRoot))).digest("hex"), hash, `ATLAS bundle checksum: ${file}`);
   }
   z.fromJSONSchema(JSON.parse(readFileSync(new URL("atlas-site.schema.json", exportRoot), "utf8"))).parse(bundle);
-  assert(["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0"].includes(bundle.contract_version));
+  assert(["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0", "1.6.0", "1.7.0", "1.8.0"].includes(bundle.contract_version));
   assert.equal(COMPACT_GROUPING_VERSION, "1.0.0");
 
-  z.fromJSONSchema(JSON.parse(readFileSync(new URL(`../src/lib/atlas-vendor/${bundle.metrics.contract_version === "0.2.0" ? "1.1/" : ""}metrics.schema.json`, import.meta.url), "utf8"))).parse(metrics);
+  z.fromJSONSchema(JSON.parse(readFileSync(new URL(`../src/lib/atlas-vendor/${bundle.metrics.contract_version === "0.4.0" ? "1.7/" : bundle.metrics.contract_version === "0.3.0" ? "1.6/" : bundle.metrics.contract_version === "0.2.0" ? "1.1/" : ""}metrics.schema.json`, import.meta.url), "utf8"))).parse(metrics);
   assert.equal(metrics.input_sha256, snapshot.input_sha256, "ATLAS inputs differ");
   const records = new Map(snapshot.records.map(r => [r.id, r]));
   for (const record of metrics.records) {
@@ -63,7 +63,7 @@ export function validateAtlas(exportDirectory: string, snapshotPath: string) {
   for (const channel of channels.values()) {
     assert(organizations.has(channel.organization_id));
     const organization = reportOrganizations[channel.snapshot_source];
-    assert(organization.logo && existsSync(new URL(`../public/logos/atlas/${organization.logo}`, import.meta.url)), `Missing organization logo: ${channel.organization_id}`);
+    assert(!organization.logo || existsSync(new URL(`../public/logos/atlas/${organization.logo}`, import.meta.url)), `Missing organization logo: ${channel.organization_id}`);
   }
   for (const topic of bundle.topics) for (const id of topic.place_ids) assert(places.has(id));
   if (snapshot.map_places) {

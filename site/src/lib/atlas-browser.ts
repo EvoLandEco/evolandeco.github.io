@@ -1,16 +1,32 @@
 import { z } from "zod";
 import { parseAtlasJson, verifiedBytes } from "./atlas-json";
 import type { AtlasRelease } from "./atlas-release";
-import type { AtlasSiteBundle, AtlasMapSnapshot, AtlasReviewedSeries } from "./atlas-vendor/browser/atlas.js";
-import type { AtlasBrowserDetailIndex, AtlasBrowserManifest } from "./atlas-vendor/browser/browser_transport.js";
-export { decodeBrowserCore, prepareBrowserView, hydrateBrowserView } from "./atlas-vendor/browser/browser_transport.js";
-export type { AtlasBrowserCore, AtlasBrowserData, AtlasBrowserMeasure, AtlasBrowserSelector, AtlasBrowserMap, AtlasBrowserSeries, AtlasBrowserManifest, AtlasBrowserSelection } from "./atlas-vendor/browser/browser_transport.js";
+import type { AtlasSiteBundle, AtlasMapSnapshot, AtlasReviewedSeries } from "./atlas-vendor/browser/0.3/atlas.js";
+import * as transport from "./atlas-vendor/browser/0.3/browser_transport.js";
+export { hydrateBrowserView } from "./atlas-vendor/browser/0.3/browser_transport.js";
+export type AtlasBrowserCore = transport.AtlasBrowserCore;
+export type AtlasBrowserData = Omit<transport.AtlasBrowserData, "contract_version"> & { contract_version: "1.8.0" };
+export type { AtlasBrowserMeasure, AtlasBrowserSelector, AtlasBrowserMap, AtlasBrowserManifest, AtlasBrowserSelection, AtlasBrowserSeries, AtlasBrowserDetailIndex, AtlasBrowserDetailPartition } from "./atlas-vendor/browser/0.3/browser_transport.js";
+import type { AtlasBrowserManifest, AtlasBrowserDetailIndex, AtlasBrowserDetailPartition } from "./atlas-vendor/browser/0.3/browser_transport.js";
+
+function requireCurrentCore(core: AtlasBrowserCore) {
+  if (core.metadata.contract_version !== "1.8.0" || core.metadata.metrics.contract_version !== "0.4.0") throw new Error("ATLAS requires site contract 1.8.0 and metrics 0.4.0");
+}
+export function decodeBrowserCore(core: AtlasBrowserCore, exportId: string): AtlasBrowserData {
+  requireCurrentCore(core);
+  return transport.decodeBrowserCore(core, exportId) as AtlasBrowserData;
+}
+export function prepareBrowserView(core: AtlasBrowserCore, exportId: string) {
+  requireCurrentCore(core);
+  const { data, select } = transport.prepareBrowserView(core, exportId);
+  return { data: data as AtlasBrowserData, select };
+}
 
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 const asset = z.strictObject({ sha256: digest, bytes: z.number().int().positive().safe() });
 const file = asset.extend({ path: z.string().min(1) });
 const manifestSchema = z.strictObject({
-  transport_version: z.literal("0.1.0"), source_export_id: digest,
+  transport_version: z.literal("0.3.0"), source_export_id: digest,
   source: z.strictObject({ manifest: file, site: file, map: file, metrics_sha256: digest, site_contract_version: z.string(), selector: file }),
   core: z.string(), map_core: z.string(), detail_index: z.string(), selector: z.string(),
   assets: z.record(z.string(), asset.extend({ kind: z.string() })),
@@ -41,6 +57,7 @@ export async function fetchBrowserManifest(root: string, descriptor: AtlasBrowse
 
 export function validateBrowserManifest(input: unknown, release: AtlasRelease, trustedSelectorHashes: Readonly<Record<string, string>>): AtlasBrowserManifest {
   const manifest = manifestSchema.parse(input);
+  if (release.browser && manifest.transport_version !== release.browser.transport_version) throw new Error("ATLAS browser transport version mismatch");
   if (manifest.source_export_id !== release.export_id || manifest.source.site_contract_version !== release.contract_version ||
       manifest.source.selector.sha256 !== release.selector_sha256 ||
       manifest.source.site.sha256 !== release.assets["atlas-site.json"].sha256 || manifest.source.site.bytes !== release.assets["atlas-site.json"].bytes ||
@@ -119,7 +136,7 @@ export function createAtlasDetailStore(root: string, manifest: AtlasBrowserManif
     }
   }
   function checkIndex(input: unknown): Index {
-    if (!object(input) || !exactKeys(input, ["transport_version", "source_export_id", "partitions", "collections"]) || input.transport_version !== "0.1.0" || input.source_export_id !== manifest.source_export_id ||
+    if (!object(input) || !exactKeys(input, ["transport_version", "source_export_id", "partitions", "collections"]) || input.transport_version !== manifest.transport_version || input.source_export_id !== manifest.source_export_id ||
         !Array.isArray(input.partitions) || input.partitions.length !== manifest.partitions.length || input.partitions.some((path, i) => path !== manifest.partitions[i].path) || !object(input.collections) ||
         !exactKeys(input.collections, Object.keys(manifest.reconstruction.collections))) throw new Error("Invalid ATLAS detail index");
     const ids = new Map<string, Map<string, number>>();
@@ -152,7 +169,7 @@ export function createAtlasDetailStore(root: string, manifest: AtlasBrowserManif
   }
   function checkPartition(input: unknown, path: string, lookup: Index) {
     const owner = owners.get(path);
-    if (!owner || !object(input) || !exactKeys(input, ["transport_version", "source_export_id", "owner", "rows"]) || input.transport_version !== "0.1.0" || input.source_export_id !== manifest.source_export_id ||
+    if (!owner || !object(input) || !exactKeys(input, ["transport_version", "source_export_id", "owner", "rows"]) || input.transport_version !== manifest.transport_version || input.source_export_id !== manifest.source_export_id ||
         input.owner !== owner.owner || !Array.isArray(input.rows) || input.rows.length !== owner.rows) throw new Error("Invalid ATLAS detail partition");
     const result = new Map<string, unknown>();
     for (const row of input.rows) {

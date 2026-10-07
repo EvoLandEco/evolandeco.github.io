@@ -1,3 +1,4 @@
+import { requireCurrentPresentation } from "./publish-atlas-presentation";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFile, writeFile, mkdir, mkdtemp, rm } from "node:fs/promises";
@@ -12,12 +13,18 @@ import { releaseSchema, verifiedBytes, releaseRoot, type AtlasRelease } from "..
 import type { AtlasPublicationHandoff, AtlasFileReference, AtlasExportReference } from "../src/lib/atlas-vendor/site-types";
 import { validateAtlas } from "./validate-atlas-metrics";
 import { prepareBrowserCandidate, stageBrowserAsset } from "./publish-atlas-browser";
+import { supplementPublicationSchema, prepareSourceSupplement, requireCurrentSourceSupplement, verifyPublishedSourceSupplement } from "./publish-atlas-supplement";
 
 const site = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const hash = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
+const fileReference = z.object({ path: z.string().min(1), bytes: z.number().int().positive(), sha256: z.string().regex(/^[a-f0-9]{64}$/) });
 export const correctionSchema = z.object({
   correction_version: z.literal("1.0.0"), replaces_export_id: z.string().regex(/^[a-f0-9]{64}$/),
   reason: z.string().min(1), authorization: z.object({ thread_id: z.string().min(1), instruction: z.string().min(1) }),
+  source_supplement: supplementPublicationSchema.optional(),
+  network: z.unknown().optional(), intelligence: z.unknown().optional(),
+  browser_validation: fileReference.optional(),
+  browser: z.object({ transport_version: z.literal("0.3.0"), manifest: fileReference }).passthrough().optional(),
   export: z.object({ bundle_path: z.string().min(1), map_snapshot_path: z.string().min(1) }).passthrough(),
 });
 export function checkCorrectionTarget(replaces: string, existing: AtlasRelease | null) {
@@ -62,7 +69,8 @@ async function currentRelease() {
   assert(response.ok, `Cannot read published release: ${response.status}`);
   return releaseSchema.parse(await response.json());
 }
-export async function syncAtlas(project: string, cycle: string, initial = false, correctionPath?: string, stageOnly = false) {
+export async function syncAtlas(project: string, cycle: string, initial = false, correctionPath?: string, stageOnly = false, readIntervalMs = 600) {
+  assert(Number.isSafeInteger(readIntervalMs) && readIntervalMs >= 0 && readIntervalMs <= 60_000, "Invalid public read interval");
   assert(!(initial && correctionPath), "Choose either initial publication or correction");
   const cache = resolve(site, ".cache/atlas-sync");
   await mkdir(cache, { recursive: true });
@@ -85,6 +93,7 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
       return JSON.parse(await readFile(handoffPath, "utf8")) as AtlasPublicationHandoff;
     };
     const first = correctionPath ? await correction() : await handoff();
+    if ("export" in first && (first.network || first.intelligence)) assert(stageOnly, "A release with network or Intelligence assets must stage the base first; activate its complete descriptor through publish-atlas-intelligence");
     const candidate = "export" in first ? first.export : publicationCandidate(first, cycle, initial);
     if (!candidate) { console.log(JSON.stringify({ status: "not_ready", cycle, reasons: "blocking_reasons" in first ? first.blocking_reasons : [] })); return; }
     assert.equal(candidate.contract_version, hosting.contract_version);
@@ -96,7 +105,13 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
     const mapBytes = await checkedFile(candidate.map_snapshot);
     const { bundle } = validateAtlas(candidate.bundle_path, candidate.map_snapshot_path);
     const existing = await currentRelease();
-    if (existing?.export_id === candidate.export_id) { console.log(JSON.stringify({ status: "unchanged", export_id: existing.export_id })); return; }
+    if (existing?.export_id === candidate.export_id) {
+      if ("export" in first && first.source_supplement) {
+        const supplement = await prepareSourceSupplement(first.source_supplement, existing);
+        assert.deepEqual(existing.source_supplement, supplement.descriptor, "Same-export supplement attachment requires a reviewed release descriptor");
+      }
+      console.log(JSON.stringify({ status: "unchanged", export_id: existing.export_id })); return;
+    }
     if ("export" in first) checkCorrectionTarget(first.replaces_export_id, existing);
     assert(!initial || !existing, "Initial publication cannot replace an existing release");
     assert(!existing?.cycle || existing.cycle <= cycle, "Cannot publish an older weekly cycle");
@@ -105,15 +120,30 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
       cycle: correctionPath ? existing!.cycle : initial ? null : cycle, mode: correctionPath ? existing!.mode : initial ? "initial" : "weekly", contract_version: candidate.contract_version,
       ...("export" in first ? { correction: { replaces_export_id: first.replaces_export_id, authorization_sha256: first.authorization_sha256 } } : {}),
       selector_sha256: candidate.selector.sha256, assets: Object.fromEntries(Object.entries(assets).map(([name, bytes]) => [name, { sha256: hash(bytes), bytes: bytes.length }])) });
+    const supplementAuthorization = "export" in first ? first.source_supplement : undefined;
+    const supplement = supplementAuthorization ? await prepareSourceSupplement(supplementAuthorization, release) : null;
+    if (supplement) release = releaseSchema.parse({ ...release, source_supplement: supplement.descriptor });
+    if (existing) { requireCurrentSourceSupplement(existing, release); requireCurrentPresentation(existing, release); }
+    if (supplement) await writeFile(resolve(cache, `supplement-delivery-${supplement.descriptor.sha256}.json`), JSON.stringify({
+      status: "validated", export_id: release.export_id, descriptor: supplement.descriptor, counts: supplement.counts,
+      authorization_sha256: "export" in first ? first.authorization_sha256 : null, staged_verification: "pending", activation: "pending",
+    }, null, 2));
     const browserDirectory = await mkdtemp(resolve(cache, `browser-${candidate.export_id}-`));
-    const browserOut = resolve(browserDirectory, "assets"), browserHandoffPath = resolve(browserDirectory, "handoff.json");
-    execFileSync(process.execPath, ["scripts/export_browser_transport.mjs", "--site", candidate.structured_data.path, "--map", candidate.map_snapshot.path, "--export-id", candidate.export_id, "--out", browserOut], { cwd: project, stdio: "inherit" });
-    execFileSync(process.execPath, ["scripts/verify_browser_transport.mjs", "--directory", browserOut, "--site", candidate.structured_data.path, "--map", candidate.map_snapshot.path, "--every-record", "--out", browserHandoffPath], { cwd: project, stdio: "inherit" });
-    const browserHandoffBytes = await readFile(browserHandoffPath);
-    const browserReference = { path: browserHandoffPath, bytes: browserHandoffBytes.length, sha256: hash(browserHandoffBytes) };
+    let browserReference = "export" in first ? first.browser_validation : undefined;
+    if (!browserReference) {
+      const browserOut = resolve(browserDirectory, "assets"), browserHandoffPath = resolve(browserDirectory, "handoff.json");
+      execFileSync(process.execPath, ["scripts/export_browser_transport.mjs", "--site", candidate.structured_data.path, "--map", candidate.map_snapshot.path, "--export-id", candidate.export_id, "--out", browserOut], { cwd: project, stdio: "inherit" });
+      execFileSync(process.execPath, ["scripts/verify_browser_transport.mjs", "--directory", browserOut, "--site", candidate.structured_data.path, "--map", candidate.map_snapshot.path, "--every-record", "--out", browserHandoffPath], { cwd: project, stdio: "inherit" });
+      const bytes = await readFile(browserHandoffPath);
+      browserReference = { path: browserHandoffPath, bytes: bytes.length, sha256: hash(bytes) };
+    }
     const browser = await prepareBrowserCandidate(browserReference, release);
+    if ("export" in first && first.browser) {
+      assert.equal(browser.manifest.transport_version, first.browser.transport_version);
+      assert.deepEqual(browser.handoff.browser.manifest, first.browser.manifest, "Browser manifest differs from publication authorization");
+    }
     assert.deepEqual({ sha256: browser.manifest.source.manifest.sha256, bytes: browser.manifest.source.manifest.bytes }, { sha256: candidate.manifest.sha256, bytes: candidate.manifest.bytes });
-    release = releaseSchema.parse({ ...release, browser: { transport_version: "0.1.0", manifest: browser.descriptor } });
+    release = releaseSchema.parse({ ...release, browser: { transport_version: browser.manifest.transport_version, manifest: browser.descriptor } });
     const put = (key: string, path: string, compressed: boolean) => execFileSync(process.execPath, [resolve(site, "node_modules/wrangler/bin/wrangler.js"), "r2", "object", "put", `${hosting.bucket}/${key}`, "--file", path, "--remote", "--content-type", /\.(?:mjs|js)\.gz$/.test(key) ? "text/javascript" : /\.d\.(?:mts|ts)\.gz$/.test(key) ? "text/plain" : "application/json", ...(compressed ? ["--content-encoding", "gzip"] : [])], { cwd: site, stdio: "inherit" });
     for (const [name, bytes] of Object.entries(assets)) {
       const path = resolve(cache, name + ".gz");
@@ -121,12 +151,23 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
       put(`releases/${release.export_id}/${name}.gz`, path, true);
       await verifiedBytes(await fetch(`${releaseRoot(release)}/${name}`, { cache: "no-cache" }), release.assets[name as keyof typeof assets]);
     }
+    let lastRead = 0;
     const readBrowserAsset = async (key: string) => {
+      const wait = readIntervalMs - (Date.now() - lastRead);
+      if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
+      lastRead = Date.now();
       const response = await fetch(`${hosting.origin}/${key}`, { cache: "no-cache" });
       assert(response.status !== 429, `Browser asset verification hit the public read limit; Retry-After=${response.headers.get("Retry-After") ?? "unspecified"}. The published release has not changed.`);
       return response;
     };
     for (const ref of browser.files) await stageBrowserAsset(ref.key, await checkedFile(ref), browserDirectory, readBrowserAsset, put);
+    if (supplement) {
+      for (const ref of supplement.files) await stageBrowserAsset(ref.key, await checkedFile(ref), browserDirectory, readBrowserAsset, put);
+      await verifyPublishedSourceSupplement(release, readBrowserAsset);
+      await writeFile(resolve(cache, `supplement-staged-${supplement.descriptor.sha256}.json`), JSON.stringify({
+        status: "verified", export_id: release.export_id, descriptor: supplement.descriptor, authorization_sha256: "export" in first ? first.authorization_sha256 : null, public_files: supplement.files.map(ref => ref.key), activation: "pending",
+      }, null, 2));
+    }
     await checkedFile(browserReference);
     await checkedFile(browser.handoff.browser.manifest);
     const final = correctionPath ? await correction() : await handoff();
@@ -137,6 +178,7 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
       assert.deepEqual(final.ledger, first.ledger, "Ledger changed during upload");
       assert.deepEqual(final.jobs, first.jobs, "Weekly receipts changed during upload");
     }
+    if (supplementAuthorization) await prepareSourceSupplement(supplementAuthorization, release);
     assert.deepEqual(await currentRelease(), existing, "Published release changed during upload");
     const releasePath = resolve(cache, "current.json");
     await writeFile(releasePath, JSON.stringify(release));
@@ -152,7 +194,7 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
   } finally { await rm(lock, { recursive: true }); }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  const { values } = parseArgs({ options: { project: { type: "string" }, cycle: { type: "string" }, initial: { type: "boolean", default: false }, correction: { type: "string" }, "stage-only": { type: "boolean", default: false } } });
+  const { values } = parseArgs({ options: { project: { type: "string" }, cycle: { type: "string" }, initial: { type: "boolean", default: false }, correction: { type: "string" }, "stage-only": { type: "boolean", default: false }, "read-interval-ms": { type: "string", default: "600" } } });
   assert(values.project, "Supply --project with the local ATLAS checkout");
-  syncAtlas(resolve(values.project), values.cycle ?? weeklyCycle(), values.initial, values.correction, values["stage-only"]).catch(error => { console.error(error); process.exitCode = 1; });
+  syncAtlas(resolve(values.project), values.cycle ?? weeklyCycle(), values.initial, values.correction, values["stage-only"], Number(values["read-interval-ms"])).catch(error => { console.error(error); process.exitCode = 1; });
 }

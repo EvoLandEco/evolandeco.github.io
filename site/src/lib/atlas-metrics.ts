@@ -11,9 +11,12 @@ export function visibleMeasure(measure: Measure, recordIds: Set<string>) {
   return measureEvidenceRecords(measure).every(id => recordIds.has(id));
 }
 const metricFormatter = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
-export function metricValue(measure: Pick<Measure, "value" | "value_status" | "unit">) {
+export function metricValue(measure: Pick<Measure, "value" | "value_status" | "unit"> & { qualifier?: string }) {
   if (measure.value === null) return measure.value_status.replaceAll("_", " ");
-  return metricFormatter.format(measure.value) + (measure.unit === "percent" ? "%" : "");
+  const suffix = measure.unit === "percent" ? "%" : measure.unit === "percent_change" ? "% change" : measure.unit === "percent_of_target" ? "% of target" : "";
+  const qualifier = measure.qualifier;
+  const prefix = qualifier === "more_than" ? ">" : qualifier === "less_than" ? "<" : qualifier === "at_least" ? "≥" : qualifier === "at_most" ? "≤" : qualifier === "approximately" ? "≈" : "";
+  return prefix + metricFormatter.format(measure.value) + suffix;
 }
 export function createMetrics<B extends AtlasData>(bundle: B, selectedResearch: ReturnType<typeof createResearch>["selectedResearch"]) {
   const metrics: B["metrics"] = bundle.metrics;

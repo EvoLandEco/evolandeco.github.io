@@ -1,3 +1,4 @@
+import { SourceQuotation } from "./atlas-source-text";
 import { AtlasScope } from "./atlas-scope";
 import { AtlasDisclosure } from "./atlas-disclosure";
 import { AtlasDetailStatus, useAtlasDetails } from "./atlas-detail";
@@ -48,11 +49,11 @@ export function SourceComparisons({ recordIds, reportIds, onReport }: { recordId
   </section>)}</div>;
 }
 
-function AssertionEvidence({ ids }: { ids: string[] }) {
+export function AssertionEvidence({ ids }: { ids: string[] }) {
   const { data, error, retry } = useAtlasDetails(ids.map(id => ({ collection: "evidence", id })));
   if (!data) return <AtlasDetailStatus error={error} retry={retry} />;
   return ids.map(id => {
     const evidence = data.get("evidence", id);
-    return <div key={id}><small><CountryText>{evidence.section}</CountryText>{evidence.page !== null && ` · page ${evidence.page}`}</small><blockquote><CountryText>{evidence.quote}</CountryText></blockquote></div>;
+    return <div key={id}><small><CountryText>{evidence.section}</CountryText>{evidence.page !== null && ` · page ${evidence.page}`}</small><SourceQuotation quote={evidence.quote} evidenceId={evidence.id} /></div>;
   });
 }

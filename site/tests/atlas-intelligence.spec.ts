@@ -1,15 +1,50 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { intelligenceSchema } from '../src/lib/atlas-intelligence';
 
 test.use({ baseURL: process.env.ATLAS_INTELLIGENCE_PREVIEW_URL ?? 'http://127.0.0.1:3005' });
 
 test.beforeEach(async ({ page }) => {
+  if (process.env.ATLAS_BROWSER_CANDIDATE) {
+    const directory = process.env.ATLAS_BROWSER_CANDIDATE;
+    await page.route('**/releases/*/browser/*/**', route => {
+      const asset = new URL(route.request().url()).pathname.split('/browser/')[1].split('/').slice(1).join('/');
+      return route.fulfill({ contentType: 'application/json', body: readFileSync(join(directory, asset)) });
+    });
+    if (process.env.ATLAS_INTELLIGENCE_FILE) await page.route('**/intelligence/*/intelligence.json', route => route.fulfill({ contentType: 'application/json', body: readFileSync(process.env.ATLAS_INTELLIGENCE_FILE!) }));
+  }
   if (process.env.ATLAS_RELEASE_FILE) {
     const receipt = JSON.parse(readFileSync(process.env.ATLAS_RELEASE_FILE, 'utf8'));
     await page.route('**/current.json', route => route.fulfill({ json: receipt.release ?? receipt }));
   }
+});
+
+for (const width of [1440, 390]) test(`Source risk profile selection at ${width}px`, async ({ page }) => {
+  test.skip(!process.env.ATLAS_INTELLIGENCE_FILE, 'Requires the producer Intelligence sidecar');
+  await page.setViewportSize({ width, height: 780 });
+  await page.goto(process.env.ATLAS_INTELLIGENCE_TEST_PATH ?? '/atlas/experimental/');
+  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+  await page.getByRole('group', { name: 'Report content', exact: true }).getByRole('button', { name: 'Assessments', exact: true }).click();
+  await page.getByRole('group', { name: 'Assessment category', exact: true }).getByRole('button', { name: 'Source risk assessments', exact: true }).click();
+  const risk = page.getByRole('region', { name: 'Source risk assessments', exact: true });
+  const selector = risk.locator('summary[aria-label="Evidence profile"]');
+  await selector.click();
+  const search = risk.getByRole('searchbox', { name: 'Search evidence profile', exact: true });
+  await search.fill('Cereulide');
+  await expect(risk.getByRole('option')).toHaveCount(1);
+  await search.press('ArrowDown');
+  await risk.getByRole('option', { name: 'Cereulide in infant formula', exact: true }).press('Enter');
+  await expect(risk.getByRole('heading', { name: 'Cereulide in infant formula', exact: true })).toBeVisible();
+  await expect(selector).toBeFocused();
+  await selector.click();
+  await expect(search).toHaveValue('');
+  await expect(risk.getByRole('option')).toHaveCount(3);
+  expect((await new AxeBuilder({ page }).include('[aria-label="Source risk assessments"]').analyze()).violations).toEqual([]);
+  await risk.getByRole('option', { name: 'Salmonella in sprouted seeds', exact: true }).click();
+  await risk.getByRole('button', { name: 'View report', exact: true }).click();
+  await expect(page.locator('.atlas-report[data-evidence="true"]').first()).toHaveAttribute('open', '');
 });
 
 for (const width of [1440, 390]) test(`Merged Intelligence navigation and evidence at ${width}px`, async ({ page }) => {
@@ -21,7 +56,7 @@ for (const width of [1440, 390]) test(`Merged Intelligence navigation and eviden
   await page.goto(process.env.ATLAS_INTELLIGENCE_TEST_PATH ?? '/atlas/experimental/');
   const tabs = page.getByRole('tablist', { name: 'Evidence views' });
   await expect(tabs.getByRole('tab')).toHaveCount(5, { timeout: 120000 });
-  expect(await tabs.getByRole('tab').evaluateAll(nodes => nodes.map(node => node.getAttribute('aria-label')))).toEqual(['Trends', 'Analysis', 'One Health', 'Reports', 'Geographic links']);
+  expect(await tabs.getByRole('tab').evaluateAll(nodes => nodes.map(node => node.getAttribute('aria-label')))).toEqual(['Trends', 'Analysis', 'Geographic links', 'One Health', 'Reports']);
   const toolbar = page.locator('.atlas-toolbar');
   await toolbar.evaluate(element => window.scrollTo(0, window.scrollY + element.getBoundingClientRect().top + 180));
   await expect.poll(async () => (await toolbar.boundingBox())!.y).toBeCloseTo(0, 0);
@@ -34,6 +69,9 @@ for (const width of [1440, 390]) test(`Merged Intelligence navigation and eviden
   }
   await tabs.getByRole('tab', { name: 'Analysis', exact: true }).click();
   const analysis = page.getByRole('region', { name: 'Experimental analysis' });
+  await expect(analysis.getByRole('group', { name: 'Analysis views' }).getByRole('button').first()).toHaveText('Models');
+  await expect(analysis.getByRole('button', { name: 'Models', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await analysis.getByRole('button', { name: 'Signals', exact: true }).click();
   const aboutAnalysis = page.locator('.atlas-workspace-footer').getByRole('button', { name: 'About Analysis', exact: true });
   await expect(aboutAnalysis).toBeVisible();
   const footerBounds = (await page.locator('.atlas-workspace-footer').boundingBox())!;
@@ -103,7 +141,7 @@ for (const width of [1440, 390]) test(`Merged Intelligence navigation and eviden
   await checkColumns.last().press('Enter');
   await expect(tabs.getByRole('tab', { name: 'Reports', exact: true })).toHaveAttribute('aria-selected', 'true');
   await tabs.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  await analysis.getByRole('button', { name: 'Model evaluation', exact: true }).click();
+  await analysis.getByRole('button', { name: 'Models', exact: true }).click();
   await expect(analysis.locator('summary')).toHaveCount(0);
   await aboutAnalysis.click();
   await expect(analysisMethods.locator('h4')).toHaveText('Nigeria Lassa fever · Confirmed cases · weekly reports');
@@ -135,7 +173,7 @@ for (const width of [1440, 390]) test(`Merged Intelligence navigation and eviden
   await predictionPanel.screenshot({ path: `/tmp/atlas-prediction-summary-${width}.png` });
   await expect(analysis.getByRole('table').filter({ has: page.locator('caption', { hasText: 'Hindcast performance' }) }).getByRole('row')).toHaveCount(5);
   await analysis.getByRole('combobox', { name: 'Evaluation', exact: true }).selectOption('extrapolation');
-  await expect(predictionPanel.getByRole('img')).toHaveAttribute('aria-label', /prediction for 20 Sept? 2026/);
+  await expect(predictionPanel.locator('svg[aria-label^="Reported counts"]')).toHaveAttribute('aria-label', /prediction for 20 Sept? 2026/);
   await expect(predictionPanel.locator('dl')).toContainText('Not evaluated');
   await page.screenshot({ path: `/tmp/atlas-merged-analysis-${width}.png`, fullPage: width === 390 });
   expect((await new AxeBuilder({ page }).include('[aria-label="Experimental analysis"]').analyze()).violations).toEqual([]);
@@ -197,7 +235,7 @@ for (const width of [1440, 390]) test(`Merged Intelligence navigation and eviden
   await reports.getByRole('button', { name: 'Source coverage', exact: true }).click();
   await expect(page.locator('.atlas-source-network')).toBeVisible();
   await expect(page.locator('.atlas-report-tools')).toHaveAttribute('data-coverage', 'true');
-  await expect(page.locator('.atlas-coverage-headings')).toContainText('Reporting topics');
+  await expect(page.locator('.atlas-coverage-filters').getByRole('heading', { name: 'Topics', exact: true })).toBeVisible();
   await expect(page.locator('.atlas-report-context')).toContainText('Captured');
   await expect(page.locator('.atlas-report-context')).toContainText('Next update');
   await expect(page.locator('.atlas-report-tools')).not.toHaveAttribute('data-timeline');
@@ -510,7 +548,7 @@ test('Analysis, One Health and Reports keep their control row below the tab menu
     }
     for (const name of ['Analysis', 'One Health', 'Reports']) {
       await tabs.getByRole('tab', { name, exact: true }).click();
-      if (name === 'Analysis') await page.getByRole('button', { name: 'Model evaluation', exact: true }).click();
+      if (name === 'Analysis') await page.getByRole('button', { name: 'Models', exact: true }).click();
       const controls = page.locator('.atlas-panel-tools');
       await expect(controls).toBeVisible();
       await expect(controls).toHaveCSS('position', 'sticky');
@@ -551,7 +589,13 @@ test('Model evaluation fits the workspace and links model rows to the prediction
   await page.getByRole('button', { name: 'Click to enter full screen' }).press('Enter');
   await tabs.getByRole('tab', { name: 'Analysis', exact: true }).click();
   const analysis = page.getByRole('region', { name: 'Experimental analysis' });
-  await analysis.getByRole('button', { name: 'Model evaluation', exact: true }).click();
+  const viewButtons = analysis.getByRole('group', { name: 'Analysis views' }).getByRole('button');
+  await expect(viewButtons).toHaveText(['Models', 'Signals']);
+  await expect(viewButtons.first()).toHaveAttribute('aria-pressed', 'true');
+  for (const button of await viewButtons.all()) await expect(button.locator('span')).toBeVisible();
+  const header = analysis.locator('header').first();
+  expect(await header.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+  await header.screenshot({ path: '/tmp/atlas-analysis-models-toolbar.png' });
   const prediction = analysis.getByRole('region', { name: 'Model prediction', exact: true });
   const performance = analysis.getByRole('table').filter({ has: page.locator('caption', { hasText: 'Hindcast performance' }) });
   const model = analysis.getByRole('combobox', { name: 'Model', exact: true });
@@ -567,7 +611,7 @@ test('Model evaluation fits the workspace and links model rows to the prediction
     await performance.getByRole('button', { name: 'Gamma–Poisson local level', exact: true }).hover();
     await expect(prediction.locator('figcaption')).toContainText('Gamma–Poisson local level');
     await expect(model).toHaveValue('ensemble_median');
-    await analysis.getByRole('button', { name: 'Model evaluation', exact: true }).hover();
+    await analysis.getByRole('button', { name: 'Models', exact: true }).hover();
     await expect(prediction.locator('figcaption')).toContainText('Median ensemble');
     await performance.getByRole('button', { name: 'Gamma–Poisson local level', exact: true }).press('Enter');
     await expect(model).toHaveValue('gamma_poisson');
@@ -580,6 +624,22 @@ test('Model evaluation fits the workspace and links model rows to the prediction
       const rect = row.getBoundingClientRect();
       return rect.top >= container.top && rect.bottom <= container.bottom + 1;
     })).toBe(true);
+    const points = prediction.locator('svg [role="button"][data-entry-id]');
+    const details = prediction.getByRole('region', { name: 'Observation details', exact: true });
+    const point = points.first();
+    const id = await point.getAttribute('data-entry-id');
+    const sourceRow = details.locator(`[data-entry-id="${id}"]`);
+    await point.locator("rect").hover();
+    await expect(sourceRow).toHaveAttribute('data-highlighted', 'true');
+    await expect(point).toHaveAttribute('data-selected', 'true');
+    await sourceRow.hover();
+    await expect(point).toHaveAttribute('data-selected', 'true');
+    await sourceRow.getByRole('button').first().focus();
+    await expect(point).toHaveAttribute('data-selected', 'true');
+    await points.last().focus();
+    const targetId = await points.last().getAttribute('data-entry-id');
+    await expect(details.locator(`[data-entry-id="${targetId}"]`)).toHaveAttribute('data-highlighted', 'true');
+    expect(await details.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
     await page.screenshot({ path: `/tmp/atlas-evaluation-contained-${height}.png` });
     await model.selectOption('ensemble_median');
   }
@@ -596,7 +656,7 @@ test('The default ensemble displays producer predictions and scores for every se
   await page.goto(process.env.ATLAS_INTELLIGENCE_TEST_PATH ?? '/atlas/experimental/');
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   const analysis = page.getByRole('region', { name: 'Experimental analysis' });
-  await analysis.getByRole('button', { name: 'Model evaluation', exact: true }).click();
+  await analysis.getByRole('button', { name: 'Models', exact: true }).click();
   const prediction = analysis.getByRole('region', { name: 'Model prediction', exact: true });
   for (const series of data.forecast_series) {
     await analysis.getByRole('combobox', { name: 'Monitored series', exact: true }).selectOption(series.id);
@@ -606,6 +666,7 @@ test('The default ensemble displays producer predictions and scores for every se
       await analysis.getByRole('combobox', { name: 'Evaluation', exact: true }).selectOption('backtest');
       const target = series.backtests.filter(item => item.model_id === 'ensemble_median' && item.horizon_weeks === horizon).sort((a, b) => a.origin.localeCompare(b.origin)).at(-1)!;
       await expect(prediction.locator('header dd')).toHaveText([formatted(target.central), formatted(target.observed), formatted(target.wis, 3)]);
+      await expect.poll(() => prediction.locator('.atlas-observation-item').evaluateAll(rows => rows.map(row => row.getAttribute('data-entry-id')).sort())).toEqual([...target.training_measure_ids, target.target_measure_id].sort());
       const metric = series.metrics.find(item => item.model_id === 'ensemble_median' && item.horizon_weeks === horizon)!;
       const row = analysis.locator('tr[data-entry-id="ensemble_median"]');
       await expect(row.locator('td').nth(0)).toHaveText(String(metric.n));
@@ -613,6 +674,7 @@ test('The default ensemble displays producer predictions and scores for every se
       await analysis.getByRole('combobox', { name: 'Evaluation', exact: true }).selectOption('extrapolation');
       const outlook = series.forecasts.find(item => item.model_id === 'ensemble_median' && item.horizon_weeks === horizon)!;
       await expect(prediction.locator('header dd')).toHaveText([formatted(outlook.central), 'Not evaluated', 'Not evaluated']);
+      await expect.poll(() => prediction.locator('.atlas-observation-item').evaluateAll(rows => rows.map(row => row.getAttribute('data-entry-id')).sort())).toEqual([...outlook.training_measure_ids].sort());
     }
   }
 });
@@ -633,7 +695,7 @@ for (const width of [1440, 390]) test(`Tab choices survive navigation at ${width
   const visit = async (name: string) => tabs.getByRole('tab', { name, exact: true }).click();
   await visit('Analysis');
   const analysis = page.getByRole('region', { name: 'Experimental analysis' });
-  await analysis.getByRole('button', { name: 'Model evaluation', exact: true }).click();
+  await analysis.getByRole('button', { name: 'Models', exact: true }).click();
   const series = analysis.getByRole('combobox', { name: 'Monitored series', exact: true });
   const firstSeries = await series.inputValue();
   const model = analysis.getByRole('combobox', { name: 'Model', exact: true });
@@ -652,13 +714,14 @@ for (const width of [1440, 390]) test(`Tab choices survive navigation at ${width
   await expect(origin).toHaveValue(chosenOrigin);
   await visit('Trends');
   await expect(analysis).toHaveCount(0);
-  if (width > 1180) await page.getByRole('group', { name: 'Trend figure' }).getByRole('button', { name: 'Observations', exact: true }).click();
-  const observationSeries = page.locator('summary[aria-label="Observation series"]');
-  await observationSeries.click();
-  await page.getByRole('option', { name: /Confirmed cases/ }).first().click();
-  const chosenObservation = await observationSeries.innerText();
+  await visit('Analysis');
+  const observationId = await series.locator('optgroup[label="Reported observations"] option').filter({ hasText: 'Confirmed cases' }).first().getAttribute('value');
+  await series.selectOption(observationId!);
+  await visit('Trends');
   await visit('Analysis');
   await expect(page.locator('.atlas-trends')).toHaveCount(0);
+  await expect(series).toHaveValue(observationId!);
+  await series.selectOption(firstSeries);
   await expect(model).toHaveValue('gamma_poisson');
   await expect(horizon).toHaveValue('2');
   await expect(origin).toHaveValue(chosenOrigin);
@@ -673,9 +736,10 @@ for (const width of [1440, 390]) test(`Tab choices survive navigation at ${width
   const chosenReport = await health.locator('summary[aria-label="One Health report"]').innerText();
   await visit('Trends');
   await expect(health).toHaveCount(0);
-  await expect(observationSeries).toHaveText(chosenObservation, { useInnerText: true });
-  if (width > 1180) await expect(page.getByRole('group', { name: 'Trend figure' }).getByRole('button', { name: 'Observations', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await visit('Analysis');
+  await analysis.getByRole('button', { name: 'Models', exact: true }).click();
+  await expect(series).toHaveValue(firstSeries);
+  await analysis.getByRole('button', { name: 'Signals', exact: true }).click();
   await expect(analysis.getByRole('combobox', { name: 'Signal type', exact: true })).toHaveValue('network_first_appearance');
   await expect(analysis.getByRole('searchbox', { name: 'Search country connections' })).toHaveValue('Measles');
   await visit('One Health');

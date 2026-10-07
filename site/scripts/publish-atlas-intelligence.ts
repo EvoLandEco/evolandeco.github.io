@@ -1,3 +1,4 @@
+import { preparePresentation, requireCurrentPresentation } from "./publish-atlas-presentation";
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -13,6 +14,7 @@ import { releaseSchema, releaseRoot, verifiedBytes } from '../src/lib/atlas-rele
 import { validateNetworkTransport, parseNetworkAnalysis } from '../src/lib/atlas-network-analysis';
 import { correctionSchema } from './sync-atlas';
 import { requireCurrentBrowserDescriptor } from './publish-atlas-browser';
+import { prepareSourceSupplement, requireCurrentSourceSupplement, verifyPublishedSourceSupplement } from './publish-atlas-supplement';
 
 const site = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const hash = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
@@ -41,12 +43,17 @@ async function main() {
     assert(authorization.authorization.thread_id && authorization.authorization.instruction && authorization.authorization.confirmation);
     const receipt = JSON.parse(await readFile(values.release, 'utf8'));
     const base = releaseSchema.parse(receipt.release ?? receipt);
-    const release = releaseSchema.parse({ ...base, assets: { ...base.assets, 'network-transport.json': authorization.network.pointer_asset }, intelligence: authorization.intelligence.pointer_descriptor });
+    const presentation = await preparePresentation(authorization.presentation ?? {}, base);
+    const release = releaseSchema.parse({ ...base, ...presentation.descriptors, assets: { ...base.assets, 'network-transport.json': authorization.network.pointer_asset }, intelligence: authorization.intelligence.pointer_descriptor });
     assert.equal(release.export_id, source.export_id);
     assert.equal(release.assets['atlas-site.json'].sha256, source.structured_data.sha256);
     assert.equal(release.assets['map.json'].sha256, source.map_snapshot.sha256);
     assert.equal(release.selector_sha256, source.selector.sha256);
     assert.equal(release.correction?.authorization_sha256, hash(authorizationBytes));
+    assert.deepEqual(release.source_supplement, correction.source_supplement?.pointer_descriptor, 'Release supplement must match the publication authorization');
+    if (correction.source_supplement) await prepareSourceSupplement(correction.source_supplement, release);
+    if (correction.browser) assert.deepEqual(release.browser, { transport_version: correction.browser.transport_version,
+      manifest: { bytes: correction.browser.manifest.bytes, sha256: correction.browser.manifest.sha256 } }, 'Browser descriptor must match the publication authorization');
     const files = authorization.intelligence.files as Record<string, FileReference>;
     const sources = [source.manifest, source.structured_data, source.map_snapshot, source.selector, authorization.validation] as FileReference[];
     for (const ref of sources) await checked(ref);
@@ -75,6 +82,7 @@ async function main() {
     const selector = await checked(source.selector);
     assert.equal(selector.length, transport.selector.bytes);
     assets.set(transport.selector.relative_path, selector);
+    for (const file of presentation.files) assets.set(file.key, file.content);
     assets.set(`releases/${release.export_id}/release.json`, Buffer.from(JSON.stringify(release)));
     if (values['dry-run']) {
       console.log(JSON.stringify({ status: 'validated', export_id: release.export_id, experiment_id: data.experiment_id }));
@@ -90,6 +98,8 @@ async function main() {
     assert.equal(release.mode, before.mode);
     assert.equal(release.cycle, before.cycle);
     requireCurrentBrowserDescriptor(before, release);
+    requireCurrentSourceSupplement(before, release);
+    requireCurrentPresentation(before, release);
     if (before.export_id === release.export_id && before.intelligence) assert.deepEqual(before.intelligence, release.intelligence, 'An intervening Intelligence release requires review');
     const directory = resolve(cache, `intelligence-${data.experiment_id}`);
     await mkdir(directory, { recursive: true });
@@ -108,6 +118,9 @@ async function main() {
     for (const [name, expected] of Object.entries(release.assets))
       await verifiedBytes(await fetch(`${releaseRoot(release)}/${name}`, { cache: 'no-cache' }), expected);
     for (const ref of [...sources, ...Object.values(files), ...Object.values(networkFiles)]) await checked(ref);
+    await preparePresentation(authorization.presentation ?? {}, release);
+    await verifyPublishedSourceSupplement(release);
+    if (correction.source_supplement) await prepareSourceSupplement(correction.source_supplement, release);
     assert.deepEqual(await readFile(values.authorization), authorizationBytes, 'Publication authorization changed');
     assert.deepEqual(await current(), before, 'Public release changed during upload');
     const path = resolve(directory, 'current.json');

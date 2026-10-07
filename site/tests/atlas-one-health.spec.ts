@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { readFileSync } from 'node:fs';
 import fixture from './atlas-fixture.json';
 import AxeBuilder from '@axe-core/playwright';
 
@@ -69,31 +68,15 @@ for (const {width,height,workspace} of [{width:390,height:950,workspace:false},{
 });
 
 
-test('Legacy dataset keeps its existing evidence views', async({page})=>{
+test('Unsupported datasets stop before loading report assets', async({page})=>{
+ const assets:string[]=[];
  await page.route(/\/(?:current\.json|releases\/)/,route=>{
-  const name=new URL(route.request().url()).pathname.split('/').at(-1)!;
-  return name==='current.json'?route.fulfill({json:fixture.release}):route.fulfill({contentType:'application/json',body:readFileSync(`.cache/atlas-fixture/${name}`)});
+  if(new URL(route.request().url()).pathname.endsWith('/current.json')) return route.fulfill({json:fixture.release});
+  assets.push(route.request().url());return route.abort();
  });
  await page.goto('/atlas/');
- await expect(page.locator('.atlas-page')).toHaveAttribute('data-ready','true');
- await expect(page.getByRole('tab',{name:'One Health',exact:true})).toHaveCount(0);
- await expect(page.getByRole('tab',{name:'Trends',exact:true})).toHaveAttribute('aria-selected','true');
- await page.getByRole('tab',{name:'Reports',exact:true}).click();
- await expect(page.locator('.atlas-report').first()).toBeVisible();
-});
-
-
-test('Published 1.2 journeys remain compatible', async({page})=>{
- await page.route('http://localhost:3004/**',async route=>{
-  const response=await route.fetch({url:'https://qtj-atlas.evolandeco-github-io.workers.dev'+new URL(route.request().url()).pathname});
-  await route.fulfill({response});
- });
- await page.goto('/atlas/');
- await expect(page.locator('.atlas-page')).toHaveAttribute('data-ready','true');
- await expect(page.getByRole('tab',{name:'One Health',exact:true})).toHaveCount(0);
- await expect(page.locator('.atlas-chain-figure')).toBeVisible();
- await page.locator('summary[aria-label="Reviewed chain"]').click();
- await expect(page.locator('.atlas-chain-section').getByRole('option')).toHaveCount(7);
+ await expect(page.locator('.atlas-page').getByRole('alert')).toContainText('Reports could not be loaded');
+ expect(assets).toEqual([]);
 });
 
 for (const width of [390,1280]) test(`One Health evidence, overview and literature at ${width}`,async({page})=>{

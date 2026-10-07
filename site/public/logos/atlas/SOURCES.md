@@ -11,3 +11,10 @@ Official website identity assets identify the organizations that publish each re
 - RIVM: https://www.rivm.nl/themes/custom/sdv_theme/logo.svg
 
 - UKHSA: GOV.UK favicon, https://www.gov.uk/assets/collections/favicon-d962d21b5bb443f546c097ea21b567cde639adef7370da45be5e349ba8d62d33.svg
+- UN Geneva: https://www.ungeneva.org/themes/contrib/un_geneva_design_system/images/logo.svg
+- CBS News: https://www.cbsnews.com/fly/bundles/cbsnewscore/icons/icon.svg
+- IRK.ru: https://static.irk.ru/static/img/favicon.f8d7359dddcc.svg
+- Santé publique France: symbol region of https://www.santepubliquefrance.fr/themes/custom/santepubliquefrance/logo.svg
+- Robert Koch Institute: https://www.rki.de/SiteGlobals/Frontend/Images/favicon-96x96.png?__blob=normal&v=1
+- China CDC: emblem region of https://www.chinacdc.cn/images/logo0817.png, on a blue field for its white artwork.
+- US CDC: https://www.cdc.gov/favicon.ico

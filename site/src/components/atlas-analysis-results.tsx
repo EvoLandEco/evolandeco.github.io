@@ -1,5 +1,7 @@
 "use client";
-import { useAtlasPanelState } from "./atlas-context";
+import { ObservationRow } from "./atlas-metrics";
+import { SourceQuotation } from "./atlas-source-text";
+import { useAtlas, useAtlasPanelState } from "./atlas-context";
 
 import { useRef, useState } from "react";
 import { revealAtlasEntries } from "@/lib/atlas-detail-scroll";
@@ -8,6 +10,7 @@ import type { IntelligenceExperiment, IntelligenceSeries, IntelligenceForecast, 
 import { formatDate, linkLabels, type AtlasLink } from "@/lib/atlas";
 import styles from "./atlas-analysis.module.css";
 import { AtlasScope } from "./atlas-scope";
+import { AtlasSelect } from "./atlas-select";
 import { useElementSize } from "./use-element-size";
 
 type DataProps = { data: IntelligenceExperiment };
@@ -15,7 +18,8 @@ const number = (value: number | null, maximumFractionDigits = 2) => value === nu
 const date = (value: string) => formatDate(value);
 const methodLabel = (data: IntelligenceExperiment, id: string) => data.methods.find(method => method.id === id)?.label ?? id;
 function SourceLinks({ data, ids }: DataProps & { ids: string[] }) {
-  return <ul className={styles.sources}>{data.sources.filter(source => ids.includes(source.id)).map(source => <li key={source.id}><a href={source.url} target="_blank" rel="noreferrer"><FileText size={14} aria-hidden /><span>{source.title}</span><ExternalLink size={12} aria-hidden /></a><small>Published {date(source.publication)} · Captured {date(source.capture)}</small></li>)}</ul>;
+  const { englishTitle } = useAtlas();
+  return <ul className={styles.sources}>{data.sources.filter(source => ids.includes(source.id)).map(source => <li key={source.id}><a href={source.url} target="_blank" rel="noreferrer"><FileText size={14} aria-hidden /><span>{englishTitle(source)}</span><ExternalLink size={12} aria-hidden /></a><small>Published {date(source.publication)} · Captured {date(source.capture)}</small></li>)}</ul>;
 }
 function Method({ data, id }: DataProps & { id: string }) {
   const method = data.methods.find(item => item.id === id);
@@ -95,10 +99,10 @@ export function RiskProfiles({ data, initialRecord, onReport, onOneHealth, healt
   const profile = data.risk_profiles.find(item => item.id === id) ?? data.risk_profiles[0];
   if (!profile) return <p className={styles.notice}>No risk evidence profiles in this experiment.</p>;
   function evidence(ids: string[]) {
-    return <details className={styles.disclosure}><summary><FileText size={14} aria-hidden />Supporting evidence · {ids.length}</summary>{profile!.evidence.filter(item => ids.includes(item.assertion_id)).map(item => <div key={item.assertion_id}><p>{item.text}</p>{item.quotes.map(quote => <blockquote key={quote.id} tabIndex={0} aria-label="Source quotation">{quote.quote}{quote.page !== null && <cite>Page {quote.page}</cite>}</blockquote>)}</div>)}</details>;
+    return <details className={styles.disclosure}><summary><FileText size={14} aria-hidden />Supporting evidence · {ids.length}</summary>{profile!.evidence.filter(item => ids.includes(item.assertion_id)).map(item => <div key={item.assertion_id}><p>{item.text}</p>{item.quotes.map(quote => <div key={quote.id}><SourceQuotation quote={quote.quote} evidenceId={quote.id} />{quote.page !== null && <cite>Page {quote.page}</cite>}</div>)}</div>)}</details>;
   }
   return <>
-    <div className={styles.controls}><label>Evidence profile<select value={profile.id} onChange={event => setId(event.target.value)}>{data.risk_profiles.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label></div>
+    <div className={styles.profileSelector}><span>Evidence profile</span><AtlasSelect label="Evidence profile" searchable value={profile.id} onChange={setId} items={data.risk_profiles.map(item => ({ value: item.id, label: item.label }))} /></div>
     <div className={styles.profileHeading}><h3>{profile.label}</h3><span><ShieldCheck size={14} aria-hidden />{profile.authority}</span></div>
     <p className={styles.note}><CalendarDays size={13} aria-hidden />Assessment {profile.assessment_date ? date(profile.assessment_date) : "date unknown"} · Published {date(profile.publication)}</p>
     <div className={styles.assessments}>{profile.assessments.map((assessment, index) => <section key={index}><p className={styles.kicker}>Source-reported assessment</p><strong>{assessment.rating}</strong><p>{assessment.population}</p>{evidence(assessment.assertion_ids)}</section>)}</div>
@@ -108,15 +112,26 @@ export function RiskProfiles({ data, initialRecord, onReport, onOneHealth, healt
   </>;
 }
 
-export function Forecasts({ data, seriesId }: DataProps & { seriesId: string }) {
+export function Forecasts({ data, seriesId, onReport }: DataProps & { seriesId: string; onReport: (ids: string[]) => void }) {
   const series = data.forecast_series.find(item => item.id === seriesId) ?? data.forecast_series[0];
   if (!series) return <p className={styles.notice}>No study series match the reporting selection.</p>;
   return <>
-    {series ? <ForecastEvaluation key={series.id} series={series} data={data} /> : <p className={styles.notice}>No eligible forecast series in this experiment.</p>}
+    {series ? <ForecastEvaluation key={series.id} series={series} data={data} onReport={onReport} /> : <p className={styles.notice}>No eligible forecast series in this experiment.</p>}
   </>;
 }
 
-function ForecastEvaluation({ data, series }: DataProps & { series: IntelligenceSeries }) {
+function ForecastEvaluation({ data, series, onReport }: DataProps & { series: IntelligenceSeries; onReport: (ids: string[]) => void }) {
+  const { measures } = useAtlas();
+  const observationEntries = useRef<HTMLDivElement>(null);
+  const [hoveredObservation, setHoveredObservation] = useState<string | null>(null);
+  const [focusedObservation, setFocusedObservation] = useState<string | null>(null);
+  const activeObservation = hoveredObservation ?? focusedObservation;
+  function highlightObservation(id: string | null, focus = false) {
+    if (!focus && hoveredObservation === id) return;
+    if (focus) { setFocusedObservation(id); setHoveredObservation(null); }
+    else setHoveredObservation(id);
+    if (id) revealAtlasEntries(observationEntries.current, [id]);
+  }
   const [model, setModel] = useAtlasPanelState(`evaluation.${series.id}.model`, "ensemble_median");
   const [hovered, setHovered] = useState<string | null>(null);
   const [focused, setFocused] = useState<string | null>(null);
@@ -142,6 +157,7 @@ function ForecastEvaluation({ data, series }: DataProps & { series: Intelligence
   const candidates = (mode === "backtest" ? series.backtests : series.forecasts).filter(item => item.model_id === displayedModel && item.horizon_weeks === horizon).sort((a, b) => a.origin.localeCompare(b.origin));
   const prediction = candidates.find(item => item.origin === origin) ?? candidates.at(-1);
   const backtest = mode === "backtest" ? series.backtests.find(item => item.model_id === displayedModel && item.horizon_weeks === horizon && item.origin === prediction?.origin) : undefined;
+  const plottedObservations = prediction ? series.observations.filter(item => prediction.training_measure_ids.includes(item.measure_id) || item.measure_id === backtest?.target_measure_id).sort((a, b) => a.date.localeCompare(b.date)) : [];
   return <div className={styles.evaluation}>
     <div className={`${styles.controls} ${styles.evaluationControls}`}>
       <label><span className="sr-only">Evaluation</span><select title="Evaluation" value={mode} onChange={event => { setMode(event.target.value); setOrigin(""); }}><option value="backtest">Held-out hindcast</option><option value="extrapolation">Last-origin extrapolation</option></select></label>
@@ -162,13 +178,18 @@ function ForecastEvaluation({ data, series }: DataProps & { series: Intelligence
         </div>
       </AtlasScope></div></header>
 
-      <ForecastChart series={series} prediction={prediction} modelLabel={methodLabel(data, displayedModel)} active={activeModel === displayedModel} onHighlight={highlightPrediction} />
+      <div className={styles.predictionBody}>
+        <ForecastChart series={series} prediction={prediction} modelLabel={methodLabel(data, displayedModel)} active={activeModel === displayedModel} onHighlight={highlightPrediction} activeObservation={activeObservation} onObservation={highlightObservation} onReport={onReport} />
+        <div ref={observationEntries} className={styles.observationDetails} role="region" aria-label="Observation details" tabIndex={0}>
+          <div className="atlas-observation-values" role="group" aria-label="Values & sources">{plottedObservations.map(item => <ObservationRow key={item.measure_id} measure={measures.get(item.measure_id)!} onReport={onReport} highlighted={activeObservation === item.measure_id} onHover={setHoveredObservation} onFocus={setFocusedObservation} />)}</div>
+        </div>
+      </div>
     </section> : <p className={styles.notice}>No eligible origin for this model and horizon.</p>}
     <div ref={entries} className={`${styles.table} ${styles.performanceTable}`} tabIndex={0}><table><caption className="sr-only">Hindcast performance · {horizon}-week horizon</caption><thead><tr><th scope="col">Model</th><th scope="col">Targets</th><th scope="col">MAE</th><th scope="col">WIS</th><th scope="col">Relative WIS</th><th scope="col">50% coverage</th><th scope="col">80% coverage</th><th scope="col">95% coverage</th></tr></thead><tbody>{series.metrics.filter(metric => metric.horizon_weeks === horizon).map(metric => <tr key={metric.model_id} data-entry-id={metric.model_id} data-selected={metric.model_id === displayedModel} data-active={metric.model_id === activeModel} onPointerMove={() => setHovered(metric.model_id)} onPointerLeave={() => setHovered(null)} onFocus={() => { setFocused(metric.model_id); setHovered(null); }} onBlur={() => setFocused(null)}><th scope="row"><button className={styles.modelChoice} aria-pressed={metric.model_id === model} onClick={() => chooseModel(metric.model_id)}>{methodLabel(data, metric.model_id)}</button></th><td>{metric.n}</td><td>{number(metric.mae, 3)}</td><td>{number(metric.wis, 3)}</td><td>{number(metric.relative_wis, 3)}</td>{[.5, .8, .95].map(level => { const coverage = metric.coverage.find(item => item.level === level); return <td key={level}>{coverage ? `${number(coverage.value * 100)}%` : "Not reported"}</td>; })}</tr>)}</tbody></table></div>
   </div>;
 }
 
-function ForecastChart({ series, prediction, modelLabel, active, onHighlight }: { series: IntelligenceSeries; prediction: IntelligenceForecast | IntelligenceBacktest; modelLabel: string; active: boolean; onHighlight: (active: boolean) => void }) {
+function ForecastChart({ series, prediction, modelLabel, active, onHighlight, activeObservation, onObservation, onReport }: { series: IntelligenceSeries; prediction: IntelligenceForecast | IntelligenceBacktest; modelLabel: string; active: boolean; onHighlight: (active: boolean) => void; activeObservation: string | null; onObservation: (id: string | null, focus?: boolean) => void; onReport: (ids: string[]) => void }) {
   const { ref, size } = useElementSize<SVGSVGElement>();
   const width = size?.width ?? 700, height = size?.height ?? 280;
   const right = width - 40, bottom = height - 24;
@@ -179,16 +200,30 @@ function ForecastChart({ series, prediction, modelLabel, active, onHighlight }: 
   const x = (value: string) => 48 + (Date.parse(value) - start) / (end - start) * (right - 48);
   const y = (value: number) => bottom - value / maximum * (bottom - 18);
   const segments = [...new Set(history.map(item => item.segment))];
+  const target = "target_measure_id" in prediction ? series.observations.find(item => item.measure_id === prediction.target_measure_id) : undefined;
+  const targetStart = history.length ? (x(history.at(-1)!.date) + x(prediction.target)) / 2 : x(prediction.target) - 18;
+  function observationPoint(item: IntelligenceSeries["observations"][number], index: number, heldOut = false) {
+    const left = heldOut ? targetStart : index ? (x(history[index - 1].date) + x(item.date)) / 2 : 36;
+    const right = heldOut ? x(item.date) + 18 : (x(item.date) + x(history[index + 1]?.date ?? prediction.target)) / 2;
+    const selected = activeObservation === item.measure_id;
+    return <g key={item.measure_id} className={styles.observationPoint} data-entry-id={item.measure_id} data-selected={selected} role="button" tabIndex={0} aria-label={`${date(item.date)}: ${number(item.value)}${heldOut ? ", held-out count" : ""}. View report`}
+      onPointerMove={() => onObservation(item.measure_id)} onPointerLeave={() => onObservation(null)} onFocus={() => onObservation(item.measure_id, true)} onBlur={() => onObservation(null, true)} onClick={() => onReport([item.record_id])} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onReport([item.record_id]); } }}>
+      <line className={styles.checkGuide} x1={x(item.date)} x2={x(item.date)} y1="14" y2={bottom} />
+      <rect className={styles.observationHit} x={left} y={heldOut ? y(item.value) - 12 : 14} width={Math.max(0, right - left)} height={heldOut ? 24 : Math.max(0, bottom - 14)} rx="3" />
+      {heldOut ? <path d={`M${x(item.date)} ${y(item.value) - 6}l6 6-6 6-6-6Z`} className={styles.actualPoint} /> : <circle cx={x(item.date)} cy={y(item.value)} r={selected ? 5 : 3} className={styles.historyPoint} />}
+      <title>{date(item.date)}: {number(item.value)}</title>
+    </g>;
+  }
   return <figure className={styles.chart} data-model-active={active}>
-    <svg ref={ref} className={styles.predictionSvg} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`Reported counts through ${date(prediction.origin)} and ${prediction.horizon_weeks}-week prediction for ${date(prediction.target)}. Central estimate ${number(prediction.central)}${actual === null ? ". Target not evaluated." : `; held-out count ${number(actual)}.`}`}>
+    <svg ref={ref} className={styles.predictionSvg} viewBox={`0 0 ${width} ${height}`} role="group" aria-label={`Reported counts through ${date(prediction.origin)} and ${prediction.horizon_weeks}-week prediction for ${date(prediction.target)}. Central estimate ${number(prediction.central)}${actual === null ? ". Target not evaluated." : `; held-out count ${number(actual)}.`}`}>
       {[0, maximum / 2, maximum].map(tick => <g key={tick}><line x1="48" x2={width - 20} y1={y(tick)} y2={y(tick)} className={styles.gridLine} /><text x="40" y={y(tick) + 4} textAnchor="end">{number(tick)}</text></g>)}
       <line x1={x(prediction.origin)} x2={x(prediction.origin)} y1="14" y2={bottom} className={styles.originLine} />
       {segments.map(segment => <polyline key={segment} points={history.filter(item => item.segment === segment).map(item => `${x(item.date)},${y(item.value)}`).join(" ")} className={styles.historyLine} />)}
-      {history.map(item => <circle key={item.measure_id} cx={x(item.date)} cy={y(item.value)} r="3" className={styles.historyPoint}><title>{date(item.date)}: {number(item.value)}</title></circle>)}
-      <g onPointerMove={() => onHighlight(true)} onPointerLeave={() => onHighlight(false)}><rect className={styles.predictionHit} x={x(prediction.target) - 18} y="14" width="36" height={Math.max(0, bottom - 14)} rx="4" />
+      {history.map((item, index) => observationPoint(item, index))}
+      <g onPointerMove={() => onHighlight(true)} onPointerLeave={() => onHighlight(false)}><rect className={styles.predictionHit} x={targetStart} y="14" width={x(prediction.target) + 18 - targetStart} height={Math.max(0, bottom - 14)} rx="4" />
       {prediction.intervals.slice().sort((a, b) => b.level - a.level).map((interval, index) => <rect key={interval.level} x={x(prediction.target) - (22 - index * 6) / 2} width={22 - index * 6} y={y(interval.upper)} height={Math.max(1, y(interval.lower) - y(interval.upper))} rx="2" className={styles.interval} data-level={interval.level}><title>{interval.level * 100}% interval: {number(interval.lower)}–{number(interval.upper)}</title></rect>)}
       <circle cx={x(prediction.target)} cy={y(prediction.central)} r="5" className={styles.predictionPoint} />
-      {actual !== null && <path d={`M${x(prediction.target)} ${y(actual) - 6}l6 6-6 6-6-6Z`} className={styles.actualPoint} />}
+      {target && observationPoint(target, history.length, true)}
       </g>
       <text x="48" y={height - 8}>{history.length ? date(history[0].date) : date(prediction.origin)}</text><text x={right} y={height - 8} textAnchor="end">{date(prediction.target)}</text>
       <text x={x(prediction.origin) - 5} y="10" textAnchor="end">Origin · {date(prediction.origin)}</text>

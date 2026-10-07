@@ -46,7 +46,21 @@
 .numbers dd[data-unavailable] { font-size: 12px; line-height: 27px; font-weight: 400; color: var(--muted-foreground); }
 .predictionHeading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .predictionHelp { position: relative; flex: 0 0 28px; width: 28px; height: 28px; }
-.prediction > .chart { margin-top: 12px; }
+.predictionBody { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(250px, 1fr); gap: 16px; height: 320px; min-height: 0; margin-top: 12px; }
+.predictionBody > .chart { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; min-width: 0; margin: 0; }
+.predictionBody > .chart .predictionSvg { height: 100%; min-height: 0; }
+.observationDetails { min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; border-left: 1px solid var(--border); padding-left: 12px; }
+.observationPoint { cursor: var(--cursor-pointer, pointer); }
+.observationPoint :is(.historyPoint, .actualPoint), .predictionBody :is(.interval, .predictionPoint) { pointer-events: none; }
+.observationHit { fill: var(--primary); fill-opacity: 0; }
+.observationPoint[data-selected="true"] .observationHit { fill-opacity: .1; }
+.observationPoint[data-selected="true"] .checkGuide { opacity: .6; }
+.observationPoint:focus-visible { outline: none; }
+.observationPoint:focus-visible .observationHit { stroke: var(--primary); stroke-width: 1; }
+@container atlas-workspace (max-width: 600px) {
+  .predictionBody { grid-template-columns: minmax(0, 1fr); grid-template-rows: 260px 220px; height: auto; }
+  .observationDetails { border-left: 0; border-top: 1px solid var(--border); padding: 10px 0 0; }
+}
 .note { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; font-size: 11px !important; color: var(--muted-foreground); margin: 10px 0; }
 .notice { padding: 11px 13px; border-radius: 9px; background: color-mix(in srgb, var(--primary) 5%, transparent); color: var(--muted-foreground); font-size: 12px; line-height: 1.65; }
 .disclosure { margin: 16px 0; color: var(--muted-foreground); font-size: 12px; }
@@ -62,6 +76,10 @@
 .sources a { display: flex; align-items: flex-start; gap: 6px; color: var(--primary); font-size: 12px; line-height: 1.5; }
 .sources a > svg { flex-shrink: 0; margin-top: 2px; }
 .sources small { display: block; margin: 5px 0 0 20px; font-size: 10px; color: var(--muted-foreground); }
+.profileSelector { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; margin: 16px 0 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.profileSelector > span { color: var(--muted-foreground); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.profileSelector :global(.atlas-select) > summary { min-height: 36px; padding: 8px 10px; border-radius: 9px; color: var(--foreground); font-weight: 500; background: color-mix(in srgb, var(--primary) 4%, var(--background)); }
+.profileSelector :global(.atlas-select) > summary:hover, .profileSelector :global(.atlas-select[open]) > summary { background: color-mix(in srgb, var(--primary) 8%, var(--background)); }
 .profileHeading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin: 18px 0 6px; }
 .profileHeading h3 { font-size: 17px; margin: 0; }
 .profileHeading > span { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--atlas-green); }
@@ -148,7 +166,7 @@
 .toolbarSelect { min-width: 0; }
 .analysis .analysisHeader .toolbarSelect select { width: 100%; min-width: 0; height: 40px; padding: 8px 24px 8px 10px; border: 0; border-radius: 12px; background: color-mix(in srgb, var(--primary) 4%, var(--background)); color: var(--foreground); font-size: 12px; text-overflow: ellipsis; }
 .analysis .analysisHeader .toolbarSelect select:hover { background: color-mix(in srgb, var(--primary) 8%, var(--background)); }
-@container atlas-workspace (max-width: 900px) { .analysis .analysisHeader .tabs button > span { display: none; } .analysis .analysisHeader .tabs button { width: 34px; padding: 8px; } }
+@container atlas-workspace (max-width: 450px) { .analysis .analysisHeader .tabs button > span { display: none; } .analysis .analysisHeader .tabs button { width: 34px; padding: 8px; } }
 @container atlas-workspace (max-width: 450px) { .analysisHeader { gap: 6px; } .analysisHeader[data-view="signals"][data-series="true"] { grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr); } .analysis .analysisHeader .toolbarSelect select { font-size: 11px; padding-left: 8px; padding-right: 16px; } }
 .tabs { display: flex; gap: 3px; padding: 3px; border-radius: 12px; background: color-mix(in srgb, var(--primary) 4%, var(--background)); }
 .analysis .analysisHeader .tabs button { min-height: 34px; white-space: nowrap; border: 0; border-radius: 9px; padding: 8px 10px; background: transparent; color: var(--muted-foreground); font-size: 13px; }
@@ -175,8 +193,8 @@
 :global(.atlas-page[data-fullscreen]) .evaluation { display: grid; grid-template-rows: auto minmax(0, 1fr) minmax(116px, .55fr); }
 :global(.atlas-page[data-fullscreen]) .evaluationControls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 :global(.atlas-page[data-fullscreen]) .prediction { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
-:global(.atlas-page[data-fullscreen]) .prediction > .chart { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; margin: 8px 0 0; }
-:global(.atlas-page[data-fullscreen]) .prediction > .chart svg { height: 100%; min-height: 0; }
+:global(.atlas-page[data-fullscreen]) .predictionBody { height: auto; margin-top: 8px; }
+
 :global(.atlas-page[data-fullscreen]) .performanceTable { min-height: 0; max-height: none; margin: 12px 0 0; }
 
 .analysis .evaluation .evaluationControls select { border: 0; border-radius: 10px; background: color-mix(in srgb, var(--primary) 4%, var(--background)); }
@@ -187,3 +205,7 @@
 @media (max-height: 720px) {
   :global(.atlas-page[data-fullscreen]) .evaluation .numbers > div { display: flex; align-items: baseline; justify-content: center; gap: 8px; }
 }
+
+:global(.atlas-page[data-fullscreen]) :global(.atlas-workspace-scroll):has(:global(.atlas-analysis-observations)) { display: grid; grid-template-rows: minmax(0, 1fr); }
+:global(.atlas-page[data-fullscreen]) :global(#atlas-panel):has(:global(.atlas-analysis-observations)) { min-height: 0; }
+:global(.atlas-page[data-fullscreen]) .analysis:has(:global(.atlas-analysis-observations)) { display: grid; height: 100%; min-height: 0; grid-template-rows: auto minmax(0, 1fr); padding-bottom: 0; }

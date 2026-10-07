@@ -1,3 +1,5 @@
+import { bundle } from "./atlas-fixture";
+import { routeBrowserFixture } from "./atlas-browser-fixture.mjs";
 import { test, expect, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import fixture from "./atlas-fixture.json";
@@ -5,14 +7,7 @@ import fixture from "./atlas-fixture.json";
 test.use({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
 
 test.beforeEach(async ({ page }) => {
-  await page.route(/\/(?:current\.json|releases\/)/, async route => {
-    const path = new URL(route.request().url()).pathname;
-    const name = path.split("/").at(-1)!;
-    if (path === "/current.json") return route.fulfill({ json: fixture.release });
-    if (path.startsWith(`/releases/${fixture.export_id}/`) && name in fixture.assets)
-      return route.fulfill({ contentType: "application/json", body: readFileSync(`.cache/atlas-fixture/${name}`) });
-    return route.abort();
-  });
+  await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
 });
 
 async function openAtlas(page: Page, fullscreen = true) {
@@ -60,8 +55,10 @@ async function overlayPoint(page: Page, selector: string) {
     for (const element of elements) {
       const matrix = (element as SVGGraphicsElement).getScreenCTM();
       if (!matrix) continue;
+      const length = element instanceof SVGPathElement ? element.getTotalLength() : 0;
+      if (element instanceof SVGPathElement && length === 0) continue;
       for (const fraction of [.2, .4, .6, .8]) {
-        const local = element instanceof SVGPathElement ? element.getPointAtLength(element.getTotalLength() * fraction) : new DOMPoint(0, 0);
+        const local = element instanceof SVGPathElement ? element.getPointAtLength(length * fraction) : new DOMPoint(0, 0);
         const point = new DOMPoint(local.x, local.y).matrixTransform(matrix);
         const target = document.elementFromPoint(point.x, point.y);
         if (target && element.contains(target)) return { x: point.x, y: point.y };

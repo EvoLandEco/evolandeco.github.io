@@ -1,3 +1,4 @@
+import { SourceQuotation } from "./atlas-source-text";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { EvidenceSummary } from "./atlas-evidence-summary";
 import { AtlasDisclosure } from "./atlas-disclosure";
@@ -24,11 +25,11 @@ export function AtlasChains({ chains, onReport }: { chains: AtlasSelectedChain[]
   if (!chain) return null;
   return <section id="atlas-journeys" className="atlas-chain-section" aria-labelledby="atlas-chains-title">
     <header><GitBranch size={18} aria-hidden /><h2 id="atlas-chains-title">Journeys & connections</h2><span>{chains.length}</span></header>
-    <AtlasSelect label="Reviewed chain" value={chain.id} onChange={setChoice} items={chains.map(c => ({ value: c.id, label: c.label, badges: [
+    <div className="atlas-chain-tools"><AtlasSelect label="Reviewed chain" value={chain.id} onChange={setChoice} items={chains.map(c => ({ value: c.id, label: c.label, badges: [
       { kind: "kind", label: kinds[c.kind] },
       { kind: "count", label: `${c.nodes.length} ${c.nodes.length === 1 ? "event" : "events"}` },
       ...(c.nodes.some(n => !n.place_id) ? [{ kind: "place" as const, label: `${c.nodes.filter(n => !n.place_id).length} unlocated` }] : []),
-    ] }))} />
+    ] }))} /></div>
     <ChainFigure chain={chain} onReport={onReport} />
   </section>;
 }
@@ -190,12 +191,12 @@ function ChainFigure({ chain, onReport }: { chain: AtlasSelectedChain; onReport:
 }
 
 function ChainSourceEvidence({ ids }: { ids: string[] }) {
-  const { atlasDocuments } = useAtlas();
+  const { atlasDocuments, englishTitle } = useAtlas();
   const { data, error, retry } = useAtlasDetails(ids.map(id => ({ collection: "evidence", id })));
   if (!data) return <AtlasDetailStatus error={error} retry={retry} />;
   return ids.map(id => {
     const entry = data.get("evidence", id), report = atlasDocuments.get(entry.document_id)!;
-    return <blockquote key={id}><p>{entry.quote}</p><a href={report.url} target="_blank" rel="noopener noreferrer">{report.title} · {formatDate(report.publication)}</a></blockquote>;
+    return <div key={id}><SourceQuotation quote={entry.quote} evidenceId={entry.id} /><a href={report.url} target="_blank" rel="noopener noreferrer">{englishTitle(report)} · {formatDate(report.publication)}</a></div>;
   });
 }
 

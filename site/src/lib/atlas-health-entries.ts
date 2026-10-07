@@ -22,9 +22,9 @@ export function healthEntryIndex(view:AtlasSelectedOneHealth) {
     for(const id of component)for(const next of adjacent.get(id)!)component.add(next);
     for(const id of component)components.set(id,component);
   }
-  const timings='timings' in view ? [...view.timings,...view.undated_timings,...view.reporting_cutoffs] : [];
-  const sampling='timings' in view ? [...view.sampling_assessments,...view.undated_sampling_assessments] : [];
-  const contexts='timings' in view ? [...view.contexts,...view.undated_contexts] : [];
+  const timings=[...view.timings,...view.undated_timings,...view.reporting_cutoffs];
+  const sampling=[...view.sampling_assessments,...view.undated_sampling_assessments];
+  const contexts=[...view.contexts,...view.undated_contexts];
   const records=new Set([...all,...timings,...sampling,...contexts].map(r=>r.record_id));
   return new Map([...records].map(id=>{
     const nodeIds=new Set(all.filter(n=>n.record_id===id).flatMap(n=>[...components.get(n.id)!]));
@@ -34,7 +34,7 @@ export function healthEntryIndex(view:AtlasSelectedOneHealth) {
     const samples=sampling.filter(matches),context=contexts.filter(matches);
     return [id,{nodeIds,counts:{network:nodes.length,evidence:relations.length,timeline:timings.filter(matches).length,sampling:samples.length,environment:context.length},
       domains:new Set(nodes.map(n=>n.domain)),
-      dated:'timings' in view && [...view.timings,...view.sampling_assessments,...view.contexts].some(matches),
+      dated:[...view.timings,...view.sampling_assessments,...view.contexts].some(matches),
       fraction:samples.some(s=>s.display==='proportion'&&s.proportion!==null),
       negative:nodes.some(n=>n.finding==='agent_not_detected'),
       hypothesis:relations.some(r=>r.basis==='source_hypothesis')||context.some(c=>c.kind==='source_hypothesis'),

@@ -14,7 +14,7 @@ export function reportingFacets(bundle: AtlasData, rows: AtlasRecord[], filters:
     codes.add(membership.area_code);
     places.set(membership.record_id, codes);
   }
-  const reviews = new Map(("disease_reviews" in bundle ? bundle.disease_reviews : []).map(review => [review.record_id, review]));
+  const reviews = new Map(bundle.disease_reviews.map(review => [review.record_id, review]));
   const classifications = new Map(rows.map(row => {
     const review = reviews.get(row.id);
     const diseases = !review || !supported(review.eligibility) || review.kind === "unresolved" ? ["unclassified"]
@@ -37,7 +37,7 @@ export function reportingFacets(bundle: AtlasData, rows: AtlasRecord[], filters:
     rows: selected,
     places: [...choices(bundle.areas.map(area => ({ value: area.code, label: area.label, searchText: area.code })), placeCounts),
       { value: "unspecified", label: "Location unspecified", count: placeCounts.get("unspecified") ?? 0 }],
-    diseases: [...choices(("diseases" in bundle ? bundle.diseases : []).map(disease => ({ value: disease.id, label: disease.label })), diseaseCounts),
+    diseases: [...choices(bundle.diseases.map(disease => ({ value: disease.id, label: disease.label })), diseaseCounts),
       { value: "not_disease_specific", label: "Not disease-specific", count: diseaseCounts.get("not_disease_specific") ?? 0 },
       { value: "unclassified", label: "Unclassified disease", count: diseaseCounts.get("unclassified") ?? 0 }],
   };

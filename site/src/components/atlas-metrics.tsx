@@ -1,3 +1,4 @@
+import { SourceQuotation } from "./atlas-source-text";
 import { motion, useReducedMotion } from "motion/react";
 import { memo, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { AtlasScope } from "./atlas-scope";
@@ -6,7 +7,7 @@ import { AtlasDetailStatus, useAtlasDetails } from "./atlas-detail";
 import { CountryText } from "./atlas-location-badges";
 import { useElementSize } from "./use-element-size";
 import type { AtlasReviewedSeries } from "@/lib/atlas-contract";
-import type { AtlasBrowserSeries } from "@/lib/atlas-vendor/browser/browser.mjs";
+import type { AtlasBrowserSeries } from "@/lib/atlas-vendor/browser/0.3/browser_transport.js";
 import { useAtlas, useAtlasPanelState } from "./atlas-context";
 import { GitBranch, ExternalLink, TriangleAlert } from "lucide-react";
 import { visibleMeasure, metricValue, measureRecord, type Measure } from "@/lib/atlas-metrics";
@@ -29,7 +30,7 @@ function MeasureDetailContent({ measure }: { measure: Measure }) {
     <dl>{[["Count type", m.count_kind], ["Disease", m.disease.value], ["Population", m.population.value], ["Case definition", m.case_definition.value], ["Scope", m.stratum.value], ["Denominator", m.denominator === null ? null : String(m.denominator)], ["Denominator population", m.denominator_population.value], ["Authority", m.origin_authority.value]].filter(([, value]) => value !== null).map(([label, value]) => <div key={label}><dt>{label}</dt><dd><CountryText>{value}</CountryText></dd></div>)}</dl>
     {m.semantic_note && <p><CountryText>{m.semantic_note}</CountryText></p>}
     {m.source_date_warning && <span className="atlas-status" data-tone="warning"><TriangleAlert size={13} aria-hidden />Source date mismatch</span>}
-    {m.evidence_references.map((ref, i) => <div key={i}>{ref.quotes.map((quote, j) => <blockquote key={j}><CountryText>{quote}</CountryText></blockquote>)}</div>)}
+    {m.evidence_references.map((ref, i) => <div key={i}>{ref.quotes.map((quote, j) => <SourceQuotation key={j} quote={quote} recordId={ref.record_id} claimIndex={ref.claim_index} quoteIndex={ref.quote_indexes[j]} />)}</div>)}
     <a href={m.source_url} target="_blank" rel="noopener noreferrer">{m.source_id} · {formatDate(m.publication)} <ExternalLink size={12} aria-hidden /></a>
     </div>
   </>;
@@ -157,13 +158,13 @@ function SeriesEvidence({ seriesId, evidenceIds, onReport }: { seriesId: string;
   const { data, error, retry } = useAtlasDetails([{ collection: "metrics.reviewed_series", id: seriesId }]);
   if (!data) return <AtlasDetailStatus error={error} retry={retry} />;
   const evidence = data.get("metrics.reviewed_series", seriesId).evidence.filter(row => evidenceIds.includes(row.id));
-  return evidence.map(e => <div key={e.id}><strong>{e.section}{e.page === null ? "" : ` · p. ${e.page}`}</strong><blockquote>{e.quote}</blockquote>
+  return evidence.map(e => <div key={e.id}><strong>{e.section}{e.page === null ? "" : ` · p. ${e.page}`}</strong><SourceQuotation quote={e.quote} evidenceId={e.id} />
     <button className="atlas-observation-source" onClick={() => onReport([e.record_id])}>{atlasDocuments.get(e.document_id)!.title} <ExternalLink size={12} aria-hidden /></button></div>);
 }
 
-const ObservationRow = memo(function ObservationRow({ measure: m, onReport, publication = false, highlighted, onHover, onFocus }: { measure: Measure; onReport: (ids: string[], expand?: boolean) => void; publication?: boolean; highlighted: boolean; onHover: Dispatch<SetStateAction<string | null>>; onFocus: Dispatch<SetStateAction<string | null>> }) {
+export const ObservationRow = memo(function ObservationRow({ measure: m, onReport, publication = false, highlighted, onHover, onFocus }: { measure: Measure; onReport: (ids: string[], expand?: boolean) => void; publication?: boolean; highlighted: boolean; onHover: Dispatch<SetStateAction<string | null>>; onFocus: Dispatch<SetStateAction<string | null>> }) {
   return <div className="atlas-observation-item" data-entry-id={m.measure_id} data-highlighted={highlighted || undefined}
-    onPointerEnter={() => onHover(m.measure_id)} onPointerLeave={() => onHover(current => current === m.measure_id ? null : current)}
+    onPointerMove={() => onHover(m.measure_id)} onPointerLeave={() => onHover(current => current === m.measure_id ? null : current)}
     onFocus={() => { onFocus(m.measure_id); onHover(null); }} onBlur={() => onFocus(current => current === m.measure_id ? null : current)}>
     <button className="atlas-observation-source atlas-observation-row" onClick={() => onReport([measureRecord(m)])}>
       <span className="atlas-observation-date"><time>{formatDate(m.observation_date!)}</time><small>{m.period_label}{publication && ` · Published ${formatDate(m.publication)}`}{m.conflict_set && " · Conflicting totals"}</small></span>

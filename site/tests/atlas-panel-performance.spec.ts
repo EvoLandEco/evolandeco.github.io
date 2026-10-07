@@ -1,8 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import { healthPanelsFixture } from './atlas-health-panels-fixture';
-import { selectorHashes } from '../src/lib/atlas-contract';
+import { routeBrowserFixture } from './atlas-browser-fixture.mjs';
 
 function fixture() {
   const bundle = healthPanelsFixture();
@@ -15,21 +14,11 @@ function fixture() {
     evidence_ids: bundle.evidence.filter(evidence => evidence.record_id === record.id).slice(0, 1).map(evidence => evidence.id),
     eligibility: { ...original.eligibility, record_ids: [record.id] },
   })));
-  const bodies: Record<string, Buffer> = {
-    'atlas-site.json': Buffer.from(JSON.stringify(bundle)),
-    'map.json': readFileSync('.cache/atlas-fixture/map.json'),
-    'metrics.json': Buffer.from(JSON.stringify(bundle.metrics)),
-  };
-  const assets = Object.fromEntries(Object.entries(bodies).map(([name, bytes]) => [name, { bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') }]));
-  return { bodies, release: { version: 1, export_id: 'f'.repeat(64), published_at: '2026-09-28T00:00:00Z', mode: 'initial', cycle: null, contract_version: '1.5.0', selector_sha256: selectorHashes['1.5.0'], assets } };
+  return bundle;
 }
 
 test.beforeEach(async ({ page }) => {
-  const { bodies, release } = fixture();
-  await page.route(/\/(?:current\.json|releases\/)/, route => {
-    const name = new URL(route.request().url()).pathname.split('/').at(-1)!;
-    return name === 'current.json' ? route.fulfill({ json: release }) : name in bodies ? route.fulfill({ contentType: 'application/json', body: bodies[name] }) : route.abort();
-  });
+  await routeBrowserFixture(page, fixture(), JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
 });

@@ -4,12 +4,12 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { createAtlasDetailStore, fetchBrowserManifest, fetchBrowserAsset, prepareBrowserView, hydrateBrowserView, type AtlasBrowserCore, type AtlasBrowserManifest } from "../src/lib/atlas-browser";
-import type { AtlasRelease } from "../src/lib/atlas-release";
+import { browserSelectorHashes, type AtlasRelease } from "../src/lib/atlas-release";
 import fixture from "./atlas-fixture.json";
 
 const root = "https://atlas.invalid/browser/test";
 const fingerprint = (bytes: Uint8Array) => ({ sha256: createHash("sha256").update(bytes).digest("hex"), bytes: bytes.byteLength });
-function setup() {
+function setup(version: "0.3.0" = "0.3.0") {
   const release = fixture.release as AtlasRelease;
   const bodies = new Map<string, Buffer>();
   const assets: AtlasBrowserManifest["assets"] = {};
@@ -21,16 +21,16 @@ function setup() {
   const evidence = ["a", "b", "c"].map(id => ({ id, quote: `Synthetic quotation ${id}`, record_id: `r${id}`, document_id: `d${id}` }));
   const partitions = evidence.map((value, ordinal) => {
     const path = `details/${value.id}.json`, owner = `document:d${value.id}`;
-    add(path, { transport_version: "0.1.0", source_export_id: release.export_id, owner, rows: [{ collection: "site.evidence", ordinal, id: value.id, value }] }, "detail");
+    add(path, { transport_version: version, source_export_id: release.export_id, owner, rows: [{ collection: "site.evidence", ordinal, id: value.id, value }] }, "detail");
     return { path, owner, rows: 1 };
   });
-  const index = { transport_version: "0.1.0", source_export_id: release.export_id, partitions: partitions.map(row => row.path), collections: { "site.evidence": evidence.map((row, i) => [row.id, i]) } };
+  const index = { transport_version: version, source_export_id: release.export_id, partitions: partitions.map(row => row.path), collections: { "site.evidence": evidence.map((row, i) => [row.id, i]) } };
   add("detail-index.json", index, "detail-index");
   add("core.json", {}, "core");
   add("map-core.json", {}, "map-core");
   const trusted = { "browser_transport.js": "a".repeat(64) };
   assets["browser_transport.js"] = { sha256: trusted["browser_transport.js"], bytes: 10, kind: "selector" };
-  const manifest: AtlasBrowserManifest = { transport_version: "0.1.0", source_export_id: release.export_id,
+  const manifest: AtlasBrowserManifest = { transport_version: version, source_export_id: release.export_id,
     source: { manifest: { path: "manifest.json", sha256: "b".repeat(64), bytes: 10 }, site: { path: "atlas-site.json", ...release.assets["atlas-site.json"] },
       map: { path: "map.json", ...release.assets["map.json"] }, metrics_sha256: "c".repeat(64), site_contract_version: release.contract_version,
       selector: { path: "view.mjs", sha256: release.selector_sha256, bytes: 10 } },
@@ -55,6 +55,26 @@ test("Browser manifests bind byte verification, the scientific source and all ex
   delete f.manifest.assets["../elsewhere.json"];
   f.manifest.source.map.bytes++;
   await assert.rejects(read(), /source mismatch/);
+});
+
+test("Transport 0.3 binds manifest, index and partitions to one version", async t => {
+  const f = setup("0.3.0");
+  t.mock.method(globalThis, "fetch", async (url: string) => new Response((url.endsWith("/manifest.json") ? f.manifestBytes() : f.bodies.get(url))?.toString("utf8")));
+  const release = { ...f.release, browser: { transport_version: "0.3.0" as const, manifest: fingerprint(f.manifestBytes()) } };
+  await fetchBrowserManifest(root, fingerprint(f.manifestBytes()), release, f.trusted);
+  await assert.rejects(fetchBrowserManifest(root, fingerprint(f.manifestBytes()), { ...release, browser: { ...release.browser, transport_version: "0.1.0" } }, f.trusted), /version mismatch/);
+  const store = createAtlasDetailStore(root, f.manifest);
+  const lease = await store.acquire([{ collection: "evidence", id: "a" }]);
+  assert.deepEqual(lease.get("evidence", "a"), f.evidence[0]);
+  lease.release(); store.dispose();
+  for (const asset of ["detail-index.json", "details/a.json"]) {
+    const original = JSON.parse(f.bodies.get(`${root}/${asset}`)!.toString());
+    f.add(asset, { ...original, transport_version: "0.1.0" }, f.manifest.assets[asset].kind);
+    const invalid = createAtlasDetailStore(root, f.manifest);
+    await assert.rejects(invalid.acquire([{ collection: "evidence", id: "a" }]), /Invalid ATLAS detail/);
+    invalid.dispose();
+    f.add(asset, original, f.manifest.assets[asset].kind);
+  }
 });
 
 test("Detail leases request exact entities, share downloads and evict unpinned bytes in usage order", async t => {
@@ -164,8 +184,7 @@ test("Producer transport preserves source-bound values and serves only requested
   assert(process.env.ATLAS_RELEASE_FILE, "ATLAS_RELEASE_FILE must identify the transport's scientific release");
   const release = JSON.parse(await readFile(process.env.ATLAS_RELEASE_FILE, "utf8")) as AtlasRelease;
   const bytes = await readFile(path.join(directory, "manifest.json"));
-  const pinned: Record<string, string> = {};
-  for (const name of ["browser_transport.js", "browser_tables.js", "site_view.js"]) pinned[name] = fingerprint(await readFile(new URL(`../src/lib/atlas-vendor/browser/${name}`, import.meta.url))).sha256;
+  const pinned = browserSelectorHashes[(JSON.parse(bytes.toString()) as AtlasBrowserManifest).transport_version];
   const fetched: string[] = [];
   t.mock.method(globalThis, "fetch", async (url: string, init: RequestInit) => {
     init.signal?.throwIfAborted();

@@ -49,8 +49,8 @@ for (const [width, height, workspace] of [[390, 844, false], [1280, 720, true], 
     await page.keyboard.press('Escape');
     await expect(dialog).not.toBeVisible();
     await expect(methods).toBeFocused();
-    await expect(page.getByRole('heading', { name: 'Reporting activity' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Reporting attention' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Outbreak watch' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Latest reports' })).toBeVisible();
     if (workspace) expect(await page.locator('.atlas-workspace-scroll').evaluate(el => el.scrollHeight <= el.clientHeight)).toBe(true);
     await expect(overview).toBeVisible();
     await page.locator('summary[aria-label="Link type"]').click();

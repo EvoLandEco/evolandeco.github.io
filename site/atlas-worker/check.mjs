@@ -31,6 +31,13 @@ for (const name of ['atlas-site.json', 'map.json', 'metrics.json', 'network-tran
   assert.equal(keys.at(-1), path.slice(1) + '.gz');
   assert.match(response.headers.get('Content-Type'), name.endsWith('.mjs') ? /javascript/ : /json/);
 }
+for (const name of ['source-supplement.json', 'source-supplement.schema.json']) {
+  const path = `/releases/${'a'.repeat(64)}/supplements/${'b'.repeat(64)}/${name}`;
+  assert.equal((await worker.fetch(request(path), env)).status, 200);
+  assert.equal(limits.at(-1).bucket, 'general');
+  assert.equal(keys.at(-1), path.slice(1) + '.gz');
+}
+for (const name of ['private.json', 'source-supplement.js']) assert.equal((await worker.fetch(request(`/releases/${'a'.repeat(64)}/supplements/${'b'.repeat(64)}/${name}`), env)).status, 404);
 for (const name of ['network-analysis.json', 'network-analysis.schema.json', 'coverage-ledger.json']) {
   const path = `/network-analysis/${'b'.repeat(64)}/${name}`;
   assert.equal((await worker.fetch(request(path), env)).status, 200);
@@ -101,3 +108,26 @@ assert.deepEqual(configuration.ratelimits.map(({ name, simple }) => ({ name, sim
 ]);
 assert.equal(new Set(configuration.ratelimits.map(row => row.namespace_id)).size, configuration.ratelimits.length);
 console.log("ATLAS Worker: paths, compression, CORS, conditional reads, methods and separate read limits checked.");
+
+for (const name of ['source-text-display.json', 'source-text-display.schema.json', 'watch.json', 'watch.schema.json']) {
+  const path = `/releases/${'a'.repeat(64)}/presentation/${'b'.repeat(64)}/${name}`;
+  assert.equal((await worker.fetch(request(path), env)).status, 200);
+  assert.equal(keys.at(-1), path.slice(1) + '.gz');
+}
+assert.equal((await worker.fetch(request(`/releases/${'a'.repeat(64)}/presentation/${'b'.repeat(64)}/private.json`), env)).status, 404);
+
+const dailyRoot = `/daily/${'a'.repeat(64)}`;
+const dailyCurrent = await worker.fetch(request(`${dailyRoot}/current.json`), env);
+assert.equal(dailyCurrent.status, 200);
+assert.equal(keys.at(-1), `${dailyRoot.slice(1)}/current.json`);
+assert.equal(dailyCurrent.headers.get('Content-Encoding'), null);
+assert.match(dailyCurrent.headers.get('Cache-Control'), /must-revalidate/);
+for (const name of ['daily.json', 'daily.schema.json', 'manifest.json', 'validation.json', 'daily-view.mjs']) {
+  const dailyPath = `${dailyRoot}/${'b'.repeat(64)}/${name}`;
+  const response = await worker.fetch(request(dailyPath), env);
+  assert.equal(response.status, 200);
+  assert.equal(keys.at(-1), dailyPath.slice(1) + '.gz');
+  assert.match(response.headers.get('Cache-Control'), /immutable/);
+}
+for (const suffix of ['private.json', 'unknown.mjs', 'current.json'])
+  assert.equal((await worker.fetch(request(`${dailyRoot}/${'b'.repeat(64)}/${suffix}`), env)).status, 404);

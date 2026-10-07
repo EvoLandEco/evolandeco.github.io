@@ -14,9 +14,11 @@ test("Browser attachment preserves every release field and rejects silent replac
   const base = { ...fixture.release, extra_analysis: { identity: "preserve" }, assets: { ...fixture.release.assets, "future.json": { bytes: 8, sha256: "e".repeat(64) } } };
   const descriptor = { sha256: "f".repeat(64), bytes: 100 };
   const attached = attachBrowserDescriptor(base, descriptor);
-  assert.deepEqual(attached, { ...base, browser: { transport_version: "0.1.0", manifest: descriptor } });
+  assert.deepEqual(attached, { ...base, browser: { transport_version: "0.3.0", manifest: descriptor } });
   assert.deepEqual(attachBrowserDescriptor(attached, descriptor), attached);
   assert.throws(() => attachBrowserDescriptor(attached, { ...descriptor, sha256: "a".repeat(64) }), /separate review/);
+  assert.equal(attachBrowserDescriptor(base, descriptor, "0.3.0").browser.transport_version, "0.3.0");
+
 });
 
 test("Browser publication authorization binds destination, source and explicit approval state", () => {
@@ -44,12 +46,16 @@ test("Same-export publication rejects a stale receipt that loses or changes brow
 
 test("Stable producer handoffs require exact source bindings, reconstruction and every-record parity", async () => {
   const handoff = JSON.parse(await readFile(new URL("../evidence/browser-transport-stable-handoff-2026-10-02.json", import.meta.url), "utf8"));
+  handoff.browser.transport_version = "0.3.0";
   handoff.browser.directory = join(tmpdir(), "atlas-browser-handoff");
   handoff.browser.manifest.path = join(handoff.browser.directory, "manifest.json");
   const assets = Object.fromEntries(Array.from({ length: handoff.asset_count }, (_, i) => [`details/synthetic-${i}.json`, { bytes: 1, sha256: "a".repeat(64), kind: "detail" }]));
-  const manifest = { source_export_id: handoff.source_export_id, source: handoff.browser.source, assets } as AtlasBrowserManifest;
+  const manifest = { transport_version: handoff.browser.transport_version, source_export_id: handoff.source_export_id, source: handoff.browser.source, assets } as AtlasBrowserManifest;
   const check = (candidate = handoff, ref = handoff.browser.manifest) => checkBrowserHandoff(candidate, manifest, ref);
   assert.equal(check().selection_cases, 2220);
+  assert.throws(() => check({ ...handoff, browser: { ...handoff.browser, transport_version: "0.2.0" } }));
+  const version02 = { ...handoff, browser: { ...handoff.browser, transport_version: "0.3.0" } };
+  assert.equal(checkBrowserHandoff(version02, { ...manifest, transport_version: "0.3.0" }, handoff.browser.manifest).browser.transport_version, "0.3.0");
   for (const field of ["reconstruction", "all_records_individually", "producer_ready", "pinned_selector_parity"]) assert.throws(() => check({ ...handoff, [field]: false }));
   assert.throws(() => check({ ...handoff, source_files_compared: ["site"] }));
   assert.throws(() => check(handoff, { ...handoff.browser.manifest, bytes: handoff.browser.manifest.bytes + 1 }));

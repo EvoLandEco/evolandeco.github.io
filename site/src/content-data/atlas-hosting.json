@@ -1,6 +1,6 @@
 {
   "origin": "https://qtj-atlas.evolandeco-github-io.workers.dev",
   "bucket": "qtj-atlas",
-  "contract_version": "1.5.0",
-  "selector_sha256": "80f15b7fda19c2fd1aed5d92a6317733fe5b69aa66c5fa0e386b403a61b21e0c"
+  "contract_version": "1.8.0",
+  "selector_sha256": "eeb1ed08365086de8f97a1b952405927f9948f3c61ffde538f401dab4c083136"
 }

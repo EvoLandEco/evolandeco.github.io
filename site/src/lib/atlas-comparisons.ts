@@ -1,21 +1,10 @@
-import type { AtlasData, AtlasSiteBundle } from "./atlas-contract";
-import type { AtlasBrowserSelector } from "./atlas-vendor/browser/browser.mjs";
-import { selectView } from "./atlas-vendor/view.mjs";
-import { selectView as selectReviewedView } from "./atlas-vendor/1.1/view.mjs";
-import { selectView as selectChainView } from "./atlas-vendor/1.2/view.mjs";
-import { selectView as selectDiseaseView } from "./atlas-vendor/1.3/view.mjs";
-import { selectView as selectOneHealthView } from "./atlas-vendor/1.4/view.mjs";
-import { selectView as selectPanelView } from "./atlas-vendor/1.5/view.mjs";
-import type { AtlasOneHealthOptions, AtlasSelectedOneHealth, AtlasDiseaseComposition } from "./atlas-contract";
-import type { AtlasReviewedSeries, AtlasSelectedChain } from "./atlas-contract";
+import type { AtlasData, AtlasSiteBundle, AtlasReportAssessment } from "./atlas-contract";
+import type { AtlasBrowserSelector } from "./atlas-browser";
+import { selectView as selectAssessedView } from "./atlas-vendor/browser/0.3/site_view.js";
+import type { AtlasOneHealthOptions, AtlasSelectedOneHealth } from "./atlas-contract";
 function selectResearch(bundle: AtlasSiteBundle, ids: string[], options: AtlasOneHealthOptions = {}) {
   const { publication_from: from, publication_until: until } = bundle.snapshot;
-  if (bundle.contract_version === "1.5.0") return selectPanelView(bundle, from, until, "publication", null, ids, options);
-  if (bundle.contract_version === "1.4.0") return selectOneHealthView(bundle, from, until, "publication", null, ids, options);
-  if (bundle.contract_version === "1.3.0") return { ...selectDiseaseView(bundle, from, until, "publication", null, ids), one_health: null as AtlasSelectedOneHealth | null };
-  if (bundle.contract_version === "1.2.0") return { ...selectChainView(bundle, from, until, "publication", null, ids), disease_composition: null as AtlasDiseaseComposition | null, one_health: null as AtlasSelectedOneHealth | null };
-  if (bundle.contract_version === "1.1.0") return { ...selectReviewedView(bundle, from, until, "publication", null, ids), reviewed_chains: [] as AtlasSelectedChain[], disease_composition: null as AtlasDiseaseComposition | null, one_health: null as AtlasSelectedOneHealth | null };
-  return { ...selectView(bundle, from, until, "publication", null, ids), reviewed_series: [] as AtlasReviewedSeries[], reviewed_chains: [] as AtlasSelectedChain[], numeric_coverage: null, disease_composition: null as AtlasDiseaseComposition | null, one_health: null as AtlasSelectedOneHealth | null };
+  return selectAssessedView(bundle, from, until, "publication", null, ids, options);
 }
 export type Comparison = AtlasData["comparisons"][number];
 export function createResearch<B extends AtlasData>(bundle: B, browserSelect?: AtlasBrowserSelector) {
@@ -28,12 +17,17 @@ export function createResearch<B extends AtlasData>(bundle: B, browserSelect?: A
   };
 
   let selection: { ids: Set<string>; view: ReturnType<typeof select> } | undefined;
-  function selectedResearch(recordIds: Set<string>) {
+  function selectedResearch(recordIds: Set<string>): ReturnType<typeof select> & { report_assessments?: AtlasReportAssessment[] } {
     if (!selection || selection.ids.size !== recordIds.size || [...recordIds].some(id => !selection!.ids.has(id))) {
       // Identical report selections share the producer's evidence view across panels.
       selection = { ids: new Set(recordIds), view: select([...recordIds]) };
     }
     return selection.view;
+  }
+
+  function reportAssessments(recordIds: Set<string>, reportIds: string[]): AtlasReportAssessment[] {
+    const view = selectedResearch(recordIds);
+    return (view.report_assessments ?? []).filter(row => reportIds.includes(row.record_id));
   }
 
   function reportComparisons(recordIds: Set<string>, reportIds: string[]) {
@@ -46,5 +40,5 @@ export function createResearch<B extends AtlasData>(bundle: B, browserSelect?: A
     return select([...recordIds], options).one_health;
   }
 
-  return { bundle, assertions, channels, selectedResearch, selectedOneHealth, reportComparisons };
+  return { bundle, assertions, channels, selectedResearch, selectedOneHealth, reportComparisons, reportAssessments };
 }

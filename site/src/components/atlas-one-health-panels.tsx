@@ -1,4 +1,5 @@
 "use client";
+import { SourceQuotation } from "./atlas-source-text";
 import { useEffect, useId, useMemo, useRef } from "react";
 import { ArrowRight, ExternalLink, FileText } from "lucide-react";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -10,7 +11,7 @@ import { formatDate } from "@/lib/atlas";
 import { healthPanelForEntry } from "@/lib/atlas-health-entries";
 import { metricValue } from "@/lib/atlas-metrics";
 import { observationTimeBounds, observationTimeLabel } from "@/lib/atlas-health-time";
-import type { AtlasSelectedOneHealth } from "@/lib/atlas-vendor/1.5/site-types";
+import type { AtlasSelectedOneHealth } from "@/lib/atlas-vendor/browser/0.3/atlas.js";
 import type { AtlasOneHealthNode, AtlasOneHealthTiming, AtlasOneHealthSamplingAssessment, AtlasOneHealthContext, AtlasSelectedOneHealthPanel } from "@/lib/atlas-contract";
 import type { AtlasDetailRef } from "@/lib/atlas-browser";
 
@@ -91,7 +92,7 @@ function SamplingTable({rows,nodes,selected,onSelect}:{rows:Sampling[];nodes:Map
 }
 
 function PanelDetails({item,nodes,onReport}:{item:PanelItem;nodes:Map<string,AtlasOneHealthNode>;onReport:(ids:string[],expand?:boolean)=>void}) {
-  const {bundle,atlasDocuments}=useAtlas();
+  const {bundle,atlasDocuments,englishTitle}=useAtlas();
   const refs=useMemo<AtlasDetailRef[]>(()=>{
     const requested:AtlasDetailRef[]=item.evidence_ids.map(id=>({collection:"evidence",id}));
     const measureIds=isContext(item) ? item.measure_ids : isSampling(item) ? [item.positive_measure_id,item.tested_measure_id].filter((id):id is string=>id!==null) : [];
@@ -114,8 +115,8 @@ function PanelDetails({item,nodes,onReport}:{item:PanelItem;nodes:Map<string,Atl
     {isContext(item) && <><p>{item.linkage_note}</p>{!item.node_ids.length && <p>Independent source statement; no linked observation is asserted.</p>}<LocationBadges codes={[...new Set(places.flatMap(p=>p.area_codes))]} />{places.map(p=><p key={p.id}>{p.label} · {words(p.precision)}</p>)}</>}
     {values.map(m=><article className="atlas-oh-measure" key={m.measure_id}><strong>{metricValue(m)} <small>{words(m.unit)}</small></strong><b>{m.label}</b><span>{m.population.value ?? words(m.population.status)}</span><span>{m.period_label}</span><p>{m.semantic_note}</p></article>)}
     <p>{item.reason}</p><p>{words(item.review_state)} · reviewed {formatDate(item.reviewed_at)}</p>
-    <details className="atlas-oh-methods"><summary>Publication & capture dates</summary>{documents.map(d=><p key={d.id}>{d.title}<small>Published {formatDate(d.publication)} · Captured {formatDate(d.capture)}</small></p>)}</details>
+    <details className="atlas-oh-methods"><summary>Publication & capture dates</summary>{documents.map(d=><p key={d.id}>{englishTitle(d)}<small>Published {formatDate(d.publication)} · Captured {formatDate(d.capture)}</small></p>)}</details>
     {item.comparison_ids.map(id=>{const c=bundle.comparisons.find(c=>c.id===id)!;return <details key={id}><summary>{words(c.kind)} · comparison evidence</summary>{c.participant_ids.map(id=><p key={id}>{data.get("assertions",id).text}</p>)}</details>;})}
-    <h4>Source evidence</h4>{item.evidence_ids.map(id=>{const e=data.get("evidence",id),d=atlasDocuments.get(e.document_id)!;return <div key={id}><a href={d.url} target="_blank" rel="noopener noreferrer">{d.title}<ExternalLink size={12} aria-hidden /></a><small>Published {formatDate(d.publication)}{e.page!==null?` · Page ${e.page}`:""}{e.section?` · ${e.section}`:""}</small><blockquote>{e.quote}</blockquote></div>;})}
+    <h4>Source evidence</h4>{item.evidence_ids.map(id=>{const e=data.get("evidence",id),d=atlasDocuments.get(e.document_id)!;return <div key={id}><a href={d.url} target="_blank" rel="noopener noreferrer">{englishTitle(d)}<ExternalLink size={12} aria-hidden /></a><small>Published {formatDate(d.publication)}{e.page!==null?` · Page ${e.page}`:""}{e.section?` · ${e.section}`:""}</small><SourceQuotation quote={e.quote} evidenceId={e.id} /></div>;})}
   </>;
 }

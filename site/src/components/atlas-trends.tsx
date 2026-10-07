@@ -1,52 +1,84 @@
-import { memo, useId, useMemo, useState, type CSSProperties } from "react";
+import { sourceLogos } from "@/lib/atlas-identities";
+import { DailyWatchCard } from "./atlas-daily";
+import { dailyTitle, reportChronology, type DailyDocument, type DailySelection, type DailyState, type DailyWatch } from "@/lib/atlas-daily";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { Activity, ChartNoAxesCombined, ChartPie, GitBranch } from "lucide-react";
-import { useAtlas, useAtlasPanelState } from "./atlas-context";
-import { AtlasChains } from "./atlas-chains";
-import { AtlasSelect } from "./atlas-select";
-import { ObservationPlot } from "./atlas-metrics";
 import { visibleMeasure, measureEvidenceRecords } from "@/lib/atlas-metrics";
-import type { AtlasRecord } from "@/lib/atlas";
+import { memo, useMemo, useId, useState, useContext, useCallback, type CSSProperties } from "react";
+import Image from "next/image";
+import { ArrowRight, ChevronDown, ChevronsDown, Newspaper, Radar, Activity, ChartPie, Building2 } from "lucide-react";
+import { useAtlas, AtlasWorkspaceContext } from "./atlas-context";
+import { useElementSize } from "./use-element-size";
+import { ReportCountryFlags } from "./atlas-location-badges";
+import { formatDate, type AtlasRecord } from "@/lib/atlas";
 
-export const AtlasTrends = memo(function AtlasTrends({ rows, window, onReport }: { rows: AtlasRecord[]; window: [string, string]; onReport: (ids: string[], expand?: boolean) => void }) {
-  const { metrics, measures, atlasDocuments, selectedResearch } = useAtlas();
-  const [context, setContext] = useAtlasPanelState("trends.series", "");
-  const [panel, setPanel] = useAtlasPanelState("trends.panel", "journeys");
+export const AtlasTrends = memo(function AtlasTrends({ rows, window, onReport, onBrowseReports, daily, dailyDocuments = [], dailyState, dailyExcluded, onDailyReport, onWatchReports, onPeriod }: { rows: AtlasRecord[]; window: [string, string]; onReport: (ids: string[], expand?: boolean) => void; onBrowseReports: () => void; daily?: DailySelection; dailyDocuments?: DailyDocument[]; dailyState?: DailyState; dailyExcluded?: boolean; onDailyReport: (id: string) => void; onWatchReports: (item: DailyWatch) => void; onPeriod: (month: string) => void }) {
+  const { atlasDocuments, englishTitle, sourceName, reportOrganizations, selectedResearch, metrics } = useAtlas();
+  const fullscreen = useContext(AtlasWorkspaceContext);
+  const { ref: latestBody, size: latestSize } = useElementSize<HTMLDivElement>();
+  const latestRowHeight = 84;
+  const latestCount = fullscreen ? Math.max(1, Math.floor(((latestSize?.height ?? 0) - latestRowHeight) / latestRowHeight)) : 7;
+  const latestFadeHeight = fullscreen && latestSize ? latestSize.height / (latestCount + 1) : latestRowHeight;
+  const dailyEvents = useMemo(() => daily?.watch_items ?? [], [daily]);
+  const [watchCount, setWatchCount] = useState(3);
+  const [watchHasMore, setWatchHasMore] = useState(false);
+  const watchEnd = useCallback((element: HTMLDivElement | null) => {
+    if (!element) return;
+    const observer = new IntersectionObserver(([entry]) => setWatchHasMore(!entry.isIntersecting), {
+      root: element.parentElement,
+      rootMargin: `0px 0px -${latestFadeHeight}px 0px`,
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [latestFadeHeight]);
+  const featuredDaily = useMemo(() => new Set(dailyEvents.flatMap(item => item.document_ids)), [dailyEvents]);
   const data = useMemo(() => {
-    const ids = new Set(rows.map(r => r.id));
+    const ids = new Set(rows.map(row => row.id));
+    const groups = new Map<string, AtlasRecord[]>();
+    for (const row of rows) {
+      const group = groups.get(row.document_id) ?? [];
+      group.push(row); groups.set(row.document_id, group);
+    }
+    const publications = reportChronology([...groups.values()], dailyDocuments, id => atlasDocuments.get(id)!);
+    const latest = publications.filter(entry => !entry.dailyVersions.some(doc => featuredDaily.has(doc.id)));
     const view = selectedResearch(ids);
-    const eligible = new Set(view.panels.flatMap(p => p.measure_ids));
-    const reviewed = view.reviewed_series;
-    const reviewedIds = new Set(reviewed.flatMap(s => s.members.map(m => m.measure_id)));
-    const selected = metrics.measures.filter(m => eligible.has(m.measure_id) && visibleMeasure(m, ids) && !m.superseded);
-    const measured = new Set(selected.flatMap(measureEvidenceRecords));
-    const unreviewed = metrics.series.map(s => ({ id: s.context_id, review: undefined, items: s.measure_ids.map(id => measures.get(id)!).filter(m => !reviewedIds.has(m.measure_id) && eligible.has(m.measure_id) && visibleMeasure(m, ids) && !m.superseded && m.value !== null && m.observation_date !== null).sort((a, b) => a.observation_date!.localeCompare(b.observation_date!)) }))
-      .filter(s => new Set(s.items.map(m => m.observation_date)).size > 1);
-    const series = [...reviewed.map(review => ({ id: review.series_id, review, items: review.members.map(m => measures.get(m.measure_id)!) })), ...unreviewed];
+    const eligible = new Set(view.panels.flatMap(panel => panel.measure_ids));
+    const measured = new Set(metrics.measures.filter(measure => eligible.has(measure.measure_id) && visibleMeasure(measure, ids) && !measure.superseded).flatMap(measureEvidenceRecords));
     const months = [];
     const cursor = new Date(`${window[0].slice(0, 7)}-01T00:00:00Z`);
     while (cursor.toISOString().slice(0, 7) <= window[1].slice(0, 7)) {
       const month = cursor.toISOString().slice(0, 7);
-      const records = rows.filter(r => atlasDocuments.get(r.document_id)!.publication.startsWith(month));
-      months.push({ month, records, count: new Set(records.map(r => r.document_id)).size });
+      const count = publications.filter(entry => entry.publication.startsWith(month)).length;
+      months.push({ month, count });
       cursor.setUTCMonth(cursor.getUTCMonth() + 1);
     }
-    return { composition: view.disease_composition, chains: view.reviewed_chains, series, months, measured: view.numeric_coverage?.records_with_measures ?? measured.size, documents: new Set(rows.map(r => r.document_id)).size };
-  }, [rows, window, metrics, measures, atlasDocuments, selectedResearch]);
-  const selected = data.series.find(s => s.id === context) ?? data.series[0];
-  const peak = Math.max(1, ...data.months.map(m => m.count));
+    return { latest, months, composition: view.disease_composition, measured: view.numeric_coverage?.records_with_measures ?? measured.size, documents: publications.length };
+  }, [rows, atlasDocuments, window, selectedResearch, metrics, featuredDaily, dailyDocuments]);
+  const { latest } = data;
+  function latestEntry(entry: (typeof latest)[number], index: number) {
+    const dailyDocument = entry.dailyVersions[0];
+    const document = entry.records.length ? atlasDocuments.get(entry.id)! : dailyDocument;
+    const source = entry.records[0]?.source ?? dailyDocument.channel_id ?? dailyDocument.source_id;
+    const logo = entry.records.length ? reportOrganizations[source]?.logo : sourceLogos[dailyDocument.source_id];
+    const title = entry.records.length ? englishTitle(document) : dailyTitle(dailyDocument);
+    return <li key={entry.id} className={index === latestCount ? "atlas-latest-preview" : undefined} inert={index === latestCount}><button className="atlas-latest-entry" onClick={() => dailyDocument ? onDailyReport(dailyDocument.id) : onReport(entry.records.map(record => record.id), true)}>
+      <span className="atlas-timeline-node institution-logo atlas-source-logo" aria-hidden>{logo ? <Image src={`/logos/atlas/${logo}`} alt="" width={32} height={32} unoptimized /> : <Building2 size={18} />}</span>
+      <span className="atlas-latest-date">{document.publication && <time dateTime={document.publication}>{formatDate(document.publication)}</time>}<small>{entry.records.length ? sourceName(source) : dailyDocument.source_name}</small></span>
+      <span><strong title={title}>{title}</strong></span><ArrowRight size={16} aria-hidden />
+    </button></li>;
+  }
+  const peak = Math.max(1, ...data.months.map(month => month.count));
   const coverage = rows.length ? data.measured / rows.length * 100 : 0;
-  return <div className="atlas-trends" data-panel={panel}>
+  return <div className="atlas-trends atlas-briefing">
     <div className="atlas-trend-overview">
       <section className="atlas-trend-activity" aria-labelledby="atlas-activity-title">
         <header><Activity size={17} aria-hidden /><h2 id="atlas-activity-title">Reporting activity</h2><strong>{data.documents}<small> reports</small></strong></header>
-        <div className="atlas-activity-bars">{data.months.map(({ month, records, count }) => <button key={month} disabled={!count} aria-label={`${month}: ${count} reports. View reports`} onClick={() => onReport(records.map(r => r.id))}>
+        <div className="atlas-activity-bars">{data.months.map(({ month, count }) => <button key={month} disabled={!count} aria-label={`${month}: ${count} reports. View reports`} onClick={() => onPeriod(month)}>
           <span className="atlas-activity-track"><span style={{ height: `calc((100% - 20px) * ${count / peak})` }} /><b>{count}</b></span>
           <span>{new Intl.DateTimeFormat("en-GB", { month: "short", timeZone: "UTC" }).format(new Date(`${month}-01`))}<small>{month.slice(0, 4)}</small></span>
         </button>)}</div>
       </section>
       <section className="atlas-trend-coverage" aria-labelledby="atlas-coverage-title">
-        <header><ChartPie size={17} aria-hidden /><h2 id="atlas-coverage-title">{data.composition ? "Reporting attention" : "Figure coverage"}</h2></header>
+        <header><ChartPie size={17} aria-hidden /><h2 id="atlas-coverage-title">{data.composition ? "Reporting attention" : "Figure coverage"}</h2>{dailyState?.data && <span className="atlas-daily-attention-scope" title="Weekly reviewed reports" aria-label="Weekly reviewed reports">Weekly</span>}</header>
         {data.composition ? <DiseaseRing composition={data.composition} onReport={onReport} /> : <>
         <svg viewBox="10 10 124 124" role="img" aria-label={`${data.measured} of ${rows.length} records have extracted figures`}>
           <circle cx="72" cy="72" r="58" className="atlas-coverage-track" />
@@ -55,29 +87,24 @@ export const AtlasTrends = memo(function AtlasTrends({ rows, window, onReport }:
         </svg></>}
       </section>
     </div>
-    {data.chains.length > 0 && <div className="atlas-trend-switch" role="group" aria-label="Trend figure">
-      <button aria-pressed={panel === "journeys"} aria-controls="atlas-journeys" onClick={() => setPanel("journeys")}><GitBranch size={15} aria-hidden />Journeys</button>
-      <button aria-pressed={panel === "observations"} aria-controls="atlas-observation-panel" onClick={() => setPanel("observations")}><ChartNoAxesCombined size={15} aria-hidden />Observations</button>
-    </div>}
-    <AtlasChains chains={data.chains} onReport={onReport} />
-    <section id="atlas-observation-panel" className="atlas-trend-observations" aria-labelledby="atlas-observations-title">
-      <header><ChartNoAxesCombined size={18} aria-hidden /><h2 id="atlas-observations-title">Reported observations</h2><span>{data.series.length} series</span></header>
-      {selected ? <>
-        <AtlasSelect label="Observation series" searchable value={selected.id} onChange={setContext} items={data.series.map(s => {
-          const measure = s.items[0];
-          return { value: s.id, label: s.review?.label ?? [measure.disease.value, measure.geography.value, measure.label, measure.count_kind].filter(Boolean).join(" · "), title: measure.label,
-            badges: [
-              ...(measure.disease.value ? [{ kind: "disease" as const, label: measure.disease.value }] : []),
-              ...(measure.geography.value ? [{ kind: "place" as const, label: measure.geography.value }] : []),
-              { kind: "period" as const, label: measure.count_kind === "interval" ? "Per reporting period" : measure.count_kind === "cumulative" ? "Cumulative" : "Reported values" },
-            ] };
-        })} />
-        <div className="atlas-observation-grid"><ObservationPlot seriesId={selected.id} series={selected.review} items={selected.items} onReport={onReport} /></div>
-      </> : <p className="atlas-empty">No observations across multiple dates in this selection. Try a wider reporting window or another topic.</p>}
+    <div className="atlas-briefing-columns" style={{ "--latest-row-height": `${latestRowHeight}px`, "--briefing-fade-height": `${latestFadeHeight}px` } as CSSProperties}><section className="atlas-watch" aria-labelledby="atlas-watch-title">
+      <header><Radar size={18} aria-hidden /><h2 id="atlas-watch-title">Outbreak watch</h2></header>
+      <div className="atlas-briefing-body" data-fade={dailyEvents.length > 0}><ReportCountryFlags value={true}><div className="atlas-watch-list">{dailyState?.loading && <p className="atlas-daily-notice" role="status">Checking daily reports…</p>}{dailyState?.error && <p className="atlas-daily-notice" role="status">{dailyState.error}</p>}{dailyState?.data && dailyExcluded && <p className="atlas-daily-notice">Daily reports have no reviewed disease, topic or relationship classifications for these filters.</p>}{daily && dailyEvents.length > 0 ? <>
+        <div className="atlas-watch-cards" id="atlas-watch-cards">{dailyEvents.map((item, index) => <div key={item.id} data-mobile-hidden={index >= watchCount}><DailyWatchCard item={item} onReports={onWatchReports} /></div>)}</div>
+        {dailyEvents.length > watchCount && <button className="atlas-briefing-link atlas-watch-more" aria-controls="atlas-watch-cards" onClick={() => setWatchCount(count => count + 3)}>Load more<ChevronDown size={16} aria-hidden /></button>}
+      </> : !dailyState?.loading && !dailyState?.error && <p className="atlas-empty">No current watch selections match this reporting scope.</p>}<div ref={watchEnd} className="atlas-watch-end" aria-hidden /></div></ReportCountryFlags>
+        {dailyEvents.length > 0 && watchHasMore && <span className="atlas-watch-scroll" aria-hidden><span>Scroll for more<ChevronsDown size={16} /></span></span>}
+      </div>
     </section>
+    <section className="atlas-latest" aria-labelledby="atlas-latest-title">
+      <header><Newspaper size={18} aria-hidden /><h2 id="atlas-latest-title">Latest reports</h2></header>
+      <div ref={latestBody} className="atlas-briefing-body atlas-latest-body" data-fade={latest.length > latestCount}>
+        <ol className="atlas-latest-list">{latest.length ? latest.slice(0, latestCount + 1).map(latestEntry) : <li className="atlas-empty">No additional dated reports match these filters.</li>}</ol>
+        <button className="atlas-briefing-link atlas-latest-all" onClick={onBrowseReports}>View all reports<ArrowRight size={15} aria-hidden /></button>
+      </div>
+    </section></div>
   </div>;
 });
-
 
 function DiseaseRing({ composition, onReport }: { composition: import("@/lib/atlas-contract").AtlasDiseaseComposition; onReport: (ids: string[]) => void }) {
   const clipId = useId();

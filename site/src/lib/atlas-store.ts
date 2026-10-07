@@ -1,3 +1,5 @@
+import type { WatchData } from "./atlas-presentation";
+import type { SourceTextIndex } from "./atlas-source-text";
 import type { AtlasData, AtlasMap, AtlasMapSnapshot, AtlasSiteBundle } from "./atlas-contract";
 import type { AtlasBrowserSelector, AtlasDetailCollections, AtlasDetailLease, AtlasDetailRef } from "./atlas-browser";
 import { createAtlas } from "./atlas";
@@ -11,7 +13,7 @@ function archiveDetails(snapshot: AtlasMapSnapshot, bundle: AtlasSiteBundle): De
   const collections: { [K in keyof AtlasDetailCollections]: AtlasDetailCollections[K][] } = {
     assertions: bundle.assertions, evidence: bundle.evidence, comparisons: bundle.comparisons,
     "metrics.measures": bundle.metrics.measures,
-    "metrics.reviewed_series": "reviewed_series" in bundle.metrics ? bundle.metrics.reviewed_series : [],
+    "metrics.reviewed_series": bundle.metrics.reviewed_series,
     "map.records": snapshot.records,
   };
   const indexes = new Map<keyof AtlasDetailCollections, Map<string, number>>();
@@ -46,7 +48,7 @@ function archiveDetails(snapshot: AtlasMapSnapshot, bundle: AtlasSiteBundle): De
   };
 }
 
-export function createAtlasStore<S extends AtlasMap, B extends AtlasData>(snapshot: S, bundle: B, browser?: { select: AtlasBrowserSelector; details: Details }) {
+export function createAtlasStore<S extends AtlasMap, B extends AtlasData>(snapshot: S, bundle: B, browser?: { select: AtlasBrowserSelector; details: Details }, sourceText?: SourceTextIndex, watch?: WatchData) {
   const research = createResearch(bundle, browser?.select);
   let details = browser?.details;
   if (!details) {
@@ -54,6 +56,10 @@ export function createAtlasStore<S extends AtlasMap, B extends AtlasData>(snapsh
     details = archiveDetails(snapshot, bundle);
   }
   return { ...createAtlas(snapshot, bundle), ...research,
-    ...createMetrics(bundle, research.selectedResearch), ...createIdentities(bundle, snapshot), details };
+    ...createMetrics(bundle, research.selectedResearch), ...createIdentities(bundle, snapshot), details, sourceText, watch,
+    englishTitle(document: { id: string; title: string }) {
+      const id = sourceText?.titles.get(document.id)?.english_translation_id;
+      return id ? sourceText!.translations.get(id)!.text : document.title;
+    } };
 }
 export type AtlasStore = ReturnType<typeof createAtlasStore>;

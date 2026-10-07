@@ -23,3 +23,12 @@ test('Timeline placement preserves days, leap months, years and incomplete dates
  assert.equal(observationTimeLabel(time('2026',null,'year')),'2026');
  assert.equal(observationTimeLabel({...time('2026-07',null,'month'),certainty:'approximately'}),'Jul 2026 · approximate');
 });
+
+test('Mixed interval endpoints retain independent source precision',()=>{
+ const mixed={...time('2024','2026-02-15','year'),precision:'mixed' as const};
+ assert.equal(observationTimeLabel(mixed),'2024 – 15 Feb 2026');
+ assert.deepEqual(observationTimeBounds(mixed)?.map(ms=>new Date(ms).toISOString().slice(0,10)),['2024-01-01','2026-02-15']);
+ const monthEnd={...mixed,start:{value:'2024-01-15',status:'reported' as const},end:{value:'2024-02',status:'reported' as const}};
+ assert.equal(observationTimeLabel(monthEnd),'15 Jan 2024 – Feb 2024');
+ assert.deepEqual(observationTimeBounds(monthEnd)?.map(ms=>new Date(ms).toISOString().slice(0,10)),['2024-01-15','2024-02-29']);
+});

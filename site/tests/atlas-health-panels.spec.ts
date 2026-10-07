@@ -1,16 +1,12 @@
 import { test,expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import AxeBuilder from '@axe-core/playwright';
 import { healthPanelsFixture } from './atlas-health-panels-fixture';
-import { selectorHashes } from '../src/lib/atlas-contract';
+import { routeBrowserFixture } from './atlas-browser-fixture.mjs';
 
 for(const viewport of [{width:390,height:950},{width:1280,height:720},{width:1280,height:950}])test(`One Health analytical panels ${viewport.width}×${viewport.height}`,async({page})=>{
  const bundle=healthPanelsFixture();
- const data:Record<string,Buffer>={'atlas-site.json':Buffer.from(JSON.stringify(bundle)),'map.json':readFileSync('.cache/atlas-fixture/map.json'),'metrics.json':Buffer.from(JSON.stringify(bundle.metrics))};
- const assets=Object.fromEntries(Object.entries(data).map(([key,bytes])=>[key,{bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')}]));
- const release={version:1,export_id:'f'.repeat(64),published_at:'2026-09-28T00:00:00Z',mode:'initial',cycle:null,contract_version:'1.5.0',selector_sha256:selectorHashes['1.5.0'],assets};
- await page.route(/\/(?:current\.json|releases\/)/,route=>{const name=new URL(route.request().url()).pathname.split('/').at(-1)!;return name==='current.json'?route.fulfill({json:release}):route.fulfill({contentType:'application/json',body:data[name]});});
+ await routeBrowserFixture(page,bundle,JSON.parse(readFileSync('.cache/atlas-fixture/map.json','utf8')));
  await page.setViewportSize(viewport);await page.emulateMedia({reducedMotion:'reduce',colorScheme:viewport.width===390?'dark':'light'});
  const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
  await page.goto('/atlas/');

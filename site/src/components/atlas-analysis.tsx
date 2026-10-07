@@ -1,8 +1,9 @@
 "use client";
 import { memo, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { AtlasObservations, useObservationSeries, observationSeriesLabel } from "./atlas-observations";
 import { AtlasScope } from "./atlas-scope";
-import { ChartNoAxesCombined, Database, Radar, BookOpen, CircleHelp, Activity, ListChecks } from "lucide-react";
+import { ChartNoAxesCombined, Database, Radar, BookOpen, CircleHelp, Activity, ListChecks, ChartScatter } from "lucide-react";
 import type { AtlasExperiment, IntelligenceExperiment, IntelligenceSeries } from "@/lib/atlas-intelligence";
 import type { AtlasRecord, AtlasLink } from "@/lib/atlas";
 import { formatDate } from "@/lib/atlas";
@@ -13,7 +14,8 @@ import styles from "./atlas-analysis.module.css";
 type Props = { experiment: AtlasExperiment; rows: AtlasRecord[]; onReport: (ids: string[], expand?: boolean) => void };
 
 export const AtlasAnalysis = memo(function AtlasAnalysis({ experiment, rows, links, seriesId, onSeries, onReport, onLink, footerTarget }: Props & { footerTarget: HTMLElement | null; links: AtlasLink[]; seriesId: string; onSeries: (id: string) => void; onLink: (id: string) => void }) {
-  const [view, setView] = useAtlasPanelState("analysis.view", "signals");
+  const [view, setView] = useAtlasPanelState("analysis.view", "evaluation");
+  const observations = useObservationSeries(rows);
   const [kind, setKind] = useAtlasPanelState("analysis.kind", "count_exceedance");
   const data = useMemo(() => {
     if (!experiment.data) return;
@@ -23,19 +25,26 @@ export const AtlasAnalysis = memo(function AtlasAnalysis({ experiment, rows, lin
       forecast_series: experiment.data.forecast_series.filter(series => series.observations.some(item => ids.has(item.record_id))),
     };
   }, [experiment.data, rows, links]);
+  const observationSeries = observations.filter(item => !data?.forecast_series.some(series => series.id === item.id));
   const currentSeries = data?.forecast_series.find(series => series.id === seriesId) ?? data?.forecast_series[0];
+  const selectedObservation = observationSeries.find(item => `observations:${item.id}` === seriesId);
+  const selectedSeriesId = selectedObservation ? seriesId : currentSeries?.id ?? (observationSeries[0] ? `observations:${observationSeries[0].id}` : "");
+  const observation = selectedObservation ?? (!currentSeries ? observationSeries[0] : undefined);
   return <section className={styles.analysis} aria-label="Experimental analysis">
-    {footerTarget && createPortal(<div className="atlas-view-about"><AtlasScope buttonLabel="About Analysis" label="Methods & references" title="Analysis"><AnalysisMethods data={experiment.data} series={currentSeries} digest={experiment.digest} /></AtlasScope></div>, footerTarget)}
+    {footerTarget && createPortal(<div className="atlas-view-about"><AtlasScope buttonLabel="About Analysis" label="Methods & references" title="Analysis"><AnalysisMethods data={experiment.data} series={observation ? undefined : currentSeries} digest={experiment.digest} /></AtlasScope></div>, footerTarget)}
     <h2 className="sr-only">Analysis</h2><header className={`${styles.analysisHeader} atlas-panel-tools`} data-series={view === "evaluation" || kind === "count_exceedance"} data-view={view}>
       <div className={styles.tabs} role="group" aria-label="Analysis views">
+        <button aria-label="Models" title="Models" aria-pressed={view === "evaluation"} onClick={() => setView("evaluation")}><ChartNoAxesCombined size={16} aria-hidden /><span>Models</span></button>
         <button aria-label="Signals" title="Signals" aria-pressed={view === "signals"} onClick={() => setView("signals")}><Radar size={16} aria-hidden /><span>Signals</span></button>
-        <button aria-label="Model evaluation" title="Model evaluation" aria-pressed={view === "evaluation"} onClick={() => setView("evaluation")}><ChartNoAxesCombined size={16} aria-hidden /><span>Model evaluation</span></button>
       </div>
       {view === "signals" && <label className={styles.toolbarSelect}><span className="sr-only">Signal type</span><select title="Signal type" value={kind} onChange={event => setKind(event.target.value)}><option value="all">All signals</option><option value="count_exceedance">Count checks</option><option value="network_first_appearance">First country connections</option></select></label>}
-      {(view === "evaluation" || kind === "count_exceedance") && <label className={styles.toolbarSelect}><span className="sr-only">Monitored series</span><select title={currentSeries?.label ?? "Monitored series"} disabled={!currentSeries} value={currentSeries?.id ?? ""} onChange={event => onSeries(event.target.value)}>{data?.forecast_series.map(series => <option key={series.id} value={series.id}>{series.label}</option>)}</select></label>}
+      {(view === "evaluation" || kind === "count_exceedance") && <label className={styles.toolbarSelect}><span className="sr-only">Monitored series</span><select title="Monitored series" disabled={!currentSeries && !observationSeries.length} value={view === "signals" ? currentSeries?.id ?? "" : selectedSeriesId} onChange={event => onSeries(event.target.value)}>
+        <optgroup label="Model evaluation">{data?.forecast_series.map(series => <option key={series.id} value={series.id}>{series.label}</option>)}</optgroup>
+        {view === "evaluation" && <optgroup label="Reported observations">{observationSeries.map(series => <option key={series.id} value={`observations:${series.id}`}>{observationSeriesLabel(series)}</option>)}</optgroup>}
+      </select></label>}
     </header>
-    {!data ? <p className={styles.notice} role={experiment.error ? "alert" : "status"}>{experiment.error ?? "No validated analysis is loaded for this dataset."}</p> : <>
-      {view === "signals" ? <Monitoring kind={kind} data={data} seriesId={seriesId} links={links} onKind={setKind} onSeries={onSeries} onReport={onReport} onLink={onLink} /> : <Forecasts data={data} seriesId={seriesId} />}
+    {view === "evaluation" && (observation || !data && !experiment.error) ? <AtlasObservations selected={observation} onReport={onReport} /> : !data ? <p className={styles.notice} role={experiment.error ? "alert" : "status"}>{experiment.error ?? "No validated analysis is loaded for this dataset."}</p> : <>
+      {view === "signals" ? <Monitoring kind={kind} data={data} seriesId={seriesId} links={links} onKind={setKind} onSeries={onSeries} onReport={onReport} onLink={onLink} /> : <Forecasts data={data} seriesId={seriesId} onReport={onReport} />}
     </>}
   </section>;
 });
@@ -47,6 +56,8 @@ function AnalysisMethods({ data, series, digest }: { data?: IntelligenceExperime
       <h3><Database size={16} aria-hidden />Study scope</h3>
       <dl className={styles.methodScope}><div><dt>Publication window</dt><dd>{formatDate(data.scope.publication_from)}–{formatDate(data.scope.publication_until)}</dd></div><div><dt>Captured through</dt><dd>{formatDate(data.scope.capture_until)}</dd></div><div><dt>Archive</dt><dd>{data.scope.documents} documents · {data.scope.records} report entries</dd></div><div><dt>Selected series</dt><dd>{series?.label ?? "No eligible series in this selection"}</dd></div></dl>
     </>}
+    <h3><ChartScatter size={16} aria-hidden />Reported observations</h3>
+    <p>Observation charts retain the source’s units, reporting periods and count definitions. Reviewed series follow ATLAS comparability decisions; other repeated observations remain separate contexts. The series selector includes observation contexts without eligible models. In model evaluation, the value panel shows training observations and the held-out target. Hover or focus connects each plotted value to its source row; selecting it opens the report.</p>
     <h3><Activity size={16} aria-hidden />Count models</h3>
     <p><strong>Persistence random walk.</strong> The baseline uses preceding weekly changes and their negatives, drawing on the empirical baseline in <a href="https://doi.org/10.1016/j.ijforecast.2022.06.005" target="_blank" rel="noopener noreferrer">Ray et al. (2023, §2.4)</a>. ATLAS propagates discrete count probabilities, setting negative counts to zero at each step; it does not reproduce every quantile convention in that study.</p>
     <p><strong>Recent-change random walk.</strong> This variant uses the last eight changes with their signs retained and sets negative counts to zero at each step. Comparing baseline specifications is motivated by <a href="https://doi.org/10.64898/2026.03.18.26348748" target="_blank" rel="noopener noreferrer">Suez &amp; Fox (2026, preprint)</a>. The eight-change window is an ATLAS study choice, not a validated optimum from that paper.</p>
@@ -87,5 +98,5 @@ export const AtlasRiskAssessments = memo(function AtlasRiskAssessments({ experim
     const health = selectedOneHealth(ids);
     return { data: experiment.data && { ...experiment.data, risk_profiles: experiment.data.risk_profiles.filter(profile => ids.has(profile.record_id)) }, healthRecords: new Set([...(health?.nodes ?? []), ...(health?.undated_nodes ?? [])].map(node => node.record_id)) };
   }, [experiment.data, rows, selectedOneHealth]);
-  return <section className={styles.analysis} aria-label="Source risk assessments"><h2 className="sr-only">Source risk assessments</h2><p className={styles.note}>Authority assessments retain their stated population and date. ATLAS does not estimate a probability of harm.</p>{data ? <RiskProfiles key={initialRecord} data={data} initialRecord={initialRecord} onReport={onReport} onOneHealth={onOneHealth} healthRecords={healthRecords} /> : <p className={styles.notice}>{experiment.error ?? "No validated risk profiles are loaded."}</p>}</section>;
+  return <section className={styles.analysis} aria-label="Source risk assessments"><h2 className="sr-only">Source risk assessments</h2>{data ? <RiskProfiles key={initialRecord} data={data} initialRecord={initialRecord} onReport={onReport} onOneHealth={onOneHealth} healthRecords={healthRecords} /> : <p className={styles.notice}>{experiment.error ?? "No validated risk profiles are loaded."}</p>}</section>;
 });

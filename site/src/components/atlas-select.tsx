@@ -87,7 +87,7 @@ export const AtlasSelect = memo(function AtlasSelect(props: SelectProps) {
       <div id={id} role={multiple ? "group" : "listbox"} aria-label={label}>
       {open && choices.map((item,index) => multiple ? <label key={item.value} className="atlas-select-check">
         <input type="checkbox" checked={item.value === items[0].value ? selected.length === 0 : selected.includes(item.value)} tabIndex={-1} onChange={() => pick(item.value)} aria-label={item.label} /><span>{item.label}</span>{item.count !== undefined && <small className="atlas-select-count" title={`${item.count} report entries`}>{item.count}</small>}
-      </label> : <button key={item.value} type="button" role="option" aria-label={item.label} aria-describedby={item.badges ? `${id}-${index}-badges` : undefined} aria-selected={item.value === value} tabIndex={-1}
+      </label> : <button key={item.value} type="button" value={item.value} role="option" aria-label={item.label} aria-describedby={item.badges ? `${id}-${index}-badges` : undefined} aria-selected={item.value === value} tabIndex={-1}
         onClick={() => pick(item.value)}><Choice item={item} badgeId={`${id}-${index}-badges`} />{item.value === value && <Check size={14} aria-hidden />}</button>)}
       </div>
       {open && choices.length === 0 && <p className="atlas-select-empty" role="status">No matches</p>}

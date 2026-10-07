@@ -95,18 +95,17 @@ test("Corrections require authorization for the exact published release", () => 
 
 
 test("Loading checks the bundle identity and honors cancellation between data tasks", async t => {
-  const map = Buffer.from('{}');
-  const digest = (bytes: Buffer) => ({ sha256: createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length });
-  let bundle = Buffer.from(JSON.stringify({ contract_version: fixture.release.contract_version, snapshot: { source_snapshot_sha256: digest(map).sha256 } }));
-  t.mock.method(globalThis, 'fetch', async (url: string) => url.endsWith('/current.json')
-    ? Response.json({ ...fixture.release, assets: { ...fixture.release.assets, 'map.json': digest(map), 'atlas-site.json': digest(bundle) } })
-    : new Response(url.endsWith('/map.json') ? map : bundle));
+  const { browserFixture } = await import('./atlas-browser-fixture.mjs');
+  const { bundle } = await import('./atlas-fixture');
+  const { readFileSync } = await import('node:fs');
+  const { release, bodies } = browserFixture(bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
+  t.mock.method(globalThis, 'fetch', async (url: string) => new Response(bodies[new URL(url).pathname]));
   const progress: AtlasLoadProgress[] = [];
-  assert.equal((await fetchAtlasData(undefined, value => progress.push(value))).bundle.contract_version, fixture.release.contract_version);
+  assert.equal((await fetchAtlasData(undefined, value => progress.push(value))).bundle.contract_version, '1.8.0');
   assert.equal(progress[0].phase, 'release');
   assert.equal(progress.at(-1)!.phase, 'prepare');
   assert(progress.some(p => p.phase === 'verify'));
-  const total = map.length + bundle.length;
+  const total = progress.at(-1)!.total;
   assert(progress.slice(1).every(p => p.total === total && p.loaded <= total));
   assert(progress.every((p, i) => !i || p.loaded >= progress[i - 1].loaded));
   assert.equal(progress.at(-1)!.loaded, total);
@@ -118,6 +117,7 @@ test("Loading checks the bundle identity and honors cancellation between data ta
     if (value.phase === 'download') controller.abort();
   }), { name: 'AbortError' });
   assert(!cancelled.some(value => value.phase === 'prepare'));
-  bundle = Buffer.from(JSON.stringify({ contract_version: '1.5.0', snapshot: { source_snapshot_sha256: digest(map).sha256 } }));
-  await assert.rejects(fetchAtlasData(), /does not match/);
+  release.assets['map.json'].sha256 = '0'.repeat(64);
+  bodies['/current.json'] = Buffer.from(JSON.stringify(release));
+  await assert.rejects(fetchAtlasData(), /source mismatch/);
 });

@@ -1,4 +1,5 @@
 "use client";
+import { SourceQuotation } from "./atlas-source-text";
 import { memo, useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowUp, ArrowDown, ArrowUpDown, RotateCcw, ArrowRight, ChevronDown, ExternalLink, FileText, Network, Grid2X2, Rows3, BookOpen, Check, SlidersHorizontal, Activity, CalendarDays, Microscope, Info, TriangleAlert, UserRound, PawPrint, Leaf, Wheat, CircleHelp, MapPin } from "lucide-react";
 import { createPortal } from "react-dom";
@@ -30,7 +31,7 @@ const words = (value: string) => value.replaceAll("_", " ");
 const dateLabel = (node: Node | Relation) => node.observation_date.value ? formatDate(node.observation_date.value) : node.period_start.value && node.period_end.value ? `${formatDate(node.period_start.value)} – ${formatDate(node.period_end.value)}` : "Observation date unknown";
 
 export const AtlasOneHealth = memo(function AtlasOneHealth({ rows, onReport, footerTarget, mergedTimeline = false, initialReport = "" }: { mergedTimeline?: boolean; initialReport?: string; footerTarget: HTMLElement | null; rows: AtlasRecord[]; onReport: (ids: string[], expand?: boolean) => void }) {
-  const { bundle, selectedOneHealth, atlasDocuments } = useAtlas();
+  const { bundle, selectedOneHealth, atlasDocuments, englishTitle } = useAtlas();
   const [mode, setMode] = useAtlasPanelState<HealthMode>("health.mode", "network");
   const [report, setReport] = useAtlasPanelState("health.report", initialReport);
   const [selection, setSelection] = useAtlasPanelState("health.selection", "");
@@ -83,10 +84,12 @@ export const AtlasOneHealth = memo(function AtlasOneHealth({ rows, onReport, foo
       diagramNodes:nodes.filter(n=>n.scope!=="background"), surveillance:nodes.filter(n=>n.scope==="surveillance") };
   },[view,selectedIds]);
   const reportItems=useMemo<AtlasSelectItem[]>(()=>{
-    const views=healthViews.filter(v=>(!mergedTimeline || v.value!=="environment") && (view && "timings" in view || v.value==='network' || v.value==='evidence'));
-    return matching.map(r => ({ value:r.id, label:`${r.topic} · ${r.document.title}`, title:r.topic,
-      badges:[{kind:"period",label:formatDate(r.document.publication)},...views.map(v=>({kind:v.value,label:`${v.label} ${r.entry.counts[v.value]}`,empty:r.entry.counts[v.value]===0}))] }));
-  },[matching,mergedTimeline,view]);
+    const views=healthViews.filter(v=>(!mergedTimeline || v.value!=="environment"));
+    const labels = new Map<string, number>();
+    for (const r of reports) { const label = `${r.topic} · ${englishTitle(r.document)}`; labels.set(label, (labels.get(label) ?? 0) + 1); }
+    return matching.map(r => ({ value:r.id, label:`${r.topic} · ${englishTitle(r.document)}`, title:r.topic,
+      badges:[{kind:"period",label:formatDate(r.document.publication)},...(labels.get(`${r.topic} · ${englishTitle(r.document)}`)! > 1 ? [{kind:"period" as const,label:`Captured ${formatDate(r.document.capture)}`}] : []),...views.map(v=>({kind:v.value,label:`${v.label} ${r.entry.counts[v.value]}`,empty:r.entry.counts[v.value]===0}))] }));
+  },[reports,matching,mergedTimeline,englishTitle]);
   const selectReport=useCallback((value:string)=>{setReport(value);setSelection("");},[setReport,setSelection]);
   const modeItems=useMemo<AtlasSelectItem[]>(()=>panelModes.filter(m => !mergedTimeline || m.value !== "environment").map(m=>({value:m.value,label:m.label,title:m.label,badges:m.value==='overview' ? [{kind:'count',label:`${overviewRows.length} entries`}] : [
     {kind:m.value,label:current ? `${current.entry.counts[m.value]} in this entry` : 'No entry selected',empty:!current?.entry.counts[m.value]},
@@ -108,27 +111,27 @@ export const AtlasOneHealth = memo(function AtlasOneHealth({ rows, onReport, foo
   const ModeIcon = { network: Network, evidence: Grid2X2, overview: Rows3, timeline: CalendarDays, sampling: Microscope, environment: Leaf }[mode];
   const selected = mode === "evidence" ? relations.find(r => r.id === selection) ?? relations[0] : items.find(n => n.id === selection) ?? relations.find(r => r.id === selection) ?? items[0];
   const review = view.reviews.find(r => r.record_id === current?.id);
-  const reviewHelp = review && current && <AtlasScope label="Review scope" title={current.document.title}><p>{words(review.outcome)} review</p><p>{review.scope}</p><p>{review.reason}</p>{!relations.some(r=>r.kind==="cross_species_transmission") && <p>No supported cross-species transmission relationship in this selection.</p>}<ul>{review.pending_items.map(item=><li key={item}>{item}</li>)}</ul></AtlasScope>;
+  const reviewHelp = review && current && <AtlasScope label="Review scope" title={englishTitle(current.document)}><p>{words(review.outcome)} review</p><p>{review.scope}</p><p>{review.reason}</p>{!relations.some(r=>r.kind==="cross_species_transmission") && <p>No supported cross-species transmission relationship in this selection.</p>}<ul>{review.pending_items.map(item=><li key={item}>{item}</li>)}</ul></AtlasScope>;
   return <section className="atlas-one-health" aria-label="One Health evidence" onKeyDown={event => {
     if (event.key !== "Escape") return;
     const menu=entryFilterMenu.current;
     if (menu?.open && menu.contains(event.target as globalThis.Node)) { event.stopPropagation(); menu.open = false; menu.querySelector("summary")?.focus(); }
   }}>
     <h2 className="sr-only">One Health evidence</h2>
-    <div className="atlas-oh-tools atlas-panel-tools">{"timings" in view ? <div className="atlas-oh-view-select"><AtlasSelect label="One Health view" summaryLabel={<span className="atlas-oh-mode-label"><ModeIcon size={14} aria-hidden /><span>{modeItems.find(item => item.value === mode)?.label}</span></span>} value={mode} items={modeItems} onChange={value=>setMode(value as HealthMode)} /></div> : <div className="atlas-oh-views" role="group" aria-label="One Health view">{([{id:"network",label:"Network",Icon:Network},{id:"evidence",label:"Evidence",Icon:Grid2X2},{id:"overview",label:"Overview",Icon:Rows3}] as const).map(({id,label,Icon})=><button key={id} aria-pressed={mode===id} onClick={()=>setMode(id)}><Icon size={14} aria-hidden />{label}</button>)}</div>}
+    <div className="atlas-oh-tools atlas-panel-tools"><div className="atlas-oh-view-select"><AtlasSelect label="One Health view" summaryLabel={<span className="atlas-oh-mode-label"><ModeIcon size={14} aria-hidden /><span>{modeItems.find(item => item.value === mode)?.label}</span></span>} value={mode} items={modeItems} onChange={value=>setMode(value as HealthMode)} /></div>
     {mode !== "overview" && current && <AtlasSelect label="One Health report" searchable value={current.id} onChange={selectReport} items={reportItems} />}
     {mode === "overview" && <div ref={setOverviewTools} className="atlas-oh-overview-tools" />}
     <details ref={entryFilterMenu} className="atlas-oh-entry-filters"><summary aria-label={`Filter One Health entries${entryFilters.length ? `: ${entryFilters.length} active` : ''}`} title="Filter entries"><SlidersHorizontal size={16} aria-hidden />{entryFilters.length>0 && <b>{entryFilters.length}</b>}</summary>
       <div className="atlas-oh-filter-menu"><header><strong>Find entries</strong><span aria-live="polite">{matching.length} / {reports.length}</span><button type="button" disabled={!entryFilters.length} onClick={()=>setEntryFilters([])}>Clear</button></header>
         <p>Matches any choice within a group; all selected features. Each entry keeps its full evidence.</p>
-        {[{label:'Content available',items:healthViews.filter(v=>(!mergedTimeline || v.value!=="environment") && ("timings" in view || v.value==='network' || v.value==='evidence')).map(v=>({value:`view:${v.value}`,label:v.label}))},
+        {[{label:'Content available',items:healthViews.filter(v=>(!mergedTimeline || v.value!=="environment")).map(v=>({value:`view:${v.value}`,label:v.label}))},
           {label:'Includes domain',items:domains.map(d=>({value:`domain:${d.id}`,label:d.label}))},
-          {label:'Features',items:[...("timings" in view ? [{value:'feature:dated',label:'Dated panel evidence'},{value:'feature:fraction',label:'Reviewed sample fraction'}] : []),{value:'feature:negative',label:'Negative findings'},{value:'feature:hypothesis',label:'Source hypothesis'}]},
+          {label:'Features',items:[...[{value:'feature:dated',label:'Dated panel evidence'},{value:'feature:fraction',label:'Reviewed sample fraction'}],{value:'feature:negative',label:'Negative findings'},{value:'feature:hypothesis',label:'Source hypothesis'}]},
         ].map(group=><fieldset key={group.label}><legend>{group.label}</legend>{group.items.map(item=><label key={item.value}><input type="checkbox" checked={entryFilters.includes(item.value)} onChange={()=>setEntryFilters(prev=>prev.includes(item.value)?prev.filter(v=>v!==item.value):[...prev,item.value])} />{item.label}</label>)}</fieldset>)}
       </div>
     </details></div>
     {footerTarget && createPortal(<div className="atlas-view-about"><AtlasScope buttonLabel="About One Health" label="Figure methods & references" title="One Health evidence"><HealthMethods /></AtlasScope></div>, footerTarget)}
-    {mode === "overview" ? <HealthOverview toolsTarget={overviewTools} footerTarget={footerTarget} rows={overviewRows} view={view} onOpen={(id,nodeId)=>{setReport(id);setSelection(nodeId ?? "");setMode("network");}} onReport={onReport} /> : current && "timings" in view && (mode === "timeline" || mode === "sampling" || mode === "environment") ? <AtlasHealthPanels mergedTimeline={mergedTimeline} key={`${mode}:${current.id}`} mode={mode} view={view} reportId={current.id} nodeIds={selectedIds ?? new Set<string>()} onReport={onReport} /> : current ? <>
+    {mode === "overview" ? <HealthOverview toolsTarget={overviewTools} footerTarget={footerTarget} rows={overviewRows} view={view} onOpen={(id,nodeId)=>{setReport(id);setSelection(nodeId ?? "");setMode("network");}} onReport={onReport} /> : current && (mode === "timeline" || mode === "sampling" || mode === "environment") ? <AtlasHealthPanels mergedTimeline={mergedTimeline} key={`${mode}:${current.id}`} mode={mode} view={view} reportId={current.id} nodeIds={selectedIds ?? new Set<string>()} onReport={onReport} /> : current ? <>
       <div className="atlas-oh-layout" data-view={mode}>
         <div ref={main} className="atlas-oh-main">
           <div className="atlas-oh-figure">
@@ -182,7 +185,7 @@ function HealthOverview({rows,view,onOpen,onReport,footerTarget,toolsTarget}:{to
   const scroll=useRef<HTMLDivElement>(null);
   const evidence=useMemo(()=>healthOverviewEvidence(view),[view]);
   const reviews=useMemo(()=>new Map(view.reviews.map(r=>[r.record_id,r])),[view]);
-  const reviewedIds=useMemo(()=>new Set(("one_health_reviews" in bundle ? bundle.one_health_reviews : []).map(r=>r.record_id)),[bundle]);
+  const reviewedIds=useMemo(()=>new Set(bundle.one_health_reviews.map(r=>r.record_id)),[bundle]);
   const entries=useMemo(()=>rows.filter(r=>`${r.title} ${tracks.get(r.track)?.label ?? ""}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())).sort((a,b)=>{
     const left=evidence.get(a.id),right=evidence.get(b.id);
     const difference=sort.key==="evidence" ? -compareHealthEvidence(left?.rank,right?.rank)
@@ -284,7 +287,7 @@ function HealthObservationList({ nodes, networkNodes, selected, highlighted, onH
 }
 
 const HealthDetails = memo(function HealthDetails({item,nodes,onReport}:{item:Node|Relation;nodes:Node[];onReport:(ids:string[],expand?:boolean)=>void}) {
-  const {bundle,atlasDocuments}=useAtlas();
+  const {bundle,atlasDocuments,englishTitle}=useAtlas();
   const refs=useMemo<AtlasDetailRef[]>(()=>{
     const requested:AtlasDetailRef[]=item.evidence_ids.map(id=>({collection:"evidence",id}));
     if ("domain" in item) requested.push(...item.measure_ids.map(id=>({collection:"metrics.measures" as const,id})));
@@ -315,7 +318,7 @@ const HealthDetails = memo(function HealthDetails({item,nodes,onReport}:{item:No
     {relation && <><p>{relation.reason}</p><p>{relation.scope}</p><blockquote>{data.get("assertions",relation.source_assertion_id).text}</blockquote>{relation.comparison_ids.map(id=>{const c=bundle.comparisons.find(c=>c.id===id)!;return <details key={id}><summary>{words(c.kind)} · comparison evidence</summary>{c.participant_ids.map(id=><p key={id}>{data.get("assertions",id).text}</p>)}</details>;})}<p>{words(relation.review_state)} · reviewed {formatDate(relation.reviewed_at)}</p></>}
     {values.map(m=><article className="atlas-oh-measure" key={m.measure_id}><strong>{metricValue(m)} <small>{words(m.unit)}</small></strong><b>{m.label}</b><span>{m.geography.value} · {m.period_label}</span><span>{words(m.count_kind)} · {m.as_of.value ? `As of ${m.as_of.value}` : words(m.date_basis)}</span><span>Denominator: {m.denominator??words(m.denominator_status)}{m.denominator_population.value?` · ${m.denominator_population.value}`:''}</span><p>{m.semantic_note}</p></article>)}
     {node && <><h4><MapPin size={14} aria-hidden />Reviewed locations</h4><ReviewedPlaces placeIds={node.place_ids} /><LocationBadges codes={[...new Set(places.flatMap(p=>p.area_codes))]} /><p>{node.location_note}</p></>}
-    <h4><FileText size={14} aria-hidden />Source evidence</h4>{relation && <p className="atlas-oh-note">These passages support the relationship as a whole. The export does not assign individual passages to evidence types.</p>}{item.evidence_ids.map(id=>{const e=data.get("evidence",id);const d=atlasDocuments.get(e.document_id)!;return <div className="atlas-oh-source" key={id}><a href={d.url} target="_blank" rel="noopener noreferrer">{d.title}<ExternalLink size={12} aria-hidden /></a><small>Published {formatDate(d.publication)} · Captured {formatDate(d.capture)}{e.page!==null?` · Page ${e.page}`:''}{e.section?` · ${e.section}`:''}</small><blockquote>{e.quote}</blockquote></div>;})}
+    <h4><FileText size={14} aria-hidden />Source evidence</h4>{relation && <p className="atlas-oh-note">These passages support the relationship as a whole. The export does not assign individual passages to evidence types.</p>}{item.evidence_ids.map(id=>{const e=data.get("evidence",id);const d=atlasDocuments.get(e.document_id)!;return <div className="atlas-oh-source" key={id}><a href={d.url} target="_blank" rel="noopener noreferrer">{englishTitle(d)}<ExternalLink size={12} aria-hidden /></a><small>Published {formatDate(d.publication)} · Captured {formatDate(d.capture)}{e.page!==null?` · Page ${e.page}`:''}{e.section?` · ${e.section}`:''}</small><SourceQuotation quote={e.quote} evidenceId={e.id} /></div>;})}
   </>;
 });
 function ReviewedPlaces({placeIds}:{placeIds:string[]}) {

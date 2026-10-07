@@ -10,12 +10,15 @@ const worker = {
       return new Response("Method not allowed", { status: 405, headers });
     }
     const path = new URL(request.url).pathname;
-    const current = path === "/current.json";
+    const current = path === "/current.json" || /^\/daily\/[a-f0-9]{64}\/current\.json$/.test(path);
+    const dailyAsset = /^\/daily\/[a-f0-9]{64}\/[a-f0-9]{64}\/(?:(?:daily(?:\.schema)?|manifest|validation)\.json|daily-view\.mjs)$/.test(path);
     const releaseAsset = /^\/releases\/[a-f0-9]{64}\/(?:(?:atlas-site|map|metrics|network-transport|release)\.json|view\.mjs)$/.test(path);
     const networkAsset = /^\/network-analysis\/[a-f0-9]{64}\/(network-analysis|network-analysis\.schema|coverage-ledger)\.json$/.test(path);
     const intelligenceAsset = /^\/intelligence\/[a-f0-9]{64}\/(intelligence|contract\.schema)\.json$/.test(path);
     const browserAsset = /^\/releases\/[a-f0-9]{64}\/browser\/[a-f0-9]{64}\/(?:(?:manifest|release|core|map-core|detail-index|browser-transport\.schema|browser-manifest\.schema)\.json|(?:browser_transport|browser_tables|site_view)\.js|browser\.d\.mts|atlas\.d\.ts|details\/part-\d{5}\.json)$/.test(path);
-    if (!current && !releaseAsset && !networkAsset && !intelligenceAsset && !browserAsset)
+    const supplementAsset = /^\/releases\/[a-f0-9]{64}\/supplements\/[a-f0-9]{64}\/source-supplement(?:\.schema)?\.json$/.test(path);
+    const presentationAsset = /^\/releases\/[a-f0-9]{64}\/presentation\/[a-f0-9]{64}\/(?:source-text-display|watch)(?:\.schema)?\.json$/.test(path);
+    if (!current && !dailyAsset && !releaseAsset && !networkAsset && !intelligenceAsset && !browserAsset && !supplementAsset && !presentationAsset)
       return new Response("Not found", { status: 404, headers });
     const ip = request.headers.get("CF-Connecting-IP");
     if (!ip) return new Response("Forbidden", { status: 403, headers });

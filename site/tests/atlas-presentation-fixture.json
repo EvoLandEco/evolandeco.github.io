@@ -1,0 +1,276 @@
+{
+  "text": {
+    "catalogue_scope": "site_document_titles_record_titles_and_evidence",
+    "claim_bindings": [
+      {
+        "claim_index": 0,
+        "evidence_ids": [
+          "evidence_4faf7b1bcca167288edecdd7",
+          "evidence_8ee4407a6aafcc008beb6bed"
+        ],
+        "quote_index": 0,
+        "record_id": "doc_985d5f6501dc8cda8ddee523:0",
+        "status": "bound",
+        "text_id": "text_0156c95de86abbe8ad6ff17e"
+      }
+    ],
+    "display_version": "0.1.0",
+    "full_coverage": {
+      "available": 247,
+      "evidence_bindings": 64071,
+      "language_unresolved": 12786,
+      "not_required": 364,
+      "pending": 0,
+      "texts": 13397,
+      "title_bindings": 2534,
+      "translations": 247
+    },
+    "omission_rule": "only_language_status_not_reviewed",
+    "omitted_text_count": 12786,
+    "selection_policy": "attach_to_selected_original_only",
+    "source_export_id": "2a905e3c3d76885c62976eec23c573d83eccc178d2b47adc4ae47da1016b2426",
+    "source_text_sha256": "92516ceef0dce109dc3cdba3384f7d9f94f41dab5c91b6ed4ca582ca0892892c",
+    "source_text_version": "0.1.0",
+    "texts": [
+      {
+        "document_id": "doc_985d5f6501dc8cda8ddee523",
+        "end": 679,
+        "english_translation_id": "translation_8a59ec7c39d78c8a0223eccc",
+        "id": "text_0156c95de86abbe8ad6ff17e",
+        "kind": "evidence",
+        "language_basis": "text_review",
+        "language_note": "The exact title or quotation was inspected in the saved language review packet.",
+        "language_status": "reviewed",
+        "language_tag": "nl",
+        "original_text_sha256": "844bc7e5cd57c43a0e26e1794e1af008e8ee57621562b31697ebf5ae685d0273",
+        "reviewed_at": "2026-10-07T13:51:36.891260Z",
+        "reviewed_by": "Codex source text review",
+        "source_text_sha256": "c1b4bdfbae1e7c2055c2b69cfb96784b78283437c63ba4a7a4cf1b2227045de1",
+        "start": 468,
+        "target_ids": [
+          "evidence_057a24d762e2b1464904cc94",
+          "evidence_4faf7b1bcca167288edecdd7",
+          "evidence_8ee4407a6aafcc008beb6bed"
+        ],
+        "translation_status": "available"
+      },
+      {
+        "document_id": "doc_ef8bce948984972b8253d37d",
+        "end": null,
+        "english_translation_id": "translation_7b21a79559f173af91dd59bd",
+        "id": "text_05beac5c525bc731f1a92d4c",
+        "kind": "document_title",
+        "language_basis": "text_review",
+        "language_note": "The exact title or quotation was inspected in the saved language review packet.",
+        "language_status": "reviewed",
+        "language_tag": "nl",
+        "original_text_sha256": "36e4a5006758edbdf0121a382854a47d9199c175c4849d1ba3e8ee4e7bda4942",
+        "reviewed_at": "2026-10-07T13:51:36.891260Z",
+        "reviewed_by": "Codex source text review",
+        "source_text_sha256": "33cd9db7c8a92863c262f2f684d3a67e4c44a84ead09971dd7dbbb663b8957b6",
+        "start": null,
+        "target_ids": [
+          "doc_ef8bce948984972b8253d37d"
+        ],
+        "translation_status": "available"
+      }
+    ],
+    "translations": [
+      {
+        "created_at": "2026-10-07T13:51:36.891260Z",
+        "created_by": "Codex translation agent; exact model identifier not supplied",
+        "id": "translation_8a59ec7c39d78c8a0223eccc",
+        "language_tag": "en",
+        "method_version": "atlas-translation-0.1.0",
+        "origin": "atlas_generated",
+        "original_text_id": "text_0156c95de86abbe8ad6ff17e",
+        "pairing_evidence_ids": [],
+        "publisher_text_id": null,
+        "review_note": "Agent-generated English draft. Independent bilingual review is pending.",
+        "review_status": "unreviewed",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "text": "RIVM studied the health effects of climate change in 2050 in relation to heat, air quality,\nUV\n(ultraviolet)\nradiation, infectious diseases, allergies and pollen, and mental health."
+      },
+      {
+        "created_at": "2026-10-07T13:51:36.891260Z",
+        "created_by": "Codex translation agent; exact model identifier not supplied",
+        "id": "translation_7b21a79559f173af91dd59bd",
+        "language_tag": "en",
+        "method_version": "atlas-translation-0.1.0",
+        "origin": "atlas_generated",
+        "original_text_id": "text_05beac5c525bc731f1a92d4c",
+        "pairing_evidence_ids": [],
+        "publisher_text_id": null,
+        "review_note": "Agent-generated English draft. Independent bilingual review is pending.",
+        "review_status": "unreviewed",
+        "reviewed_at": null,
+        "reviewed_by": null,
+        "text": "Vaccination coverage falls slightly among babies and preschool children, rises among teenagers"
+      }
+    ],
+    "unlisted_language_status": "not_reviewed",
+    "unlisted_language_tag": "und",
+    "unlisted_reason": "Language has not been reviewed for this exact text.",
+    "unlisted_translation_status": "language_unresolved",
+    "unmapped_scopes": [
+      "embedded_series_method_evidence",
+      "undated_supplement"
+    ]
+  },
+  "watch": {
+    "annotations_sha256": "6527c229468359cfcd6846d78e827c934e6db26bf034f4b5689a9967e26b7c32",
+    "generated_at": "2026-10-07T14:23:45.728315Z",
+    "items": [
+      {
+        "assertion_ids": [
+          "assertion_40e5d7aae30356355f74e2de",
+          "assertion_f86cd4fe26fe03d4fb769a6d"
+        ],
+        "diagnostic_assessment_id": "report_assessment_fb2fa17fc72c3bc795b77d1b",
+        "diagnostic_authority": {
+          "status": "reported",
+          "value": "World Health Organization"
+        },
+        "diagnostic_label": "Cause of death unconfirmed",
+        "diagnostic_status": {
+          "status": "reported",
+          "value": "unconfirmed"
+        },
+        "document_ids": [
+          "doc_3b1880bcaef11646c12533c2"
+        ],
+        "eligibility": {
+          "partial": "hide_relationship_keep_visible_assertions",
+          "record_ids": [
+            "doc_3b1880bcaef11646c12533c2:0"
+          ],
+          "rule": "all_supporting_records_in_window"
+        },
+        "event_identity": "not_assigned",
+        "evidence_ids": [
+          "evidence_01217edbdc7f5515026364f6",
+          "evidence_847e2064b4203c6fa3c5cd0b",
+          "evidence_dd369c1b94fc37b152256a26"
+        ],
+        "follow_up_question": "Has an official cause of death been established for the laboratory worker described by WHO?",
+        "id": "watch_05a93a631541814323b13fd0",
+        "key": "who-irkutsk-cause-follow-up",
+        "label": "Irkutsk laboratory death: cause unconfirmed",
+        "latest_capture": "2026-10-07T11:49:17.247779Z",
+        "latest_publication": "2026-10-06",
+        "reason_for_attention": "WHO reports the death of a laboratory worker and states that no cause of death has been officially confirmed. An authoritative determination would clarify this report.",
+        "record_id": "doc_3b1880bcaef11646c12533c2:0",
+        "record_ids": [
+          "doc_3b1880bcaef11646c12533c2:0"
+        ],
+        "review_state": "source_checked_draft",
+        "reviewed_at": "2026-10-07T14:23:34.478863Z",
+        "reviewed_by": "ATLAS agent review of the complete captured WHO briefing",
+        "scope_kind": "single_report",
+        "selection_status": "selected",
+        "source_text_hashes": {
+          "doc_3b1880bcaef11646c12533c2": "24b4b700efecac81287fc0071e9bac8ce73b3eea8cb7498848e98fe424d73857"
+        },
+        "sources": [
+          {
+            "capture": "2026-10-07T11:49:17.247779Z",
+            "channel_id": "un_geneva_news",
+            "document_id": "doc_3b1880bcaef11646c12533c2",
+            "publication": "2026-10-06",
+            "publication_basis": "publication date",
+            "publication_precision": "day",
+            "record_ids": [
+              "doc_3b1880bcaef11646c12533c2:0"
+            ],
+            "title": "UN Geneva - Multimedia Newsroom : Irkutsk suspected plague death - WHO",
+            "url": "https://www.unognewsroom.org/story/en/3289/irkutsk-suspected-plague-death-who"
+          }
+        ]
+      }
+    ],
+    "limitations": [
+      "This selection covers one named report; it does not establish an outbreak identity or a comparative hazard ranking.",
+      "The cause remains unconfirmed in the captured source. The selection is a source-checked agent draft."
+    ],
+    "map_snapshot_sha256": "f11395e2302b763783a0ba1679d42f14b7ef34b3cd766f3177471bc0bdeaa5dc",
+    "ordering": "review_input_order_no_risk_rank",
+    "review_scope": "Captured WHO briefing published by UN Geneva on 6 October 2026, read in full against its exported findings and diagnostic assessment.",
+    "selection_policy": "all_supporting_records_and_review_cutoff",
+    "software_version": "0.1.0a35",
+    "source_export_id": "2a905e3c3d76885c62976eec23c573d83eccc178d2b47adc4ae47da1016b2426",
+    "source_manifest_sha256": "da76afc6c3ec6768e88ad67aec447cbd1e76a019ecdac54ae1ba33a63602ca36",
+    "source_site_sha256": "341a5f9e8b18738a00d20b41615c6047604acba7c246337dad4dd7e92f2fac8c",
+    "watch_version": "0.1.0"
+  },
+  "release": {
+    "version": 1,
+    "export_id": "2a905e3c3d76885c62976eec23c573d83eccc178d2b47adc4ae47da1016b2426",
+    "published_at": "2026-10-07T12:30:00Z",
+    "cycle": "2026-10-07",
+    "mode": "weekly",
+    "contract_version": "1.8.0",
+    "selector_sha256": "eeb1ed08365086de8f97a1b952405927f9948f3c61ffde538f401dab4c083136",
+    "assets": {
+      "atlas-site.json": {
+        "sha256": "341a5f9e8b18738a00d20b41615c6047604acba7c246337dad4dd7e92f2fac8c",
+        "bytes": 422865644
+      },
+      "map.json": {
+        "sha256": "f11395e2302b763783a0ba1679d42f14b7ef34b3cd766f3177471bc0bdeaa5dc",
+        "bytes": 21295026
+      },
+      "metrics.json": {
+        "sha256": "77be9f47a89b5f4c7478ec141b48c2664ab1afb696886575be96afd9b359e604",
+        "bytes": 149682319
+      },
+      "network-transport.json": {
+        "sha256": "cba7c5eb2eb238e132ed8b8a99999511e1dac3d9289c41227feca0e894df8571",
+        "bytes": 1838
+      }
+    },
+    "source_supplement": {
+      "version": "0.1.0",
+      "source_export_id": "2a905e3c3d76885c62976eec23c573d83eccc178d2b47adc4ae47da1016b2426",
+      "path": "source-supplement.json",
+      "schema_path": "source-supplement.schema.json",
+      "sha256": "2785cb125ebf2e8a5d1953b8399605d9ba6d6ac421bc4c2037f98cee371cc0d8",
+      "bytes": 12900,
+      "schema_sha256": "2314d67db4e9cf1c7c0abab880e5644c21320f2a03fa43bd01a41e6c3015ac01"
+    },
+    "intelligence": {
+      "experiment_id": "0594fd6f35d1a043da90f7a22209a06f4cdc9efe00903fe61a0cf68cf022af27",
+      "schema_version": "0.2.0",
+      "asset": {
+        "sha256": "e88920dce37c0c10c3ad7fc162875d44e1131763dc1c0fc7c8172b41410bad23",
+        "bytes": 2484437
+      }
+    },
+    "browser": {
+      "transport_version": "0.3.0",
+      "manifest": {
+        "sha256": "eca1da7a3a55b558097e0c5e96ac7733036fbc515a8f1d27b208f9d7960d84d9",
+        "bytes": 1247120
+      }
+    },
+    "source_text": {
+      "version": "0.1.0",
+      "source_export_id": "2a905e3c3d76885c62976eec23c573d83eccc178d2b47adc4ae47da1016b2426",
+      "path": "source-text-display.json",
+      "schema_path": "source-text-display.schema.json",
+      "sha256": "f5377118299f7ec82783068342a26b191e2d3e525c4516035530ff6e97efcbae",
+      "bytes": 914763,
+      "schema_sha256": "5d31be301360faa5aae9c4dd162511641f346b79bad6d3440b87290eefdacd30",
+      "catalogue_sha256": "92516ceef0dce109dc3cdba3384f7d9f94f41dab5c91b6ed4ca582ca0892892c"
+    },
+    "watch": {
+      "version": "0.1.0",
+      "source_export_id": "2a905e3c3d76885c62976eec23c573d83eccc178d2b47adc4ae47da1016b2426",
+      "path": "watch.json",
+      "schema_path": "watch.schema.json",
+      "sha256": "41875c48704e63ddb3fed2fa7dc9d7937bb5d802abf168abd0a6226f5550263a",
+      "bytes": 3813,
+      "schema_sha256": "6029955be2f9c4e22c247c1f0e9a127c6251b422463d242b9a35a75101579caa"
+    }
+  }
+}
