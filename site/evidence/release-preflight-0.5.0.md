@@ -13,24 +13,25 @@ The scientific release must use site contract `1.8.0`, metrics `0.4.0` and Brows
 - ESLint, TypeScript, the production build, static links and assets, and Worker checks pass.
 - All 98 unit tests pass with the matching Browser and Intelligence fixtures. Without those fixtures, 95 pass and three are skipped.
 - The seven browser cases selected by the GitHub Pages workflow pass in Chromium, Firefox and WebKit. One Firefox case required an isolated rerun after concurrent test runs collided over trace output.
-- Thirteen focused Chromium cases pass across briefing navigation, report highlights, mobile loading, source logos, daily evidence, watch selection, undated evidence, network review, attributed assessment quotations and fullscreen layout. These include desktop and phone viewport sizes. Two sealed daily preview cases were skipped because their fixture environment was not configured.
+- Thirteen focused Chromium cases pass across briefing navigation, report highlights, mobile loading, source logos, daily evidence, watch selection, undated evidence, network review, attributed assessment quotations and fullscreen layout. These include desktop and phone viewport sizes.
+- The sealed daily bundle passes six browser cases across Chromium, Firefox and WebKit at phone and desktop widths. Card facts, source links, evidence highlights and reset controls match the supplied data. All six watch cards remain selected in a January 2027 replay.
+- The production build renders the matching network review using the uploaded public Browser and network assets.
 - About ATLAS displays `ATLAS UI v0.5.0` in the local preview. Browser viewport checks do not replace physical phone testing.
 - Git whitespace checks pass. Generated exports, local data, browser traces and screenshots are excluded from the commit.
 
-The focused checks use the local contract `1.8.0` candidate and synthetic fixtures. They do not establish compatibility with the public service's active dataset. Local command output is in `.cache/atlas-ui-0.5.0-preflight/`.
+Local command output is in `.cache/atlas-ui-0.5.0-preflight/`, `.cache/atlas-publish-0.5.0/` and the daily bundle's `.cache/atlas-daily/` directory.
 
-## Deployment prerequisite
+## Release data
 
-The public service was checked on 7 October 2026:
+The publication targets are:
 
-- [The active release](https://qtj-atlas.evolandeco-github-io.workers.dev/current.json) points to export `e5f3f97dffb4be05d02c634d3eaa45a5eb7be26c3e5dbe3e82d1283d1a489e48`, site contract `1.5.0` and Browser transport `0.1.0`.
-- The validated local candidate is `2a905e3c3d76885c62976eec23c573d83eccc178d2b47adc4ae47da1016b2426`, site contract `1.8.0` and Browser transport `0.3.0`.
-- The candidate's public `releases/<export_id>/release.json` endpoint returns HTTP 404.
+- Scientific export `2a905e3c3d76885c62976eec23c573d83eccc178d2b47adc4ae47da1016b2426`, with 345 documents and 2,189 records. Its 519 base files and matching network, Intelligence, supplement and presentation attachments pass public hash verification. The [complete release descriptor](https://qtj-atlas.evolandeco-github-io.workers.dev/releases/2a905e3c3d76885c62976eec23c573d83eccc178d2b47adc4ae47da1016b2426/release.json) records their identities.
+- Daily bundle `33698e21048ca6508dfe787739d97143e4dfa1fa3bb94c190dfe436679693a36`, bound to that scientific export. It contains 37 documents, 208 findings and six watch cards, using daily contract `0.2.1` and watch method `daily-watch-1.0.2`.
 
-**Hold the push until the compatible dataset is published and its activation is coordinated with the UI deployment.** Pushing `main` triggers GitHub Pages deployment. UI 0.5.0 rejects the active `1.5.0` release, so deploying it against that release would prevent data loading. Dataset publication and pointer activation require a separate authorized operation.
+All daily documents retain **Weekly review pending**. WHO editions 597 and 598 have reviewed PDF evidence; other source access gaps remain recorded in the producer's audit. Scientific candidates with different export IDs require their own consumer checks and matching attachments.
 
-## Local preparation
+## Deployment
 
-The release is prepared on `main`. Remote `main` matched local base `24029ef381058c9355695068e4472f6ce0a08d5e` during the preflight. The local preview is at <http://127.0.0.1:3008/atlas/>. This preparation does not push, deploy, upload datasets or activate public pointers.
+The user authorized dataset publication and the UI push on 7 October 2026. The publication run verifies immutable public assets before coordinating the scientific and daily pointers with GitHub Pages deployment. The data Worker supports the daily, supplement and presentation paths and preserves the existing request limits.
 
-After the dataset prerequisite is satisfied, push the release commit and confirm the UI version, dataset loading, daily reports and evidence navigation on the deployed site.
+Pushing `main` triggers the Pages build, browser checks and deployment. Confirm UI 0.5.0, both dataset identities, the six watch cards and source navigation on the deployed site. Runtime publication and deployment receipts are saved in `.cache/atlas-publish-0.5.0/`.

@@ -8,7 +8,7 @@ import type { AtlasRecord } from "./atlas";
 export type { DailyData, DailyDocument, DailyFinding, DailyEvidence, DailyWatch } from "./atlas-vendor/daily/0.2.1/daily";
 export type DailySelection = ReturnType<typeof selectDaily>;
 export type DailyState = { data?: DailyData; error?: string; loading?: boolean };
-export const dailyPins = { schema: "f6ad4682d20d19bb306fc9accc09d8dd8ebb375852eb4d15f6f3124aad0ac86a", selector: "76a1c662f49d9e0fcc5e26e8f90f92be96abc765f9c3b2f824335364568fb5e0" };
+export const dailyPins = { schema: "91c8f56346d966f095006d3d0932c3f96d3d9a703312f6190ef8bbc957599c06", selector: "76a1c662f49d9e0fcc5e26e8f90f92be96abc765f9c3b2f824335364568fb5e0" };
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 export const dailyPointerSchema = z.strictObject({ version: z.literal(1), daily_version: z.literal("0.2.1"), daily_id: digest,
   base_source_export_id: digest, base_manifest_sha256: digest, published_at: z.iso.datetime(),

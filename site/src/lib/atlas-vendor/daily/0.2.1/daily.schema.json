@@ -627,7 +627,7 @@
           "type": "string"
         },
         "method_version": {
-          "const": "daily-watch-1.0.1",
+          "const": "daily-watch-1.0.2",
           "title": "Method Version",
           "type": "string"
         },
