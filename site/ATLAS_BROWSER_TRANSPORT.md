@@ -2,7 +2,7 @@
 
 ## Transport versions
 
-The UI requires browser transport 0.3.0, site contract 1.8.0 and metrics 0.4.0. Its byte-preserved producer runtime, declarations and selector live in `atlas-vendor/browser/0.3`. Core, map core, detail index, detail partitions and producer handoff must agree with this transport version. The handoff envelope is version 0.1.0.
+The UI requires browser transport 0.3.0, site contract 1.8.0 and metrics 0.4.0. Its byte-preserved producer runtime, declarations and selector live in `src/lib/atlas-vendor/browser/0.3`. Core, map core, detail index, detail partitions and producer handoff must agree with this transport version. The handoff envelope is version 0.1.0.
 
 Measurement summaries carry `qualifier`, including strict, inclusive and approximate bounds. Summary figures and detail views use the same value formatter. No executable asset is fetched for execution; the manifest must match the bundled runtime. Other transport versions and releases without browser transport are rejected before dataset downloads.
 
@@ -88,6 +88,7 @@ Fields in each row below retain their source spelling and meaning. Fields absent
 | disease_reviews | record_id, disease_ids, kind, eligibility |
 | assertions | id, record_id, measure_id, eligibility |
 | comparisons | id, kind, status, participant_ids, lineage, eligibility |
+| report_assessments | Complete `AtlasReportAssessment` rows, including authority, scope, review, evidence, eligibility and supersession fields |
 | one_health_reviews | Complete `AtlasOneHealthReview` rows |
 | one_health_nodes | Complete `AtlasOneHealthNode` rows |
 | one_health_relations | Complete `AtlasOneHealthRelation` rows |
@@ -105,7 +106,7 @@ Every One Health date, scope, label, reason, certainty, direction, source wordin
 Core measures retain:
 
 ```text
-measure_id context_id label metric value value_status unit observation_date
+measure_id context_id label metric value value_status unit qualifier observation_date
 priority source_id track_id superseded conflict_set geography disease count_kind
 period_label source_date_warning publication source_record_id evidence_record_ids
 compact_figure_id
@@ -161,7 +162,7 @@ Required checks are:
 
 A candidate must pass both producer integrity checks and consumer parity, interaction and memory checks before adoption. The live release stays bound to its matching analysis assets throughout validation.
 
-## Bound producer candidate
+## Transport 0.1.0 measurements
 
 Transport 0.1.0 for the measured source export has manifest SHA-256 `b660d7a7445f697f2fc2c8737b37e531d695ab9deff87f44d50779b337a2c057`. The [stable producer handoff](evidence/browser-transport-stable-handoff-2026-10-02.json) records exact reconstruction and 2,220 selection cases, including every report entry. Its public copy has checksum `cda3c1ac0bf45bb6bfa1eeba3dee6687808c4c6afa609cb7099aef4bde1593e2`. The [producer handoff](evidence/browser-transport-handoff-2026-10-02.json), [reconstruction and selection receipt](evidence/browser-transport-validation-2026-10-02.json), [exhaustive selection receipt](evidence/browser-transport-exhaustive-validation-2026-10-02.json) and [size measurements](evidence/browser-transport-measurements-2026-10-02.json) provide supporting validation and measurements. The public handoff copies use portable file names and serve as evidence summaries; publication requires the producer's local receipt.
 
@@ -177,7 +178,9 @@ The exact core and map core total **20,039,058 bytes** before compression. This 
 
 The release descriptor is `{ "transport_version": "0.1.0", "manifest": { "sha256": "…", "bytes": 870451 } }` under `browser`. Its directory is `releases/<export_id>/browser/<manifest_sha256>/`. The manifest fixes 453 detail partitions and binds their exact bytes. The detail index maps each source collection's ordered `[id, partition_ordinal]` tuples to the partition path array. Tuple position is the source row ordinal; null IDs remain addressable by ordinal. Partition rows carry `collection`, `ordinal`, `id` and the complete source `value`.
 
-The bundled runtime files are byte identical to the producer candidate. Their hashes are pinned by `browserSelectorHashes` in `src/lib/atlas-release.ts`. `browser_transport.d.ts` is a byte identical copy of `browser.d.mts` so TypeScript resolves the runtime's declarations.
+## Consumer validation and detail cache
+
+The bundled transport 0.3.0 runtime must match the producer manifest. Its hashes are pinned by `browserSelectorHashes` in `src/lib/atlas-release.ts`. `browser_transport.d.ts` is a byte identical copy of the producer's `browser.d.mts` so TypeScript resolves the runtime's declarations.
 
 `src/lib/atlas-browser.ts` verifies the manifest and assets, then exposes an entity lease interface. `acquire()` accepts typed collection and ID or ordinal references; `get()` returns only entities requested by that lease. Missing entities, corrupted bytes, wrong source identities and unrequested reads throw errors. Concurrent readers share downloads. Cancelling one reader leaves other readers intact; cancelling the last reader aborts its request. Visible leases pin their partitions. Releasing a lease makes its partitions eligible for eviction under the 32 MiB uncompressed retention budget. A set of visible details can exceed that budget until its leases are released. The detail index is retained separately and reported in cache diagnostics.
 

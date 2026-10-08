@@ -58,24 +58,57 @@ test('Watch cards remain selected after review deadlines until a reviewed releas
   data.watch_items = structuredClone(data.watch_assessments);
   await assert.rejects(validateDaily(data, release, data.base_manifest_sha256), /watch fact evidence/);
 });
-test('Daily publication validates the sealed files and the weekly browser binding', async () => {
+test('Daily publication validates sealed files and weekly document and channel bindings', async () => {
   const { mkdtemp, writeFile, rm } = await import('node:fs/promises');
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');
   const { prepareDailyRelease } = await import('../scripts/publish-atlas-daily');
+  const { browserFixture } = await import('./atlas-browser-fixture.mjs');
+  const { bundle } = await import('./atlas-fixture');
   const directory = await mkdtemp(join(tmpdir(), 'atlas-daily-'));
   try {
-    const data = dailyFixture(release);
-    const browserBytes = Buffer.from(JSON.stringify({ source_export_id: release.export_id, source: { manifest: { sha256: data.base_manifest_sha256 }, site: { sha256: data.base_site_sha256 } } }));
-    const base = { ...release, browser: { transport_version: '0.3.0' as const, manifest: { sha256: dailyHash(browserBytes), bytes: browserBytes.length } } };
-    const files = { 'daily.json': Buffer.from(JSON.stringify(data)), 'daily.schema.json': readFileSync('src/lib/atlas-vendor/daily/0.2.1/daily.schema.json'), 'daily-view.mjs': readFileSync('src/lib/atlas-vendor/daily/0.2.1/daily-view.mjs'), 'validation.json': Buffer.from(JSON.stringify({ status: 'valid', daily_id: data.daily_id, base_source_export_id: release.export_id, documents: 2, findings: 1, watch_items: 1, weekly_review_pending: 2 })) };
-    for (const [name, bytes] of Object.entries(files)) await writeFile(join(directory, name), bytes);
-    await writeFile(join(directory, 'manifest.json'), JSON.stringify({ daily_version: '0.2.1', daily_id: data.daily_id, base_source_export_id: release.export_id, files: Object.fromEntries(Object.entries(files).map(([name, bytes]) => [name, { sha256: dailyHash(bytes), bytes: bytes.length }])) }));
-    assert.equal((await prepareDailyRelease(directory, base, browserBytes)).pointer.daily_id, data.daily_id);
-    await assert.rejects(prepareDailyRelease(directory, base, Buffer.from('{}')));
+    const fixture = browserFixture(bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
+    const base = fixture.release as AtlasRelease, root = `/releases/${base.export_id}/browser/${base.browser!.manifest.sha256}`;
+    const browserBytes = fixture.bodies[`${root}/manifest.json`], browser = JSON.parse(browserBytes.toString());
+    const browserPath = join(directory, 'browser-manifest.json'), corePath = join(directory, browser.core);
+    await writeFile(browserPath, browserBytes);
+    await writeFile(corePath, fixture.bodies[`${root}/${browser.core}`]);
+    const data = dailyFixture(base, browser.source.manifest.sha256);
+    async function seal(candidate: typeof data) {
+      const files = { 'daily.json': Buffer.from(JSON.stringify(candidate)), 'daily.schema.json': readFileSync('src/lib/atlas-vendor/daily/0.2.1/daily.schema.json'), 'daily-view.mjs': readFileSync('src/lib/atlas-vendor/daily/0.2.1/daily-view.mjs'), 'validation.json': Buffer.from(JSON.stringify({ status: 'valid', daily_id: candidate.daily_id, base_source_export_id: base.export_id, documents: 2, findings: 1, watch_items: 1, weekly_review_pending: 2 })) };
+      for (const [name, bytes] of Object.entries(files)) await writeFile(join(directory, name), bytes);
+      await writeFile(join(directory, 'manifest.json'), JSON.stringify({ daily_version: '0.2.1', daily_id: candidate.daily_id, base_source_export_id: base.export_id, files: Object.fromEntries(Object.entries(files).map(([name, bytes]) => [name, { sha256: dailyHash(bytes), bytes: bytes.length }])) }));
+    }
+    await seal(data);
+    assert.equal((await prepareDailyRelease(directory, base, browserPath)).pointer.daily_id, data.daily_id);
+    for (const [mutate, message] of [
+      [(candidate: typeof data) => { candidate.documents[0].base_document_ids = ['missing']; }, /publication version binding/],
+      [(candidate: typeof data) => { candidate.documents[0].channel_id = bundle.channels[0].id; candidate.documents[0].source_id = 'other'; }, /source channel binding/],
+    ] as const) {
+      const invalid = structuredClone(data); mutate(invalid); await seal(invalid);
+      await assert.rejects(prepareDailyRelease(directory, base, browserPath), message);
+    }
+    await seal(data);
+    await writeFile(browserPath, '{}');
+    await assert.rejects(prepareDailyRelease(directory, base, browserPath), /Weekly browser manifest hash/);
+    await writeFile(browserPath, browserBytes);
+    await writeFile(corePath, '{}');
+    await assert.rejects(prepareDailyRelease(directory, base, browserPath), /Weekly browser core hash/);
+    await writeFile(corePath, fixture.bodies[`${root}/${browser.core}`]);
     await writeFile(join(directory, 'daily.json'), '{}');
-    await assert.rejects(prepareDailyRelease(directory, base, browserBytes));
+    await assert.rejects(prepareDailyRelease(directory, base, browserPath));
   } finally { await rm(directory, { recursive: true }); }
+});
+
+test('Daily publication ordering compares instants across fractional timestamp precision', async () => {
+  const { checkDailyPublicationOrder } = await import('../scripts/publish-atlas-daily');
+  const pointer = dailyPointer(dailyFixture(release));
+  const current = { ...pointer, published_at: '2026-10-08T06:00:00Z' };
+  const later = { ...pointer, published_at: '2026-10-08T06:00:00.500Z' };
+  checkDailyPublicationOrder(null, current);
+  checkDailyPublicationOrder(current, current);
+  checkDailyPublicationOrder(current, later);
+  assert.throws(() => checkDailyPublicationOrder(later, current), /must not move backwards/);
 });
 
 test('Exact daily document identities share one report entry with their weekly records', () => {

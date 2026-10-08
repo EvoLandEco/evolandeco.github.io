@@ -212,6 +212,9 @@ export function AtlasExplorer({ downloadRoot, release, experiment, daily = {} }:
   const moveCallout = useCallback((point: GlobeAnchor) => calloutPoint.set(point), [calloutPoint]);
   const [focus, setFocus] = useState<[number, number]>();
   const [weeklyMin, weeklyMax] = useMemo(() => dateBounds(basis), [dateBounds, basis]);
+  const dailyCapturedAt = daily.data && Date.parse(daily.data.knowledge_cutoff) > Date.parse(atlas.snapshot.captured_at)
+    ? daily.data.knowledge_cutoff : undefined;
+  const capturedAt = dailyCapturedAt ?? atlas.snapshot.captured_at;
   const min = daily.data && daily.data.publication_from < weeklyMin ? daily.data.publication_from : weeklyMin;
   const max = daily.data && daily.data.publication_until > weeklyMax ? daily.data.publication_until : weeklyMax;
   const [knownBounds, setKnownBounds] = useState([min, max]);
@@ -219,7 +222,7 @@ export function AtlasExplorer({ downloadRoot, release, experiment, daily = {} }:
     setKnownBounds([min, max]);
     setWindow([window[0] === knownBounds[0] ? min : window[0], window[1] === knownBounds[1] ? max : window[1]]);
   }
-  const dailyExcluded = !!(diseases.length || topic.length || kind.length || reportEvidence.recordIds.length);
+  const dailyExcluded = !!(diseases.length || topic.length || kind.length);
   const dailyView = useMemo(() => daily.data && !dailyExcluded ? dailySelection(daily.data, window, source, places) : undefined, [daily.data, dailyExcluded, window, source, places]);
   const dailyDocuments = useMemo(() => dailyView ? pendingDailyDocuments(dailyView, new Set(bundle.records.map(row => row.id))) : [], [dailyView, bundle]);
   const sourceChoices = useMemo(() => {
@@ -266,7 +269,7 @@ export function AtlasExplorer({ downloadRoot, release, experiment, daily = {} }:
   }, [assessments, recordIds]);
   const riskRecords = useMemo(() => new Set(experiment?.data?.risk_profiles.map(profile => profile.record_id)), [experiment]);
   const documents = useMemo(() => reportChronology(reportDocuments(filtered, basis, topic, source), dailyDocuments, id => atlasDocuments.get(id)!), [filtered, basis, topic, source, reportDocuments, dailyDocuments, atlasDocuments]);
-  const facetScope = [places, diseases, includeContext];
+  const facetScope = [places, diseases, includeContext, kind];
   const reportScope = JSON.stringify([basis, window, topic, source, ...facetScope]);
   const entryScope = JSON.stringify([reportScope, kind]);
   if (entryPages.scope !== entryScope) setEntryPages({ scope: entryScope, links: 0, assessments: 0, sources: 0 });
@@ -401,12 +404,12 @@ export function AtlasExplorer({ downloadRoot, release, experiment, daily = {} }:
     const broaden = ids.some(id => !candidateIds.has(id));
     const targetDocuments = reportDocuments(broaden ? rows : candidates, basis, topics, sources);
     if (broaden) { setPlaces([]); setDiseases([]); }
-    const targetChronology = reportChronology(targetDocuments, !ids.length && !topics.length && !diseases.length && !kind.length && daily.data ? pendingDailyDocuments(dailySelection(daily.data, window, sources, broaden ? [] : places), new Set(bundle.records.map(row => row.id))) : [], id => atlasDocuments.get(id)!);
+    const targetChronology = reportChronology(targetDocuments, !topics.length && (!diseases.length || broaden) && !kind.length && daily.data ? pendingDailyDocuments(dailySelection(daily.data, window, sources, broaden ? [] : places), new Set(bundle.records.map(row => row.id))) : [], id => atlasDocuments.get(id)!);
     const targets = highlightedReportIds(targetChronology, ids, documentIds);
     const index = targetChronology.findIndex(entry => targets.has(entry.id));
     setTopic(topics); setSource(sources); setTab("reports"); setReportView("reports"); setHover(null);
     setReportEvidence({ recordIds: ids, documentIds });
-    setReportPage({ scope: JSON.stringify([basis, window, topics, sources, broaden ? [] : places, broaden ? [] : diseases, includeContext]), index: index < 0 ? 0 : Math.floor(index / reportsPerPage) });
+    setReportPage({ scope: JSON.stringify([basis, window, topics, sources, broaden ? [] : places, broaden ? [] : diseases, includeContext, kind]), index: index < 0 ? 0 : Math.floor(index / reportsPerPage) });
     setReportJump({ documentId: index < 0 ? null : targetChronology[index].id, expand });
   }, [bundle, places, diseases, includeContext, rows, basis, reportDocuments, window, kind, daily.data, atlasDocuments]);
   const showReports = useCallback((ids: string[], expand?: boolean) => openReports(ids, [], [], expand), [openReports]);
@@ -425,12 +428,12 @@ export function AtlasExplorer({ downloadRoot, release, experiment, daily = {} }:
     const known = ids.filter(id => lookup.has(id));
     if (known.every(id => recordIds.has(id))) { showReports(known, expand); return; }
     const targetIds = new Set(known);
-    const allDocuments = reportDocuments(windowRecords(min, max, basis), basis, [], []);
-    const index = allDocuments.findIndex(records => records.some(record => targetIds.has(record.id)));
-    setWindow([min, max]); setPreset(3); setTopic([]); setSource([]); setPlaces([]); setDiseases([]); setIncludeContext(false); setReportEvidence({ recordIds: known, documentIds: [] });
+    const allDocuments = reportChronology(reportDocuments(windowRecords(min, max, basis), basis, [], []), daily.data ? pendingDailyDocuments(dailySelection(daily.data, [min, max], [], []), new Set(bundle.records.map(row => row.id))) : [], id => atlasDocuments.get(id)!);
+    const index = allDocuments.findIndex(entry => entry.records.some(record => targetIds.has(record.id)));
+    setWindow([min, max]); setPreset(3); setTopic([]); setSource([]); setPlaces([]); setDiseases([]); setIncludeContext(false); setKind([]); setReportEvidence({ recordIds: known, documentIds: [] });
     setTab("reports"); setReportView("reports");
-    setReportPage({ scope: JSON.stringify([basis, [min, max], [], [], [], [], false]), index: Math.max(0, Math.floor(index / reportsPerPage)) });
-    setReportJump({ documentId: index < 0 ? null : allDocuments[index][0].document_id, expand });
+    setReportPage({ scope: JSON.stringify([basis, [min, max], [], [], [], [], false, []]), index: Math.max(0, Math.floor(index / reportsPerPage)) });
+    setReportJump({ documentId: index < 0 ? null : allDocuments[index].id, expand });
   };
   const showSourceReports = useCallback((s: string) => openReports(filtered.filter(r => r.source === s).map(r => r.id), topic, s), [openReports, filtered, topic]);
   const showTopicReports = useCallback((id: string) => { chooseTopic(id); openReports(filtered.filter(r => r.track === id).map(r => r.id), id, source); }, [chooseTopic, openReports, filtered, source]);
@@ -602,9 +605,9 @@ export function AtlasExplorer({ downloadRoot, release, experiment, daily = {} }:
             <button aria-label="Source risk assessments" title="Source risk assessments" aria-pressed={assessmentKind === "risk"} aria-controls="atlas-panel" onClick={() => setAssessmentKind("risk")}><ShieldCheck size={15} aria-hidden /><span>Risks</span></button>
           </div> : (showingSources || showingAssessments || window[1] === max && documents.length > 0) && <div className="atlas-timeline-next">
             <span className="atlas-timeline-next-label">
-              <span><span>Captured</span><time dateTime={atlas.snapshot.captured_at}>{formatDate(atlas.snapshot.captured_at)}</time></span>
+              <span><span>Captured</span><time dateTime={capturedAt}>{formatDate(capturedAt, dailyCapturedAt ? "Europe/Amsterdam" : "UTC")}</time></span>
               <RefreshCw size={14} aria-hidden />
-              <span title={`Planned update · ${atlas.snapshot.schedule_timezone}`}><span>Next update <span className="sr-only">(planned)</span></span><time dateTime={atlas.snapshot.next_update_date}>{formatDate(atlas.snapshot.next_update_date)}</time></span>
+              <span title={`Planned review · ${atlas.snapshot.schedule_timezone}`}><span>Next review <span className="sr-only">(planned)</span></span><time dateTime={atlas.snapshot.next_update_date}>{formatDate(atlas.snapshot.next_update_date)}</time></span>
             </span>
           </div>}
           </div>

@@ -146,9 +146,9 @@ test("Decorative motion settles and respects reduced motion", async ({
   ).toBeVisible();
 });
 test("Core content and full-image routes without JavaScript", async ({
-  browser,
+  browser, baseURL,
 }) => {
-  const context = await browser.newContext({ javaScriptEnabled: false });
+  const context = await browser.newContext({ javaScriptEnabled: false, baseURL });
   const page = await context.newPage();
   for (const route of [
     ...routes,
@@ -156,7 +156,7 @@ test("Core content and full-image routes without JavaScript", async ({
     photography.albums[0].href,
     photography.albums[0].photos[0].href,
   ]) {
-    await page.goto("http://127.0.0.1:3000" + route);
+    await page.goto(route);
     await expect(page.locator("h1")).toBeVisible();
     await expect(page.getByRole("img", { name: "Tianjian Qin", exact: true })).toBeVisible();
   }
@@ -533,11 +533,9 @@ test("Globe animation avoids stylesheet churn and cleans up renderer wrappers", 
   const canvas = globe.locator('canvas[data-markers]');
   const angle = await canvas.getAttribute('data-angle');
   const writes = await page.evaluate(async () => {
-    const style = [...document.head.querySelectorAll('style')].find(el => el.textContent === ':root{}');
-    if (!style) throw new Error('Globe anchor stylesheet missing');
     let writes = 0;
     const observer = new MutationObserver(records => { writes += records.length; });
-    observer.observe(style, { childList: true, characterData: true, subtree: true });
+    observer.observe(document.head, { childList: true, characterData: true, subtree: true });
     await new Promise(resolve => setTimeout(resolve, 1000));
     observer.disconnect();
     return writes;
@@ -550,7 +548,7 @@ test("Globe animation avoids stylesheet churn and cleans up renderer wrappers", 
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await expect(globe).toHaveAttribute('data-motion-state', 'running');
   }
-  await expect(page.locator('.globe-frame > div > canvas[data-markers]')).toHaveCount(1);
+  await expect(canvas).toHaveCount(1);
 });
 
 

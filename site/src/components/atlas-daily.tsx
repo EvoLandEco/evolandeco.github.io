@@ -25,8 +25,8 @@ export function DailyWatchCard({ item, onReports }: { item: DailyWatch; onReport
   </article>;
 }
 export function DailyVersion({ document, selection }: { document: DailyDocument; selection: DailySelection }) {
-  return <ReportCountryFlags value={true}><section className="atlas-daily-version" aria-label={`Daily version captured ${formatDate(document.capture)}`}>
-    <div className="atlas-item-meta atlas-report-meta"><span><CalendarDays size={14} aria-hidden />Captured {formatDate(document.capture)}</span><a href={document.url} target="_blank" rel="noopener noreferrer">Read source <ExternalLink size={14} aria-hidden /></a></div>
+  return <ReportCountryFlags value={true}><section className="atlas-daily-version" aria-label={`Daily version captured ${formatDate(document.capture, "Europe/Amsterdam")}`}>
+    <div className="atlas-item-meta atlas-report-meta"><span><CalendarDays size={14} aria-hidden />Captured {formatDate(document.capture, "Europe/Amsterdam")}</span><a href={document.url} target="_blank" rel="noopener noreferrer">Read source <ExternalLink size={14} aria-hidden /></a></div>
     {document.title_translation && <TranslatedTitle title={document.title} language={document.language_tag} translation={document.title_translation} />}
     {selection.findings.filter(finding => finding.document_id === document.id).map(finding => <div className="atlas-claim" key={finding.id}>
       <p><CountryText>{finding.text}</CountryText></p>
@@ -44,7 +44,7 @@ export function DailyReport({ documents, selection, highlighted }: { documents: 
   const [open, setOpen] = useAtlasPanelState(`daily.${document.id}.open`, false);
   return <details open={open} className="atlas-report atlas-daily-report" id={`atlas-report-${document.id}`} data-evidence={highlighted} onToggle={event => { if (event.target === event.currentTarget) setOpen(event.currentTarget.open); }}>
     <summary><span className="atlas-timeline-node institution-logo atlas-source-logo">{logo ? <Image src={`/logos/atlas/${logo}`} alt={document.source_name} width={32} height={32} unoptimized /> : <Building2 size={20} aria-hidden />}</span>
-      <span className="atlas-report-date">{document.publication ? formatDate(document.publication) : "Undated"}<small>{document.source_name}</small></span>
+      <span className="atlas-report-date">{document.publication ? formatDate(document.publication, "Europe/Amsterdam") : "Undated"}<small>{document.source_name}</small></span>
       <span className="atlas-report-summary"><strong>{dailyTitle(document)}</strong><DailyProcessing document={documents.find(doc => doc.processing_status === "weekly_review_pending") ?? document} /></span><span className="atlas-expand" aria-hidden><ChevronDown size={17} /></span></summary>
     {open && <div className="atlas-report-body atlas-daily-body">{documents.map(doc => <DailyVersion key={doc.id} document={doc} selection={selection} />)}</div>}
   </details>;

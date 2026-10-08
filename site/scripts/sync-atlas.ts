@@ -31,6 +31,11 @@ export function checkCorrectionTarget(replaces: string, existing: AtlasRelease |
   assert(existing, "A correction requires an existing publication");
   assert.equal(existing.export_id, replaces, "Correction authorization does not match the published release");
 }
+export function requireSyncAttachments(current: AtlasRelease | null, candidate: AtlasRelease, stageOnly: boolean) {
+  if (!current || stageOnly) return;
+  requireCurrentSourceSupplement(current, candidate);
+  requireCurrentPresentation(current, candidate);
+}
 export function weeklyCycle(today = new Date()) {
   const local = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Amsterdam", year: "numeric", month: "2-digit", day: "2-digit" }).format(today);
   const date = new Date(local + "T00:00:00Z");
@@ -123,7 +128,7 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
     const supplementAuthorization = "export" in first ? first.source_supplement : undefined;
     const supplement = supplementAuthorization ? await prepareSourceSupplement(supplementAuthorization, release) : null;
     if (supplement) release = releaseSchema.parse({ ...release, source_supplement: supplement.descriptor });
-    if (existing) { requireCurrentSourceSupplement(existing, release); requireCurrentPresentation(existing, release); }
+    requireSyncAttachments(existing, release, stageOnly);
     if (supplement) await writeFile(resolve(cache, `supplement-delivery-${supplement.descriptor.sha256}.json`), JSON.stringify({
       status: "validated", export_id: release.export_id, descriptor: supplement.descriptor, counts: supplement.counts,
       authorization_sha256: "export" in first ? first.authorization_sha256 : null, staged_verification: "pending", activation: "pending",

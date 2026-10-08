@@ -1,9 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { weeklyCycle, publicationCandidate, correctionSchema, checkCorrectionTarget } from "../scripts/sync-atlas";
+import { weeklyCycle, publicationCandidate, correctionSchema, checkCorrectionTarget, requireSyncAttachments } from "../scripts/sync-atlas";
 import { verifiedBytes, parseAtlasJson, releaseSchema, fetchAtlasData, type AtlasLoadProgress } from "../src/lib/atlas-release";
 import fixture from "./atlas-fixture.json";
+import presentationFixture from "./atlas-presentation-fixture.json";
 import type { AtlasPublicationHandoff } from "../src/lib/atlas-vendor/site-types";
 
 test("Publication requires all three matching weekly receipts", () => {
@@ -23,6 +24,23 @@ test("Publication requires all three matching weekly receipts", () => {
   assert.equal(publicationCandidate(handoff, handoff.cycle, false), candidate);
   handoff.jobs.inbox.status = "partial";
   assert.throws(() => publicationCandidate(handoff, handoff.cycle, false));
+});
+test("Scientific staging can precede attachment delivery while activation retains attachments", () => {
+  const current = releaseSchema.parse(presentationFixture.release);
+  const exportId = "f".repeat(64);
+  const candidate = { ...current, export_id: exportId, source_text: undefined, watch: undefined,
+    source_supplement: { ...current.source_supplement!, source_export_id: exportId } };
+  requireSyncAttachments(current, candidate, true);
+  assert.throws(() => requireSyncAttachments(current, candidate, false), /must retain source_text/);
+  const complete = { ...candidate, source_text: { ...current.source_text!, source_export_id: exportId },
+    watch: { ...current.watch!, source_export_id: exportId } };
+  requireSyncAttachments(current, complete, false);
+  assert.throws(() => requireSyncAttachments(current, { ...complete, watch: undefined }, false), /must retain watch/);
+  const base = { ...candidate, source_supplement: undefined };
+  requireSyncAttachments(current, base, true);
+  assert.throws(() => requireSyncAttachments(current, base, false), /must include a supplement/);
+  assert.throws(() => requireSyncAttachments(current, { ...current, source_supplement: { ...current.source_supplement!, sha256: "e".repeat(64) } }, false), /must preserve/);
+  assert.throws(() => requireSyncAttachments(current, { ...current, watch: { ...current.watch!, sha256: "e".repeat(64) } }, false), /Same export must retain watch/);
 });
 test("Remote release bytes must match their published checksums", async () => {
   const bytes = Buffer.from('{"records":[]}');

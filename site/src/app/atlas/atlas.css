@@ -737,6 +737,7 @@ html[data-magicui-theme-vt="active"] .atlas-page[data-fullscreen] { view-transit
 .atlas-page[data-fullscreen] .atlas-link-legend { flex-wrap: wrap; padding-top: 4px; }
 .atlas-page[data-fullscreen] .atlas-filters { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
 .atlas-page[data-fullscreen] .atlas-filters .atlas-select-options { top: auto; bottom: calc(100% + 7px); }
+.atlas-page[data-fullscreen] .atlas-filters > div:nth-child(3) .atlas-select-options { left: 0; right: auto; }
 .atlas-page[data-fullscreen] .atlas-filters .atlas-select > summary > svg { transform: rotate(180deg); }
 .atlas-page[data-fullscreen] .atlas-filters .atlas-select[open] > summary > svg { transform: none; }
 .atlas-page[data-fullscreen] .atlas-workspace { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; width: 100%; min-height: 0; margin-top: 0; animation: none; border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border)); border-radius: 22px; background: var(--background); box-shadow: 0 8px 28px color-mix(in srgb, var(--primary) 5%, transparent); overflow: hidden; }

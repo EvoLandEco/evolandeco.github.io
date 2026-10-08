@@ -1,6 +1,6 @@
 import { sourceLogos } from "@/lib/atlas-identities";
 import { DailyWatchCard } from "./atlas-daily";
-import { dailyTitle, reportChronology, type DailyDocument, type DailySelection, type DailyState, type DailyWatch } from "@/lib/atlas-daily";
+import { dailyTitle, reportChronology, reportPublicationMonth, type DailyDocument, type DailySelection, type DailyState, type DailyWatch } from "@/lib/atlas-daily";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { visibleMeasure, measureEvidenceRecords } from "@/lib/atlas-metrics";
 import { memo, useMemo, useId, useState, useContext, useCallback, type CSSProperties } from "react";
@@ -30,7 +30,6 @@ export const AtlasTrends = memo(function AtlasTrends({ rows, window, onReport, o
     observer.observe(element);
     return () => observer.disconnect();
   }, [latestFadeHeight]);
-  const featuredDaily = useMemo(() => new Set(dailyEvents.flatMap(item => item.document_ids)), [dailyEvents]);
   const data = useMemo(() => {
     const ids = new Set(rows.map(row => row.id));
     const groups = new Map<string, AtlasRecord[]>();
@@ -39,7 +38,6 @@ export const AtlasTrends = memo(function AtlasTrends({ rows, window, onReport, o
       group.push(row); groups.set(row.document_id, group);
     }
     const publications = reportChronology([...groups.values()], dailyDocuments, id => atlasDocuments.get(id)!);
-    const latest = publications.filter(entry => !entry.dailyVersions.some(doc => featuredDaily.has(doc.id)));
     const view = selectedResearch(ids);
     const eligible = new Set(view.panels.flatMap(panel => panel.measure_ids));
     const measured = new Set(metrics.measures.filter(measure => eligible.has(measure.measure_id) && visibleMeasure(measure, ids) && !measure.superseded).flatMap(measureEvidenceRecords));
@@ -47,12 +45,12 @@ export const AtlasTrends = memo(function AtlasTrends({ rows, window, onReport, o
     const cursor = new Date(`${window[0].slice(0, 7)}-01T00:00:00Z`);
     while (cursor.toISOString().slice(0, 7) <= window[1].slice(0, 7)) {
       const month = cursor.toISOString().slice(0, 7);
-      const count = publications.filter(entry => entry.publication.startsWith(month)).length;
+      const count = publications.filter(entry => reportPublicationMonth(entry) === month).length;
       months.push({ month, count });
       cursor.setUTCMonth(cursor.getUTCMonth() + 1);
     }
-    return { latest, months, composition: view.disease_composition, measured: view.numeric_coverage?.records_with_measures ?? measured.size, documents: publications.length };
-  }, [rows, atlasDocuments, window, selectedResearch, metrics, featuredDaily, dailyDocuments]);
+    return { latest: publications, months, composition: view.disease_composition, measured: view.numeric_coverage?.records_with_measures ?? measured.size, documents: publications.length };
+  }, [rows, atlasDocuments, window, selectedResearch, metrics, dailyDocuments]);
   const { latest } = data;
   function latestEntry(entry: (typeof latest)[number], index: number) {
     const dailyDocument = entry.dailyVersions[0];
@@ -62,7 +60,7 @@ export const AtlasTrends = memo(function AtlasTrends({ rows, window, onReport, o
     const title = entry.records.length ? englishTitle(document) : dailyTitle(dailyDocument);
     return <li key={entry.id} className={index === latestCount ? "atlas-latest-preview" : undefined} inert={index === latestCount}><button className="atlas-latest-entry" onClick={() => dailyDocument ? onDailyReport(dailyDocument.id) : onReport(entry.records.map(record => record.id), true)}>
       <span className="atlas-timeline-node institution-logo atlas-source-logo" aria-hidden>{logo ? <Image src={`/logos/atlas/${logo}`} alt="" width={32} height={32} unoptimized /> : <Building2 size={18} />}</span>
-      <span className="atlas-latest-date">{document.publication && <time dateTime={document.publication}>{formatDate(document.publication)}</time>}<small>{entry.records.length ? sourceName(source) : dailyDocument.source_name}</small></span>
+      <span className="atlas-latest-date">{document.publication && <time dateTime={document.publication}>{formatDate(document.publication, entry.records.length ? "UTC" : "Europe/Amsterdam")}</time>}<small>{entry.records.length ? sourceName(source) : dailyDocument.source_name}</small></span>
       <span><strong title={title}>{title}</strong></span><ArrowRight size={16} aria-hidden />
     </button></li>;
   }
@@ -99,7 +97,7 @@ export const AtlasTrends = memo(function AtlasTrends({ rows, window, onReport, o
     <section className="atlas-latest" aria-labelledby="atlas-latest-title">
       <header><Newspaper size={18} aria-hidden /><h2 id="atlas-latest-title">Latest reports</h2></header>
       <div ref={latestBody} className="atlas-briefing-body atlas-latest-body" data-fade={latest.length > latestCount}>
-        <ol className="atlas-latest-list">{latest.length ? latest.slice(0, latestCount + 1).map(latestEntry) : <li className="atlas-empty">No additional dated reports match these filters.</li>}</ol>
+        <ol className="atlas-latest-list">{latest.length ? latest.slice(0, latestCount + 1).map(latestEntry) : <li className="atlas-empty">No dated reports match these filters.</li>}</ol>
         <button className="atlas-briefing-link atlas-latest-all" onClick={onBrowseReports}>View all reports<ArrowRight size={15} aria-hidden /></button>
       </div>
     </section></div>

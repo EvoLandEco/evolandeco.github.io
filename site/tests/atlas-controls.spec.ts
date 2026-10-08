@@ -1,11 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { routeBrowserFixture } from './atlas-browser-fixture.mjs';
+import { bundle } from './atlas-fixture';
 
 for (const view of [
   { width: 390, height: 844, theme: 'light', workspace: false },
   { width: 390, height: 844, theme: 'dark', workspace: false },
   { width: 1280, height: 900, theme: 'light', workspace: false },
-  { width: 1180, height: 720, theme: 'dark', workspace: true },
+  { width: 1200, height: 720, theme: 'dark', workspace: true },
 ]) test(`Reporting controls retain their size at ${view.width} ${view.theme}`, async ({ page }) => {
+  await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
   await page.setViewportSize(view);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.addInitScript(theme => localStorage.setItem('theme', theme), view.theme);
@@ -54,16 +58,22 @@ for (const view of [
   await controls.getByRole('button', { name: '3 months', exact: true }).click();
   await stable();
   for (const label of ['Reporting topic', 'Reporting source', 'Link type']) {
-    const menu = controls.locator('.atlas-select').filter({ has: page.locator(`summary[aria-label="${label}"]`) });
-    await menu.locator('summary').click();
+    if (label === 'Reporting topic') await controls.locator('.atlas-rules > summary').click();
+    const menu = controls.locator(`.atlas-select:has(> summary[aria-label="${label}"])`);
+    await menu.locator(':scope > summary').click();
+    await expect(menu.getByRole('checkbox').nth(1)).toBeVisible();
+    const menuBox = await menu.locator(':scope > .atlas-select-options').boundingBox();
+    expect(menuBox!.x).toBeGreaterThanOrEqual(0);
+    expect(menuBox!.x + menuBox!.width).toBeLessThanOrEqual(view.width);
     const count = Math.min(15, (await menu.getByRole('checkbox').count()) - 1);
     for (let i = 1; i <= count; i++) await menu.getByRole('checkbox').nth(i).check();
     await menu.getByRole('checkbox').nth(1).press('Escape');
+    if (label === 'Reporting topic') await controls.locator('.atlas-rules > summary').click();
     await stable();
   }
   const rules = controls.locator('.atlas-rules');
-  await expect(rules.locator('summary')).toHaveAttribute('aria-label', 'Active rules: 4');
-  await rules.locator('summary').click();
+  await expect(rules.locator(':scope > summary')).toHaveAttribute('aria-label', 'Active rules: 4');
+  await rules.locator(':scope > summary').click();
   await expect(rules.getByRole('button', { name: 'Remove topic filter' })).toBeVisible();
   await stable();
   const popup = await rules.locator('.atlas-rules-options').boundingBox();
@@ -74,7 +84,7 @@ for (const view of [
   await rules.getByRole('button', { name: 'Remove topic filter' }).click();
   await stable();
   await page.keyboard.press('Escape');
-  await expect(rules.locator('summary')).toBeFocused();
+  await expect(rules.locator(':scope > summary')).toBeFocused();
   if (view.workspace) await expect(atlas).toHaveAttribute('data-fullscreen', 'true');
   await expect(toolbarReset).toBeEnabled();
   await toolbar.screenshot({ path: `/tmp/atlas-toolbar-${view.width}-${view.theme}.png` });
@@ -83,13 +93,13 @@ for (const view of [
   await expect(theme).toHaveAttribute('aria-checked', wasDark === 'true' ? 'false' : 'true');
   await theme.click();
   await toolbarReset.click();
-  await expect(rules.locator('summary')).toHaveAttribute('aria-label', 'Active rules: 0');
+  await expect(rules.locator(':scope > summary')).toHaveAttribute('aria-label', 'Active rules: 0');
   await stable();
   await page.locator('.atlas-link-target').first().press('Enter');
-  await rules.locator('summary').click();
+  await rules.locator(':scope > summary').click();
   await expect(rules.getByRole('button', { name: 'Clear selected route' })).toBeVisible();
   await stable();
   await rules.getByRole('button', { name: 'Clear selected route' }).click();
-  await expect(rules.locator('summary')).toHaveAttribute('aria-label', 'Active rules: 0');
+  await expect(rules.locator(':scope > summary')).toHaveAttribute('aria-label', 'Active rules: 0');
   await stable();
 });

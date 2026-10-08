@@ -1,0 +1,32 @@
+import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { routeBrowserFixture } from './atlas-browser-fixture.mjs';
+import { bundle } from './atlas-fixture';
+import { releaseSchema } from '../src/lib/atlas-release';
+import { dailyFixture, dailyPointer } from './atlas-daily-fixture';
+
+for (const width of [390, 1466]) test(`Scientific evidence highlights retain daily reports and use merged pagination at ${width}px`, async ({ page }) => {
+  const fixture = await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
+  const manifest = JSON.parse(fixture.bodies[`/releases/${fixture.release.export_id}/browser/${fixture.release.browser.manifest.sha256}/manifest.json`].toString());
+  const data = dailyFixture(releaseSchema.parse(fixture.release), manifest.source.manifest.sha256);
+  for (let index = 0; index < 13; index++) data.documents.push({ ...data.documents[1], id: `daily_extra_${index}`, review_id: `review_extra_${index}` });
+  await page.route(/\/daily\//, route => route.fulfill({ contentType: 'application/json', body: JSON.stringify(route.request().url().endsWith('current.json') ? dailyPointer(data) : data) }));
+  await page.setViewportSize({ width, height: 832 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.clock.install({ time: new Date('2026-10-07T12:00:00Z') });
+  await page.goto('/atlas/');
+  await expect(page.locator('.atlas-daily-watch')).toBeVisible();
+  const activity = await page.locator('.atlas-trend-activity header strong').innerText();
+  await page.locator('.atlas-disease-segment').first().press('Enter');
+  const highlights = page.locator('.atlas-report[data-evidence="true"]');
+  await expect(highlights.first().locator(':scope > summary')).toBeFocused();
+  await expect(page.locator('.atlas-daily-report')).toHaveCount(3);
+  await expect(page.locator('.atlas-report-prelude')).toContainText('13–24 of');
+  await page.getByRole('tab', { name: 'Trends', exact: true }).click();
+  await expect(page.locator('.atlas-daily-watch')).toBeVisible();
+  await expect(page.locator('.atlas-trend-activity header strong')).toHaveText(activity);
+  await expect(page.locator('.atlas-latest-entry').first()).toContainText('Investigation in France');
+  await page.locator('.atlas-latest-entry').first().click();
+  await expect(page.locator('.atlas-report[data-evidence="true"]')).toHaveCount(1);
+  await expect(page.locator('.atlas-report[data-evidence="true"]')).toHaveAttribute('open', '');
+});

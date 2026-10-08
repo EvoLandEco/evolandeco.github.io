@@ -108,19 +108,24 @@ export function reportChronology(weekly: AtlasRecord[][], daily: DailyData["docu
   }
   for (const document of daily) for (const base of document.base_document_ids) parent.set(root(document.id), root(base));
   const entries = new Map<string, Entry>();
-  const chronological = (a: { publication: string; capture: string; id: string }, b: { publication: string; capture: string; id: string }) => b.publication.localeCompare(a.publication) || b.capture.localeCompare(a.capture) || a.id.localeCompare(b.id);
+  const timestamp = (value: string) => value ? Date.parse(value) : -Infinity;
+  const chronological = (a: { publication: string; capture: string; id: string }, b: { publication: string; capture: string; id: string }) => timestamp(b.publication) - timestamp(a.publication) || timestamp(b.capture) - timestamp(a.capture) || a.id.localeCompare(b.id);
   const weeklyEntries = weekly.map(records => ({ records, id: records[0].document_id, ...dates(records[0].document_id) })).sort(chronological);
   for (const entry of weeklyEntries) {
     const key = root(entry.id), existing = entries.get(key);
     if (existing) { existing.records.push(...entry.records); existing.weeklyVersions.push(entry.records); }
     else entries.set(key, { ...entry, records: [...entry.records], weeklyVersions: [entry.records], dailyVersions: [] });
   }
-  for (const document of [...daily].sort((a, b) => b.capture.localeCompare(a.capture) || a.id.localeCompare(b.id))) {
+  for (const document of [...daily].sort((a, b) => timestamp(b.capture) - timestamp(a.capture) || a.id.localeCompare(b.id))) {
     const key = root(document.id), existing = entries.get(key);
     if (existing) existing.dailyVersions.push(document);
     else entries.set(key, { id: document.id, records: [], weeklyVersions: [], dailyVersions: [document], publication: document.publication ?? "", capture: document.capture });
   }
   return [...entries.values()].sort(chronological);
+}
+const dailyMonthFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Amsterdam", year: "numeric", month: "2-digit" });
+export function reportPublicationMonth(entry: ReturnType<typeof reportChronology>[number]) {
+  return entry.records.length || !entry.publication ? entry.publication.slice(0, 7) : dailyMonthFormatter.format(new Date(entry.publication));
 }
 
 export function highlightedReportIds(entries: ReturnType<typeof reportChronology>, recordIds: string[], documentIds: string[]) {

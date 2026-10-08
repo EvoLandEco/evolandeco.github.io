@@ -38,8 +38,9 @@ export function monthsBefore(date: string, months: number) {
   return new Date(Date.UTC(year, month - 1 - months, Math.min(day, lastDay))).toISOString().slice(0, 10);
 }
 const dateFormatter = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
-export function formatDate(date: string) {
-  return dateFormatter.format(new Date(date));
+const dailyDateFormatter = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/Amsterdam" });
+export function formatDate(date: string, timeZone: "UTC" | "Europe/Amsterdam" = "UTC") {
+  return (timeZone === "UTC" ? dateFormatter : dailyDateFormatter).format(new Date(date));
 }
 
 export function topicIds(selection: string | string[]): string[] { return Array.isArray(selection) ? selection : selection.replace(/^place:/, "").split(",").filter(Boolean); }

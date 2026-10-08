@@ -1,14 +1,26 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
+import { routeBrowserFixture } from './atlas-browser-fixture.mjs';
+import { bundle } from './atlas-fixture';
 
 for (const colorScheme of ['light', 'dark'] as const) test(`Cursor set preserves interaction states in ${colorScheme}`, async ({ page }) => {
+  await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
   await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
   await page.goto('/atlas/');
   await expect(page.locator('.atlas-page[data-ready="true"]')).toBeVisible();
   await expect(page.locator('html')).toHaveCSS('cursor', /data:image\/svg\+xml.*6 4, default/);
   await expect(page.getByRole('tab', { name: 'Trends', exact: true })).toHaveCSS('cursor', /16 16, pointer/);
   await expect(page.getByRole('button', { name: 'Reset all filters and rules' })).toHaveCSS('cursor', /16 16, not-allowed/);
+  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+  await page.locator('.atlas-rules > summary').click();
+  await page.locator('summary[aria-label="Reporting topic"]').click();
+  await page.getByRole('checkbox', { name: 'Lassa fever · Nigeria', exact: true }).check();
+  await page.getByRole('checkbox', { name: 'Lassa fever · Nigeria', exact: true }).press('Escape');
+  await page.locator('.atlas-rules > summary').click();
+  await page.locator('.atlas-observations > summary').click();
   await expect(page.locator('.atlas-observation-chart').first()).toHaveCSS('cursor', /16 16, crosshair/);
+  await page.getByRole('button', { name: 'Reset all', exact: true }).click();
+  await page.getByRole('tab', { name: 'Trends', exact: true }).click();
   const thumb = await page.getByRole('slider', { name: 'Window start', exact: true }).evaluate(el => getComputedStyle(el, '::-webkit-slider-thumb').cursor);
   expect(thumb).toContain('16 16, ew-resize');
   await page.getByRole('button', { name: 'Click to enter full screen', exact: true }).press('Enter');
@@ -26,8 +38,9 @@ for (const colorScheme of ['light', 'dark'] as const) test(`Cursor set preserves
   });
   await page.mouse.move(point.x, point.y);
   await page.mouse.down();
-  await expect(canvas).toHaveCSS('cursor', /16 16, grabbing/);
   await page.mouse.move(point.x + 12, point.y);
+  await expect(canvas).toHaveAttribute('data-dragging', 'true');
+  await expect(canvas).toHaveCSS('cursor', /16 16, grabbing/);
   await page.mouse.up();
   await expect(canvas).not.toHaveAttribute('data-dragging');
   await page.emulateMedia({ forcedColors: 'active' });

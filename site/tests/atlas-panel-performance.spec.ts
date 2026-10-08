@@ -61,9 +61,20 @@ test('One Health hover reuses report selection and fixed network geometry', asyn
 
 test('Observation hover avoids repeated scroll measurements and hidden report charts mount on demand', async ({ page }) => {
   await page.goto('/atlas/');
-  const chart = page.locator('.atlas-trend-observations .atlas-observation-chart');
-  await expect(chart.locator('circle').first()).toBeVisible();
-  await chart.locator('circle').first().hover();
+  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+  await page.locator('summary[aria-label^="Active rules:"]').click();
+  await page.locator('summary[aria-label="Reporting topic"]').click();
+  await page.getByRole('checkbox', { name: 'Lassa fever · Nigeria', exact: true }).check();
+  await page.getByRole('checkbox', { name: 'Lassa fever · Nigeria', exact: true }).press('Escape');
+  await page.locator('summary[aria-label^="Active rules:"]').click();
+  const history = page.locator('.atlas-observations');
+  await expect(history).toBeVisible();
+  await expect(history.locator('.atlas-observation-chart')).toHaveCount(0);
+  await history.locator(':scope > summary').click();
+  const point = history.locator('circle').first();
+  await expect(point).toBeVisible();
+  const chart = history.locator('.atlas-observation-chart').first();
+  await point.hover();
   const reads = await chart.evaluate(async element => {
     const circle = element.querySelector('circle')!;
     const bounds = Element.prototype.getBoundingClientRect;
@@ -81,18 +92,6 @@ test('Observation hover avoids repeated scroll measurements and hidden report ch
     return count;
   });
   expect(reads).toBe(0);
-  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
-  await page.locator('summary[aria-label^="Active rules:"]').click();
-  await page.locator('summary[aria-label="Reporting topic"]').click();
-  await page.getByRole('checkbox', { name: 'Lassa fever · Nigeria', exact: true }).check();
-  await page.getByRole('checkbox', { name: 'Lassa fever · Nigeria', exact: true }).press('Escape');
-  await page.locator('summary[aria-label^="Active rules:"]').click();
-  const history = page.locator('.atlas-observations');
-  await expect(history).toBeVisible();
-  await expect(history.locator('.atlas-observation-chart')).toHaveCount(0);
-  await history.locator(':scope > summary').click();
-  const point = history.locator('circle').first();
-  await expect(point).toBeVisible();
   await history.getByRole('button', { name: /^Scope & source for/ }).first().click();
   const dialog = page.getByRole('dialog').filter({ has: page.locator('.atlas-measure-details') });
   await expect(dialog).toBeVisible();

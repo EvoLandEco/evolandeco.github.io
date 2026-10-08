@@ -8,6 +8,35 @@ import AxeBuilder from '@axe-core/playwright';
 import type { DailyData } from '../src/lib/atlas-daily';
 import { sourceLogos } from '../src/lib/atlas-identities';
 
+test('Reports dates include daily captures and retain the weekly review schedule', async ({ page }) => {
+  const captured = '2026-10-07T12:00:00Z', review = '2026-10-14';
+  const fixture = await routeBrowserFixture(page, { ...bundle, snapshot: { ...bundle.snapshot, captured_at: captured, next_update_date: review } }, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
+  const manifest = JSON.parse(fixture.bodies[`/releases/${fixture.release.export_id}/browser/${fixture.release.browser.manifest.sha256}/manifest.json`].toString());
+  const data = dailyFixture(releaseSchema.parse(fixture.release), manifest.source.manifest.sha256);
+  let cutoff: string | undefined;
+  await page.route(/\/daily\//, route => cutoff
+    ? route.fulfill({ contentType: 'application/json', body: JSON.stringify(route.request().url().endsWith('current.json') ? dailyPointer(data) : data) })
+    : route.fulfill({ status: 404, body: '' }));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const [value, expected, label] of [[undefined, captured, '7 Oct 2026'], ['2026-10-07T08:00:00Z', captured, '7 Oct 2026'], ['2026-10-08T06:00:00Z', '2026-10-08T06:00:00Z', '8 Oct 2026']] as const) {
+    cutoff = value;
+    if (cutoff) { data.knowledge_cutoff = cutoff; data.generated_at = '2026-10-09T08:00:00Z'; }
+    const dailyResponse = page.waitForResponse(response => response.url().includes('/daily/') && response.url().endsWith('current.json'));
+    await page.goto('/atlas/');
+    await dailyResponse;
+    if (cutoff) await expect(page.locator('.atlas-daily-attention-scope')).toBeVisible();
+    await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+    for (const name of ['Reports', 'Source coverage']) {
+      await page.getByRole('group', { name: 'Report content' }).getByRole('button', { name, exact: true }).click();
+      const dates = page.locator('.atlas-timeline-next time');
+      await expect(dates.nth(0)).toHaveAttribute('datetime', expected);
+      await expect(dates.nth(0)).toHaveText(label);
+      await expect(dates.nth(1)).toHaveAttribute('datetime', review);
+      await expect(page.locator('.atlas-timeline-next')).toContainText('Next review');
+    }
+  }
+});
+
 test('Reset clears every watch report highlight through either reset control', async ({ page }) => {
   const fixture = await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
   const manifest = JSON.parse(fixture.bodies[`/releases/${fixture.release.export_id}/browser/${fixture.release.browser.manifest.sha256}/manifest.json`].toString());
@@ -96,6 +125,7 @@ for (const width of [390, 1466]) test(`Daily reports retain evidence and stay ou
   const fixture = await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
   const browserManifest = JSON.parse(fixture.bodies[`/releases/${fixture.release.export_id}/browser/${fixture.release.browser.manifest.sha256}/manifest.json`].toString());
   const data = dailyFixture(releaseSchema.parse(fixture.release), browserManifest.source.manifest.sha256);
+  data.documents[1].publication = '2026-10-06';
   await page.route(/\/daily\//, route => route.fulfill({ contentType: 'application/json', body: JSON.stringify(route.request().url().endsWith('current.json') ? dailyPointer(data) : data) }));
   await page.setViewportSize({ width, height: 832 }); await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.install({ time: new Date('2026-10-07T12:00:00Z') });
@@ -116,12 +146,16 @@ for (const width of [390, 1466]) test(`Daily reports retain evidence and stay ou
   const weeklyCount = await page.locator('.atlas-trend-activity header strong').innerText();
   const latest = page.locator('.atlas-latest-entry');
   await expect(latest.locator('.atlas-status')).toHaveCount(0);
-  await expect(latest.first()).toContainText('Latest daily report');
+  await expect(latest.first()).toContainText('Investigation in France');
   await expect(latest.first().locator('img')).toHaveAttribute('src', '/logos/atlas/spf.svg');
-  await expect(page.locator('.atlas-latest-list')).not.toContainText('Investigation in France');
+  await expect(page.locator('.atlas-latest-list')).toContainText('Latest daily report');
   const publicationDates = await latest.locator('time').evaluateAll(elements => elements.map(element => element.getAttribute('datetime')));
   expect(publicationDates).toEqual([...publicationDates].sort().reverse());
   await latest.first().click();
+  await expect(page.locator('#atlas-report-daily_doc')).toHaveAttribute('open', '');
+  await page.locator('#atlas-report-daily_doc > summary').click();
+  await page.getByRole('tab', { name: 'Trends', exact: true }).click();
+  await latest.filter({ hasText: 'Latest daily report' }).click();
   await expect(page.locator('#atlas-report-daily_latest')).toHaveAttribute('open', '');
   await expect(page.locator('#atlas-report-daily_latest')).toContainText('Weekly review pending');
   await expect(page.locator('#atlas-report-daily_latest .atlas-daily-processing')).toHaveCount(1);

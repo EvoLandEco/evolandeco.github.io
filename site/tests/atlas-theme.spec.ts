@@ -36,7 +36,8 @@ test('Workspace theme transition keeps the viewport covered', async ({ page }) =
     await expect.poll(() => page.evaluate(() => document.getAnimations().some(a => (a.effect as KeyframeEffect)?.pseudoElement === '::view-transition-new(root)' && a.playState === 'paused'))).toBe(true);
     await expect(page.locator('html')).toHaveCSS('view-transition-name', 'none');
     await expect(workspace).toHaveCSS('view-transition-name', 'root');
-    expect(await workspace.boundingBox()).toMatchObject({ x: 0, y: 0, width: 1440, height: 900 });
+    const viewport = await page.evaluate(() => ({ x: 0, y: 0, width: document.documentElement.getBoundingClientRect().width, height: window.innerHeight }));
+    expect(await workspace.boundingBox()).toMatchObject(viewport);
     await expect(page.getByTestId('primary-navigation')).toHaveAttribute('inert', '');
     await page.screenshot({ path: `/tmp/atlas-theme-${mode}-start.png` });
     await page.evaluate(() => { for (const a of document.getAnimations()) if ((a.effect as KeyframeEffect)?.pseudoElement === '::view-transition-new(root)') a.currentTime = 200; });

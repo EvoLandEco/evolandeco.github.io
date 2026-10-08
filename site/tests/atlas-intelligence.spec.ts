@@ -237,7 +237,7 @@ for (const width of [1440, 390]) test(`Merged Intelligence navigation and eviden
   await expect(page.locator('.atlas-report-tools')).toHaveAttribute('data-coverage', 'true');
   await expect(page.locator('.atlas-coverage-filters').getByRole('heading', { name: 'Topics', exact: true })).toBeVisible();
   await expect(page.locator('.atlas-report-context')).toContainText('Captured');
-  await expect(page.locator('.atlas-report-context')).toContainText('Next update');
+  await expect(page.locator('.atlas-report-context')).toContainText('Next review');
   await expect(page.locator('.atlas-report-tools')).not.toHaveAttribute('data-timeline');
   if (width > 1180) await expect(page.locator('.atlas-workspace-footer').getByRole('button', { name: /Next/ })).toBeVisible();
   await page.screenshot({ path: `/tmp/atlas-merged-sources-${width}.png`, fullPage: width === 390 });

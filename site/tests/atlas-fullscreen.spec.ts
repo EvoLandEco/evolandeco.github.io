@@ -1,5 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { bundle } from './atlas-fixture';
+
+async function openView(page: Page, name: string) {
+  const reportView = ['Reports', 'Assessments', 'Source coverage'].includes(name);
+  await page.getByRole('tab', { name: reportView ? 'Reports' : name, exact: true }).click();
+  if (reportView) await page.getByRole('group', { name: 'Report content' }).getByRole('button', { name, exact: true }).click();
+}
+
+async function selectCaseObservations(page: Page) {
+  await page.getByRole('combobox', { name: 'Monitored series', exact: true }).selectOption('observations:ncdc-lassa-2026-cumulative-1');
+  await expect(page.getByRole('region', { name: 'Reported observations', exact: true })).toBeVisible();
+}
 
 test('ATLAS full-screen workspace preserves interactions and restores the page', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -64,10 +76,9 @@ test('ATLAS full-screen workspace preserves interactions and restores the page',
   expect((await page.locator('.atlas-report[open] > summary').first().boundingBox())!.y).toBeGreaterThanOrEqual((await scroller.boundingBox())!.y - 1);
   await page.getByRole('tab', { name: 'Trends', exact: true }).click();
   for (const name of ['Reports', 'Geographic links', 'Assessments', 'Source coverage']) {
-    await page.getByRole('tab', { name: name === 'Assessments' ? 'Reports' : name, exact: true }).click();
-    if (name === 'Assessments') await page.getByRole('group', {name:'Report content'}).getByRole('button', {name:'Assessments',exact:true}).click();
+    await openView(page, name);
     if (name === 'Geographic links' || name === 'Source coverage') {
-      const first = page.locator(name === 'Geographic links' ? '.atlas-connection .atlas-item-meta' : '.atlas-coverage-source > rect').first();
+      const first = page.locator(name === 'Geographic links' ? '.atlas-geographic-journeys' : '.atlas-coverage-filters');
       const gap = (await first.boundingBox())!.y - (await scroller.boundingBox())!.y;
       expect(gap).toBeGreaterThanOrEqual(0);
       expect(gap).toBeLessThanOrEqual(20);
@@ -98,8 +109,7 @@ test('ATLAS full-screen workspace preserves interactions and restores the page',
   const footer = page.locator('.atlas-workspace-footer');
   const footerPosition = (await footer.boundingBox())!.y;
   for (const name of ['Trends', 'Reports', 'Geographic links', 'Assessments', 'Source coverage']) {
-    await page.getByRole('tab', { name: name === 'Assessments' ? 'Reports' : name, exact: true }).click();
-    if (name === 'Assessments') await page.getByRole('group', {name:'Report content'}).getByRole('button', {name:'Assessments',exact:true}).click();
+    await openView(page, name);
     await expect(footer.getByRole('button', { name: 'About ATLAS' })).toBeVisible();
     await scroller.evaluate(el => { el.scrollTop = el.scrollHeight; });
     expect((await footer.boundingBox())!.y).toBe(footerPosition);
@@ -111,7 +121,15 @@ test('ATLAS full-screen workspace preserves interactions and restores the page',
   await page.setViewportSize({ width: 1920, height: 1000 });
   for (const [tab, visual, details] of [["Geographic links", ".atlas-chain-map", ".atlas-chain-details"], ["Analysis", ".atlas-observation-visual", ".atlas-observation-details"]]) {
     await page.getByRole('tab', { name: tab, exact: true }).click();
-    if (tab === 'Analysis') await page.getByRole('button', { name: 'Models', exact: true }).click();
+    if (tab === 'Analysis') {
+      await page.getByRole('button', { name: 'Models', exact: true }).click();
+      await selectCaseObservations(page);
+    } else {
+      await page.locator('.atlas-chain-entry > summary').last().click();
+      const evidence = page.getByRole('region', { name: 'Selected chain evidence' });
+      await evidence.getByText('Source evidence', { exact: true }).click();
+      await expect(evidence.locator('blockquote').first()).toBeVisible();
+    }
     const a = await page.locator(visual).boundingBox(), b = await page.locator(details).boundingBox();
     expect(a!.x + a!.width).toBeLessThan(b!.x);
     await page.locator(details).evaluate(el => { el.scrollTop = el.scrollHeight; });
@@ -126,9 +144,10 @@ test('ATLAS full-screen workspace preserves interactions and restores the page',
   expect((await selectedChain.boundingBox())!.y).toBeLessThan((await chainDetails.boundingBox())!.y + 150);
   await expect(page.locator('.atlas-chain-entry[open] > summary')).toBeVisible();
   await selectedChain.getByText('Source evidence', { exact: true }).click();
-  expect(await scroller.evaluate(el => el.scrollHeight <= el.clientHeight)).toBe(true);
+  expect(await scroller.evaluate(el => el.scrollTop)).toBe(0);
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   await page.getByRole('button', { name: 'Models', exact: true }).click();
+  await selectCaseObservations(page);
   await page.locator('.atlas-observation-connection').first().press('Enter');
   await expect.poll(() => page.locator('.atlas-observation-details').evaluate(el => el.scrollTop)).toBe(0);
   const datasetButton = page.getByRole('button', { name: 'About ATLAS', exact: true });
@@ -230,6 +249,7 @@ test('ATLAS workspace animates at the wide breakpoint and exits with its button'
   await page.screenshot({ path: '/tmp/atlas-workspace-short.png' });
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   await page.getByRole('button', { name: 'Models', exact: true }).click();
+  await selectCaseObservations(page);
   await expect(page.locator('.atlas-chain-section')).toBeHidden();
   await expect(page.locator('.atlas-trend-observations')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Models', exact: true })).toHaveAttribute('aria-pressed', 'true');
@@ -284,7 +304,16 @@ for (const theme of ['light', 'dark'] as const) test(`Workspace scope overlays p
   const entrance = page.getByRole('button', { name: 'Click to enter full screen' });
   await entrance.focus(); await entrance.press('Enter');
   await page.getByRole('tab', { name: 'Reports', exact: true }).click();
-  await page.locator('.atlas-report > summary').first().click();
+  const sourceDocument = bundle.documents.find(doc => doc.title === 'Ebola disease caused by Bundibugyo virus - Democratic Republic of the Congo' && doc.publication.startsWith('2026-09-25'))!;
+  const report = page.locator(`#atlas-report-${sourceDocument.id}`);
+  while (!await report.count()) {
+    const pager = page.locator('.atlas-pagination');
+    const label = await pager.locator('summary').innerText();
+    await expect(pager.getByRole('button', { name: /^Next/ })).toBeEnabled();
+    await pager.getByRole('button', { name: /^Next/ }).click();
+    await expect(pager.locator('summary')).not.toHaveText(label);
+  }
+  await report.locator(':scope > summary').click();
   const trigger = page.locator('.atlas-report[open] .atlas-scope-trigger').first();
   await expect(page.locator('.atlas-report-summary .atlas-location-badge')).toHaveCount(0);
   await expect(page.locator('.atlas-report[open] .atlas-claim > p .atlas-country-inline img').first()).toBeAttached();
@@ -346,6 +375,7 @@ for (const theme of ['light', 'dark'] as const) test(`Workspace scope overlays p
   await expect(journeyHelp).toBeFocused();
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   await page.getByRole('button', { name: 'Models', exact: true }).click();
+  await selectCaseObservations(page);
   await expect(page.getByRole('button', { name: 'Series scope', exact: true })).toHaveCount(0);
   await expect(page.locator('.atlas-observation-details > .atlas-chart-note')).toHaveCount(0);
   const values = page.getByRole('group', { name: 'Values & sources', exact: true });
@@ -372,7 +402,7 @@ for (const theme of ['light', 'dark'] as const) test(`Workspace scope overlays p
   await expect(page.getByRole('button', { name: /^Scope & source for/ }).first()).toHaveText('?');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('tab', { name: 'Reports', exact: true }).click();
-  await expect(page.locator('.atlas-report').first()).toHaveAttribute('open', '');
+  await expect(report).toHaveAttribute('open', '');
   const phoneClaim = page.locator('.atlas-report[open] .atlas-claim > p').first();
   await expect(phoneClaim.locator('.atlas-report-inline-date')).toBeVisible();
   expect(await phoneClaim.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);

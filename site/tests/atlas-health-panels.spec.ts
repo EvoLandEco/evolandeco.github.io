@@ -16,8 +16,8 @@ for(const viewport of [{width:390,height:950},{width:1280,height:720},{width:128
  const choose=async(name:string)=>{await view.locator('summary[aria-label="One Health view"]').click();await view.getByRole('option',{name,exact:true}).click();};
  await choose('Timeline');
  await expect(view.getByRole('heading',{name:'Aligned evidence timeline'})).toHaveClass('sr-only');
- await expect(view.locator('.atlas-oh-time-point')).toHaveCount(3);
- await expect(view.getByRole('heading',{name:'Undated or incomplete dates 3'})).toBeVisible();
+ await expect(view.locator('.atlas-oh-time-point')).toHaveCount(4);
+ await expect(view.getByRole('heading',{name:'Undated or incomplete dates 4'})).toBeVisible();
  await expect(view.getByRole('heading',{name:'Reporting cutoffs 1'})).toBeVisible();
  await expect(view.getByRole('button',{name:/detection · 2022 · end unknown/})).toBeVisible();
  const unresolved=view.getByRole('button',{name:/unknown · Jul 2026/});
@@ -39,10 +39,11 @@ for(const viewport of [{width:390,height:950},{width:1280,height:720},{width:128
  await expect(view.getByRole('complementary')).toContainText('Poolingnot reported');
  expect((await new AxeBuilder({page}).include('.atlas-one-health').analyze()).violations).toEqual([]);
  await page.screenshot({path:`/tmp/atlas-panel-sampling-${viewport.width}-${viewport.height}.png`});
- await choose('Environment');
+ await choose('Timeline');
+ await view.getByRole('group',{name:'Timeline layers'}).getByRole('button',{name:'Observations',exact:true}).click();
  await expect(view.locator('.atlas-oh-time-point')).toHaveCount(1);
  await expect(view.getByRole('complementary')).toContainText('Reported intervention');
- await expect(view).toContainText('Alignment does not establish an effect');
+ await expect(view).toContainText('Alignment does not establish transmission or an intervention effect');
  await expect(view.getByRole('button',{name:/Synthetic condition with unresolved date kind.*Jul 2026/})).toBeVisible();
  await view.locator('summary[aria-label="One Health report"]').click();
  await view.getByRole('option').last().click();

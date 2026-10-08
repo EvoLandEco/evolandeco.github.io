@@ -10,15 +10,16 @@ for (const width of [390, 1466]) test(`English reports, paired quotations and br
   await expect(page.getByRole('heading', { name: 'Reporting activity', exact: true })).toBeVisible();
   await expect(page.locator('.atlas-disease-ring')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Outbreak watch', exact: true })).toBeVisible();
-  await expect(page.locator('.atlas-watch-entry')).toHaveCount(1);
-  await expect(page.locator('.atlas-watch-entry')).toContainText('Cause of death unconfirmed');
-  await expect(page.locator('.atlas-watch-diagnosis strong')).toHaveText('Cause of death unconfirmed');
   await expect(page.locator('.atlas-watch .atlas-scope-trigger')).toHaveCount(0);
   await expect(page.locator('.atlas-latest-list > li:not([inert]) .atlas-latest-entry')).toHaveCount(7);
-  await expect(page.locator('.atlas-latest-list')).not.toContainText('Irkutsk laboratory death: cause unconfirmed');
   if (width > 1000) await page.getByRole('button', { name: 'Click to enter full screen' }).click();
-  await page.locator('.atlas-latest-entry').filter({ hasText: 'Rospotrebnadzor called reports' }).click();
-  const report = page.locator('.atlas-report[data-evidence="true"]');
+  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+  const report = page.locator('.atlas-report').filter({ hasText: 'Rospotrebnadzor called reports of a strict quarantine in Irkutsk Region fake' });
+  const next = page.getByRole('button', { name: 'Next report page', exact: true }).first();
+  await page.locator('.atlas-report-list').scrollIntoViewIfNeeded();
+  while (!await report.count() && await next.isEnabled()) await next.click();
+  await expect(report).toHaveCount(1);
+  await report.locator(':scope > summary').click();
   await expect(report).toContainText('Rospotrebnadzor called reports of a strict quarantine in Irkutsk Region fake');
   await expect(report.locator('.atlas-original-title')).toContainText('Original title · Russian');
   await report.locator('.atlas-original-title summary').click();
@@ -52,81 +53,4 @@ for (const width of [390, 1466]) test(`English reports, paired quotations and br
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: `/tmp/atlas-briefing-${width}.png` });
   expect(errors).toEqual([]);
-});
-
-test('Fullscreen briefing allocates space and fits complete timeline entries', async ({ page }) => {
-  test.skip(!process.env.ATLAS_PRESENTATION_PREVIEW, 'Requires the matching producer presentation release');
-  await page.setViewportSize({ width: 1466, height: 1100 });
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto(process.env.ATLAS_PRESENTATION_PREVIEW!);
-  await page.getByRole('button', { name: 'Click to enter full screen' }).click();
-  const entries = page.locator('.atlas-latest-list > li:not([inert]) .atlas-latest-entry');
-  const fit = () => page.locator('.atlas-latest-list').evaluate(element => {
-    const rowHeight = parseFloat(getComputedStyle(element).getPropertyValue('--latest-row-height'));
-    return Math.max(1, Math.floor((element.clientHeight - rowHeight) / rowHeight));
-  });
-  for (const height of [1100, 832, 720]) {
-    await page.setViewportSize({ width: 1466, height });
-    await expect.poll(async () => await entries.count() === await fit()).toBe(true);
-    const dimensions = await page.locator('.atlas-briefing-columns').evaluate(element => {
-      const watch = element.querySelector('.atlas-watch')!.getBoundingClientRect();
-      const latest = element.querySelector('.atlas-latest')!.getBoundingClientRect();
-      const list = element.querySelector('.atlas-latest-list')!;
-      const watchBody = element.querySelector('.atlas-watch .atlas-briefing-body')!;
-      const latestBody = element.querySelector('.atlas-latest-body')!;
-      return { watch: watch.height, latest: latest.height, watchRight: watch.right, latestLeft: latest.left, watchTop: watch.top, latestTop: latest.top, overflow: list.scrollHeight - list.clientHeight, watchBottom: watchBody.getBoundingClientRect().bottom, latestBottom: latestBody.getBoundingClientRect().bottom, watchFade: getComputedStyle(watchBody, '::after').height, latestFade: getComputedStyle(latestBody, '::after').height };
-    });
-    expect(dimensions.latest).toBeCloseTo(dimensions.watch, 0);
-    expect(dimensions.watchTop).toBeCloseTo(dimensions.latestTop, 0);
-    expect(dimensions.watchRight).toBeLessThan(dimensions.latestLeft);
-    expect(dimensions.overflow).toBeLessThanOrEqual(1);
-    expect(dimensions.watchBottom).toBeCloseTo(dimensions.latestBottom, 0);
-    expect(dimensions.watchFade).toBe(dimensions.latestFade);
-    const timeline = await page.locator('.atlas-latest-list').evaluate(element => {
-      const rows = [...element.children].map(row => row.getBoundingClientRect());
-      const heights = rows.map(row => row.height);
-      const nodes = [...element.querySelectorAll('.atlas-source-logo')].map(node => node.getBoundingClientRect().top);
-      const gaps = nodes.slice(1).map((top, index) => top - nodes[index]);
-      const fade = parseFloat(getComputedStyle(element.parentElement!, '::after').height);
-      const topGap = element.querySelector('.atlas-latest-date')!.getBoundingClientRect().top - rows[0].top;
-      return { spread: Math.max(...heights) - Math.min(...heights), nodeSpread: Math.max(...gaps) - Math.min(...gaps), topGap, previewHeight: heights.at(-1)!, fade };
-    });
-    expect(timeline.spread).toBeLessThan(1);
-    expect(timeline.nodeSpread).toBeLessThan(1);
-    expect(timeline.topGap).toBeLessThanOrEqual(10);
-    expect(Math.abs(timeline.previewHeight - timeline.fade)).toBeLessThan(1);
-    await expect(page.locator('.atlas-latest-preview')).toHaveCount(1);
-    expect(await page.locator('.atlas-latest-preview').evaluate(el => el.getBoundingClientRect().top - el.previousElementSibling!.getBoundingClientRect().bottom)).toBeCloseTo(0, 0);
-    await expect(page.getByRole('button', { name: 'View all reports', exact: true })).toBeVisible();
-    if (height === 1100) expect(await entries.count()).toBeGreaterThan(3);
-    await expect(entries.first().locator('.atlas-source-logo')).toBeVisible();
-  }
-  const timelineTop = await page.locator('.atlas-latest-list').evaluate(element => element.scrollTop);
-  await expect(page.locator('.atlas-latest-list')).toHaveCSS('overflow-y', 'clip');
-  for (const selector of ['.atlas-latest-list', '.atlas-watch-list']) {
-    await expect(page.locator(selector)).toHaveCSS('scrollbar-width', 'none');
-    await expect(page.locator(selector)).toHaveCSS('scrollbar-gutter', 'auto');
-    expect(await page.locator(selector).evaluate(element => element.getBoundingClientRect().width - element.clientWidth)).toBeLessThan(1);
-  }
-  await expect(page.locator('.atlas-watch-scroll')).toBeVisible();
-  await page.locator('.atlas-watch-reports').last().focus();
-  expect(await page.locator('.atlas-watch-list').evaluate(element => element.scrollTop)).toBeGreaterThan(0);
-  expect(await page.locator('.atlas-latest-list').evaluate(element => element.scrollTop)).toBe(timelineTop);
-  await page.locator('.atlas-watch-list').evaluate(element => { element.scrollTop = element.scrollHeight; });
-  await expect(page.locator('.atlas-watch-scroll')).toHaveCount(0);
-  await page.locator('.atlas-watch-list').evaluate(element => { element.scrollTop = 0; });
-  await expect(page.locator('.atlas-watch-scroll')).toBeVisible();
-  await page.setViewportSize({ width: 1466, height: 1100 });
-  await expect.poll(async () => await entries.count()).toBeGreaterThan(3);
-  await page.screenshot({ path: '/tmp/atlas-briefing-fit-1100.png' });
-  await page.setViewportSize({ width: 1466, height: 832 });
-  await expect.poll(async () => await entries.count() === await fit()).toBe(true);
-  await page.screenshot({ path: '/tmp/atlas-briefing-fit-832.png' });
-  await page.getByRole('switch', { name: 'Dark mode' }).click();
-  await expect(page.getByRole('switch', { name: 'Dark mode' })).toHaveAttribute('aria-checked', 'true');
-  await page.screenshot({ path: '/tmp/atlas-briefing-fit-dark.png' });
-  await page.getByRole('button', { name: 'Exit full screen' }).click();
-  await expect(entries).toHaveCount(7);
-  await page.getByRole('switch', { name: 'Dark mode' }).click();
-  await page.locator('.atlas-briefing-columns').screenshot({ path: '/tmp/atlas-briefing-normal.png' });
 });

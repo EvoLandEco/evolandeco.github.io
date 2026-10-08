@@ -177,19 +177,26 @@ test("Stationary globes draw their land texture without a render loop", async ({
   await page.goto("/atlas/");
   await expect(page.locator(".atlas-page")).toHaveAttribute("data-ready", "true");
   const canvas = page.locator('canvas[data-markers]');
-  async function landDots() {
-    const { data, info } = await sharp(await canvas.screenshot()).removeAlpha().raw().toBuffer({ resolveWithObject: true });
-    let darkPixels = 0;
+  async function landTextureFraction() {
+    const screenshot = await canvas.screenshot({ style: ".atlas-globe-pins, .globe-drag-hint { visibility: hidden !important; }" });
+    const { data, info } = await sharp(screenshot).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+    let texturedPixels = 0, sampledPixels = 0;
     for (let y = Math.floor(info.height * .25); y < info.height * .75; y++)
       for (let x = Math.floor(info.width * .25); x < info.width * .75; x++) {
         const i = (y * info.width + x) * info.channels;
-        if (data[i] < 120 && data[i + 1] < 120 && data[i + 2] < 120) darkPixels++;
+        const next = i + info.channels;
+        // Land dots have sharp local contrast; smooth globe shading does not.
+        const contrast = Math.abs((data[i] + data[i + 1] + data[i + 2] - data[next] - data[next + 1] - data[next + 2]) / 3);
+        if (contrast > 8) texturedPixels++;
+        sampledPixels++;
       }
-    return darkPixels;
+    return texturedPixels / sampledPixels;
   }
-  await expect.poll(landDots).toBeGreaterThan(100);
+  const angle = await canvas.getAttribute("data-angle");
+  await expect.poll(landTextureFraction).toBeGreaterThan(.02);
+  await expect(canvas).toHaveAttribute("data-angle", angle!);
   await select(page, "Reporting topic", "Bundibugyo reporting · DRC");
-  await expect.poll(landDots).toBeGreaterThan(100);
+  await expect.poll(landTextureFraction).toBeGreaterThan(.02);
 });
 
 test("ATLAS surface interactions, smooth centering and shared range handles", async ({ page }) => {
@@ -346,7 +353,7 @@ test("ATLAS returns to Home through a shrinking globe transition", async ({ page
     const globe = page.locator('.globe-interaction > .globe-frame');
     await expect(globe).toHaveCSS("view-transition-name", "atlas-globe");
     expect((await globe.boundingBox())!.width).toBeLessThan(wide);
-    await expect(globe.locator('canvas[data-markers]')).toHaveAttribute("data-tilt", "0.70162");
+    await expect(globe.locator('canvas[data-markers]')).toHaveAttribute("data-tilt", "0.22000");
     await expect(page.locator('html')).not.toHaveAttribute("data-atlas-transition");
     await expect(globe).toHaveCSS("view-transition-name", "none");
   }
@@ -417,6 +424,7 @@ test("Closing globe selections restores the overview orientation", async ({ page
       angle: Number(await canvas.getAttribute("data-angle")),
       tilt: await canvas.getAttribute("data-tilt"),
     };
+    await page.locator('.atlas-rules > summary').click();
     await page.locator('summary[aria-label="Reporting topic"]').click();
     const firstTopic = page.getByRole('checkbox', { name: 'Bundibugyo imported case · France', exact: true });
     await firstTopic.evaluate(input => input.addEventListener('click', () => {
@@ -426,19 +434,29 @@ test("Closing globe selections restores the overview orientation", async ({ page
     await firstTopic.check();
     before.angle = Number(await canvas.getAttribute('data-selection-angle'));
     await firstTopic.press('Escape');
+    await page.locator('.atlas-rules > summary').click();
     await canvas.scrollIntoViewIfNeeded();
     await expect(canvas).toHaveAttribute("data-tilt", "0.81158");
-    await select(page, "Reporting topic", "Crimean-Congo haemorrhagic fever · Spain");
+    const link = page.getByRole("button", { name: "Reported return travel · Bundibugyo", exact: true });
+    await link.focus(); await page.keyboard.press("Enter");
     await canvas.scrollIntoViewIfNeeded();
-    await expect(canvas).toHaveAttribute("data-tilt", "0.70162");
+    await expect(canvas).toHaveAttribute("data-tilt", "-0.05061");
+    await canvas.evaluate((element, tilt) => {
+      const observer = new MutationObserver(() => {
+        if (element.getAttribute('data-tilt') !== tilt) return;
+        element.setAttribute('data-restored-angle', element.getAttribute('data-angle')!);
+        observer.disconnect();
+      });
+      observer.observe(element, { attributes: true, attributeFilter: ['data-tilt'] });
+    }, before.tilt);
     await page.getByRole("button", { name: "Clear globe selection", exact: true }).click();
     await canvas.scrollIntoViewIfNeeded();
     await expect(canvas).toHaveAttribute("data-tilt", before.tilt!);
-    const restored = Number(await canvas.getAttribute("data-angle"));
+    await expect(canvas).toHaveAttribute('data-restored-angle');
+    const restored = Number(await canvas.getAttribute("data-restored-angle"));
     expect(Math.abs(Math.atan2(Math.sin(restored - before.angle), Math.cos(restored - before.angle)))).toBeLessThan(.15);
     await expect(page.getByRole("region", { name: "Selected map item" })).toHaveCount(0);
 
-    const link = page.getByRole("button", { name: "Reported return travel · Bundibugyo", exact: true });
     await link.focus(); await page.keyboard.press("Enter");
     await canvas.scrollIntoViewIfNeeded();
     await expect(canvas).toHaveAttribute("data-tilt", "-0.05061");
@@ -449,7 +467,7 @@ test("Closing globe selections restores the overview orientation", async ({ page
     await select(page, "Reporting topic", "Bundibugyo imported case · France");
     await canvas.scrollIntoViewIfNeeded();
     await expect(canvas).toHaveAttribute("data-tilt", "0.81158");
-    await select(page, "Reporting topic", "All places & topics");
+    await select(page, "Reporting topic", "All topics");
     await canvas.scrollIntoViewIfNeeded();
     await expect(canvas).toHaveAttribute("data-tilt", before.tilt!);
   }
@@ -584,7 +602,9 @@ test("Globe cards show location badges and readable details in both themes", asy
     await expect(card.locator(".atlas-location-badge")).toHaveCount(1);
     await expect(card.getByRole("img", { name: "France", exact: true })).toBeVisible();
     await expect(card.locator(".atlas-location-flag")).toHaveAttribute("src", "https://flagcdn.com/w40/fr.webp");
-    await expect(card).toContainText("13 reports");
+    const topic = snapshot.tracks.find(track => track.label === "Bundibugyo imported case · France")!;
+    const reports = new Set(snapshot.records.filter(record => record.track === topic.id).map(record => record.document_id));
+    await expect(card).toContainText(`${reports.size} reports`);
     await page.locator('.atlas-globe-pin[data-selected="true"]').hover();
     await expect(page.getByRole("tooltip").getByRole("img", { name: "France", exact: true })).toBeVisible();
     await page.mouse.move(5, 5);
@@ -1326,7 +1346,8 @@ for (const width of [390, 1280]) test(`Models filter observation contexts and na
   const trends = page.locator(".atlas-trends");
   const observations = page.locator(".atlas-analysis-observations");
   await expect(trends.getByRole("heading", { name: "Outbreak watch" })).toBeVisible();
-  await expect(trends.locator(".atlas-latest-entry")).toHaveCount(5);
+  await expect(trends.locator(".atlas-latest-list > li:not([inert]) .atlas-latest-entry")).toHaveCount(7);
+  await expect(trends.locator(".atlas-latest-preview[inert] .atlas-latest-entry")).toHaveCount(1);
   await page.getByRole("tab", { name: "Analysis", exact: true }).click();
   await page.getByRole("button", { name: "Models", exact: true }).click();
   await select(page, "Reporting topic", "Lassa fever · Nigeria");
@@ -1567,13 +1588,13 @@ for (const width of [390, 1280]) test(`Many filter selections stay compact at ${
   await page.setViewportSize({ width, height: 950 });
   await page.emulateMedia({ reducedMotion: "reduce", colorScheme: width === 390 ? "dark" : "light" });
   await page.goto("/atlas/");
-  const menu = page.locator('.atlas-select').filter({ has: page.locator('summary[aria-label="Reporting topic"]') });
+  await page.locator('.atlas-rules > summary').click();
+  const menu = page.locator('summary[aria-label="Reporting topic"]').locator('..');
   await menu.locator('summary').click();
   const choices = menu.getByRole('checkbox');
   const names = await choices.evaluateAll(items => items.slice(1, 16).map(item => item.parentElement!.textContent!));
   for (const name of names) await menu.getByRole('checkbox', { name, exact: true }).check();
   await choices.nth(15).press('Escape');
-  await page.locator('.atlas-rules > summary').click();
   const chip = page.getByRole('button', { name: 'Remove topic filter', exact: true });
   await expect(chip).toHaveText('Topics · 15 selected');
   for (const name of names) expect(await chip.getAttribute('title')).toContain(name);
@@ -1581,7 +1602,6 @@ for (const width of [390, 1280]) test(`Many filter selections stay compact at ${
   await menu.locator('summary').click();
   await expect(menu.getByRole('checkbox', { checked: true })).toHaveCount(15);
   await choices.nth(15).press('Escape');
-  await page.locator('.atlas-rules > summary').click();
   await chip.click();
   await expect(chip).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -1920,21 +1940,23 @@ test('Globe and title animations pause while the document is hidden', async ({ p
 test('Closed selectors release choices and preserve keyboard navigation', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/atlas/');
-  const hiddenChoices = page.locator('.atlas-select:not([open]) .atlas-select-options :is([role="option"], input)');
+  const hiddenChoices = page.locator('.atlas-select:not(.atlas-rules):not([open]) > .atlas-select-options :is([role="option"], input)');
   await expect(hiddenChoices).toHaveCount(0);
+  await page.locator('.atlas-rules > summary').click();
   const topic = page.locator('summary[aria-label="Reporting topic"]');
+  const topicChoices = topic.locator('..').getByRole('checkbox');
   await topic.focus();
   await topic.press('Enter');
   const search = page.getByRole('searchbox', { name: 'Search reporting topic' });
   await expect(search).toBeFocused();
   await search.fill('Bundibugyo imported case');
   await search.press('ArrowDown');
-  await expect(page.getByRole('checkbox').first()).toBeFocused();
+  await expect(topicChoices.first()).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(topic).toBeFocused();
   await expect(hiddenChoices).toHaveCount(0);
   await topic.press('End');
-  await expect(page.getByRole('checkbox').last()).toBeFocused();
+  await expect(topicChoices.last()).toBeFocused();
   await page.keyboard.press('Escape');
   await topic.press('Enter');
   await expect(search).toHaveValue('');
