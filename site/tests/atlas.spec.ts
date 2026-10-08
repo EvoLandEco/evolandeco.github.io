@@ -1,4 +1,5 @@
 import { browserFixture, routeBrowserFixture } from "./atlas-browser-fixture.mjs";
+import { selectAtlasOption } from "./atlas-select-actions";
 import { test, expect, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import type { AtlasMapSnapshot } from "../src/lib/atlas-contract";
@@ -26,7 +27,7 @@ async function controlBottom(page: Page) {
 }
 
 async function select(page: Page, label: string, choice: string) {
-  if (label === "Observation series") { await page.getByRole("combobox", { name: "Monitored series", exact: true }).selectOption({ label: choice }); return; }
+  if (label === "Observation series") { await selectAtlasOption(page, "Monitored series", { label: choice }); return; }
   if (label.endsWith("page, side")) await showPageControl(page);
   if (label === "Reporting topic") await page.locator(".atlas-rules > summary").click();
   await page.locator(`summary[aria-label="${label}"]`).click();
@@ -1361,7 +1362,10 @@ for (const width of [390, 1280]) test(`Models filter observation contexts and na
   await expect(page.locator('.atlas-report[data-evidence="true"]')).toHaveCount(1);
   await page.getByRole("tab", { name: "Analysis", exact: true }).click();
   await setWindowDate(page, "end", "2026-07-01");
-  await expect(page.getByRole("combobox", { name: "Monitored series", exact: true })).toBeDisabled();
+  const series = page.locator('summary[aria-label="Monitored series"]');
+  await expect(series).toHaveAttribute('aria-disabled', 'true');
+  await series.press('Enter');
+  await expect(series.locator('..')).not.toHaveAttribute('open');
   await expect(page.getByRole("region", { name: "Experimental analysis" }).getByRole("alert")).toHaveText("No validated analysis is published for this dataset.");
   await expect(observations.locator(".atlas-observation-grid")).toHaveCount(0);
 });

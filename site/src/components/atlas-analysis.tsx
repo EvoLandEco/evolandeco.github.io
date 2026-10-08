@@ -3,6 +3,7 @@ import { memo, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { AtlasObservations, useObservationSeries, observationSeriesLabel } from "./atlas-observations";
 import { AtlasScope } from "./atlas-scope";
+import { AtlasSelect, type AtlasSelectItem } from "./atlas-select";
 import { ChartNoAxesCombined, Database, Radar, BookOpen, CircleHelp, Activity, ListChecks, ChartScatter } from "lucide-react";
 import type { AtlasExperiment, IntelligenceExperiment, IntelligenceSeries } from "@/lib/atlas-intelligence";
 import type { AtlasRecord, AtlasLink } from "@/lib/atlas";
@@ -30,18 +31,23 @@ export const AtlasAnalysis = memo(function AtlasAnalysis({ experiment, rows, lin
   const selectedObservation = observationSeries.find(item => `observations:${item.id}` === seriesId);
   const selectedSeriesId = selectedObservation ? seriesId : currentSeries?.id ?? (observationSeries[0] ? `observations:${observationSeries[0].id}` : "");
   const observation = selectedObservation ?? (!currentSeries ? observationSeries[0] : undefined);
+  const seriesItems: AtlasSelectItem[] = [
+    ...(data?.forecast_series ?? []).map(series => ({ value: series.id, label: series.label, badges: [
+      { kind: "kind" as const, label: "Model evaluation" }, { kind: "count" as const, label: `${series.observations.length} observations` },
+    ] })),
+    ...(view === "evaluation" ? observationSeries.map(series => ({ value: `observations:${series.id}`, label: observationSeriesLabel(series), badges: [
+      { kind: "kind" as const, label: "Reported observations" }, { kind: "count" as const, label: `${series.items.length} observations` },
+    ] })) : []),
+  ];
   return <section className={styles.analysis} aria-label="Experimental analysis">
     {footerTarget && createPortal(<div className="atlas-view-about"><AtlasScope buttonLabel="About Analysis" label="Methods & references" title="Analysis"><AnalysisMethods data={experiment.data} series={observation ? undefined : currentSeries} digest={experiment.digest} /></AtlasScope></div>, footerTarget)}
-    <h2 className="sr-only">Analysis</h2><header className={`${styles.analysisHeader} atlas-panel-tools`} data-series={view === "evaluation" || kind === "count_exceedance"} data-view={view}>
+    <h2 className="sr-only">Analysis</h2><header className={`${styles.analysisHeader} atlas-entry-tools atlas-panel-tools`} data-series={view === "evaluation" || kind === "count_exceedance"} data-view={view}>
       <div className={styles.tabs} role="group" aria-label="Analysis views">
         <button aria-label="Models" title="Models" aria-pressed={view === "evaluation"} onClick={() => setView("evaluation")}><ChartNoAxesCombined size={16} aria-hidden /><span>Models</span></button>
         <button aria-label="Signals" title="Signals" aria-pressed={view === "signals"} onClick={() => setView("signals")}><Radar size={16} aria-hidden /><span>Signals</span></button>
       </div>
       {view === "signals" && <label className={styles.toolbarSelect}><span className="sr-only">Signal type</span><select title="Signal type" value={kind} onChange={event => setKind(event.target.value)}><option value="all">All signals</option><option value="count_exceedance">Count checks</option><option value="network_first_appearance">First country connections</option></select></label>}
-      {(view === "evaluation" || kind === "count_exceedance") && <label className={styles.toolbarSelect}><span className="sr-only">Monitored series</span><select title="Monitored series" disabled={!currentSeries && !observationSeries.length} value={view === "signals" ? currentSeries?.id ?? "" : selectedSeriesId} onChange={event => onSeries(event.target.value)}>
-        <optgroup label="Model evaluation">{data?.forecast_series.map(series => <option key={series.id} value={series.id}>{series.label}</option>)}</optgroup>
-        {view === "evaluation" && <optgroup label="Reported observations">{observationSeries.map(series => <option key={series.id} value={`observations:${series.id}`}>{observationSeriesLabel(series)}</option>)}</optgroup>}
-      </select></label>}
+      {(view === "evaluation" || kind === "count_exceedance") && <AtlasSelect label="Monitored series" searchable disabled={!seriesItems.length} summaryLabel={seriesItems.length ? undefined : "No series available"} value={view === "signals" ? currentSeries?.id ?? "" : selectedSeriesId} onChange={onSeries} items={seriesItems} />}
     </header>
     {view === "evaluation" && (observation || !data && !experiment.error) ? <AtlasObservations selected={observation} onReport={onReport} /> : !data ? <p className={styles.notice} role={experiment.error ? "alert" : "status"}>{experiment.error ?? "No validated analysis is loaded for this dataset."}</p> : <>
       {view === "signals" ? <Monitoring kind={kind} data={data} seriesId={seriesId} links={links} onKind={setKind} onSeries={onSeries} onReport={onReport} onLink={onLink} /> : <Forecasts data={data} seriesId={seriesId} onReport={onReport} />}

@@ -3,6 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { intelligenceSchema } from '../src/lib/atlas-intelligence';
+import { atlasSelect, selectAtlasOption, selectedAtlasValue } from './atlas-select-actions';
 
 test.use({ baseURL: process.env.ATLAS_INTELLIGENCE_PREVIEW_URL ?? 'http://127.0.0.1:3005' });
 
@@ -107,14 +108,14 @@ for (const width of [1440, 390]) test(`Merged Intelligence navigation and eviden
   await page.keyboard.press('Escape');
   await expect(aboutAnalysis).toBeFocused();
   await expect(analysis.getByRole('alert')).toHaveCount(0);
-  await expect(analysis.locator('details')).toHaveCount(0);
+  await expect(analysis.locator('details:not(.atlas-select)')).toHaveCount(0);
   const analysisHeader = analysis.locator('header').first();
-  const topControls = await analysisHeader.locator('select').evaluateAll(elements => elements.map(el => el.getBoundingClientRect().y));
+  const topControls = await analysisHeader.locator('select, summary[aria-label="Monitored series"]').evaluateAll(elements => elements.map(el => el.getBoundingClientRect().y));
   expect(topControls).toHaveLength(2);
   await expect(analysisHeader.locator('select').first()).toHaveCSS('border-top-width', '0px');
   expect(Math.abs(topControls[0] - topControls[1])).toBeLessThan(2);
   await analysisHeader.screenshot({ path: `/tmp/atlas-analysis-controls-${width}.png` });
-  await analysis.getByRole('combobox', { name: 'Monitored series', exact: true }).selectOption({ index: 1 });
+  await selectAtlasOption(analysis, 'Monitored series', { index: 1 });
   await expect(analysis.getByRole('button', { name: 'Evaluate models', exact: true })).toHaveCount(0);
   await expect(analysis.getByRole('button', { name: 'View supporting reports', exact: true })).toHaveCount(0);
   const checkColumns = analysis.locator('svg [role="button"][data-entry-id]');
@@ -142,11 +143,11 @@ for (const width of [1440, 390]) test(`Merged Intelligence navigation and eviden
   await expect(tabs.getByRole('tab', { name: 'Reports', exact: true })).toHaveAttribute('aria-selected', 'true');
   await tabs.getByRole('tab', { name: 'Analysis', exact: true }).click();
   await analysis.getByRole('button', { name: 'Models', exact: true }).click();
-  await expect(analysis.locator('summary')).toHaveCount(0);
+  await expect(analysis.locator('details:not(.atlas-select) > summary')).toHaveCount(0);
   await aboutAnalysis.click();
   await expect(analysisMethods.locator('h4')).toHaveText('Nigeria Lassa fever · Confirmed cases · weekly reports');
   await page.keyboard.press('Escape');
-  await expect(analysis.getByRole('combobox', { name: 'Monitored series', exact: true })).toHaveValue('ncdc-lassa-2026-interval-1');
+  expect(await selectedAtlasValue(analysis, 'Monitored series')).toBe('ncdc-lassa-2026-interval-1');
   await expect(analysis.getByRole('combobox', { name: 'Model', exact: true })).toHaveValue('ensemble_median');
   await expect(analysis.getByRole('combobox', { name: 'Model', exact: true }).locator('option').first()).toHaveText('Median ensemble');
   await analysis.getByRole('combobox', { name: 'Model', exact: true }).selectOption('gamma_poisson');
@@ -180,11 +181,12 @@ for (const width of [1440, 390]) test(`Merged Intelligence navigation and eviden
   await expect(analysis.getByRole('button', { name: 'Reported observations', exact: true })).toHaveCount(0);
   await tabs.getByRole('tab', { name: 'Trends', exact: true }).click();
   await expect(tabs.getByRole('tab', { name: 'Trends', exact: true })).toHaveAttribute('aria-selected', 'true');
-  await expect(page.locator('summary[aria-label="Observation series"]')).toContainText('Suspected cases');
+  await expect(page.locator('.atlas-briefing')).toBeVisible();
+  await expect(analysis).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Analyze this series', exact: true })).toHaveCount(0);
   await tabs.getByRole('tab', { name: 'Analysis', exact: true }).click();
 
-  await expect(analysis.getByRole('combobox', { name: 'Monitored series', exact: true })).toHaveValue('ncdc-lassa-2026-interval-1');
+  expect(await selectedAtlasValue(analysis, 'Monitored series')).toBe('ncdc-lassa-2026-interval-1');
   await analysis.getByRole('button', { name: 'Signals', exact: true }).click();
   await analysis.getByRole('combobox', { name: 'Signal type', exact: true }).selectOption('all');
   const signalOverview = analysis.getByRole('region', { name: 'Signal overview' });
@@ -659,7 +661,7 @@ test('The default ensemble displays producer predictions and scores for every se
   await analysis.getByRole('button', { name: 'Models', exact: true }).click();
   const prediction = analysis.getByRole('region', { name: 'Model prediction', exact: true });
   for (const series of data.forecast_series) {
-    await analysis.getByRole('combobox', { name: 'Monitored series', exact: true }).selectOption(series.id);
+    await selectAtlasOption(analysis, 'Monitored series', series.id);
     await expect(analysis.getByRole('combobox', { name: 'Model', exact: true })).toHaveValue('ensemble_median');
     for (const horizon of [1, 2]) {
       await analysis.getByRole('combobox', { name: 'Horizon', exact: true }).selectOption(String(horizon));
@@ -696,8 +698,8 @@ for (const width of [1440, 390]) test(`Tab choices survive navigation at ${width
   await visit('Analysis');
   const analysis = page.getByRole('region', { name: 'Experimental analysis' });
   await analysis.getByRole('button', { name: 'Models', exact: true }).click();
-  const series = analysis.getByRole('combobox', { name: 'Monitored series', exact: true });
-  const firstSeries = await series.inputValue();
+  const series = atlasSelect(analysis, 'Monitored series');
+  const firstSeries = await selectedAtlasValue(analysis, 'Monitored series');
   const model = analysis.getByRole('combobox', { name: 'Model', exact: true });
   const horizon = analysis.getByRole('combobox', { name: 'Horizon', exact: true });
   const origin = analysis.getByRole('combobox', { name: 'Historical origin', exact: true });
@@ -705,23 +707,25 @@ for (const width of [1440, 390]) test(`Tab choices survive navigation at ${width
   await horizon.selectOption('2');
   await origin.selectOption({ index: 1 });
   const chosenOrigin = await origin.inputValue();
-  await series.selectOption({ index: 1 });
+  await selectAtlasOption(analysis, 'Monitored series', { index: 1 });
   await expect(model).toHaveValue('ensemble_median');
   await model.selectOption('recent_changes');
-  await series.selectOption(firstSeries);
+  await selectAtlasOption(analysis, 'Monitored series', firstSeries);
   await expect(model).toHaveValue('gamma_poisson');
   await expect(horizon).toHaveValue('2');
   await expect(origin).toHaveValue(chosenOrigin);
   await visit('Trends');
   await expect(analysis).toHaveCount(0);
   await visit('Analysis');
-  const observationId = await series.locator('optgroup[label="Reported observations"] option').filter({ hasText: 'Confirmed cases' }).first().getAttribute('value');
-  await series.selectOption(observationId!);
+  await series.locator(':scope > summary').click();
+  const observation = series.getByRole('option').and(series.locator('button[value^="observations:"]')).filter({ hasText: 'Confirmed cases' }).first();
+  const observationId = await observation.getAttribute('value');
+  await observation.click();
   await visit('Trends');
   await visit('Analysis');
   await expect(page.locator('.atlas-trends')).toHaveCount(0);
-  await expect(series).toHaveValue(observationId!);
-  await series.selectOption(firstSeries);
+  expect(await selectedAtlasValue(analysis, 'Monitored series')).toBe(observationId);
+  await selectAtlasOption(analysis, 'Monitored series', firstSeries);
   await expect(model).toHaveValue('gamma_poisson');
   await expect(horizon).toHaveValue('2');
   await expect(origin).toHaveValue(chosenOrigin);
@@ -738,7 +742,7 @@ for (const width of [1440, 390]) test(`Tab choices survive navigation at ${width
   await expect(health).toHaveCount(0);
   await visit('Analysis');
   await analysis.getByRole('button', { name: 'Models', exact: true }).click();
-  await expect(series).toHaveValue(firstSeries);
+  expect(await selectedAtlasValue(analysis, 'Monitored series')).toBe(firstSeries);
   await analysis.getByRole('button', { name: 'Signals', exact: true }).click();
   await expect(analysis.getByRole('combobox', { name: 'Signal type', exact: true })).toHaveValue('network_first_appearance');
   await expect(analysis.getByRole('searchbox', { name: 'Search country connections' })).toHaveValue('Measles');

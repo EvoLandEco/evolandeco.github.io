@@ -14,12 +14,12 @@ function Choice({ item, badgeId }: { item: AtlasSelectItem; badgeId?: string }) 
 }
 
 type SelectProps = {
-  label: string; summaryLabel?: ReactNode; searchable?: boolean; items: AtlasSelectItem[];
+  label: string; summaryLabel?: ReactNode; searchable?: boolean; disabled?: boolean; items: AtlasSelectItem[];
 } & ({ multiple: true; value: string[]; onChange: (value: string[]) => void }
   | { multiple?: false; value: string; onChange: (value: string) => void });
 
 export const AtlasSelect = memo(function AtlasSelect(props: SelectProps) {
-  const { label, value, items, searchable = false, multiple = false } = props;
+  const { label, value, items, searchable = false, multiple = false, disabled = false } = props;
   const selected = Array.isArray(value) ? value : [value];
   const selectedLabels = items.filter(item => selected.includes(item.value)).map(item => item.label);
   const selectedItem = !multiple ? items.find(item => item.value === value) : undefined;
@@ -54,9 +54,11 @@ export const AtlasSelect = memo(function AtlasSelect(props: SelectProps) {
     if (root.current) { root.current.open = false; root.current.querySelector("summary")?.focus(); }
   }
   return <details className="atlas-select" data-structured={items.some(item => item.badges) || undefined} ref={root} onToggle={event => {
+    if (disabled && event.currentTarget.open) { event.currentTarget.open = false; return; }
     setOpen(event.currentTarget.open);
     if (!event.currentTarget.open) { setQuery(""); focusIndex.current = null; }
   }} onKeyDown={event => {
+    if (disabled) { if (event.key !== "Tab") event.preventDefault(); return; }
     if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(); return; }
     if (event.key === "Tab") { if (root.current) root.current.open = false; return; }
     const options = [...(root.current?.querySelectorAll<HTMLElement>(multiple ? 'input[type="checkbox"]' : '[role="option"]') ?? [])];
@@ -79,7 +81,7 @@ export const AtlasSelect = memo(function AtlasSelect(props: SelectProps) {
       else options[next]?.focus();
     }
   }}>
-    <summary aria-label={label} aria-haspopup={multiple ? "dialog" : "listbox"} aria-controls={id}>
+    <summary aria-label={label} aria-haspopup={multiple ? "dialog" : "listbox"} aria-controls={id} aria-disabled={disabled || undefined} tabIndex={disabled ? -1 : undefined} onClick={event => { if (disabled) event.preventDefault(); }}>
       <span title={selectedLabels.join(", ")}>{props.summaryLabel ?? (selectedItem?.badges ? <Choice item={selectedItem} /> : summary)}</span><ChevronDown size={14} aria-hidden />
     </summary>
     <div className="atlas-select-options" role={multiple ? "dialog" : undefined} aria-label={multiple ? label : undefined}>

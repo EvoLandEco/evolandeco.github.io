@@ -118,7 +118,7 @@ export const AtlasOneHealth = memo(function AtlasOneHealth({ rows, onReport, foo
     if (menu?.open && menu.contains(event.target as globalThis.Node)) { event.stopPropagation(); menu.open = false; menu.querySelector("summary")?.focus(); }
   }}>
     <h2 className="sr-only">One Health evidence</h2>
-    <div className="atlas-oh-tools atlas-panel-tools"><div className="atlas-oh-view-select"><AtlasSelect label="One Health view" summaryLabel={<span className="atlas-oh-mode-label"><ModeIcon size={14} aria-hidden /><span>{modeItems.find(item => item.value === mode)?.label}</span></span>} value={mode} items={modeItems} onChange={value=>setMode(value as HealthMode)} /></div>
+    <div className="atlas-oh-tools atlas-entry-tools atlas-panel-tools"><div className="atlas-oh-view-select"><AtlasSelect label="One Health view" summaryLabel={<span className="atlas-oh-mode-label"><ModeIcon size={14} aria-hidden /><span>{modeItems.find(item => item.value === mode)?.label}</span></span>} value={mode} items={modeItems} onChange={value=>setMode(value as HealthMode)} /></div>
     {mode !== "overview" && current && <AtlasSelect label="One Health report" searchable value={current.id} onChange={selectReport} items={reportItems} />}
     {mode === "overview" && <div ref={setOverviewTools} className="atlas-oh-overview-tools" />}
     <details ref={entryFilterMenu} className="atlas-oh-entry-filters"><summary aria-label={`Filter One Health entries${entryFilters.length ? `: ${entryFilters.length} active` : ''}`} title="Filter entries"><SlidersHorizontal size={16} aria-hidden />{entryFilters.length>0 && <b>{entryFilters.length}</b>}</summary>

@@ -60,6 +60,8 @@ Use `0.MINOR.PATCH` during experimental development:
 
 For each UI release, set the metadata, add a dated entry below describing its scope and supported export contracts, and run type, lint and relevant browser checks before publishing. Increment once per release, rather than for every edit.
 
+**0.5.3 · Experimental · 8 October 2026** — Searchable Journeys, Models and Signals series selectors share One Health menu styling, keyboard controls and structured choices. Requires site contract `1.8.0`, metrics `0.4.0`, Browser transport `0.3.0` and daily contract `0.2.1`.
+
 **0.5.2 · Experimental · 8 October 2026** — Complete Latest reports chronology, daily capture dates, Next review labels, report navigation across pages and compact fullscreen source controls. Publication checks validate daily references and timestamp order; scientific staging supports attachment preparation. Requires site contract `1.8.0`, metrics `0.4.0`, Browser transport `0.3.0` and daily contract `0.2.1`. See [release checks](evidence/release-preflight-0.5.2.md).
 
 **0.5.0 · Experimental · 7 October 2026** — Daily report chronology and Outbreak watch, source risk assessments, source quotations and translations, searchable source coverage, and responsive briefing columns. Requires site contract `1.8.0`, metrics `0.4.0` and Browser transport `0.3.0`. See [release checks and push preparation](evidence/release-preflight-0.5.0.md).

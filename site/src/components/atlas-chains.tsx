@@ -25,7 +25,7 @@ export function AtlasChains({ chains, onReport }: { chains: AtlasSelectedChain[]
   if (!chain) return null;
   return <section id="atlas-journeys" className="atlas-chain-section" aria-labelledby="atlas-chains-title">
     <header><GitBranch size={18} aria-hidden /><h2 id="atlas-chains-title">Journeys & connections</h2><span>{chains.length}</span></header>
-    <div className="atlas-chain-tools"><AtlasSelect label="Reviewed chain" value={chain.id} onChange={setChoice} items={chains.map(c => ({ value: c.id, label: c.label, badges: [
+    <div className="atlas-chain-tools atlas-entry-tools"><AtlasSelect label="Reviewed chain" searchable value={chain.id} onChange={setChoice} items={chains.map(c => ({ value: c.id, label: c.label, badges: [
       { kind: "kind", label: kinds[c.kind] },
       { kind: "count", label: `${c.nodes.length} ${c.nodes.length === 1 ? "event" : "events"}` },
       ...(c.nodes.some(n => !n.place_id) ? [{ kind: "place" as const, label: `${c.nodes.filter(n => !n.place_id).length} unlocated` }] : []),

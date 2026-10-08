@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { bundle } from './atlas-fixture';
+import { selectAtlasOption } from './atlas-select-actions';
 
 async function openView(page: Page, name: string) {
   const reportView = ['Reports', 'Assessments', 'Source coverage'].includes(name);
@@ -9,7 +10,7 @@ async function openView(page: Page, name: string) {
 }
 
 async function selectCaseObservations(page: Page) {
-  await page.getByRole('combobox', { name: 'Monitored series', exact: true }).selectOption('observations:ncdc-lassa-2026-cumulative-1');
+  await selectAtlasOption(page, 'Monitored series', 'observations:ncdc-lassa-2026-cumulative-1');
   await expect(page.getByRole('region', { name: 'Reported observations', exact: true })).toBeVisible();
 }
 
