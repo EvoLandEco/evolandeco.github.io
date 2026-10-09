@@ -800,7 +800,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
       {ruleCount > 0 && <button className="atlas-footer-filter-cue" aria-label="Reset all filters and selections" title="Reset filters, reporting window and selections" onClick={event => {
         event.currentTarget.parentElement?.querySelector<HTMLButtonElement>(":scope > .atlas-dataset-button")?.focus({ preventScroll: true });
         resetAll();
-      }}><SlidersHorizontal size={14} aria-hidden /><span>{activeFilters.length ? "Filtered view" : "Selection active"}</span><strong>Reset<RotateCcw size={13} aria-hidden /></strong></button>}
+      }}><SlidersHorizontal size={14} aria-hidden /><span>{activeFilters.length ? "Filtered view" : "Selection active"}</span><strong><span>Reset</span><RotateCcw size={13} aria-hidden /></strong></button>}
       <div ref={setFooterTarget} className="atlas-footer-navigation">
         {showingReports && pageCount > 1 && <ReportPagination position="bottom" index={pageIndex} items={pageItems} onChange={changeReportPage} />}
         {showingSpatial && linkPageCount > 1 && <ReportPagination entity="Geographic link" position="bottom" index={linkPageIndex} items={linkPageItems} onChange={index => changeEntryPage("links", index)} />}

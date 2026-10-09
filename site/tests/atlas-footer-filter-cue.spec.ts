@@ -30,9 +30,15 @@ async function expectFooterLayout(page: Page) {
   await cue.scrollIntoViewIfNeeded();
   const bounds = (await footer.boundingBox())!;
   const button = (await cue.boundingBox())!;
-  expect(button.x + button.width / 2).toBeCloseTo(bounds.x + bounds.width / 2, 0);
+  const about = (await footer.getByRole('button', { name: 'About ATLAS', exact: true }).boundingBox())!;
+  expect(button.y + button.height / 2).toBeCloseTo(about.y + about.height / 2, 0);
+  if (bounds.width > 700) expect(button.x + button.width / 2).toBeCloseTo(bounds.x + bounds.width / 2, 0);
   expect(button.x).toBeGreaterThanOrEqual(bounds.x);
   expect(button.x + button.width).toBeLessThanOrEqual(bounds.x + bounds.width);
+  for (const center of await footer.locator('button:visible, summary:visible').evaluateAll(controls => controls.map(control => {
+    const box = control.getBoundingClientRect();
+    return box.top + box.height / 2;
+  }))) expect(center).toBeCloseTo(about.y + about.height / 2, 0);
   expect(await cue.evaluate(element => {
     const box = element.getBoundingClientRect();
     return [...element.closest('footer')!.querySelectorAll<HTMLElement>('button, summary')]
@@ -100,9 +106,11 @@ test('Footer cue identifies evidence and route selections without claiming filte
 });
 
 for (const view of [
+  { width: 320, theme: 'light' as const, fullscreen: false },
   { width: 390, theme: 'dark' as const, fullscreen: false },
+  { width: 450, theme: 'light' as const, fullscreen: false },
   { width: 1280, theme: 'light' as const, fullscreen: true },
-]) test(`Footer cue stays centered beside Reports and One Health controls at ${view.width}px`, async ({ page }, testInfo) => {
+]) test(`Footer controls share one row at ${view.width}px fullscreen=${view.fullscreen}`, async ({ page }, testInfo) => {
   await openAtlas(page, view.width, view.theme, view.fullscreen);
   await page.locator('.atlas-controls').getByRole('button', { name: '3 months', exact: true }).click();
   const footer = page.locator('.atlas-workspace-footer');

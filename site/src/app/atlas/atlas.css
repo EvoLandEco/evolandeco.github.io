@@ -188,9 +188,17 @@ html[data-atlas-transition]::view-transition-new(root) { animation: atlas-fade .
 @keyframes atlas-filter-cue-in { from { opacity: 0; transform: translateY(4px) scale(.97); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .atlas-page button:is(.atlas-footer-filter-cue, .atlas-watch-close) { animation: none; } }
 @container atlas-workspace (max-width: 700px) {
-  .atlas-workspace-footer { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .atlas-footer-navigation { grid-column: 2; }
-  .atlas-page button.atlas-footer-filter-cue { grid-column: 1 / -1; grid-row: 2; }
+  .atlas-workspace-footer { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .atlas-footer-navigation { flex-wrap: nowrap; }
+  .atlas-page button.atlas-footer-filter-cue { width: 36px; padding: 0; gap: 0; }
+  .atlas-footer-filter-cue > :is(svg, span), .atlas-footer-filter-cue strong > span { display: none; }
+  .atlas-footer-filter-cue strong { padding: 0; border: 0; }
+}
+@container atlas-workspace (max-width: 450px) {
+  .atlas-workspace-footer { gap: 6px; padding-inline: 8px; }
+  .atlas-footer-navigation { gap: 6px; }
+  .atlas-footer-navigation button.atlas-dataset-button { width: 36px; padding: 0; gap: 0; flex-shrink: 0; }
+  .atlas-footer-navigation button.atlas-dataset-button > span { display: none; }
 }
 .atlas-view-about { order: 2; margin-left: auto; flex-shrink: 0; }
 .atlas-about-name { font-weight: 600; }

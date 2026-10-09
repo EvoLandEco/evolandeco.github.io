@@ -14,7 +14,7 @@ export function AtlasScope({ label, title, children, buttonLabel, icon: Icon = I
     return () => element.close();
   }, [open]);
   return <>
-    <button className={buttonLabel ? "atlas-dataset-button" : "atlas-scope-trigger"} aria-label={buttonLabel ?? name} title={buttonLabel ?? label} aria-haspopup="dialog" onClick={event => { event.currentTarget.focus({ preventScroll: true }); setOpen(true); }}>{buttonLabel ? <><Icon size={15} aria-hidden />{buttonLabel}</> : "?"}</button>
+    <button className={buttonLabel ? "atlas-dataset-button" : "atlas-scope-trigger"} aria-label={buttonLabel ?? name} title={buttonLabel ?? label} aria-haspopup="dialog" onClick={event => { event.currentTarget.focus({ preventScroll: true }); setOpen(true); }}>{buttonLabel ? <><Icon size={15} aria-hidden /><span>{buttonLabel}</span></> : "?"}</button>
     {open && <dialog ref={dialog} className={`atlas-scope-dialog${buttonLabel ? " atlas-about-dialog" : ""}`} aria-label={name} onClose={event => { if (event.target === event.currentTarget) setOpen(false); }} onKeyDown={event => {
       event.stopPropagation();
       if (event.key !== "Tab") return;
