@@ -212,7 +212,7 @@ for (const width of [390, 1440]) test(`Entry selectors share search, keyboard an
   expect(errors).toEqual([]);
 });
 
-for (const width of [390, 1440]) test(`Entry filters narrow lists and keep a fixed trigger at ${width}px`, async ({ page }, testInfo) => {
+for (const width of [320, 390, 1440]) test(`Entry filters narrow lists and keep a fixed trigger at ${width}px`, async ({ page }, testInfo) => {
   await page.setViewportSize({ width, height: 900 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const errors: string[] = [];
@@ -226,8 +226,14 @@ for (const width of [390, 1440]) test(`Entry filters narrow lists and keep a fix
     const filters = region.locator('.atlas-entry-filters');
     const trigger = filters.locator(':scope > summary');
     await expect(trigger).toHaveAttribute('aria-label', label);
+    if (width < 1440) await trigger.evaluate(element => window.scrollBy(0, element.getBoundingClientRect().bottom - innerHeight + 80));
     await trigger.press('Enter');
     await expect(filters.getByRole('button', { name: 'Clear', exact: true })).toBeDisabled();
+    if (width < 1440) {
+      const popup = (await filters.locator('.atlas-entry-filter-menu').boundingBox())!;
+      const button = (await trigger.boundingBox())!;
+      expect(popup.y).toBeGreaterThanOrEqual(button.y + button.height);
+    }
     expect(await trigger.evaluate(element => ({ width: element.getBoundingClientRect().width, height: element.getBoundingClientRect().height }))).toEqual({ width: 36, height: 36 });
     return filters;
   }
@@ -239,8 +245,14 @@ for (const width of [390, 1440]) test(`Entry filters narrow lists and keep a fix
     const popup = await filters.locator('.atlas-entry-filter-menu').boundingBox();
     expect(popup!.x).toBeGreaterThanOrEqual(0);
     expect(popup!.x + popup!.width).toBeLessThanOrEqual(width);
-    expect(popup!.y).toBeGreaterThanOrEqual(0);
-    expect(popup!.y + popup!.height).toBeLessThanOrEqual(900);
+    if (width === 1440) {
+      expect(popup!.y).toBeGreaterThanOrEqual(0);
+      expect(popup!.y + popup!.height).toBeLessThanOrEqual(900);
+    }
+    else {
+      const button = (await trigger.boundingBox())!;
+      expect(popup!.y).toBeGreaterThanOrEqual(button.y + button.height);
+    }
     expect((await filters.getByRole('button', { name: 'Clear', exact: true }).boundingBox())!.width).toBeLessThan(popup!.width / 2);
   }
 

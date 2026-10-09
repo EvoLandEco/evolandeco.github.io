@@ -10,7 +10,7 @@ export function CardTiming({ support, label }: { support: (string | number)[][];
   if (!dates.length) return null;
   const first = dates[0], last = dates.at(-1)!;
   const span = dayNumber(last) - dayNumber(first);
-  return <section className="atlas-card-timing" data-single={dates.length === 1 || undefined} aria-label={label}>
+  return <section className="atlas-card-timing" data-single={dates.length === 1 || undefined} role="group" aria-label={label}>
     <div className="atlas-card-timing-heading"><span><CalendarDays size={13} aria-hidden />{label}</span>{dates.length > 1 && <small>{span} {span === 1 ? "day" : "days"} between reports</small>}</div>
     <div className="atlas-card-timing-dates"><time dateTime={first}>{formatDate(first)}</time>{dates.length > 1 && <time dateTime={last}>{formatDate(last)}</time>}</div>
     {dates.length > 1 && <ol className="atlas-card-timing-track" aria-label="Publication dates">{dates.map(date => {

@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useContext, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { RotateCcw, SlidersHorizontal } from "lucide-react";
+import { AtlasWorkspaceContext } from "./atlas-context";
 
 export function AtlasEntryFilters({ label, value, onChange, groups, count, total }: {
   label: string;
@@ -13,13 +14,14 @@ export function AtlasEntryFilters({ label, value, onChange, groups, count, total
   const root = useRef<HTMLDetailsElement>(null);
   const menu = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+  const fullscreen = useContext(AtlasWorkspaceContext);
   const id = useId();
   useLayoutEffect(() => {
-    if (!open) return;
+    if (!open || !fullscreen) return;
+    const popup = menu.current!;
     const position = () => {
       const trigger = root.current?.querySelector("summary")?.getBoundingClientRect();
-      const popup = menu.current;
-      if (!trigger || !popup) return;
+      if (!trigger) return;
       const height = Math.min(460, popup.querySelector("header")!.offsetHeight + popup.lastElementChild!.scrollHeight + 2);
       const above = trigger.top - 19;
       const below = window.innerHeight - trigger.bottom - 19;
@@ -33,8 +35,10 @@ export function AtlasEntryFilters({ label, value, onChange, groups, count, total
     return () => {
       window.removeEventListener("resize", position);
       document.removeEventListener("scroll", position, true);
+      delete popup.dataset.side;
+      popup.style.removeProperty("max-height");
     };
-  }, [open, groups]);
+  }, [open, groups, fullscreen]);
   useEffect(() => {
     const close = (event: PointerEvent) => {
       if (root.current && !root.current.contains(event.target as Node)) root.current.open = false;
