@@ -27,12 +27,14 @@ async function expectFooterLayout(page: Page) {
   const footer = page.locator('.atlas-workspace-footer');
   const cue = footer.getByRole('button', { name: 'Reset all filters and selections', exact: true });
   await expect(cue).toBeVisible();
+  await expect(cue.locator(':scope > span')).toBeVisible();
+  await expect(cue.locator('strong > span')).toBeVisible();
   await cue.scrollIntoViewIfNeeded();
   const bounds = (await footer.boundingBox())!;
   const button = (await cue.boundingBox())!;
   const about = (await footer.getByRole('button', { name: 'About ATLAS', exact: true }).boundingBox())!;
   expect(button.y + button.height / 2).toBeCloseTo(about.y + about.height / 2, 0);
-  if (bounds.width > 700) expect(button.x + button.width / 2).toBeCloseTo(bounds.x + bounds.width / 2, 0);
+  if (bounds.width > 700 || !await page.locator('.atlas-page[data-fullscreen]').count()) expect(button.x + button.width / 2).toBeCloseTo(bounds.x + bounds.width / 2, 0);
   expect(button.x).toBeGreaterThanOrEqual(bounds.x);
   expect(button.x + button.width).toBeLessThanOrEqual(bounds.x + bounds.width);
   for (const center of await footer.locator('button:visible, summary:visible').evaluateAll(controls => controls.map(control => {
@@ -112,7 +114,8 @@ for (const view of [
   { width: 1280, theme: 'light' as const, fullscreen: true },
 ]) test(`Footer controls share one row at ${view.width}px fullscreen=${view.fullscreen}`, async ({ page }, testInfo) => {
   await openAtlas(page, view.width, view.theme, view.fullscreen);
-  await page.locator('.atlas-controls').getByRole('button', { name: '3 months', exact: true }).click();
+  await page.locator('.atlas-latest-entry').first().click();
+  await expect(page.locator('.atlas-footer-filter-cue')).toHaveText('Selection activeReset');
   const footer = page.locator('.atlas-workspace-footer');
   await page.getByRole('tab', { name: 'Reports', exact: true }).click();
   await expectFooterLayout(page);
