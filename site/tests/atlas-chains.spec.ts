@@ -16,7 +16,7 @@ for (const width of [390, 1280]) test(`Reviewed chain maps preserve nodes, expli
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   await page.getByRole('button', { name: 'Observations', exact: true }).click();
   const observations = page.locator('.atlas-select').filter({ has: page.locator('summary[aria-label="Observation series"]') });
-  const plot = page.locator('.atlas-trend-observations figure');
+  const plot = page.locator('.atlas-analysis-observations');
   const selectedPoint = plot.locator('.atlas-observation-item').filter({ hasText: '14 Jun 2026' });
   await selectedPoint.getByRole('button', { name: /^Scope & source for/ }).click();
   const scopeDialog = page.locator('.atlas-scope-dialog[open]');
@@ -49,7 +49,7 @@ for (const width of [390, 1280]) test(`Reviewed chain maps preserve nodes, expli
   await option.press('Enter');
   await expect(observations.locator('summary > span')).toHaveAttribute('title', optionLabel!);
   await expect(observations.locator('summary .atlas-select-badge')).toHaveCount(3);
-  await page.getByRole('tab', { name: 'Geographic links', exact: true }).click();
+  await page.getByRole('tab', { name: 'Journeys', exact: true }).click();
   const figure = page.locator('.atlas-chain-figure');
   const selected = createResearch(bundle).selectedResearch(new Set(bundle.records.map(r => r.id))).reviewed_chains;
   for (const chain of selected) {
@@ -140,7 +140,7 @@ for (const workspace of [false, true]) test(`Chain and observation selection ani
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ reducedMotion: 'no-preference', colorScheme: workspace ? 'dark' : 'light' });
   await page.goto('/atlas/');
-  await page.getByRole('tab', { name: 'Geographic links', exact: true }).click();
+  await page.getByRole('tab', { name: 'Journeys', exact: true }).click();
   await expect(page.locator('.atlas-chain-pin').first()).toBeVisible();
   if (workspace) {
     const canvas = page.getByTestId('atlas-globe').locator('canvas').first();
@@ -178,19 +178,19 @@ for (const workspace of [false, true]) test(`Chain and observation selection ani
   expect(helpBox.y - panelBox.y).toBeCloseTo(10, 0);
   expect(panelBox.x + panelBox.width - helpBox.x - helpBox.width).toBeCloseTo(10, 0);
   await page.getByRole('region', { name: 'Journey details', exact: true }).screenshot({ path: `/tmp/atlas-journey-panel-${workspace ? 'dark' : 'light'}.png` });
-  const map = page.locator('.atlas-chain-map'), chart = page.locator('.atlas-trend-observations .atlas-observation-chart');
+  const map = page.locator('.atlas-chain-map'), chart = page.locator('.atlas-analysis-observations .atlas-observation-chart');
   const mapHandle = await map.elementHandle();
   const pins = map.locator('.atlas-chain-pin');
   const nodeEntries = page.locator('.atlas-chain-nodes .atlas-chain-entry');
-  const journeyPane = page.getByRole('region', { name: 'Journey details', exact: true });
+  const journeyPane = page.getByRole('region', { name: 'Journey events and connections', exact: true });
   await expect(journeyPane).toHaveCSS('overflow-y', 'auto');
-  if (!workspace) expect((await journeyPane.boundingBox())!.height).toBeLessThanOrEqual(340);
+  if (!workspace) expect((await journeyPane.boundingBox())!.height).toBeGreaterThan(180);
   await map.scrollIntoViewIfNeeded();
   await journeyPane.evaluate(el => { el.scrollTop = el.scrollHeight; });
   const mapScroll = await page.evaluate(() => scrollY);
   await pins.first().hover();
   await expect.poll(() => nodeEntries.first().locator('summary').evaluate(el => {
-    const pane = el.closest('.atlas-chain-details')!, group = el.closest('.atlas-chain-group')!;
+    const pane = el.closest('.atlas-chain-outline')!, group = el.closest('.atlas-chain-group')!;
     return el.getBoundingClientRect().top >= pane.getBoundingClientRect().top + group.querySelector('summary')!.getBoundingClientRect().height;
   })).toBe(true);
   expect(await page.evaluate(() => scrollY)).toBe(mapScroll);
@@ -208,7 +208,7 @@ for (const workspace of [false, true]) test(`Chain and observation selection ani
   });
   await page.mouse.move(routePoint.x, routePoint.y);
   await expect(routeEntries.last()).toHaveAttribute('data-highlighted', 'true');
-  await expect.poll(() => routeEntries.last().locator('summary').evaluate(el => el.getBoundingClientRect().bottom <= el.closest('.atlas-chain-details')!.getBoundingClientRect().bottom)).toBe(true);
+  await expect.poll(() => routeEntries.last().locator('summary').evaluate(el => el.getBoundingClientRect().bottom <= el.closest('.atlas-chain-outline')!.getBoundingClientRect().bottom)).toBe(true);
   await routeEntries.last().locator('summary').hover();
   await expect(routes.last()).toHaveAttribute('data-highlighted', 'true');
   await page.locator('.atlas-chain-section').screenshot({ path: `/tmp/atlas-chain-hover-${workspace}.png` });
@@ -219,7 +219,7 @@ for (const workspace of [false, true]) test(`Chain and observation selection ani
   const chartHandle = await chart.elementHandle();
   await chart.scrollIntoViewIfNeeded();
   const circles = chart.locator('circle');
-  const rows = page.locator('.atlas-trend-observations .atlas-observation-item');
+  const rows = page.locator('.atlas-analysis-observations .atlas-observation-item');
   const position = await circles.nth(3).evaluate(el => {
     const circle = el as SVGCircleElement, svg = circle.ownerSVGElement!;
     const point = new DOMPoint(circle.cx.baseVal.value, svg.viewBox.baseVal.height - 38).matrixTransform(svg.getScreenCTM()!);
@@ -254,7 +254,7 @@ for (const workspace of [false, true]) test(`Chain and observation selection ani
   await rows.nth(1).locator('.atlas-observation-row').hover();
   await expect(circles.nth(1)).toHaveAttribute('data-highlighted', 'true');
   await expect(circles.nth(3)).not.toHaveAttribute('data-highlighted');
-  await page.locator('.atlas-trend-observations').screenshot({ path: `/tmp/atlas-observation-hover-${workspace}.png` });
+  await page.locator('.atlas-analysis-observations').screenshot({ path: `/tmp/atlas-observation-hover-${workspace}.png` });
   await chart.locator('.atlas-observation-connection').first().focus();
   await rows.nth(1).dispatchEvent('pointerout');
   await expect(rows.nth(0)).toHaveAttribute('data-highlighted', 'true');
@@ -267,11 +267,11 @@ for (const workspace of [false, true]) test(`Chain and observation selection ani
   await expect(page.getByLabel('Selected chain evidence')).toBeVisible();
   const groups = page.locator('.atlas-chain-group');
   await expect(groups).toHaveCount(2);
-  await expect(groups.nth(0).locator(':scope > summary')).toContainText('Nodes');
-  await expect(groups.nth(1).locator(':scope > summary')).toContainText('Routes');
+  await expect(groups.nth(0).locator(':scope > summary')).toContainText('Events');
+  await expect(groups.nth(1).locator(':scope > summary')).toContainText('Connections');
   await page.getByLabel('Selected chain evidence').getByText('Source evidence', { exact: true }).click();
   {
-    const pane = page.locator('.atlas-chain-details');
+    const pane = page.locator('.atlas-chain-outline');
     await pane.evaluate(el => { el.scrollTop += 100; });
     const groupHeader = (await groups.first().locator(':scope > summary').boundingBox())!;
     const entryHeader = (await page.locator('.atlas-chain-entry[open] > summary').boundingBox())!;

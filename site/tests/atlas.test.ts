@@ -138,3 +138,12 @@ test("Unlocated findings remain searchable without globe coordinates", () => {
   }
   for (const topic of mappedTracks) assert(Number.isFinite(topic.lat) && Number.isFinite(topic.lon));
 });
+
+test('Publication eligibility applies to both weekly date bases and their bounds', () => {
+  const undated = { ...atlas.records[0], id: 'undated-report', publication: '', capture: '2099-01-01T00:00:00Z' };
+  const view = createAtlas({ ...atlas, records: [...atlas.records, undated] }, bundle);
+  for (const basis of ['publication', 'capture'] as const) {
+    assert.deepEqual(view.dateBounds(basis), dateBounds(basis));
+    assert(!view.windowRecords('1900-01-01', '2100-01-01', basis).some(row => row.id === undated.id));
+  }
+});

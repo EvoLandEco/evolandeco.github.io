@@ -38,6 +38,24 @@ for (const name of ['source-supplement.json', 'source-supplement.schema.json']) 
   assert.equal(keys.at(-1), path.slice(1) + '.gz');
 }
 for (const name of ['private.json', 'source-supplement.js']) assert.equal((await worker.fetch(request(`/releases/${'a'.repeat(64)}/supplements/${'b'.repeat(64)}/${name}`), env)).status, 404);
+const collectionRoot = `/releases/${'a'.repeat(64)}/supplement-collections/${'b'.repeat(64)}`;
+for (const name of ['source-supplement-collection.json', 'source-supplement-collection.schema.json', 'source-supplement-catalogue.json', 'source-supplement-catalogue.schema.json']) {
+  const path = `${collectionRoot}/${name}`;
+  const response = await worker.fetch(request(path), env);
+  assert.equal(response.status, 200);
+  assert.equal(limits.at(-1).bucket, 'general');
+  assert.equal(keys.at(-1), path.slice(1) + '.gz');
+  assert.equal(response.headers.get('Content-Encoding'), 'gzip');
+  assert.match(response.headers.get('Cache-Control'), /immutable/);
+  assert.match(response.headers.get('Content-Type'), /json/);
+  assert.equal((await worker.fetch(request(path, { method: 'HEAD' }), env)).body, null);
+  assert.equal((await worker.fetch(request(path, { headers: { 'If-None-Match': '"release"' } }), env)).status, 304);
+}
+const beforeInvalidCollectionPaths = limits.length;
+for (const name of ['private.json', 'source-supplement.json', 'source-supplement-collection.js', 'source-supplement-catalogue.json/extra', '%2e%2e/private.json'])
+  assert.equal((await worker.fetch(request(`${collectionRoot}/${name}`), env)).status, 404);
+assert.equal((await worker.fetch(request(collectionRoot.replace('supplement-collections/', 'supplement-collections/invalid/') + '/source-supplement-collection.json'), env)).status, 404);
+assert.equal(limits.length, beforeInvalidCollectionPaths);
 for (const name of ['network-analysis.json', 'network-analysis.schema.json', 'coverage-ledger.json']) {
   const path = `/network-analysis/${'b'.repeat(64)}/${name}`;
   assert.equal((await worker.fetch(request(path), env)).status, 200);

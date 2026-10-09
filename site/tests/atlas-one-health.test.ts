@@ -27,3 +27,21 @@ test('Equal report selections reuse evidence while changed selections and domain
   assert.notEqual(filtered, view);
   assert(!filtered.one_health!.nodes.some(n => n.id === bundle.one_health_nodes[0].id));
 });
+
+test('Active report sets retain evidence across alternating panels and invalidate changed IDs', async () => {
+  const { healthPanelsFixture } = await import('./atlas-health-panels-fixture');
+  const bundle = healthPanelsFixture();
+  const research = createResearch(bundle);
+  const ids = new Set(bundle.records.map(record => record.id));
+  const attentionIds = new Set([bundle.records[0].id]);
+  const reports = research.selectedResearch(ids);
+  const attention = research.selectedResearch(attentionIds);
+  assert.equal(research.selectedResearch(ids), reports);
+  assert.equal(research.selectedResearch(attentionIds), attention);
+  attentionIds.delete(bundle.records[0].id);
+  attentionIds.add(bundle.records[1].id);
+  const changed = research.selectedResearch(attentionIds);
+  assert.notEqual(changed, attention);
+  assert.deepEqual(changed.record_ids, [bundle.records[1].id]);
+  assert.equal(research.selectedResearch(ids), reports);
+});

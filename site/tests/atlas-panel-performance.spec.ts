@@ -23,6 +23,38 @@ test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
 });
 
+test('Source coverage preserves document counts without rescanning records for every connection', async ({ page }, testInfo) => {
+  await page.goto('/atlas/');
+  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+  const scanned = await page.evaluate(async () => {
+    const filter = Array.prototype.filter;
+    let count = 0;
+    Array.prototype.filter = function (...args: Parameters<typeof filter>) {
+      if (this.length && this[0]?.document_id && this[0]?.track && this[0]?.source) count += this.length;
+      return Reflect.apply(filter, this, args);
+    };
+    try {
+      document.querySelector<HTMLButtonElement>('.atlas-coverage-control button')!.click();
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+    } finally { Array.prototype.filter = filter; }
+    return count;
+  });
+  const graph = page.getByRole('group', { name: 'Sources connected to reporting topics', exact: true });
+  await expect(graph).toBeVisible();
+  const rows: { source: string; track: string; document_id: string; publication: string }[] = JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')).records.filter((row: { publication: string }) => row.publication);
+  const edges = await graph.locator('.atlas-coverage-edge').evaluateAll(elements => elements.map(element => ({
+    source: element.getAttribute('data-source'), topic: element.getAttribute('data-topic'), label: element.getAttribute('aria-label'),
+  })));
+  expect(edges.length).toBeGreaterThan(1);
+  for (const edge of edges) {
+    const count = new Set(rows.filter(row => row.source === edge.source && row.track === edge.topic).map(row => row.document_id)).size;
+    expect(edge.label).toContain(` · ${count} source document`);
+  }
+  await testInfo.attach('coverage-record-scans', { body: JSON.stringify({ records: rows.length, scanned }), contentType: 'application/json' });
+  expect(scanned).toBeLessThanOrEqual(rows.length * 3);
+});
+
 test('One Health hover reuses report selection and fixed network geometry', async ({ page }) => {
   await page.goto('/atlas/');
   await page.getByRole('tab', { name: 'One Health', exact: true }).click();

@@ -255,7 +255,7 @@ test("Globe drag guidance follows readiness and fullscreen entry without replayi
   await expect(hint).toHaveCount(0);
   await page.getByRole("button", { name: "Click to enter full screen" }).click();
   await expect(hint).toBeVisible();
-  await expect(hint).toHaveCount(0, { timeout: 7000 });
+  await expect(hint).toHaveCount(0, { timeout: 11000 });
   const fullscreenPoint = await surface(page, "ne");
   await page.mouse.click(fullscreenPoint.x, fullscreenPoint.y);
   await expect(page.locator(".atlas-page")).toHaveAttribute("data-fullscreen", "true");

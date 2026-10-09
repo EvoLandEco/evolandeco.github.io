@@ -5,6 +5,7 @@ type RGBA = [number, number, number, number];
 type Stroke = { radius: number; alpha: number };
 type Route = {
   group: SVGGElement;
+  category: string | undefined;
   line: Segments; trail: Segments; arrow: Segments;
   gradient: Float32Array;
   anchor: [number, number, boolean];
@@ -245,6 +246,7 @@ export function createGlobeRoutes(canvas: HTMLCanvasElement) {
       if (error !== gl.NO_ERROR) throw new Error(`Route texture allocation failed: ${error}`);
     }
     let routes: Route[] = [], scale = 1, radius = 8, atlasWidth = 1, atlasHeight = 1;
+    let styledSelection: SVGGElement | undefined;
     let dirty = true, glyphDirty = true, visibleTiles = 0, segmentCapacity = 0, tileCapacity = 0;
     let packedTiles = new Float32Array(0), drawnRoutes: Route[] = [];
     const glyphCanvas = document.createElement('canvas'), glyphContext = glyphCanvas.getContext('2d', { willReadFrequently: true });
@@ -264,8 +266,9 @@ export function createGlobeRoutes(canvas: HTMLCanvasElement) {
       if (!element) return { radius: 0, alpha: 0 };
       const s = getComputedStyle(element); return { radius: parseFloat(s.strokeWidth) / 2, alpha: Number(s.strokeOpacity) * Number(s.opacity) };
     };
-    function styles() {
-      for (const r of routes) {
+    function styles(targets = routes) {
+      styledSelection = routes.find(route => route.group.dataset.active === 'true')?.group;
+      for (const r of targets) {
         const s = getComputedStyle(r.group), line = r.group.querySelector('.atlas-route-line');
         const lineStyle = line ? getComputedStyle(line) : null;
         r.color = rgb(s.color); r.opacity = Number(s.opacity);
@@ -518,14 +521,30 @@ export function createGlobeRoutes(canvas: HTMLCanvasElement) {
     return {
       get available() { return available; },
       configure(groups: SVGGElement[]) {
-        routes = groups.map(group => ({ group, line: empty(), trail: empty(), arrow: empty(), gradient: new Float32Array(4),
+        const selectionChanged = styledSelection !== groups.find(group => group.dataset.active === 'true');
+        const retained = new Map(routes.map(route => [route.group, route]));
+        const added: Route[] = [];
+        routes = groups.map(group => {
+          const route = retained.get(group);
+          const text = group.querySelector('.atlas-route-count text')?.textContent ?? '';
+          const kind = group.querySelector('.atlas-travel-beam') ? 1 : group.querySelector('.atlas-route-beam') ? 2 : 0;
+          if (route && route.category === group.dataset.kind && route.kind === kind && !!route.text === !!text) {
+            if (route.text !== text) { route.text = text; glyphDirty = true; }
+            return route;
+          }
+          const entry: Route = { group, category: group.dataset.kind, line: empty(), trail: empty(), arrow: empty(), gradient: new Float32Array(4),
           anchor: [0, 0, false], halo: { radius: 0, alpha: 0 }, base: { radius: 0, alpha: 0 }, beam: [],
           arrowHalo: { radius: 0, alpha: 0 }, arrowLine: { radius: 0, alpha: 0 }, dash: [], dashOffset: 0,
           color: [0, 0, 0], start: [0, 0, 0], end: [0, 0, 0], shadow: [0, 0, 0, 0], background: [0, 0, 0],
           kind: 0, opacity: 1, text: '', font: '13px sans-serif', fontSize: 13, glyph: [0, 0, 0, 0], animations: [],
-        }));
+          };
+          added.push(entry);
+          return entry;
+        });
         layout = routes.map(route => ({ route, bounds: [0, 0, 0, 0], beam: [0, 0, 0, 0], x: 0, y: 0 }));
-        styles();
+        dirty = true;
+        if (selectionChanged) styles();
+        else if (added.length) styles(added);
       },
       styles,
       line(index: number, values: Float32Array, length: number) {

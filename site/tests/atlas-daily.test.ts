@@ -7,8 +7,8 @@ import { dailyFixture, dailyHash, dailyPointer } from './atlas-daily-fixture';
 import type { AtlasRelease } from '../src/lib/atlas-release';
 const release = { export_id: 'a'.repeat(64), assets: { 'atlas-site.json': { sha256: 'b'.repeat(64), bytes: 1 }, 'map.json': { sha256: 'c'.repeat(64), bytes: 1 } } } as AtlasRelease;
 test('Daily selections preserve bindings, source evidence, cutoffs and exact weekly reconciliation', async () => {
-  assert.equal(dailyHash(readFileSync('src/lib/atlas-vendor/daily/0.2.1/daily.schema.json')), dailyPins.schema);
-  assert.equal(dailyHash(readFileSync('src/lib/atlas-vendor/daily/0.2.1/daily-view.mjs')), dailyPins.selector);
+  assert.equal(dailyHash(readFileSync('src/lib/atlas-vendor/daily/0.2.1/daily.schema.json')), dailyPins["0.2.1"].schema);
+  assert.equal(dailyHash(readFileSync('src/lib/atlas-vendor/daily/0.2.1/daily-view.mjs')), dailyPins["0.2.1"].selector);
   const data = dailyFixture(release);
   await validateDaily(data, release, data.base_manifest_sha256);
   for (const mutate of [(d: typeof data) => { d.base_source_export_id = 'b'.repeat(64); }, (d: typeof data) => { d.evidence[0].quote = 'Changed quote'; }, (d: typeof data) => { d.findings[0].document_id = 'missing'; }, (d: typeof data) => { d.watch_items[0].document_ids = ['daily_latest']; }]) {
@@ -36,6 +36,20 @@ test('Daily fetch handles absent publication and rejects damaged or mismatched p
   await assert.rejects(fetchDaily(release, data.base_manifest_sha256));
   t.mock.restoreAll(); t.mock.method(globalThis, 'fetch', async () => new Response(null, { status: 404 }));
   assert.equal(await fetchDaily(release, data.base_manifest_sha256), undefined);
+});
+test('Cancelling a daily fetch stops quotation verification after the active digest', async t => {
+  const data = dailyFixture(release);
+  data.evidence.push(...Array.from({ length: 8 }, (_, index) => ({ ...data.evidence[0], id: `extra_evidence_${index}` })));
+  const pointer = dailyPointer(data), controller = new AbortController();
+  const digest = crypto.subtle.digest.bind(crypto.subtle);
+  let digests = 0;
+  t.mock.method(globalThis, 'fetch', async (url: string) => new Response(JSON.stringify(url.endsWith('current.json') ? pointer : data)));
+  t.mock.method(crypto.subtle, 'digest', async (...args: Parameters<typeof crypto.subtle.digest>) => {
+    if (++digests === 2) controller.abort();
+    return digest(...args);
+  });
+  await assert.rejects(fetchDaily(release, data.base_manifest_sha256, controller.signal), { name: 'AbortError' });
+  assert.equal(digests, 2);
 });
 test('Watch cards remain selected after review deadlines until a reviewed release retires them', async () => {
   const data = dailyFixture(release), window: [string, string] = ['2026-10-01', '2026-10-07'];
@@ -140,4 +154,35 @@ test('Publisher version bindings retain scientific and daily versions without cl
   assert.equal(dailySelection(data, ['2026-10-01', '2026-10-07'], ['france_spf'], [], data.generated_at).documents.length, 2);
   data.documents[0].base_document_ids.push('unknown');
   assert.throws(() => validateDailyReferences(data, base));
+});
+
+test('Sealed daily data retains verification while public selection excludes undated support', async () => {
+  const data = dailyFixture(release);
+  data.documents[0].publication = null;
+  const sealed = JSON.stringify(data);
+  await validateDaily(data, release, data.base_manifest_sha256);
+  assert.equal(selectDaily(data, data.publication_from, data.publication_until, 'capture', data.knowledge_cutoff).watch_items.length, 1);
+  for (const basis of ['publication', 'capture'] as const) {
+    const selected = dailySelection(data, [data.publication_from, data.publication_until], [], [], data.generated_at, basis);
+    assert.deepEqual(selected.documents.map(doc => doc.id), ['daily_latest']);
+    assert.equal(selected.findings.length, 0);
+    assert.equal(selected.evidence.length, 0);
+    assert.equal(selected.watch_items.length, 0);
+    assert.equal(selected.watch_assessments.length, 0);
+  }
+  assert.equal(JSON.stringify(data), sealed);
+});
+
+test('Daily 0.2.2 uses exact version pins and requires report publication dates', async () => {
+  const { dailyPointerSchema } = await import('../src/lib/atlas-daily');
+  const data = { ...dailyFixture(release), daily_version: '0.2.2' as const };
+  const pins = dailyPins['0.2.2'];
+  assert.equal(dailyHash(readFileSync('src/lib/atlas-vendor/daily/0.2.2/daily.schema.json')), pins.schema);
+  assert.equal(dailyHash(readFileSync('src/lib/atlas-vendor/daily/0.2.2/daily-view.mjs')), pins.selector);
+  await validateDaily(data, release, data.base_manifest_sha256);
+  const old = dailyPointer(dailyFixture(release));
+  assert.throws(() => dailyPointerSchema.parse({ ...old, daily_version: '0.2.2' }));
+  dailyPointerSchema.parse({ ...old, daily_version: '0.2.2', schema_sha256: pins.schema, selector_sha256: pins.selector });
+  data.documents[0].publication = null;
+  await assert.rejects(validateDaily(data, release, data.base_manifest_sha256));
 });

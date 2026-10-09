@@ -80,9 +80,10 @@ export function healthLayout(nodes: Node[], edges: Edge[], domains: string[], av
     for (const [index, edge] of links.entries()) {
       const a = port(edge, 'from'), b = port(edge, 'to');
       const start = points.get(edge.from_node_id)!, end = points.get(edge.to_node_id)!;
+      const laneDistance = Math.abs(domains.indexOf(byId.get(edge.from_node_id)!.domain) - domains.indexOf(byId.get(edge.to_node_id)!.domain));
       const between = members.some(n => { const p = points.get(n.id)!; return p.y === start.y && p.x > Math.min(start.x, end.x) && p.x < Math.max(start.x, end.x); });
       if (start.y === end.y && start.x !== end.x && !between) paths.set(edge.id, roundedPath([a, b]));
-      else if (Math.abs(start.x - end.x) <= cellWidth + gap) paths.set(edge.id, roundedPath([a, { x: a.rail, y: a.y }, { x: a.rail, y: b.y }, b]));
+      else if (laneDistance <= 1) paths.set(edge.id, roundedPath([a, { x: a.rail, y: a.y }, { x: a.rail, y: b.y }, b]));
       else paths.set(edge.id, roundedPath([a, { x: a.rail, y: a.y }, { x: a.rail, y: top + index * 8 }, { x: b.rail, y: top + index * 8 }, { x: b.rail, y: b.y }, b]));
     }
   }

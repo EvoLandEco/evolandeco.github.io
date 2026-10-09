@@ -8,6 +8,36 @@ import AxeBuilder from '@axe-core/playwright';
 import type { DailyData } from '../src/lib/atlas-daily';
 import { sourceLogos } from '../src/lib/atlas-identities';
 
+test('Source filters list collected sources and retain weekly sources with no daily documents', async ({ page }) => {
+  const fixture = await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
+  const manifest = JSON.parse(fixture.bodies[`/releases/${fixture.release.export_id}/browser/${fixture.release.browser.manifest.sha256}/manifest.json`].toString());
+  const data = dailyFixture(releaseSchema.parse(fixture.release), manifest.source.manifest.sha256);
+  for (const [source_id, source_name] of [
+    ['woah_wahis', 'WOAH WAHIS (possible source; collaboration not established)'],
+    ['beacon', 'BEACON (possible source; collaboration not established)'],
+    ['rivm', 'RIVM'],
+  ]) data.source_coverage.push({ ...data.source_coverage[0], source_id, source_name, status: 'disabled', documents: 0, reviewed: 0, relevant: 0, pending: 0 });
+  await page.route(/\/daily\//, route => route.fulfill({ contentType: 'application/json', body: JSON.stringify(route.request().url().endsWith('current.json') ? dailyPointer(data) : data) }));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/atlas/');
+  await expect(page.locator('.atlas-daily-watch')).toBeVisible();
+  for (const label of ['Reporting source', 'Coverage sources']) {
+    if (label === 'Coverage sources') {
+      await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+      await page.getByRole('button', { name: 'Source coverage', exact: true }).click();
+    }
+    await page.locator(`summary[aria-label="${label}"]`).click();
+    const menu = page.getByRole('dialog', { name: label, exact: true });
+    await expect(menu.getByRole('checkbox', { name: 'Santé publique France', exact: true })).toHaveCount(1);
+    await expect(menu.getByRole('checkbox', { name: 'RIVM', exact: true })).toHaveCount(1);
+    await expect(menu.getByRole('checkbox', { name: /WOAH WAHIS|BEACON/ })).toHaveCount(0);
+    await menu.getByRole('checkbox', { name: 'Santé publique France', exact: true }).check();
+    await menu.getByRole('searchbox').press('Escape');
+  }
+  await page.getByRole('button', { name: 'Close Source coverage', exact: true }).click();
+  await expect(page.locator('.atlas-daily-report')).toHaveCount(2);
+});
+
 test('Reports dates include daily captures and retain the weekly review schedule', async ({ page }) => {
   const captured = '2026-10-07T12:00:00Z', review = '2026-10-14';
   const fixture = await routeBrowserFixture(page, { ...bundle, snapshot: { ...bundle.snapshot, captured_at: captured, next_update_date: review } }, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
@@ -24,10 +54,10 @@ test('Reports dates include daily captures and retain the weekly review schedule
     const dailyResponse = page.waitForResponse(response => response.url().includes('/daily/') && response.url().endsWith('current.json'));
     await page.goto('/atlas/');
     await dailyResponse;
-    if (cutoff) await expect(page.locator('.atlas-daily-attention-scope')).toBeVisible();
+    if (cutoff) await expect(page.locator('.atlas-latest-list')).toContainText('Investigation in France');
+    await expect(page.getByRole('group', { name: 'Reporting attention period', exact: true }).getByRole('button')).toHaveText(['Weekly']);
     await page.getByRole('tab', { name: 'Reports', exact: true }).click();
-    for (const name of ['Reports', 'Source coverage']) {
-      await page.getByRole('group', { name: 'Report content' }).getByRole('button', { name, exact: true }).click();
+    {
       const dates = page.locator('.atlas-timeline-next time');
       await expect(dates.nth(0)).toHaveAttribute('datetime', expected);
       await expect(dates.nth(0)).toHaveText(label);
@@ -175,6 +205,12 @@ for (const width of [390, 1466]) test(`Daily reports retain evidence and stay ou
   await expect(report.locator('.atlas-report-meta').first()).toContainText('Captured 7 Oct 2026');
   await expect(report.getByRole('link', { name: 'Read source' })).toHaveAttribute('href', 'https://example.org/daily');
   await expect(report.locator('.atlas-claim > p')).toHaveText('12 reported cases in France.');
+  await report.screenshot({ path: `/tmp/atlas-report-disclosures-${width}.png` });
+  const scope = report.locator('summary').filter({ hasText: 'Evidence & scope' });
+  await scope.focus(); await scope.press('Enter');
+  await expect(report).toContainText('Synthetic source for interface tests.');
+  await scope.press('Enter');
+  expect((await new AxeBuilder({ page }).include('#atlas-report-daily_doc').analyze()).violations).toEqual([]);
   await report.getByText('Source quotation', { exact: true }).click();
   await expect(report.locator('.atlas-claim')).toContainText('Unconfirmed');
   await expect(report.locator('.atlas-quotation-pair')).toContainText('Enquête en France');
@@ -209,7 +245,9 @@ for (const width of [390, 1466]) test(`The sealed daily preview exposes every se
   await page.setViewportSize({ width, height: 832 }); await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.install({ time: new Date(data.generated_at) });
   await page.goto(process.env.ATLAS_DAILY_PREVIEW!);
-  await expect(page.locator('.atlas-daily-attention-scope')).toHaveAttribute('aria-label', 'Weekly reviewed reports');
+  const attentionPeriod = page.getByRole('group', { name: 'Reporting attention period', exact: true });
+  await expect(attentionPeriod.getByRole('button')).toHaveText(['Weekly']);
+  await expect(page.locator('.atlas-disease-ring svg[role="group"]')).toHaveAttribute('aria-label', /report entries published .+ to .+; not disease incidence$/);
   if (width === 1466) await page.getByRole('button', { name: 'Click to enter full screen' }).click();
   await expect(page.locator('.atlas-daily-watch')).toHaveCount(data.watch_items.length);
   if (width === 390) {
@@ -278,7 +316,7 @@ for (const width of [390, 1466]) test(`Daily watch board supports empty and mult
   await page.setViewportSize({ width, height: 832 }); await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.install({ time: new Date('2026-10-07T12:00:00Z') });
   await page.goto('/atlas/');
-  await expect(page.locator('.atlas-daily-attention-scope')).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Reporting attention period', exact: true }).getByRole('button')).toHaveText(['Weekly']);
   await expect(page.locator('.atlas-daily-watch')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Load more', exact: true })).toHaveCount(0);
   await expect(page.locator('.atlas-watch-list')).toContainText('No current watch selections');

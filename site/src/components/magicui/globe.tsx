@@ -50,7 +50,7 @@ export function Globe({
   rotating = true,
   fullscreen = false,
   onDragStart,
-  nodes, links, layoutLinks, selected, focus, onSelect, onLink, onHover, annotation, onAnnotationMove,
+  nodes, links, layoutLinks, selected, focus, locate, onSelect, onLink, onHover, annotation, onAnnotationMove,
 }: {
   playing: boolean;
   visible: boolean;
@@ -63,6 +63,7 @@ export function Globe({
   layoutLinks?: GlobeLink[];
   selected?: string;
   focus?: [number, number];
+  locate?: { ids: string[]; startedAt: number };
   onSelect?: (id: string) => void;
   onLink?: (id: string) => void;
   onHover?: (item: GlobeHover) => void;
@@ -214,6 +215,7 @@ export function Globe({
     if (!visible || !geographic || !el || !routesEl || !layer) return;
     let width = 0, height = 0;
     let resolution = matchMedia(`(resolution: ${devicePixelRatio}dppx)`);
+    const forcedColors = matchMedia('(forced-colors: active)');
     function resize() {
       markerRenderer.current?.resize(width, height);
       routeRenderer.current?.resize(width, height);
@@ -261,7 +263,7 @@ export function Globe({
       paint.current();
       layer!.dataset.routeRenderer = "svg";
     }
-    function fontsLoaded() {
+    function refreshStyles() {
       routeRenderer.current?.styles();
       paint.current();
     }
@@ -269,7 +271,8 @@ export function Globe({
     el.addEventListener("webglcontextrestored", start);
     routesEl.addEventListener("webglcontextlost", lostRoutes);
     routesEl.addEventListener("webglcontextrestored", startRoutes);
-    document.fonts.addEventListener("loadingdone", fontsLoaded);
+    document.fonts.addEventListener("loadingdone", refreshStyles);
+    forcedColors.addEventListener("change", refreshStyles);
     resolution.addEventListener("change", resolutionChanged);
     const observer = new ResizeObserver(([entry]) => {
       width = entry.contentRect.width; height = entry.contentRect.height;
@@ -284,7 +287,8 @@ export function Globe({
       el.removeEventListener("webglcontextrestored", start);
       routesEl.removeEventListener("webglcontextlost", lostRoutes);
       routesEl.removeEventListener("webglcontextrestored", startRoutes);
-      document.fonts.removeEventListener("loadingdone", fontsLoaded);
+      document.fonts.removeEventListener("loadingdone", refreshStyles);
+      forcedColors.removeEventListener("change", refreshStyles);
       resolution.removeEventListener("change", resolutionChanged);
       markerRenderer.current?.destroy();
       markerRenderer.current = null;
@@ -472,6 +476,18 @@ export function Globe({
       paintArrows.current = () => {};
     };
   }, [visible, resolvedTheme, beamPaths, arrows, trails, routes, nodes, curves, nodePoints, routeGeometry, drawRoutes]);
+  useEffect(() => {
+    if (!locate || !visible || document.hidden) return;
+    const elapsed = performance.now() - locate.startedAt;
+    if (elapsed >= 6000) return;
+    const frames = playing ? [{ opacity: .25 }, { opacity: 1, offset: .4 }, { opacity: .25 }] : [{ opacity: 1 }, { opacity: 1 }];
+    const animations = [...(markerLayer.current?.querySelectorAll('.atlas-locate-beacon') ?? [])].map(element => {
+      const animation = element.animate(frames, { id: "atlas-locate-pulse", duration: 1200, iterations: 5, easing: "ease-in-out" });
+      animation.currentTime = elapsed;
+      return animation;
+    });
+    return () => animations.forEach(animation => animation.cancel());
+  }, [locate, visible, playing]);
   useLayoutEffect(() => { paint.current(); }, [selected, playing]);
   useEffect(() => {
     if (!visible) return;
@@ -583,7 +599,7 @@ export function Globe({
         </svg>
         <canvas ref={markerCanvas} className="atlas-marker-canvas" aria-hidden="true" />
         <svg viewBox="0 0 1000 1000">
-        <defs><radialGradient id={haloId}><stop offset="0" stopColor="var(--atlas-marker-halo)" stopOpacity=".45" /><stop offset="1" stopColor="var(--atlas-marker-halo)" stopOpacity="0" /></radialGradient></defs>
+        <defs><radialGradient id={haloId}><stop offset="0" stopColor="var(--atlas-marker-halo)" stopOpacity=".45" /><stop offset="1" stopColor="var(--atlas-marker-halo)" stopOpacity="0" /></radialGradient><radialGradient id={`${haloId}-locate`}><stop offset="0" stopColor="var(--atlas-locate)" stopOpacity=".8" /><stop offset="1" stopColor="var(--atlas-locate)" stopOpacity="0" /></radialGradient></defs>
         {nodes.map((node, i) => ({ node, i })).sort((a, b) => Number(a.node.id === selected) - Number(b.node.id === selected)).map(({ node, i }) => <g key={node.id} ref={el => { pins.current[i] = el; }} className="atlas-globe-pin"
           data-selected={selected === node.id} role="button" tabIndex={0} aria-label={node.label} onPointerEnter={() => highlight({ kind: "node", id: node.id })} onPointerLeave={() => highlight(null)} onFocus={() => highlight({ kind: "node", id: node.id })} onBlur={() => highlight(null)} onClick={() => { highlight(null); onSelect?.(node.id); }}
           onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); highlight(null); onSelect?.(node.id); } }}>
@@ -598,6 +614,12 @@ export function Globe({
             <path className="atlas-rim-glow" d="M-3 -5L2 0L-3 5" />
             <path className="atlas-rim-chevron" d="M-3 -5L2 0L-3 5" />
           </g>
+          {locate?.ids.includes(node.id) && <g className="atlas-locate-beacon" aria-hidden="true">
+            <circle r="30" fill={`url(#${haloId}-locate)`} />
+            <circle r="13" fill="none" stroke="var(--atlas-locate)" strokeWidth="2.5" />
+            <circle r="5" fill="var(--atlas-locate)" />
+            <circle r="1.5" fill="var(--background)" />
+          </g>}
           <circle className="atlas-globe-hit" r="11" />
         </g>)}
         {routes.map((route, i) => <g key={`visual:${route.groupId ?? route.id}`} ref={el => { routeGroups.current[i] = el; }} className="atlas-route" data-kind={route.type} data-active={annotation?.kind === "link" && annotation.id === route.id} aria-hidden="true">

@@ -4,9 +4,9 @@ import { bundle } from './atlas-fixture';
 import { selectAtlasOption } from './atlas-select-actions';
 
 async function openView(page: Page, name: string) {
-  const reportView = ['Reports', 'Assessments', 'Source coverage'].includes(name);
-  await page.getByRole('tab', { name: reportView ? 'Reports' : name, exact: true }).click();
-  if (reportView) await page.getByRole('group', { name: 'Report content' }).getByRole('button', { name, exact: true }).click();
+  const analysisViews: Record<string, string> = { Signals: 'signals', Risks: 'risk', Relationships: 'relationships', 'Spatial links': 'spatial' };
+  await page.getByRole('tab', { name: analysisViews[name] ? 'Analysis' : name, exact: true }).click();
+  if (analysisViews[name]) await selectAtlasOption(page, 'Analysis view', analysisViews[name]);
 }
 
 async function selectCaseObservations(page: Page) {
@@ -76,15 +76,8 @@ test('ATLAS full-screen workspace preserves interactions and restores the page',
   expect((await tabs.boundingBox())!.y).toBe(tabsTop);
   expect((await page.locator('.atlas-report[open] > summary').first().boundingBox())!.y).toBeGreaterThanOrEqual((await scroller.boundingBox())!.y - 1);
   await page.getByRole('tab', { name: 'Trends', exact: true }).click();
-  for (const name of ['Reports', 'Geographic links', 'Assessments', 'Source coverage']) {
+  for (const name of ['Reports', 'Spatial links', 'Relationships']) {
     await openView(page, name);
-    if (name === 'Geographic links' || name === 'Source coverage') {
-      const first = page.locator(name === 'Geographic links' ? '.atlas-geographic-journeys' : '.atlas-coverage-filters');
-      const gap = (await first.boundingBox())!.y - (await scroller.boundingBox())!.y;
-      expect(gap).toBeGreaterThanOrEqual(0);
-      expect(gap).toBeLessThanOrEqual(20);
-      await page.screenshot({ path: `/tmp/atlas-top-spacing-${name.replaceAll(' ', '-')}.png` });
-    }
     const pager = page.locator('.atlas-pagination');
     await expect(pager).toHaveCount(1);
     const position = (await pager.boundingBox())!.y;
@@ -100,16 +93,23 @@ test('ATLAS full-screen workspace preserves interactions and restores the page',
     await pager.getByRole('option').first().click();
     await expect(pager.locator('summary')).toHaveText(label!);
   }
+  await page.getByRole('button', { name: 'Source coverage', exact: true }).click();
+  const coverage = page.getByRole('dialog', { name: 'Source coverage', exact: true });
+  const coveragePager = coverage.locator('.atlas-pagination');
+  await expect(coveragePager).toHaveCount(1);
+  const coverageLabel = await coveragePager.locator('summary').innerText();
+  await coveragePager.getByRole('button', { name: 'Next topic page', exact: true }).click();
+  await expect(coveragePager.locator('summary')).not.toHaveText(coverageLabel);
   await page.mouse.move(0, 0);
-  await scroller.evaluate(el => { el.scrollTop = 0; });
   await page.locator('.atlas-coverage-edge').first().focus();
   await expect(page.locator('.atlas-coverage-edge:focus')).toHaveCount(1);
   await expect(page.locator('.atlas-coverage-beam, .atlas-network-caption')).toHaveCount(0);
   await page.screenshot({ path: '/tmp/atlas-source-coverage-pagination.png' });
+  await coverage.getByRole('button', { name: 'Close Source coverage', exact: true }).click();
   await page.getByRole('tab', { name: 'Reports', exact: true }).click();
   const footer = page.locator('.atlas-workspace-footer');
   const footerPosition = (await footer.boundingBox())!.y;
-  for (const name of ['Trends', 'Reports', 'Geographic links', 'Assessments', 'Source coverage']) {
+  for (const name of ['Trends', 'Reports', 'Journeys', 'Risks', 'Relationships']) {
     await openView(page, name);
     await expect(footer.getByRole('button', { name: 'About ATLAS' })).toBeVisible();
     await scroller.evaluate(el => { el.scrollTop = el.scrollHeight; });
@@ -120,10 +120,10 @@ test('ATLAS full-screen workspace preserves interactions and restores the page',
   await page.getByRole('tab', { name: 'Trends', exact: true }).click();
   await expect(page.locator('.atlas-pagination')).toHaveCount(0);
   await page.setViewportSize({ width: 1920, height: 1000 });
-  for (const [tab, visual, details] of [["Geographic links", ".atlas-chain-map", ".atlas-chain-details"], ["Analysis", ".atlas-observation-visual", ".atlas-observation-details"]]) {
+  for (const [tab, visual, details] of [["Journeys", ".atlas-chain-map", ".atlas-chain-details"], ["Analysis", ".atlas-observation-visual", ".atlas-observation-details"]]) {
     await page.getByRole('tab', { name: tab, exact: true }).click();
     if (tab === 'Analysis') {
-      await page.getByRole('button', { name: 'Models', exact: true }).click();
+      await selectAtlasOption(page, 'Analysis view', 'signals');
       await selectCaseObservations(page);
     } else {
       await page.locator('.atlas-chain-entry > summary').last().click();
@@ -137,7 +137,7 @@ test('ATLAS full-screen workspace preserves interactions and restores the page',
     expect(await page.locator(details).evaluate(el => el.scrollTop)).toBeGreaterThan(0);
     expect(await scroller.evaluate(el => el.scrollTop)).toBe(0);
   }
-  await page.getByRole('tab', { name: 'Geographic links', exact: true }).click();
+  await page.getByRole('tab', { name: 'Journeys', exact: true }).click();
   await page.locator('.atlas-chain-map .atlas-chain-pin').first().locator('circle').last().click();
   const chainDetails = page.locator('.atlas-chain-details');
   const selectedChain = page.getByRole('region', { name: 'Selected chain evidence' });
@@ -147,7 +147,7 @@ test('ATLAS full-screen workspace preserves interactions and restores the page',
   await selectedChain.getByText('Source evidence', { exact: true }).click();
   expect(await scroller.evaluate(el => el.scrollTop)).toBe(0);
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  await page.getByRole('button', { name: 'Models', exact: true }).click();
+  await selectAtlasOption(page, 'Analysis view', 'signals');
   await selectCaseObservations(page);
   await page.locator('.atlas-observation-connection').first().press('Enter');
   await expect.poll(() => page.locator('.atlas-observation-details').evaluate(el => el.scrollTop)).toBe(0);
@@ -159,7 +159,7 @@ test('ATLAS full-screen workspace preserves interactions and restores the page',
   await expect(datasetDialog.locator('.atlas-about-credits')).toContainText('GPT-6 Astra');
   await expect(datasetDialog.locator('.atlas-about-credits')).toContainText('MagicUI');
   await expect(datasetDialog.locator('.atlas-about-credits')).toContainText('Cloudflare R2');
-  await expect(datasetDialog.getByRole('link', { name: 'Download dataset', exact: true })).toHaveAttribute('href', /atlas-site\.json$/);
+  await expect(datasetDialog.getByRole('link', { name: /Download (dataset|measurements)/ })).toHaveCount(0);
   expect(await scroller.evaluate(el => el.scrollHeight <= el.clientHeight)).toBe(true);
   await page.screenshot({ path: '/tmp/atlas-dataset-dialog.png' });
   await page.keyboard.press('Escape');
@@ -249,11 +249,11 @@ test('ATLAS workspace animates at the wide breakpoint and exits with its button'
   expect(globeBox!.width).toBeGreaterThan(250);
   await page.screenshot({ path: '/tmp/atlas-workspace-short.png' });
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  await page.getByRole('button', { name: 'Models', exact: true }).click();
+  await selectAtlasOption(page, 'Analysis view', 'signals');
   await selectCaseObservations(page);
   await expect(page.locator('.atlas-chain-section')).toBeHidden();
-  await expect(page.locator('.atlas-trend-observations')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Models', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.atlas-analysis-observations')).toBeVisible();
+  await expect(page.locator('.atlas-analysis')).toHaveAttribute('data-view', 'signals');
   await page.locator('.atlas-observation-connection').first().press('Enter');
   await expect(page.getByLabel('Selected observation evidence')).toBeVisible();
   expect(await trendsBody.evaluate(el => el.scrollHeight <= el.clientHeight)).toBe(true);
@@ -261,12 +261,12 @@ test('ATLAS workspace animates at the wide breakpoint and exits with its button'
   const axes = await page.locator('.atlas-observation-axis').evaluateAll(elements => elements.map(el => el.getBoundingClientRect().y));
   expect(Math.max(...axes) - Math.min(...axes)).toBeGreaterThan(chartBox!.height * .65);
   await page.screenshot({ path: '/tmp/atlas-workspace-short-observations.png' });
-  await page.getByRole('tab', { name: 'Geographic links', exact: true }).click();
+  await page.getByRole('tab', { name: 'Journeys', exact: true }).click();
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   await expect(page.getByLabel('Selected observation evidence')).toBeVisible();
   await page.setViewportSize({ width: 1180, height: 900 });
   await expect(page.locator('.atlas-chain-section')).toHaveCount(0);
-  await expect(page.locator('.atlas-trend-observations')).toBeVisible();
+  await expect(page.locator('.atlas-analysis-observations')).toBeVisible();
   await page.setViewportSize({ width: 1180, height: 720 });
   await page.getByRole('button', { name: '3 months', exact: true }).click();
   const overview = page.locator('.atlas-overview-column');
@@ -361,7 +361,7 @@ for (const theme of ['light', 'dark'] as const) test(`Workspace scope overlays p
   await expect(overlay).toHaveCount(0);
   await expect(page.locator('.atlas-page')).toHaveAttribute('data-fullscreen', 'true');
   await expect(trigger).toBeFocused();
-  await page.getByRole('tab', { name: 'Geographic links', exact: true }).click();
+  await page.getByRole('tab', { name: 'Journeys', exact: true }).click();
   await page.mouse.move(0, 0);
   const journeyHelp = page.getByRole('button', { name: 'Scope & review', exact: true });
   expect(await helpStyle(journeyHelp)).toEqual(sharedHelpStyle);
@@ -375,7 +375,7 @@ for (const theme of ['light', 'dark'] as const) test(`Workspace scope overlays p
   await page.keyboard.press('Escape');
   await expect(journeyHelp).toBeFocused();
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  await page.getByRole('button', { name: 'Models', exact: true }).click();
+  await selectAtlasOption(page, 'Analysis view', 'signals');
   await selectCaseObservations(page);
   await expect(page.getByRole('button', { name: 'Series scope', exact: true })).toHaveCount(0);
   await expect(page.locator('.atlas-observation-details > .atlas-chart-note')).toHaveCount(0);
@@ -383,7 +383,7 @@ for (const theme of ['light', 'dark'] as const) test(`Workspace scope overlays p
   await expect(values).toBeVisible();
   const columns = await values.locator('.atlas-observation-row').evaluateAll(rows => rows.map(row => ['time', 'strong', '.atlas-observation-authority'].map(selector => row.querySelector(selector)!.getBoundingClientRect().right)));
   for (const row of columns.slice(1)) row.forEach((right, index) => expect(Math.abs(right - columns[0][index])).toBeLessThan(1));
-  await page.locator('.atlas-trend-observations').screenshot({ path: `/tmp/atlas-observation-list-${theme}.png` });
+  await page.locator('.atlas-analysis-observations').screenshot({ path: `/tmp/atlas-observation-list-${theme}.png` });
 
   const observationHelp = page.locator('.atlas-observation-item').filter({ hasText: '14 Jun 2026' }).locator('.atlas-scope-trigger');
   await observationHelp.scrollIntoViewIfNeeded();
@@ -418,9 +418,9 @@ test('Source coverage has compact fixed rows during hover and focus', async ({ p
   const entrance = page.getByRole('button', { name: 'Click to enter full screen' });
   await entrance.focus(); await entrance.press('Enter');
   await page.getByRole('tab', { name: 'Reports', exact: true }).click();
-  await page.getByRole('group', { name: 'Report content' }).getByRole('button', { name: 'Source coverage', exact: true }).click();
+  await page.getByRole('button', { name: 'Source coverage', exact: true }).click();
   const graph = page.locator('.atlas-source-network');
-  const positions = () => graph.locator('.atlas-coverage-node').evaluateAll(nodes => nodes.map(node => node.getAttribute('transform')));
+  const positions = () => graph.locator('.atlas-coverage-node').evaluateAll(nodes => nodes.map(node => getComputedStyle(node).transform));
   const original = await positions();
   for (const target of [graph.locator('.atlas-coverage-source').first(), graph.locator('.atlas-coverage-topic').first(), graph.locator('.atlas-coverage-edge').first()]) {
     await target.hover();
@@ -429,7 +429,7 @@ test('Source coverage has compact fixed rows during hover and focus', async ({ p
     expect(await positions()).toEqual(original);
   }
   await expect(graph.locator('[data-active]')).toHaveCount(0);
-  const rows = await graph.locator('.atlas-coverage-source').evaluateAll(nodes => nodes.map(node => (node as SVGGElement).transform.baseVal.consolidate()!.matrix.f));
+  const rows = await graph.locator('.atlas-coverage-source').evaluateAll(nodes => nodes.map(node => new DOMMatrix(getComputedStyle(node).transform).m42));
   expect(rows.slice(1).every((y, i) => y - rows[i] === 46)).toBe(true);
   await page.screenshot({ path: '/tmp/atlas-coverage-static.png' });
 });

@@ -1,5 +1,7 @@
 import { ArrowRight, Building2, CalendarDays, ChevronDown, Eye, FileText, MapPin, Siren, Timer, TriangleAlert, ExternalLink } from "lucide-react";
 import Image from "next/image";
+import { motion as m } from "motion/react";
+import type { Ref } from "react";
 import { useAtlasPanelState } from "./atlas-context";
 import { sourceLogos } from "@/lib/atlas-identities";
 import { CountryText, ReportCountryFlags } from "./atlas-location-badges";
@@ -16,9 +18,9 @@ export function DailyProcessing({ document }: { document: DailyDocument }) {
 export function DailyWatchCard({ item, onReports }: { item: DailyWatch; onReports: (item: DailyWatch) => void }) {
   const AttentionIcon = item.attention === "heightened" ? TriangleAlert : item.attention === "urgent" ? Siren : Eye;
   return <article className="atlas-watch-entry atlas-daily-watch" data-daily-watch={item.id} data-attention={item.attention}>
-    <div className="atlas-watch-kicker"><span><MapPin size={13} aria-hidden /><CountryText>{item.location_label}</CountryText></span>{item.development_date && <time dateTime={item.development_date}>{item.date_basis === "source_report_date" ? "Report" : "Event"} {formatDate(item.development_date)}</time>}</div>
+    <div className="atlas-watch-kicker"><span><MapPin size={13} aria-hidden /><CountryText>{item.location_label}</CountryText></span>{item.development_date && <time className="atlas-card-date" dateTime={item.development_date}><CalendarDays size={12} aria-hidden /><span>{item.date_basis === "source_report_date" ? "Report" : "Event"}</span><strong>{formatDate(item.development_date)}</strong></time>}</div>
     <h3>{item.label}</h3>
-    <div className="atlas-watch-diagnosis"><strong>{item.diagnostic_label}</strong><span title="Editorial attention"><AttentionIcon size={12} aria-hidden />{item.attention === "heightened" ? "Heightened attention" : item.attention === "urgent" ? "Urgent follow-up" : "Watch"}</span></div>
+    <div className="atlas-watch-diagnosis"><strong className="atlas-status">{item.diagnostic_label}</strong><span className="atlas-status" data-tone={item.attention === "watch" ? undefined : "warning"} title="Editorial attention"><AttentionIcon size={12} aria-hidden />{item.attention === "heightened" ? "Heightened attention" : item.attention === "urgent" ? "Urgent follow-up" : "Watch"}</span></div>
     <dl className="atlas-watch-facts">{item.key_facts.map((fact, index) => <div key={index}><dt>{fact.label}</dt><dd><CountryText>{fact.text}</CountryText></dd></div>)}</dl>
     <p className="atlas-watch-why"><CountryText>{item.reason_for_attention}</CountryText></p>
     <button className="atlas-briefing-link atlas-watch-reports" onClick={() => onReports(item)}><FileText size={14} aria-hidden />View reports<ArrowRight size={14} aria-hidden /></button>
@@ -38,14 +40,14 @@ export function DailyVersion({ document, selection }: { document: DailyDocument;
     {!!document.limitations.length && <AtlasDisclosure summary={<EvidenceSummary kind="scope" />}>{() => document.limitations.map(text => <p key={text}>{text}</p>)}</AtlasDisclosure>}
   </section></ReportCountryFlags>;
 }
-export function DailyReport({ documents, selection, highlighted }: { documents: DailyDocument[]; selection: DailySelection; highlighted: boolean }) {
+export function DailyReport({ ref, documents, selection, highlighted }: { ref?: Ref<HTMLDetailsElement>; documents: DailyDocument[]; selection: DailySelection; highlighted: boolean }) {
   const document = documents[0];
   const logo = sourceLogos[document.source_id];
   const [open, setOpen] = useAtlasPanelState(`daily.${document.id}.open`, false);
-  return <details open={open} className="atlas-report atlas-daily-report" id={`atlas-report-${document.id}`} data-evidence={highlighted} onToggle={event => { if (event.target === event.currentTarget) setOpen(event.currentTarget.open); }}>
+  return <m.details ref={ref} layout="position" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} open={open} className="atlas-report atlas-daily-report" id={`atlas-report-${document.id}`} data-evidence={highlighted} onToggle={event => { if (event.target === event.currentTarget) setOpen(event.currentTarget.open); }}>
     <summary><span className="atlas-timeline-node institution-logo atlas-source-logo">{logo ? <Image src={`/logos/atlas/${logo}`} alt={document.source_name} width={32} height={32} unoptimized /> : <Building2 size={20} aria-hidden />}</span>
-      <span className="atlas-report-date">{document.publication ? formatDate(document.publication, "Europe/Amsterdam") : "Undated"}<small>{document.source_name}</small></span>
+      <span className="atlas-report-date">{document.publication ? <time dateTime={document.publication}>{formatDate(document.publication, "Europe/Amsterdam")}</time> : "Undated"}<small>{document.source_name}</small></span>
       <span className="atlas-report-summary"><strong>{dailyTitle(document)}</strong><DailyProcessing document={documents.find(doc => doc.processing_status === "weekly_review_pending") ?? document} /></span><span className="atlas-expand" aria-hidden><ChevronDown size={17} /></span></summary>
     {open && <div className="atlas-report-body atlas-daily-body">{documents.map(doc => <DailyVersion key={doc.id} document={doc} selection={selection} />)}</div>}
-  </details>;
+  </m.details>;
 }

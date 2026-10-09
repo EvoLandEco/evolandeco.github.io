@@ -1,3 +1,4 @@
+import { createAtlasPublicReader } from "./atlas-public-reader";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
@@ -11,7 +12,7 @@ import { z } from "zod";
 import hosting from "../src/content-data/atlas-hosting.json";
 import { browserSelectorHashes, releaseSchema, verifiedBytes, type AtlasRelease } from "../src/lib/atlas-release";
 import { validateBrowserManifest, type AtlasBrowserManifest } from "../src/lib/atlas-browser";
-import { verifyPublishedSourceSupplement } from "./publish-atlas-supplement";
+import { requireDatedReportRelease, verifyPublishedSourceSupplement } from "./publish-atlas-supplement";
 
 const site = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const hash = (bytes: Uint8Array | string) => createHash("sha256").update(bytes).digest("hex");
@@ -102,6 +103,7 @@ export async function prepareBrowserPublication(authorizationPath: string) {
   const authorizationBytes = await readFile(authorizationPath);
   const authorization = browserPublicationSchema.parse(JSON.parse(authorizationBytes.toString()));
   const base = await checkedJson(authorization.release) as Record<string, unknown>;
+  requireDatedReportRelease(releaseSchema.parse(base));
   const checkedRelease = releaseSchema.parse(base);
   assert.equal(checkedRelease.contract_version, hosting.contract_version);
   assert.equal(checkedRelease.selector_sha256, hosting.selector_sha256);
@@ -149,12 +151,9 @@ export async function publishBrowserTransport(authorizationPath: string, mode: "
       return;
     }
     assert.equal(plan.authorization.approval_status, "approved", "Public upload requires approval for this exact browser manifest");
-    let lastRead = 0;
+    const pacedRead = createAtlasPublicReader(readIntervalMs);
     const read = async (key: string) => {
-      const wait = readIntervalMs - (Date.now() - lastRead);
-      if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
-      lastRead = Date.now();
-      const response = await fetch(`${hosting.origin}/${key}`, { cache: "no-cache" });
+      const response = await pacedRead(key);
       assert(response.status !== 429, `Public read rate limit reached; Retry-After=${response.headers.get("Retry-After") ?? "unspecified"}. ${activated ? "Activation was written; verify current.json." : "The published pointer has not been changed."} Use --read-interval-ms to space verification requests.`);
       return response;
     };

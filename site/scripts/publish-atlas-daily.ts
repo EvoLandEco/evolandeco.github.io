@@ -16,7 +16,7 @@ const site = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const hash = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 const asset = z.strictObject({ sha256: digest, bytes: z.number().int().positive() });
-const manifestSchema = z.strictObject({ daily_version: z.literal('0.2.1'), daily_id: digest, base_source_export_id: digest,
+const manifestSchema = z.strictObject({ daily_version: z.enum(['0.2.1', '0.2.2']), daily_id: digest, base_source_export_id: digest,
   files: z.strictObject({ 'daily.json': asset, 'daily.schema.json': asset, 'daily-view.mjs': asset, 'validation.json': asset }) });
 export async function prepareDailyRelease(directory: string, release: AtlasRelease, browserManifestPath: string) {
   assert(release.browser, 'Weekly browser transport is required');
@@ -36,14 +36,15 @@ export async function prepareDailyRelease(directory: string, release: AtlasRelea
     assert.equal(bytes.length, expected.bytes, name); assert.equal(hash(bytes), expected.sha256, name);
     files.set(name, bytes);
   }
-  assert.equal(manifest.files['daily.schema.json'].sha256, dailyPins.schema, 'Daily schema pin');
-  assert.equal(manifest.files['daily-view.mjs'].sha256, dailyPins.selector, 'Daily selector pin');
+  const pins = dailyPins[manifest.daily_version];
+  assert.equal(manifest.files['daily.schema.json'].sha256, pins.schema, 'Daily schema pin');
+  assert.equal(manifest.files['daily-view.mjs'].sha256, pins.selector, 'Daily selector pin');
   const data = await validateDaily(JSON.parse(files.get('daily.json')!.toString()), release, browser.source.manifest.sha256);
   validateDailyReferences(data, weekly);
-  assert.equal(manifest.daily_id, data.daily_id); assert.equal(manifest.base_source_export_id, release.export_id);
+  assert.equal(manifest.daily_version, data.daily_version); assert.equal(manifest.daily_id, data.daily_id); assert.equal(manifest.base_source_export_id, release.export_id);
   const receipt = JSON.parse(files.get('validation.json')!.toString());
   assert.deepEqual(receipt, { status: 'valid', daily_id: data.daily_id, base_source_export_id: release.export_id, documents: data.documents.length, findings: data.findings.length, watch_items: data.watch_items.length, weekly_review_pending: data.documents.filter(d => d.processing_status === 'weekly_review_pending').length }, 'Producer validation receipt');
-  const pointer = dailyPointerSchema.parse({ version: 1, daily_version: data.daily_version, daily_id: data.daily_id, base_source_export_id: release.export_id, base_manifest_sha256: data.base_manifest_sha256, published_at: data.generated_at, asset: manifest.files['daily.json'], schema_sha256: dailyPins.schema, selector_sha256: dailyPins.selector });
+  const pointer = dailyPointerSchema.parse({ version: 1, daily_version: data.daily_version, daily_id: data.daily_id, base_source_export_id: release.export_id, base_manifest_sha256: data.base_manifest_sha256, published_at: data.generated_at, asset: manifest.files['daily.json'], schema_sha256: pins.schema, selector_sha256: pins.selector });
   files.set('manifest.json', manifestBytes);
   return { data, pointer, files, prefix: `daily/${release.export_id}/${data.daily_id}` };
 }

@@ -1,4 +1,4 @@
 export const atlasUI = {
-  version: "0.5.3",
+  version: "0.6.1",
   status: "Experimental",
 } as const;

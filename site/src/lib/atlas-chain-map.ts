@@ -43,6 +43,62 @@ export function chainLandDots(frame: NonNullable<ReturnType<typeof fitChainMap>>
 }
 
 type MapPoint = { x: number; y: number };
+type MapBox = MapPoint & { width: number; height: number };
+
+export function chainTimeConnector(from: MapPoint, to: MapPoint) {
+  const end = { x: to.x - 16, y: to.y };
+  const points = [{ x: from.x, y: from.y + 14 }];
+  if (end.x - from.x >= 8) points.push({ x: from.x, y: to.y });
+  else {
+    const middle = (from.y + to.y) / 2, lane = end.x - 10;
+    points.push({ x: from.x, y: middle }, { x: lane, y: middle }, { x: lane, y: to.y });
+  }
+  points.push(end);
+  let path = `M${points[0].x} ${points[0].y}`;
+  for (let index = 1; index < points.length - 1; index++) {
+    const a = points[index - 1], b = points[index], c = points[index + 1];
+    const before = Math.hypot(b.x - a.x, b.y - a.y), after = Math.hypot(c.x - b.x, c.y - b.y);
+    const radius = Math.min(6, before / 2, after / 2);
+    path += `L${b.x - (b.x - a.x) / before * radius} ${b.y - (b.y - a.y) / before * radius}Q${b.x} ${b.y} ${b.x + (c.x - b.x) / after * radius} ${b.y + (c.y - b.y) / after * radius}`;
+  }
+  return `${path}L${end.x} ${end.y}`;
+}
+
+export function chainCurveBounds(curve: { start: MapPoint; control: MapPoint; end: MapPoint }): MapBox {
+  const extent = (axis: "x" | "y") => {
+    const a = curve.start[axis], b = curve.control[axis], c = curve.end[axis];
+    const t = (a - b) / (a - 2 * b + c);
+    const values = [a, c];
+    if (t > 0 && t < 1) values.push((1 - t) ** 2 * a + 2 * t * (1 - t) * b + t ** 2 * c);
+    return [Math.min(...values), Math.max(...values)];
+  };
+  const [left, right] = extent("x"), [top, bottom] = extent("y");
+  return { x: left - 10, y: top - 10, width: right - left + 20, height: bottom - top + 20 };
+}
+
+export function placeChainInset(width: number, height: number, box: { width: number; height: number }, obstacles: MapBox[], connections: { located: MapPoint; offset: MapPoint; outgoing: boolean }[] = []): MapBox {
+  const overlapArea = (a: MapBox, b: MapBox) =>
+    Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) *
+    Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
+  const candidates = [
+    { x: width - box.width - 10, y: 10 }, { x: 10, y: 10 },
+    { x: width - box.width - 10, y: height - box.height - 10 }, { x: 10, y: height - box.height - 10 },
+  ].map(point => {
+    const rect = { ...point, ...box };
+    const overlap = obstacles.reduce((area, obstacle) => area + overlapArea(rect, obstacle), 0) + connections.reduce((area, connection) => {
+      const endpoint = { x: rect.x + connection.offset.x, y: rect.y + connection.offset.y };
+      const curve = connection.outgoing ? chainEdgeGeometry(endpoint, connection.located) : chainEdgeGeometry(connection.located, endpoint);
+      return area + (curve ? overlapArea({ ...rect, height: 38 }, chainCurveBounds(curve)) : 0);
+    }, 0);
+    const clearance = Math.min(...obstacles.map(obstacle => Math.hypot(
+      Math.max(0, rect.x - obstacle.x - obstacle.width, obstacle.x - rect.x - rect.width),
+      Math.max(0, rect.y - obstacle.y - obstacle.height, obstacle.y - rect.y - rect.height))));
+    return { rect, overlap, clearance };
+  });
+  // Exhaust the corners, minimizing occupied area before maximizing clearance.
+  candidates.sort((a, b) => a.overlap - b.overlap || b.clearance - a.clearance);
+  return candidates[0].rect;
+}
 
 export function chainEdgeGeometry(a: MapPoint, b: MapPoint) {
   const length = Math.hypot(b.x - a.x, b.y - a.y);

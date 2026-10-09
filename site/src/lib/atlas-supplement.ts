@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import schema from './atlas-vendor/supplement/0.1/source-supplement.schema.json';
-import { atlasOrigin, verifiedBytes, type AtlasRelease } from './atlas-release';
+import { atlasOrigin, parseAtlasJson, verifiedBytes, type AtlasRelease } from './atlas-release';
 import type { Measure } from './atlas-metrics';
 
 export const supplementSchemaHash = '2314d67db4e9cf1c7c0abab880e5644c21320f2a03fa43bd01a41e6c3015ac01';
@@ -26,8 +26,10 @@ function index<T extends { id: string }>(rows: T[]) {
   requireValid(result.size === rows.length, 'duplicate identity');
   return result;
 }
-export async function validateSourceSupplement(value: unknown, exportId: string): Promise<SourceSupplement> {
+export async function validateSourceSupplement(value: unknown, exportId: string, signal?: AbortSignal): Promise<SourceSupplement> {
+  signal?.throwIfAborted();
   const data = supplementSchema.parse(value) as SourceSupplement;
+  signal?.throwIfAborted();
   requireValid(data.source_export_id === exportId, 'release binding');
   z.iso.datetime({ offset: true }).parse(data.generated_at);
   const documents = index(data.documents), records = index(data.records), evidence = index(data.evidence);
@@ -50,11 +52,13 @@ export async function validateSourceSupplement(value: unknown, exportId: string)
     }
   }
   for (const span of evidence.values()) {
+    signal?.throwIfAborted();
     const record = records.get(span.record_id), claim = claims.get(slot(span.record_id, span.claim_index));
     requireValid(record?.document_id === span.document_id && claim?.evidence_ids.includes(span.id), 'evidence document or claim');
     const key = slot(span.record_id, span.claim_index, span.quote_index);
     requireValid(Number.isInteger(span.quote_index) && span.quote_index >= 0 && !quotes.has(key), 'quotation index');
     requireValid(span.quote.trim() && span.end - span.start === [...span.quote].length && await hash(span.quote) === span.quote_sha256 && span.source_text_sha256 === documents.get(span.document_id)!.text_sha256, 'quotation hash or offsets');
+    signal?.throwIfAborted();
     quotes.set(key, span);
   }
   for (const record of records.values()) for (const claim of record.claims) for (const id of claim.evidence_ids) {
@@ -85,9 +89,10 @@ export function supplementRoot(release: AtlasRelease) {
   return `${atlasOrigin}/releases/${release.export_id}/supplements/${release.source_supplement!.sha256}`;
 }
 export async function fetchSourceSupplement(release: AtlasRelease, signal?: AbortSignal) {
+  signal?.throwIfAborted();
   const descriptor = release.source_supplement;
-  requireValid(descriptor && descriptor.source_export_id === release.export_id && descriptor.schema_sha256 === supplementSchemaHash, 'descriptor');
+  requireValid(descriptor?.path === 'source-supplement.json' && descriptor.source_export_id === release.export_id && descriptor.schema_sha256 === supplementSchemaHash, 'descriptor');
   const bytes = await verifiedBytes(await fetch(`${supplementRoot(release)}/${descriptor.path}`, { signal }), descriptor);
   signal?.throwIfAborted();
-  return validateSourceSupplement(JSON.parse(new TextDecoder().decode(bytes)), release.export_id);
+  return validateSourceSupplement(await parseAtlasJson(bytes, signal), release.export_id, signal);
 }

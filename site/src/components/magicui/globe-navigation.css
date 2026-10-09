@@ -18,18 +18,22 @@
 .globe-drag-hint {
   position: absolute; inset: 0; z-index: 5; pointer-events: none;
   container-type: inline-size; color: var(--primary);
-  animation: globe-hint-lifetime 4.5s linear both;
+  animation: globe-hint-lifetime 8s linear both;
 }
 .globe-hint-capsule {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; align-items: center; gap: 10px;
   padding: 11px 18px;
   border: 1px solid color-mix(in srgb, var(--primary) 26%, transparent); border-radius: 999px;
   background: linear-gradient(125deg, color-mix(in srgb, var(--background) 92%, transparent), color-mix(in srgb, var(--atlas-green) 16%, var(--background)));
   box-shadow: 0 4px 20px color-mix(in srgb, var(--primary) 18%, transparent);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   font-size: clamp(14px, 3.2cqw, 17px); font-weight: 600; line-height: 1.25; white-space: nowrap;
-  animation: globe-hint-pulse 1.6s .3s 2 both;
+  animation: globe-hint-pulse 1.6s .3s 4 both;
 }
+.globe-hint-arrow { flex-shrink: 0; --hint-shift: 4px; animation: globe-hint-drag 1.6s .3s 4 both; }
+.globe-hint-arrow:first-child { --hint-shift: -4px; }
+.globe-hint-arrow:last-child { color: var(--atlas-green); }
 .globe-drag-hint[data-active="false"], .globe-drag-hint[data-active="false"] * { animation-play-state: paused; }
 @keyframes globe-hint-lifetime {
   from { opacity: 0; }
@@ -40,9 +44,13 @@
   from, to { opacity: .55; }
   45%, 60% { opacity: 1; }
 }
+@keyframes globe-hint-drag {
+  from, to { opacity: .55; transform: translateX(0); }
+  45%, 60% { opacity: 1; transform: translateX(var(--hint-shift)); }
+}
 @media (prefers-reduced-motion: reduce) {
   .globe-drag-hint { animation-timing-function: step-end; }
-  .globe-hint-capsule { animation: none; }
+  .globe-hint-capsule, .globe-hint-arrow { animation: none; }
   @keyframes globe-hint-lifetime {
     from { opacity: 1; }
     to { opacity: 0; }

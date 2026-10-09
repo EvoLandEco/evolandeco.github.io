@@ -54,3 +54,23 @@ test('Parallel routes stay within the outer gutter', () => {
     }
   }
 });
+
+test('Adjacent lanes keep two bends across viewport widths and edge directions', () => {
+  const domains = ['human', 'environment', 'food'];
+  for (const lane of [0, 1]) for (const reverse of [false, true]) {
+    const nodes = [
+      { id: 'a', domain: domains[lane] },
+      { id: 'b', domain: domains[lane + 1] },
+      { id: 'c', domain: domains[lane + 1] },
+    ];
+    const edges = [
+      { id: 'ab', from_node_id: 'a', to_node_id: 'b' },
+      { id: 'ac', from_node_id: reverse ? 'c' : 'a', to_node_id: reverse ? 'a' : 'c' },
+    ];
+    for (let width = 240; width <= 900; width += 0.25) {
+      const layout = healthLayout(nodes, edges, domains, width);
+      const path = layout.paths.get('ac')!;
+      assert.equal((path.match(/Q/g) ?? []).length, 2, `lane ${lane}, reverse ${reverse}, width ${width}: ${path}`);
+    }
+  }
+});

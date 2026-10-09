@@ -89,7 +89,7 @@ for (const width of [1440, 390]) test(`Reporting place and disease filters at ${
   await page.getByRole("searchbox", { name: "Search reporting disease" }).fill("Lassa");
   await page.getByRole("checkbox", { name: "Lassa fever", exact: true }).check();
   await page.keyboard.press("Escape");
-  for (const name of ["One Health", "Analysis", "Reports", "Geographic links"]) await tabs.getByRole("tab", { name, exact: true }).click();
+  for (const name of ["One Health", "Analysis", "Reports", "Journeys"]) await tabs.getByRole("tab", { name, exact: true }).click();
   expect(errors).toEqual([]);
 });
 

@@ -1,0 +1,82 @@
+import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import { readFileSync } from 'node:fs';
+import { routeBrowserFixture } from './atlas-browser-fixture.mjs';
+import { bundle } from './atlas-fixture';
+import type { AtlasMapSnapshot } from '../src/lib/atlas-contract';
+
+for (const [width, workspace] of [[390, false], [768, false], [1280, true]] as const) {
+  test(`Reporting activity scrolls from the newest months at ${width}px`, async ({ page }, testInfo) => {
+    const history = structuredClone(bundle);
+    const document = history.documents.find(item => item.id === history.records[0].document_id)!;
+    document.publication = '2024-01-01T12:00:00Z';
+    for (const row of history.records) if (row.document_id === document.id) row.publication = document.publication;
+    const map: AtlasMapSnapshot = JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8'));
+    for (const row of map.records) if (row.document_id === document.id) row.publication = document.publication;
+    await routeBrowserFixture(page, history, map);
+    await page.setViewportSize({ width, height: 850 });
+    await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: width === 390 ? 'dark' : 'light' });
+    await page.goto('/atlas/');
+    await expect(page.locator('.atlas-page')).toHaveAttribute('data-ready', 'true');
+    if (workspace) await page.getByRole('button', { name: 'Click to enter full screen' }).click();
+    const chart = page.getByRole('group', { name: 'Monthly reporting activity', exact: true });
+    const earlier = page.getByRole('button', { name: 'Scroll to earlier months', exact: true });
+    const later = page.getByRole('button', { name: 'Scroll to later months', exact: true });
+    const remaining = () => chart.evaluate(element => element.scrollWidth - element.clientWidth - element.scrollLeft);
+    await expect.poll(remaining).toBeLessThan(1);
+    await expect(chart).toHaveCSS('scrollbar-width', 'none');
+    await expect(chart).toHaveCSS('scrollbar-gutter', 'auto');
+    expect(await chart.evaluate(element => element.getBoundingClientRect().height - element.clientHeight)).toBeLessThan(1);
+    await expect(later).toBeHidden();
+    expect(await chart.evaluate(element => element.scrollWidth > element.clientWidth)).toBe(true);
+    await expect(earlier).toBeVisible();
+    await earlier.press('Enter');
+    await expect.poll(remaining).toBeGreaterThan(1);
+    await expect(later).toBeVisible();
+    await chart.evaluate(element => { element.scrollLeft = 0; });
+    await expect(earlier).toBeHidden();
+    await expect(later).toBeVisible();
+    await later.press('Enter');
+    await expect.poll(() => chart.evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
+    await chart.evaluate(element => { element.scrollLeft = element.scrollWidth; });
+    await expect(later).toBeHidden();
+    await earlier.press('Space');
+    await expect.poll(remaining).toBeGreaterThan(1);
+    await expect(later).toBeVisible();
+    const scrolled = await chart.evaluate(element => element.scrollLeft);
+    await page.getByRole('group', { name: 'Reporting attention period' }).getByRole('button').click();
+    expect(await chart.evaluate(element => element.scrollLeft)).toBe(scrolled);
+    await page.getByRole('button', { name: '3 months', exact: true }).click();
+    await expect(earlier).toBeHidden();
+    await expect(later).toBeHidden();
+    await page.getByRole('button', { name: 'All dates', exact: true }).click();
+    await expect.poll(remaining).toBeLessThan(1);
+    await expect(later).toBeHidden();
+    await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+    await page.getByRole('tab', { name: 'Trends', exact: true }).click();
+    await expect.poll(remaining).toBeLessThan(1);
+    await expect(later).toBeHidden();
+    await page.setViewportSize({ width: width - 20, height: 850 });
+    await expect.poll(remaining).toBeLessThan(1);
+    expect((await new AxeBuilder({ page }).include('.atlas-trend-activity').analyze()).violations).toEqual([]);
+    await page.locator('.atlas-trend-overview').screenshot({ path: testInfo.outputPath('activity.png') });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    for (const [zoom, chartWidth] of [[.8, 301], [.9, 301.75], [1.25, 302]]) {
+      await chart.evaluate((element, { zoom, chartWidth }) => {
+        element.parentElement!.style.zoom = String(zoom);
+        element.parentElement!.style.width = `${chartWidth}px`;
+        element.scrollLeft = 0;
+      }, { zoom, chartWidth });
+      await expect(earlier).toBeHidden();
+      await expect(later).toBeVisible();
+      await chart.evaluate(element => element.scrollTo({ left: element.scrollWidth, behavior: 'smooth' }));
+      await expect.poll(remaining).toBeLessThanOrEqual(1);
+      await expect(later).toBeHidden();
+      const end = await chart.evaluate(element => element.scrollLeft);
+      await chart.evaluate(element => { element.scrollLeft += 10000; });
+      expect(await chart.evaluate(element => element.scrollLeft)).toBe(end);
+      await earlier.press('Enter');
+      await expect(later).toBeVisible();
+    }
+  });
+}

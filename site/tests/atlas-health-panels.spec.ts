@@ -4,7 +4,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { healthPanelsFixture } from './atlas-health-panels-fixture';
 import { routeBrowserFixture } from './atlas-browser-fixture.mjs';
 
-for(const viewport of [{width:390,height:950},{width:1280,height:720},{width:1280,height:950}])test(`One Health analytical panels ${viewport.width}×${viewport.height}`,async({page})=>{
+for(const viewport of [{width:390,height:950},{width:1280,height:720},{width:1280,height:950}])test(`One Health analytical panels ${viewport.width}×${viewport.height}`,async({page},testInfo)=>{
  const bundle=healthPanelsFixture();
  await routeBrowserFixture(page,bundle,JSON.parse(readFileSync('.cache/atlas-fixture/map.json','utf8')));
  await page.setViewportSize(viewport);await page.emulateMedia({reducedMotion:'reduce',colorScheme:viewport.width===390?'dark':'light'});
@@ -15,6 +15,14 @@ for(const viewport of [{width:390,height:950},{width:1280,height:720},{width:128
  const view=page.getByRole('region',{name:'One Health evidence'});
  const choose=async(name:string)=>{await view.locator('summary[aria-label="One Health view"]').click();await view.getByRole('option',{name,exact:true}).click();};
  await choose('Timeline');
+ const layers=view.getByRole('group',{name:'Timeline layers'});
+ await expect(layers.getByRole('switch',{checked:true})).toHaveCount(3);
+ await page.evaluate(()=>document.fonts.ready);
+ const controls=await layers.getByRole('switch').evaluateAll(items=>items.map(item=>{const r=item.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top};}));
+ const layerBounds=(await layers.boundingBox())!;
+ await layers.screenshot({path:testInfo.outputPath("timeline-switches.png")});
+ expect(Math.abs((controls[0].left+controls[2].right)/2-(layerBounds.x+layerBounds.width/2))).toBeLessThan(1);
+ expect(controls.every(control=>Math.abs(control.top-controls[0].top)<1)).toBe(true);
  await expect(view.getByRole('heading',{name:'Aligned evidence timeline'})).toHaveClass('sr-only');
  await expect(view.locator('.atlas-oh-time-point')).toHaveCount(4);
  await expect(view.getByRole('heading',{name:'Undated or incomplete dates 4'})).toBeVisible();
@@ -40,10 +48,12 @@ for(const viewport of [{width:390,height:950},{width:1280,height:720},{width:128
  expect((await new AxeBuilder({page}).include('.atlas-one-health').analyze()).violations).toEqual([]);
  await page.screenshot({path:`/tmp/atlas-panel-sampling-${viewport.width}-${viewport.height}.png`});
  await choose('Timeline');
- await view.getByRole('group',{name:'Timeline layers'}).getByRole('button',{name:'Observations',exact:true}).click();
+ const observations=layers.getByRole('switch',{name:'Observations',exact:true});
+ await observations.focus();await observations.press('Space');
+ await expect(observations).not.toBeChecked();
  await expect(view.locator('.atlas-oh-time-point')).toHaveCount(1);
  await expect(view.getByRole('complementary')).toContainText('Reported intervention');
- await expect(view).toContainText('Alignment does not establish transmission or an intervention effect');
+ await expect(view).not.toContainText('Source dates align by domain or context kind.');
  await expect(view.getByRole('button',{name:/Synthetic condition with unresolved date kind.*Jul 2026/})).toBeVisible();
  await view.locator('summary[aria-label="One Health report"]').click();
  await view.getByRole('option').last().click();

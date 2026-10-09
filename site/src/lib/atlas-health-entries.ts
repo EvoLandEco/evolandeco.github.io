@@ -26,20 +26,59 @@ export function healthEntryIndex(view:AtlasSelectedOneHealth) {
   const sampling=[...view.sampling_assessments,...view.undated_sampling_assessments];
   const contexts=[...view.contexts,...view.undated_contexts];
   const records=new Set([...all,...timings,...sampling,...contexts].map(r=>r.record_id));
-  return new Map([...records].map(id=>{
-    const nodeIds=new Set(all.filter(n=>n.record_id===id).flatMap(n=>[...components.get(n.id)!]));
-    const nodes=all.filter(n=>nodeIds.has(n.id));
-    const relations=view.relations.filter(r=>nodeIds.has(r.from_node_id)&&nodeIds.has(r.to_node_id));
-    const matches=(r:{record_id:string;node_id?:string})=>healthPanelForEntry(r,id,nodeIds);
-    const samples=sampling.filter(matches),context=contexts.filter(matches);
-    return [id,{nodeIds,counts:{network:nodes.length,evidence:relations.length,timeline:timings.filter(matches).length,sampling:samples.length,environment:context.length},
-      domains:new Set(nodes.map(n=>n.domain)),
-      dated:[...view.timings,...view.sampling_assessments,...view.contexts].some(matches),
-      fraction:samples.some(s=>s.display==='proportion'&&s.proportion!==null),
-      negative:nodes.some(n=>n.finding==='agent_not_detected'),
-      hypothesis:relations.some(r=>r.basis==='source_hypothesis')||context.some(c=>c.kind==='source_hypothesis'),
-    }];
-  }));
+  const entries = new Map([...records].map(id => [id, {
+    nodeIds: new Set<string>(), counts: {network: 0, evidence: 0, timeline: 0, sampling: 0, environment: 0},
+    domains: new Set<AtlasSelectedOneHealth["nodes"][number]["domain"]>(),
+    dated: false, fraction: false, negative: false, hypothesis: false,
+  }]));
+  const componentRecords = new Map<Set<string>, Set<string>>();
+  const recordComponents = new Map<string, Set<Set<string>>>();
+  for (const node of all) {
+    const component = components.get(node.id)!;
+    if (!componentRecords.has(component)) componentRecords.set(component, new Set());
+    componentRecords.get(component)!.add(node.record_id);
+    if (!recordComponents.has(node.record_id)) recordComponents.set(node.record_id, new Set());
+    const included = recordComponents.get(node.record_id)!;
+    if (included.has(component)) continue;
+    included.add(component);
+    for (const id of component) entries.get(node.record_id)!.nodeIds.add(id);
+  }
+  for (const node of all) for (const id of componentRecords.get(components.get(node.id)!)!) {
+    const entry = entries.get(id)!;
+    entry.counts.network++;
+    entry.domains.add(node.domain);
+    entry.negative ||= node.finding === "agent_not_detected";
+  }
+  for (const relation of view.relations) for (const id of componentRecords.get(components.get(relation.from_node_id)!)!) {
+    const entry = entries.get(id)!;
+    entry.counts.evidence++;
+    entry.hypothesis ||= relation.basis === "source_hypothesis";
+  }
+  type Panel = typeof timings[number] | typeof sampling[number] | typeof contexts[number];
+  function addPanels(rows: Panel[], kind: "timeline" | "sampling" | "environment", dated: boolean) {
+    for (const row of rows) {
+      const ids = new Set([row.record_id]);
+      if ("node_id" in row && row.node_id) {
+        const component = components.get(row.node_id);
+        if (component) for (const id of componentRecords.get(component)!) ids.add(id);
+      }
+      for (const id of ids) {
+        const entry = entries.get(id)!;
+        entry.counts[kind]++;
+        entry.dated ||= dated;
+        entry.fraction ||= "display" in row && row.display === "proportion" && row.proportion !== null;
+        entry.hypothesis ||= "kind" in row && row.kind === "source_hypothesis";
+      }
+    }
+  }
+  addPanels(view.timings, "timeline", true);
+  addPanels(view.undated_timings, "timeline", false);
+  addPanels(view.reporting_cutoffs, "timeline", false);
+  addPanels(view.sampling_assessments, "sampling", true);
+  addPanels(view.undated_sampling_assessments, "sampling", false);
+  addPanels(view.contexts, "environment", true);
+  addPanels(view.undated_contexts, "environment", false);
+  return entries;
 }
 export type HealthEntry = ReturnType<typeof healthEntryIndex> extends Map<string,infer T> ? T : never;
 export function matchesHealthEntry(entry:HealthEntry, filters:string[]) {

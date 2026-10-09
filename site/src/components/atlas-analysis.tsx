@@ -1,69 +1,177 @@
 "use client";
-import { memo, useMemo } from "react";
-import { createPortal } from "react-dom";
+import { cardTransitionClips, clipCardTransition } from "./atlas-card-transition";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal, flushSync } from "react-dom";
 import { AtlasObservations, useObservationSeries, observationSeriesLabel } from "./atlas-observations";
 import { AtlasScope } from "./atlas-scope";
+import { AtlasEntryFilters } from "./atlas-entry-filters";
 import { AtlasSelect, type AtlasSelectItem } from "./atlas-select";
-import { ChartNoAxesCombined, Database, Radar, BookOpen, CircleHelp, Activity, ListChecks, ChartScatter } from "lucide-react";
+import { ChartNoAxesCombined, Database, Radar, BookOpen, CircleHelp, Activity, ListChecks, ChartScatter, ShieldCheck, Globe2, GitBranch } from "lucide-react";
 import type { AtlasExperiment, IntelligenceExperiment, IntelligenceSeries } from "@/lib/atlas-intelligence";
-import type { AtlasRecord, AtlasLink } from "@/lib/atlas";
+import type { AtlasRecord } from "@/lib/atlas";
 import { formatDate } from "@/lib/atlas";
 import { useAtlas, useAtlasPanelState } from "./atlas-context";
-import { Monitoring, Forecasts, RiskProfiles } from "./atlas-analysis-results";
+import { Forecasts, RiskProfiles } from "./atlas-analysis-results";
 import styles from "./atlas-analysis.module.css";
+import { useAtlasContentMotion } from "./use-atlas-content-motion";
+
+export type AnalysisView = "signals" | "risk" | "spatial" | "relationships";
 
 type Props = { experiment: AtlasExperiment; rows: AtlasRecord[]; onReport: (ids: string[], expand?: boolean) => void };
 
-export const AtlasAnalysis = memo(function AtlasAnalysis({ experiment, rows, links, seriesId, onSeries, onReport, onLink, footerTarget }: Props & { footerTarget: HTMLElement | null; links: AtlasLink[]; seriesId: string; onSeries: (id: string) => void; onLink: (id: string) => void }) {
-  const [view, setView] = useAtlasPanelState("analysis.view", "evaluation");
+function revealRisk(root: HTMLElement | null, id: string, behavior: ScrollBehavior = matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth") {
+  const card = root?.querySelector<HTMLElement>(`[data-risk-id="${CSS.escape(id)}"]`);
+  const tools = root?.previousElementSibling;
+  if (!card || !(tools instanceof HTMLElement)) return;
+  card.style.scrollMarginTop = `${parseFloat(getComputedStyle(tools).top) + tools.offsetHeight + 16}px`;
+  card.scrollIntoView({ block: "start", behavior });
+}
+
+export const AtlasAnalysis = memo(function AtlasAnalysis({ experiment, rows, seriesId, onSeries, onReport, footerTarget, initialRiskRecord, onOneHealth, view, onView, spatial, relationships, connectionTools, spatialCount, relationshipCount }: Props & { view: AnalysisView; onView: (view: AnalysisView) => void; spatial: ReactNode; relationships: ReactNode; connectionTools: ReactNode; spatialCount: number; relationshipCount: number; initialRiskRecord: string; onOneHealth: (id: string) => void; footerTarget: HTMLElement | null; seriesId: string; onSeries: (id: string) => void }) {
+  const [riskFilters, setRiskFilters] = useAtlasPanelState<string[]>("analysis.riskFilters", []);
+  const [signalFilters, setSignalFilters] = useAtlasPanelState<string[]>("analysis.signalFilters", []);
+  const [riskId, setRiskId] = useAtlasPanelState("analysis.risk", experiment.data?.risk_profiles.find(profile => profile.record_id === initialRiskRecord)?.id ?? "");
+  const [expandedRisk, setExpandedRisk] = useState<string | null>(null);
+  const riskMotion = useRef<{ transition: ViewTransition; clear: () => void } | null>(null);
+  useEffect(() => () => {
+    const active = riskMotion.current;
+    riskMotion.current = null;
+    active?.transition.skipTransition(); active?.clear();
+  }, []);
+  const content = useRef<HTMLDivElement>(null);
   const observations = useObservationSeries(rows);
-  const [kind, setKind] = useAtlasPanelState("analysis.kind", "count_exceedance");
+  useAtlasContentMotion(content, view);
   const data = useMemo(() => {
     if (!experiment.data) return;
-    const ids = new Set(rows.map(row => row.id)), linkIds = new Set(links.map(link => link.id));
+    const ids = new Set(rows.map(row => row.id));
     return { ...experiment.data,
-      monitoring: experiment.data.monitoring.filter(signal => signal.record_ids.some(id => ids.has(id)) && (signal.kind !== "network_first_appearance" || signal.relationship_ids.every(id => linkIds.has(id)))),
+      risk_profiles: experiment.data.risk_profiles.filter(profile => ids.has(profile.record_id)),
       forecast_series: experiment.data.forecast_series.filter(series => series.observations.some(item => ids.has(item.record_id))),
     };
-  }, [experiment.data, rows, links]);
+  }, [experiment.data, rows]);
   const observationSeries = observations.filter(item => !data?.forecast_series.some(series => series.id === item.id));
-  const currentSeries = data?.forecast_series.find(series => series.id === seriesId) ?? data?.forecast_series[0];
-  const selectedObservation = observationSeries.find(item => `observations:${item.id}` === seriesId);
-  const selectedSeriesId = selectedObservation ? seriesId : currentSeries?.id ?? (observationSeries[0] ? `observations:${observationSeries[0].id}` : "");
-  const observation = selectedObservation ?? (!currentSeries ? observationSeries[0] : undefined);
+  const modelSeries = (data?.forecast_series ?? []).filter(() => !signalFilters.length || signalFilters.includes("model"));
+  const reportedSeries = observationSeries.filter(() => !signalFilters.length || signalFilters.includes("observations"));
+  const currentSeries = modelSeries.find(series => series.id === seriesId) ?? modelSeries[0];
+  const selectedObservation = reportedSeries.find(item => `observations:${item.id}` === seriesId);
+  const selectedSeriesId = selectedObservation ? seriesId : currentSeries?.id ?? (reportedSeries[0] ? `observations:${reportedSeries[0].id}` : "");
+  const observation = selectedObservation ?? (!currentSeries ? reportedSeries[0] : undefined);
   const seriesItems: AtlasSelectItem[] = [
-    ...(data?.forecast_series ?? []).map(series => ({ value: series.id, label: series.label, badges: [
+    ...modelSeries.map(series => ({ value: series.id, label: series.label, badges: [
       { kind: "kind" as const, label: "Model evaluation" }, { kind: "count" as const, label: `${series.observations.length} observations` },
     ] })),
-    ...(view === "evaluation" ? observationSeries.map(series => ({ value: `observations:${series.id}`, label: observationSeriesLabel(series), badges: [
+    ...reportedSeries.map(series => ({ value: `observations:${series.id}`, label: observationSeriesLabel(series), badges: [
       { kind: "kind" as const, label: "Reported observations" }, { kind: "count" as const, label: `${series.items.length} observations` },
-    ] })) : []),
+    ] })),
   ];
-  return <section className={styles.analysis} aria-label="Experimental analysis">
+  const allProfiles = data?.risk_profiles ?? [];
+  const profiles = useMemo(() => (data?.risk_profiles ?? []).filter(profile => {
+    const authorities = riskFilters.filter(value => value.startsWith("authority:"));
+    const features: Record<string, boolean> = {
+      "feature:assessment": profile.assessments.length > 0,
+      "feature:dated": !!profile.assessment_date,
+      "feature:quotes": profile.evidence.some(item => item.quotes.length > 0),
+    };
+    return (!authorities.length || authorities.includes(`authority:${profile.authority}`)) && riskFilters.filter(value => value.startsWith("feature:")).every(value => features[value]);
+  }), [data, riskFilters]);
+  if (expandedRisk && !profiles.some(profile => profile.id === expandedRisk)) setExpandedRisk(null);
+  function changeRiskDetail(id: string | null) {
+    const target = id ?? expandedRisk;
+    if (!target) return;
+    const selector = `[data-risk-id="${CSS.escape(target)}"]`;
+    const update = () => {
+      flushSync(() => setExpandedRisk(id));
+      if (id) content.current?.querySelector<HTMLElement>('[aria-label="Risk profile details"]')?.scrollTo({ top: 0, behavior: "instant" });
+      revealRisk(content.current, target, "instant");
+      content.current?.querySelector<HTMLButtonElement>(`${selector} [data-risk-${id ? "back" : "expand"}]`)?.focus({ preventScroll: true });
+    };
+    riskMotion.current?.transition.skipTransition();
+    riskMotion.current?.clear();
+    riskMotion.current = null;
+    if (!document.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) { update(); return; }
+    const named = new Set<HTMLElement>();
+    const nameParts = () => {
+      const card = content.current?.querySelector<HTMLElement>(selector);
+      if (!card) return;
+      card.style.viewTransitionName = "atlas-risk-card";
+      named.add(card);
+      card.querySelectorAll<HTMLElement>("[data-risk-part]").forEach(element => {
+        element.style.viewTransitionName = `atlas-risk-${element.dataset.riskPart}`;
+        named.add(element);
+      });
+    };
+    document.documentElement.dataset.atlasRiskTransition = id ? "expand" : "collapse";
+    nameParts();
+    const card = content.current!.querySelector<HTMLElement>(selector)!;
+    const cardClips = () => cardTransitionClips(card);
+    const before = cardClips();
+    let after = before;
+    const transition = document.startViewTransition(() => { update(); nameParts(); after = cardClips(); });
+    const clearClips = clipCardTransition(transition, before, () => after);
+    const clear = () => {
+      clearClips();
+      named.forEach(element => element.style.removeProperty("view-transition-name"));
+      delete document.documentElement.dataset.atlasRiskTransition;
+    };
+    riskMotion.current = { transition, clear };
+    const finish = () => {
+      if (riskMotion.current?.transition !== transition) return;
+      clear(); riskMotion.current = null;
+    };
+    void transition.finished.then(finish, finish);
+  }
+  useLayoutEffect(() => { if (view === "risk" && riskId) revealRisk(content.current, riskId); }, [view, riskId]);
+  const cardView = view === "spatial" || view === "relationships";
+  const views = [
+    { value: "signals", label: "Signals & forecasts", shortLabel: "Signals", icon: Radar, count: seriesItems.length, unit: "series" },
+    { value: "spatial", label: "Spatial links", shortLabel: "Spatial", icon: Globe2, count: spatialCount, unit: "links" },
+    { value: "relationships", label: "Report relationships", shortLabel: "Relationships", icon: GitBranch, count: relationshipCount, unit: "relationships" },
+    { value: "risk", label: "Risk assessments", shortLabel: "Risks", icon: ShieldCheck, count: profiles.length, unit: "profiles" },
+  ];
+  const currentView = views.find(item => item.value === view)!;
+  const ViewIcon = currentView.icon;
+  return <section className={`atlas-analysis ${styles.analysis}${view === "signals" ? " atlas-analysis-signals" : view === "risk" && expandedRisk ? " atlas-analysis-risk-detail" : cardView ? " atlas-analysis-connections" : ""}`} data-view={view} data-expanded={view === "risk" && !!expandedRisk || undefined} aria-label="Experimental analysis" onKeyDown={event => {
+    if (view === "risk" && expandedRisk && event.key === "Escape" && !event.defaultPrevented && !(event.target as HTMLElement).closest('.atlas-select[open], dialog')) { event.preventDefault(); event.stopPropagation(); changeRiskDetail(null); }
+  }}>
     {footerTarget && createPortal(<div className="atlas-view-about"><AtlasScope buttonLabel="About Analysis" label="Methods & references" title="Analysis"><AnalysisMethods data={experiment.data} series={observation ? undefined : currentSeries} digest={experiment.digest} /></AtlasScope></div>, footerTarget)}
-    <h2 className="sr-only">Analysis</h2><header className={`${styles.analysisHeader} atlas-entry-tools atlas-panel-tools`} data-series={view === "evaluation" || kind === "count_exceedance"} data-view={view}>
-      <div className={styles.tabs} role="group" aria-label="Analysis views">
-        <button aria-label="Models" title="Models" aria-pressed={view === "evaluation"} onClick={() => setView("evaluation")}><ChartNoAxesCombined size={16} aria-hidden /><span>Models</span></button>
-        <button aria-label="Signals" title="Signals" aria-pressed={view === "signals"} onClick={() => setView("signals")}><Radar size={16} aria-hidden /><span>Signals</span></button>
-      </div>
-      {view === "signals" && <label className={styles.toolbarSelect}><span className="sr-only">Signal type</span><select title="Signal type" value={kind} onChange={event => setKind(event.target.value)}><option value="all">All signals</option><option value="count_exceedance">Count checks</option><option value="network_first_appearance">First country connections</option></select></label>}
-      {(view === "evaluation" || kind === "count_exceedance") && <AtlasSelect label="Monitored series" searchable disabled={!seriesItems.length} summaryLabel={seriesItems.length ? undefined : "No series available"} value={view === "signals" ? currentSeries?.id ?? "" : selectedSeriesId} onChange={onSeries} items={seriesItems} />}
+    <h2 className="sr-only">Analysis</h2><header className={`${styles.analysisHeader} atlas-entry-tools atlas-panel-tools`} data-view={view}>
+      <div className="atlas-oh-view-select"><AtlasSelect label="Analysis view" summaryLabel={<span className="atlas-oh-mode-label"><ViewIcon size={14} aria-hidden /><span>{currentView.shortLabel}</span></span>} value={view} onChange={value => onView(value as AnalysisView)} items={views.map(item => ({ value: item.value, label: item.label, title: item.label, badges: [{ kind: "count", label: `${item.count} ${item.unit} available` }] }))} /></div>
+      {cardView ? connectionTools : <>
+      {view === "risk" ? <AtlasSelect label="Evidence profile" searchable disabled={!profiles.length} summaryLabel={<span className="atlas-select-choice"><span className="atlas-select-choice-title">{profiles.length ? "Find an evidence profile" : "No evidence profiles"}</span><small className="atlas-select-count" title={`${profiles.length} evidence profiles`}>{profiles.length}</small></span>} value={riskId} onChange={id => { flushSync(() => setExpandedRisk(null)); if (id === riskId) revealRisk(content.current, id); else setRiskId(id); }} items={profiles.map(item => ({ value: item.id, label: item.label, searchText: [item.authority, item.publication, ...item.dimensions.map(dimension => dimension.summary)].join(" "), badges: [
+        { kind: "kind", label: item.authority },
+        ...(item.assessment_date ? [{ kind: "period" as const, label: formatDate(item.assessment_date) }] : []),
+      ] }))} /> : <AtlasSelect label="Monitored series" searchable disabled={!seriesItems.length} summaryLabel={<span className="atlas-select-choice"><span className="atlas-select-choice-title">{seriesItems.find(item => item.value === selectedSeriesId)?.label ?? "No series available"}</span><small className="atlas-select-count" title={`${seriesItems.length} monitored series`}>{seriesItems.length}</small></span>} value={selectedSeriesId} onChange={onSeries} items={seriesItems} />}
+      {view === "risk" ? <AtlasEntryFilters key="risk" label="Filter risk profiles" value={riskFilters} onChange={setRiskFilters} count={profiles.length} total={allProfiles.length} groups={[
+        { label: "Authority", match: "any", items: [...new Set([ ...allProfiles.map(profile => profile.authority), ...riskFilters.filter(value => value.startsWith("authority:")).map(value => value.slice(10)) ])].sort().map(authority => ({ value: `authority:${authority}`, label: authority })) },
+        { label: "Features", match: "all", items: [
+          { value: "feature:assessment", label: "Source risk rating" }, { value: "feature:dated", label: "Dated assessment" }, { value: "feature:quotes", label: "Quoted source evidence" },
+        ] },
+      ]} /> : <AtlasEntryFilters key="signals" label="Filter monitored series" value={signalFilters} onChange={setSignalFilters} count={seriesItems.length} total={(data?.forecast_series.length ?? 0) + observationSeries.length} groups={[
+        { label: "Content available", match: "any", items: [{ value: "model", label: "Model evaluation" }, { value: "observations", label: "Reported observations" }] },
+      ]} />}
+      </>}
     </header>
-    {view === "evaluation" && (observation || !data && !experiment.error) ? <AtlasObservations selected={observation} onReport={onReport} /> : !data ? <p className={styles.notice} role={experiment.error ? "alert" : "status"}>{experiment.error ?? "No validated analysis is loaded for this dataset."}</p> : <>
-      {view === "signals" ? <Monitoring kind={kind} data={data} seriesId={seriesId} links={links} onKind={setKind} onSeries={onSeries} onReport={onReport} onLink={onLink} /> : <Forecasts data={data} seriesId={seriesId} onReport={onReport} />}
-    </>}
+    <div ref={content} className={styles.analysisContent}>
+      {view === "spatial" ? spatial : view === "relationships" ? relationships : view === "risk" ? <AtlasRiskAssessments profiles={profiles} experiment={experiment} rows={rows} onReport={onReport} onOneHealth={onOneHealth} expandedId={expandedRisk} onExpand={changeRiskDetail} /> : <div className={styles.signalContent}>
+        {signalFilters.length > 0 && !seriesItems.length ? <p className={styles.notice}>No entries match these filters. Clear the entry filters or choose another combination.</p> : observation || !data && !experiment.error ? <AtlasObservations selected={observation} onReport={onReport} />
+          : !data ? <p className={styles.notice} role={experiment.error ? "alert" : "status"}>{experiment.error ?? "No validated analysis is loaded for this dataset."}</p>
+          : <Forecasts data={data} seriesId={selectedSeriesId} onReport={onReport} />}
+      </div>}
+    </div>
   </section>;
 });
 
 function AnalysisMethods({ data, series, digest }: { data?: IntelligenceExperiment; series?: IntelligenceSeries; digest?: string }) {
   return <div className="atlas-literature">
-    <p>Analysis displays calculations exported by ATLAS. The study compares models using earlier observations to predict later reported counts. Historical capture dates remain visible because this retrospective evaluation does not measure performance with data available in real time.</p>
+    <p>Risk profiles retain each authority’s assessment, population and date. Their evidence dimensions connect to source passages, uncertainties and the published assessment method.</p>
+    <p>Signals &amp; forecasts displays calculations exported by ATLAS. The study compares models using earlier observations to predict later reported counts. Historical capture dates remain visible because this retrospective evaluation does not measure performance with data available in real time.</p>
+    <p>Spatial links retain source-described travel, shared events and geographic hypotheses. Report relationships show continuity, source hypotheses and later assessments with their supporting reports. Card counts describe evidence, not cases or independent events.</p>
     {data && <>
       <h3><Database size={16} aria-hidden />Study scope</h3>
       <dl className={styles.methodScope}><div><dt>Publication window</dt><dd>{formatDate(data.scope.publication_from)}–{formatDate(data.scope.publication_until)}</dd></div><div><dt>Captured through</dt><dd>{formatDate(data.scope.capture_until)}</dd></div><div><dt>Archive</dt><dd>{data.scope.documents} documents · {data.scope.records} report entries</dd></div><div><dt>Selected series</dt><dd>{series?.label ?? "No eligible series in this selection"}</dd></div></dl>
     </>}
     <h3><ChartScatter size={16} aria-hidden />Reported observations</h3>
-    <p>Observation charts retain the source’s units, reporting periods and count definitions. Reviewed series follow ATLAS comparability decisions; other repeated observations remain separate contexts. The series selector includes observation contexts without eligible models. In model evaluation, the value panel shows training observations and the held-out target. Hover or focus connects each plotted value to its source row; selecting it opens the report.</p>
+    <p>Observation charts retain the source’s units, reporting periods and count definitions. Reviewed series follow ATLAS comparability decisions; other repeated observations remain separate contexts. The series selector includes observation contexts without eligible models. Prediction shows the reported series and model intervals. Count checks shows reported points against expected counts and investigation thresholds. Both figures share source observations, training and held-out labels, and model performance comparisons. Hover or focus connects each plotted value to its source row; selecting it opens the report.</p>
     <h3><Activity size={16} aria-hidden />Count models</h3>
     <p><strong>Persistence random walk.</strong> The baseline uses preceding weekly changes and their negatives, drawing on the empirical baseline in <a href="https://doi.org/10.1016/j.ijforecast.2022.06.005" target="_blank" rel="noopener noreferrer">Ray et al. (2023, §2.4)</a>. ATLAS propagates discrete count probabilities, setting negative counts to zero at each step; it does not reproduce every quantile convention in that study.</p>
     <p><strong>Recent-change random walk.</strong> This variant uses the last eight changes with their signs retained and sets negative counts to zero at each step. Comparing baseline specifications is motivated by <a href="https://doi.org/10.64898/2026.03.18.26348748" target="_blank" rel="noopener noreferrer">Suez &amp; Fox (2026, preprint)</a>. The eight-change window is an ATLAS study choice, not a validated optimum from that paper.</p>
@@ -77,7 +185,6 @@ function AnalysisMethods({ data, series, digest }: { data?: IntelligenceExperime
     <p>Relative WIS is the model’s mean WIS divided by the persistence baseline’s mean WIS on the same series and horizon. Values below one favour the model. With a complete matched forecast set, this equals the baseline-normalized pairwise ratio described by Ray et al. Last-origin extrapolations have no observed target score.</p>
     <h3><Radar size={16} aria-hidden />Signals and interpretation</h3>
     <p><strong>Count checks</strong> flag observations above the baseline’s one-week 95th predictive quantile. These are unadjusted prompts for investigation, with no validated false-alert rate or adjustment for repeated testing. <a href="https://stacks.cdc.gov/view/cdc/164155" target="_blank" rel="noopener noreferrer">Martin et al. (2024)</a> explain why surveillance anomalies require review of reporting and data quality. That report supports the interpretation, not this specific threshold rule.</p>
-    <p><strong>First country connections</strong> identify the earliest supporting publication for a disease, country pair and relationship type within the study archive, preserving reported direction. This is an ATLAS archive query: it does not establish biological emergence, a new transmission route or a risk estimate. Pre-archive history is unknown, and several statements may describe the same episode. See the <a href="https://github.com/EvoLandEco/ATLAS/blob/main/docs/NETWORK_ANALYSIS.md" target="_blank" rel="noopener noreferrer">ATLAS network method</a> for the archive definition.</p>
     <p>Reporting filters select the displayed evidence; they do not refit models or reset archive history. These analyses do not correct for underreporting or collection bias. Count checks and evaluation retain every eligible observation in the selected study series. Source passages and capture dates remain attached to the results.</p>
     {data && <>
       <h3><CircleHelp size={16} aria-hidden />Limits and eligibility</h3>
@@ -97,12 +204,12 @@ function AnalysisMethods({ data, series, digest }: { data?: IntelligenceExperime
   </div>;
 }
 
-export const AtlasRiskAssessments = memo(function AtlasRiskAssessments({ experiment, rows, initialRecord, onReport, onOneHealth }: Props & { initialRecord: string; onOneHealth: (id: string) => void }) {
+export const AtlasRiskAssessments = memo(function AtlasRiskAssessments({ experiment, profiles, rows, onReport, onOneHealth, expandedId, onExpand }: Props & { profiles: IntelligenceExperiment["risk_profiles"]; onOneHealth: (id: string) => void; expandedId: string | null; onExpand: (id: string | null) => void }) {
   const { selectedOneHealth } = useAtlas();
   const { data, healthRecords } = useMemo(() => {
     const ids = new Set(rows.map(row => row.id));
     const health = selectedOneHealth(ids);
-    return { data: experiment.data && { ...experiment.data, risk_profiles: experiment.data.risk_profiles.filter(profile => ids.has(profile.record_id)) }, healthRecords: new Set([...(health?.nodes ?? []), ...(health?.undated_nodes ?? [])].map(node => node.record_id)) };
-  }, [experiment.data, rows, selectedOneHealth]);
-  return <section className={styles.analysis} aria-label="Source risk assessments"><h2 className="sr-only">Source risk assessments</h2>{data ? <RiskProfiles key={initialRecord} data={data} initialRecord={initialRecord} onReport={onReport} onOneHealth={onOneHealth} healthRecords={healthRecords} /> : <p className={styles.notice}>{experiment.error ?? "No validated risk profiles are loaded."}</p>}</section>;
+    return { data: experiment.data && { ...experiment.data, risk_profiles: profiles }, healthRecords: new Set([...(health?.nodes ?? []), ...(health?.undated_nodes ?? [])].map(node => node.record_id)) };
+  }, [experiment.data, profiles, rows, selectedOneHealth]);
+  return <section className={styles.riskWorkspace} aria-label="Source risk assessments"><h2 className="sr-only">Source risk assessments</h2>{data && !profiles.length ? <p className={styles.notice}>No risk evidence profiles match these filters.</p> : data ? <RiskProfiles data={data} onReport={onReport} onOneHealth={onOneHealth} healthRecords={healthRecords} expandedId={expandedId} onExpand={onExpand} /> : <p className={styles.notice}>{experiment.error ?? "No validated risk profiles are loaded."}</p>}</section>;
 });

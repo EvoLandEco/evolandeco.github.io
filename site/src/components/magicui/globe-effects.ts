@@ -224,18 +224,26 @@ export function separateGlobeRoutes(routes: { id: string; from: [number, number]
     for (const j of component) laneLimits.set(j, limit);
   }
   const lanes = new Map<number, number>();
-  const lanePath = (i: number, lane: number) => curves[i].path.map((point, n) => {
-    const t = n / 10;
-    return point.map((v, axis) => v + 2 * (1 - t) * t * curves[i].direction[axis] * lane * laneLimits.get(i)!.step);
-  });
+  const lanePaths = routes.map(() => new Map<number, number[][]>());
+  const lanePath = (i: number, lane: number) => {
+    const known = lanePaths[i].get(lane);
+    if (known) return known;
+    const path = curves[i].path.map((point, n) => {
+      const t = n / 10;
+      return point.map((v, axis) => v + 2 * (1 - t) * t * curves[i].direction[axis] * lane * laneLimits.get(i)!.step);
+    });
+    lanePaths[i].set(lane, path);
+    return path;
+  };
   const crossings = (i: number, lane: number, j: number) => {
     const a = lanePath(i, lane), b = lanePath(j, lanes.get(j)!);
     // Compare the routes from the centre of their geographic region.
     const normal = curves[i].points[4].map((v, axis) => v + curves[j].points[4][axis]);
     const side = (p: number[], q: number[], r: number[]) => {
-      const u = q.map((v, k) => v - p[k]), v = r.map((value, k) => value - p[k]);
-      return (u[1] * v[2] - u[2] * v[1]) * normal[0] +
-        (u[2] * v[0] - u[0] * v[2]) * normal[1] + (u[0] * v[1] - u[1] * v[0]) * normal[2];
+      const ux = q[0] - p[0], uy = q[1] - p[1], uz = q[2] - p[2];
+      const vx = r[0] - p[0], vy = r[1] - p[1], vz = r[2] - p[2];
+      return (uy * vz - uz * vy) * normal[0] +
+        (uz * vx - ux * vz) * normal[1] + (ux * vy - uy * vx) * normal[2];
     };
     let count = 0;
     for (let k = 1; k < a.length; k++) for (let n = 1; n < b.length; n++) {
@@ -374,6 +382,17 @@ export function projectArcArrow(from: [number, number], to: [number, number], ph
   return prepareGlobeArc(from, to, true, bend).arrow(globeProjection(phi, theta), progress);
 }
 
+
+export function globeLocationCenter(locations: [number, number][]): [number, number] | undefined {
+  const sum: Vec3 = [0, 0, 0];
+  for (const location of locations) {
+    const point = globePoint(location);
+    for (let axis = 0; axis < 3; axis++) sum[axis] += point[axis];
+  }
+  // Opposing directions have no mean beyond floating point roundoff.
+  if (Math.hypot(...sum) <= locations.length * Number.EPSILON || !locations.length) return;
+  return [Math.atan2(sum[1], Math.hypot(sum[0], sum[2])) * 180 / Math.PI, Math.atan2(-sum[2], sum[0]) * 180 / Math.PI];
+}
 
 export function focusOrientation(location: [number, number], phi: number) {
   const target = -Math.PI / 2 - location[1] * Math.PI / 180;

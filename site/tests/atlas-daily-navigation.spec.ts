@@ -17,6 +17,7 @@ for (const width of [390, 1466]) test(`Scientific evidence highlights retain dai
   await page.goto('/atlas/');
   await expect(page.locator('.atlas-daily-watch')).toBeVisible();
   const activity = await page.locator('.atlas-trend-activity header strong').innerText();
+  await page.getByRole('group', { name: 'Reporting attention period', exact: true }).getByRole('button', { name: 'Weekly', exact: true }).click();
   await page.locator('.atlas-disease-segment').first().press('Enter');
   const highlights = page.locator('.atlas-report[data-evidence="true"]');
   await expect(highlights.first().locator(':scope > summary')).toBeFocused();
@@ -24,6 +25,7 @@ for (const width of [390, 1466]) test(`Scientific evidence highlights retain dai
   await expect(page.locator('.atlas-report-prelude')).toContainText('13–24 of');
   await page.getByRole('tab', { name: 'Trends', exact: true }).click();
   await expect(page.locator('.atlas-daily-watch')).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Reporting attention period', exact: true }).getByRole('button')).toHaveText(['Monthly']);
   await expect(page.locator('.atlas-trend-activity header strong')).toHaveText(activity);
   await expect(page.locator('.atlas-latest-entry').first()).toContainText('Investigation in France');
   await page.locator('.atlas-latest-entry').first().click();

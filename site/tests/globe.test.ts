@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   globePoint,
+  globeLocationCenter,
   arcPoint,
   projectPoint,
   GLOBE_RADIUS,
@@ -400,4 +401,24 @@ test("SVG and segment paths share projected samples in either call order", () =>
   const count = prepared.trailSegments(point => { calls++; return projection(point); }, output, gradient, .9, .45);
   assert(count > 0);
   assert.equal(calls, 45);
+});
+
+
+test("Location focus uses the spherical mean across the date line and poles", () => {
+  assert.equal(globeLocationCenter([]), undefined);
+  assert.equal(globeLocationCenter([[0, 0], [0, 180]]), undefined);
+  for (const [locations, expected] of [
+    [[[35, 120]], [35, 120]],
+    [[[0, 170], [0, -170]], [0, 180]],
+    [[[60, -90], [60, 90]], [90, 0]],
+    [[[20, -30], [-20, 30]], [0, 0]],
+  ] as [[number, number][], [number, number]][]) {
+    const center = globeLocationCenter(locations)!;
+    assert.ok(Math.abs(center[0] - expected[0]) < 1e-10);
+    assert.ok(Math.abs(Math.sin((center[1] - expected[1]) * Math.PI / 360)) < 1e-10);
+    const camera = focusOrientation(center, 0);
+    const mean = locations.map(location => projectPoint(globePoint(location), camera.phi, camera.theta));
+    assert.ok(Math.abs(mean.reduce((sum, point) => sum + point.x, 0)) < 1e-10);
+    assert.ok(Math.abs(mean.reduce((sum, point) => sum + point.y, 0)) < 1e-10);
+  }
 });

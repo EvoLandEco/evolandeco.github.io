@@ -59,7 +59,7 @@ export const AtlasSelect = memo(function AtlasSelect(props: SelectProps) {
     if (!event.currentTarget.open) { setQuery(""); focusIndex.current = null; }
   }} onKeyDown={event => {
     if (disabled) { if (event.key !== "Tab") event.preventDefault(); return; }
-    if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(); return; }
+    if (event.key === "Escape" && event.currentTarget.open) { event.preventDefault(); event.stopPropagation(); close(); return; }
     if (event.key === "Tab") { if (root.current) root.current.open = false; return; }
     const options = [...(root.current?.querySelectorAll<HTMLElement>(multiple ? 'input[type="checkbox"]' : '[role="option"]') ?? [])];
     const focused = options.indexOf(document.activeElement as HTMLButtonElement);

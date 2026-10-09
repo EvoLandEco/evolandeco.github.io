@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
+import { ChevronsLeft, ChevronsRight } from "lucide-react";
 import "./globe-navigation.css";
 
 export function GlobeDragHint({ visible, onComplete }: { visible: boolean; onComplete: () => void }) {
@@ -14,6 +15,6 @@ export function GlobeDragHint({ visible, onComplete }: { visible: boolean; onCom
   return <div ref={hint} className="globe-drag-hint" data-active="false" aria-hidden="true" onAnimationEnd={event => {
     if (event.target === event.currentTarget && event.animationName === "globe-hint-lifetime") onComplete();
   }}>
-    <div className="globe-hint-capsule">Drag to rotate</div>
+    <div className="globe-hint-capsule"><ChevronsLeft className="globe-hint-arrow" size={18} strokeWidth={1.75} aria-hidden /><span>Drag to rotate</span><ChevronsRight className="globe-hint-arrow" size={18} strokeWidth={1.75} aria-hidden /></div>
   </div>;
 }

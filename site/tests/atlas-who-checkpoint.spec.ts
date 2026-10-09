@@ -20,7 +20,7 @@ for (const [width, height] of [[390, 950], [1280, 950], [1280, 720]]) test(`WHO 
     await entrance.press('Enter');
     if (height <= 850) await page.getByRole('button', { name: 'Observations', exact: true }).click();
   }
-  const plot = page.locator('.atlas-trend-observations');
+  const plot = page.locator('.atlas-analysis-observations');
   async function series(kind: string) {
     await plot.locator('summary[aria-label="Observation series"]').click();
     await plot.getByRole('option', { name: `WHO global mpox cumulative ${kind}, January 2025 baseline`, exact: true }).click();

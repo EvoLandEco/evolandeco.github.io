@@ -1,3 +1,4 @@
+import { selectAtlasOption } from './atlas-select-actions';
 import { test, expect, type Page, type Locator } from '@playwright/test';
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -164,11 +165,12 @@ test('Reports hydrate exact claims and comparison evidence across collapse and p
   expect(errors).toEqual([]);
 });
 
-test('Selected geographic evidence unmounts on manual collapse and restores exact source quotations', async ({ page }) => {
+test('Geographic cards load exact source quotations when expanded and release them on return', async ({ page }) => {
   const source = candidate();
   const map = JSON.parse(readFileSync(path.join(source.directory, source.manifest.map_core), 'utf8')) as AtlasBrowserMap;
   const { errors } = await serve(page, source);
-  await page.getByRole('tab', { name: 'Geographic links', exact: true }).click();
+  await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
+  await selectAtlasOption(page, 'Analysis view', 'spatial');
   const entries = page.locator('.atlas-connection[data-link-id]');
   await expect(entries.first()).toBeVisible();
   const ids = await entries.evaluateAll(elements => elements.map(element => element.getAttribute('data-link-id')));
@@ -176,23 +178,16 @@ test('Selected geographic evidence unmounts on manual collapse and restores exac
     source.read('map.records', String(id)).claims.some(claim => claim.claim_index === index && claim.quotes.length)))!;
   const quotes = link.support.flatMap(([id, index]) => source.read('map.records', String(id)).claims.find(claim => claim.claim_index === index)!.quotes);
   const entry = page.locator(`.atlas-connection[data-link-id="${link.id}"]`);
-  const disclosure = entry.locator('details').filter({ has: page.locator('.atlas-evidence-summary') });
-  await expect(disclosure.locator('.atlas-evidence')).toHaveCount(0);
+  await expect(entry.locator('.atlas-evidence')).toHaveCount(0);
+  await entry.getByRole('button', { name: 'View details', exact: true }).click();
+  await expect(entry).toHaveAttribute('data-expanded', 'true');
+  await expect(entry.locator('.atlas-evidence blockquote')).toHaveText(quotes);
+  await entry.getByRole('button', { name: 'Back to geographic links', exact: true }).click();
+  await expect(entry.locator('.atlas-evidence')).toHaveCount(0);
   await entry.getByRole('button', { name: `Locate ${link.label}`, exact: true }).click();
   await expect(entry).toHaveAttribute('data-selected', 'true');
-  await expect(disclosure).toHaveAttribute('open', '');
-  await expect(disclosure.locator('blockquote')).toHaveText(quotes);
-  await disclosure.locator(':scope > summary').click();
-  await expect(disclosure).not.toHaveAttribute('open', '');
-  await expect(disclosure.locator('.atlas-evidence')).toHaveCount(0);
-  await disclosure.locator(':scope > summary').click();
-  await expect(disclosure.locator('blockquote')).toHaveText(quotes);
-  const other = page.locator(`.atlas-connection[data-link-id="${ids.find(id => id !== link.id)}"]`);
-  await other.getByRole('button', { name: /^Locate / }).click();
-  await expect(entry).toHaveAttribute('data-selected', 'false');
-  await expect(disclosure.locator('.atlas-evidence')).toHaveCount(0);
-  await entry.getByRole('button', { name: `Locate ${link.label}`, exact: true }).click();
-  await expect(disclosure.locator('blockquote')).toHaveText(quotes);
+  await expect(entry).toHaveAttribute('data-expanded', 'true');
+  await expect(entry.locator('.atlas-evidence blockquote')).toHaveText(quotes);
   expect(errors).toEqual([]);
 });
 
@@ -202,7 +197,7 @@ test('Trends hydrate exact measure scope and reviewed series passages on disclos
   const fullSeries = source.read('metrics.reviewed_series', series.series_id);
   const { errors } = await serve(page, source);
   await choose(page, 'Observation series', series.label);
-  const plot = page.locator('.atlas-trend-observations figure');
+  const plot = page.locator('.atlas-analysis-observations');
   const measure = source.read('metrics.measures', series.members[0].measure_id);
   await plot.getByRole('button', { name: /^Scope & source/ }).first().click();
   const dialog = page.getByRole('dialog', { name: /^Scope & source/ });
@@ -265,7 +260,8 @@ test('One Health views retain source evidence, sampling measures and empty selec
   await choose(view, 'One Health report', label(context.record_id), context.record_id);
   if (source.data.records.filter(record => label(record.id) === label(context.record_id)).length > 1) {
     const document = source.data.documents.find(document => document.record_ids.includes(context.record_id))!;
-    await expect(view.locator('summary[aria-label="One Health report"]')).toContainText(`Captured ${formatDate(document.capture)}`);
+    const captured = await page.evaluate(date => new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(date)), document.capture);
+    await expect(view.locator('summary[aria-label="One Health report"]')).toContainText(`Captured ${captured}`);
     const menu = view.locator('summary[aria-label="One Health report"]').locator('..');
     await menu.locator('summary').click();
     await menu.getByRole('searchbox').fill(label(context.record_id));
@@ -277,7 +273,7 @@ test('One Health views retain source evidence, sampling measures and empty selec
   await expect(detail.locator('h3')).toHaveText(context.label);
   await expect(detail.locator('blockquote').first()).toHaveText(read('evidence', context.evidence_ids[0]).quote);
   const layers = view.getByRole('group', { name: 'Timeline layers' });
-  for (const name of ['Observations', 'Environment', 'Interventions']) await layers.getByRole('button', { name, exact: true }).click();
+  for (const name of ['Observations', 'Environment', 'Interventions']) await layers.getByRole('switch', { name, exact: true }).click();
   await expect(detail).toContainText('Select a report with reviewed statements for this view.');
   await expect(detail.locator('blockquote')).toHaveCount(0);
   await expect(view.locator('.atlas-oh-time-point')).toHaveCount(0);
@@ -421,9 +417,10 @@ test('Undated sources verify separately, preserve complete evidence and never en
     return route.fulfill({ contentType: 'application/json', body: corrupt ? '{}' : readFileSync(path.join(directory, 'source-supplement.json')) });
   });
   const { errors } = await serve(page, { ...source, release: { ...source.release, source_supplement: descriptor } });
+  await page.getByRole('tab', { name: 'Trends', exact: true }).click();
+  const networkCounts = await page.locator('.atlas-network-stats').textContent();
   await page.getByRole('tab', { name: 'Reports', exact: true }).click();
   const reportCount = await page.getByRole('tab', { name: 'Reports', exact: true }).textContent();
-  const globeCounts = await page.locator('.atlas-network-stats').textContent();
   const section = page.locator('.atlas-undated-sources');
   const access = page.locator('.atlas-workspace-footer').getByRole('button', { name: 'Undated sources', exact: true });
   await expect(access).toBeVisible();
@@ -437,6 +434,8 @@ test('Undated sources verify separately, preserve complete evidence and never en
   await section.getByRole('button', { name: 'Try again' }).click();
   await expect(section.getByRole('region', { name: 'Undated source findings' })).toBeVisible();
   expect(supplementReads).toBe(2);
+  await expect(section.locator('.atlas-report-body, blockquote')).toHaveCount(0);
+  await section.locator('.atlas-undated-report > summary').first().click();
   const scopeSummary = section.locator('summary').filter({ hasText: 'Evidence & scope' });
   await page.getByRole('button', { name: 'Close Undated sources', exact: true }).press('Shift+Tab');
   await expect(scopeSummary).toBeFocused();
@@ -459,11 +458,17 @@ test('Undated sources verify separately, preserve complete evidence and never en
   await expect(page.getByRole('dialog', { name: 'Undated sources', exact: true })).toBeVisible();
   await expect(page.locator('.atlas-report-list')).not.toContainText(supplement.documents[0].title);
   expect(await page.getByRole('tab', { name: 'Reports', exact: true }).textContent()).toBe(reportCount);
-  expect(await page.locator('.atlas-network-stats').textContent()).toBe(globeCounts);
   await page.getByRole('button', { name: 'Close Undated sources', exact: true }).click();
+  await expect(section).toHaveCount(0);
+  await page.getByRole('tab', { name: 'Trends', exact: true }).click();
+  expect(await page.locator('.atlas-network-stats').textContent()).toBe(networkCounts);
+  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
   await page.getByRole('button', { name: '3 months', exact: true }).click();
   await access.click();
   await expect(section.getByRole('region', { name: 'Undated source findings' })).toBeVisible();
+  expect(supplementReads).toBe(3);
+  await expect(section.locator('.atlas-report-body, blockquote')).toHaveCount(0);
+  await section.locator('.atlas-undated-report > summary').first().click();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await section.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
   await page.screenshot({ path: '/tmp/atlas-undated-sources-phone.png' });

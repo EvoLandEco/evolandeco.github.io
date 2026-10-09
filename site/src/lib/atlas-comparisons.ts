@@ -16,11 +16,16 @@ export function createResearch<B extends AtlasData>(bundle: B, browserSelect?: A
     return selectResearch(bundle, ids, options);
   };
 
-  let selection: { ids: Set<string>; view: ReturnType<typeof select> } | undefined;
+  type Selection = { ids: Set<string>; view: ReturnType<typeof select> };
+  const selections = new WeakMap<Set<string>, Selection>();
+  let selection: Selection | undefined;
   function selectedResearch(recordIds: Set<string>): ReturnType<typeof select> & { report_assessments?: AtlasReportAssessment[] } {
-    if (!selection || selection.ids.size !== recordIds.size || [...recordIds].some(id => !selection!.ids.has(id))) {
-      // Identical report selections share the producer's evidence view across panels.
-      selection = { ids: new Set(recordIds), view: select([...recordIds]) };
+    const matches = (candidate: Selection | undefined): candidate is Selection => !!candidate && candidate.ids.size === recordIds.size && [...recordIds].every(id => candidate.ids.has(id));
+    const retained = selections.get(recordIds);
+    if (matches(retained)) selection = retained;
+    else {
+      if (!matches(selection)) selection = { ids: new Set(recordIds), view: select([...recordIds]) };
+      selections.set(recordIds, selection);
     }
     return selection.view;
   }

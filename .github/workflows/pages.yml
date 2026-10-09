@@ -40,8 +40,8 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - name: Check ATLAS browser interactions
         run: pnpm exec playwright test atlas.spec.ts --grep "ATLAS entry|ATLAS is readable|download errors|Checkbox filters|Globe surface clicks"
-      - name: Check ATLAS daily reports and briefing
-        run: pnpm exec playwright test atlas-daily.spec.ts atlas-daily-navigation.spec.ts atlas-briefing.spec.ts
+      - name: Check ATLAS reports and briefing
+        run: pnpm exec playwright test atlas-daily.spec.ts atlas-daily-navigation.spec.ts atlas-briefing.spec.ts atlas-undated.spec.ts atlas-connection-cards.spec.ts
       - uses: actions/upload-pages-artifact@v4
         with:
           path: site/out

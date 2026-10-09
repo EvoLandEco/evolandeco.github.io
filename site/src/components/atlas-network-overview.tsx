@@ -6,6 +6,8 @@ import { AtlasScope } from './atlas-scope';
 import { LocationSymbol } from './atlas-location-badges';
 import { networkStatistics } from '@/lib/atlas-network-stats';
 import type { AtlasLink } from '@/lib/atlas';
+import { Waypoints } from 'lucide-react';
+import { AnimatePresence, motion as m } from 'motion/react';
 
 export function AtlasNetworkOverview({ links, onReport, release, recordIds }: { links: AtlasLink[]; onReport: (ids: string[]) => void; release: AtlasRelease; recordIds: ReadonlySet<string> }) {
   const { bundle, countriesForLink } = useAtlas();
@@ -15,25 +17,20 @@ export function AtlasNetworkOverview({ links, onReport, release, recordIds }: { 
   const records = (entries: { records: Set<string> }[]) => [...new Set(entries.flatMap(entry => [...entry.records]))];
   const country = (code: string) => <span className="atlas-network-country" key={code} title={areas.get(code)}><LocationSymbol code={code} />{code}</span>;
   return <section className="atlas-network-overview" aria-label="Country network overview">
-
+    <header><Waypoints size={17} aria-hidden /><h2>Country links</h2><AtlasNetworkMethods links={links} release={release} recordIds={recordIds} /></header>
     <div className="atlas-network-stats">
       <button disabled={!hubs.length} onClick={() => onReport(records(hubs))} aria-label={`Most linked country: ${hubs.length ? hubs.map(node => `${areas.get(node.code)}, ${node.strength} links`).join("; ") : "no eligible links"}. View supporting reports`}>
-        <span className="atlas-network-stat-label">Most linked country</span>
-        <strong title={hubs.map(node => areas.get(node.code)).join(', ')}>{hubs.length ? <>{country(hubs[0].code)}{hubs.length > 1 && <small>+{hubs.length - 1} tied</small>}</> : '—'}</strong>
+        <span className="atlas-network-stat-label">Most linked</span>
+        <AnimatePresence initial={false} mode="popLayout"><m.strong key={hubs.map(item => item.code).join(",")} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} title={hubs.map(node => areas.get(node.code)).join(', ')}>{hubs.length ? <>{country(hubs[0].code)}{hubs.length > 1 && <small>+{hubs.length - 1} tied</small>}</> : '—'}</m.strong></AnimatePresence>
       </button>
       <button disabled={!corridors.length} onClick={() => onReport(records(corridors))} aria-label={`Most repeated pair: ${corridors.length ? corridors.map(pair => `${pair.codes.map(code => areas.get(code)).join(" and ")}, ${pair.weight} links`).join("; ") : "no eligible links"}. View supporting reports`}>
-        <span className="atlas-network-stat-label">Most repeated pair</span>
-        <strong title={corridors.map(pair => pair.codes.map(code => areas.get(code)).join(' ↔ ')).join('; ')}>{corridors.length ? <>{country(corridors[0].codes[0])}<span className="atlas-network-pair-arrow">↔</span>{country(corridors[0].codes[1])}{corridors.length > 1 && <small>+{corridors.length - 1} tied</small>}</> : '—'}</strong>
+        <span className="atlas-network-stat-label">Top pair</span>
+        <AnimatePresence initial={false} mode="popLayout"><m.strong key={corridors.map(item => item.codes.join(":")).join(",")} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} title={corridors.map(pair => pair.codes.map(code => areas.get(code)).join(' ↔ ')).join('; ')}>{corridors.length ? <><span className="atlas-network-pair">{country(corridors[0].codes[0])}<span className="atlas-network-pair-arrow">↔</span>{country(corridors[0].codes[1])}</span>{corridors.length > 1 && <small>+{corridors.length - 1} tied</small>}</> : '—'}</m.strong></AnimatePresence>
       </button>
-      <div className="atlas-network-destination">
-        <span className="atlas-network-stat-label">Top movement destination</span>
-        <div className="atlas-network-destination-value">
-          <button disabled={!destinations.length} onClick={() => onReport(records(destinations))} title="Country with the most incoming reported movement links in this selection; link counts do not measure case numbers or vulnerability." aria-label={`Top movement destination: ${destinations.length ? destinations.map(node => `${areas.get(node.code)}, ${node.weight} incoming reported movement links`).join("; ") : "no eligible directed movement links"}. View supporting reports`}>
-            <strong title={destinations.map(node => areas.get(node.code)).join(', ')}>{destinations.length ? <>{country(destinations[0].code)}{destinations.length > 1 && <small>+{destinations.length - 1} tied</small>}</> : '—'}</strong>
-          </button>
-          <AtlasNetworkMethods links={links} release={release} recordIds={recordIds} />
-        </div>
-      </div>
+      <button disabled={!destinations.length} onClick={() => onReport(records(destinations))} title="Country with the most incoming reported movement links in this selection; link counts do not measure case numbers or vulnerability." aria-label={`Top movement destination: ${destinations.length ? destinations.map(node => `${areas.get(node.code)}, ${node.weight} incoming reported movement links`).join("; ") : "no eligible directed movement links"}. View supporting reports`}>
+        <span className="atlas-network-stat-label">Top destination</span>
+        <AnimatePresence initial={false} mode="popLayout"><m.strong key={destinations.map(item => item.code).join(",")} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} title={destinations.map(node => areas.get(node.code)).join(', ')}>{destinations.length ? <>{country(destinations[0].code)}{destinations.length > 1 && <small>+{destinations.length - 1} tied</small>}</> : '—'}</m.strong></AnimatePresence>
+      </button>
     </div>
   </section>;
 }

@@ -1,6 +1,6 @@
 import { SourceQuotation } from "./atlas-source-text";
 import { motion, useReducedMotion } from "motion/react";
-import { memo, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { memo, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction, type ReactNode } from "react";
 import { AtlasScope } from "./atlas-scope";
 import { AtlasDisclosure } from "./atlas-disclosure";
 import { AtlasDetailStatus, useAtlasDetails } from "./atlas-detail";
@@ -70,7 +70,7 @@ export function ObservationHistory({ topicIds, recordIds, onReport }: { topicIds
   </AtlasDisclosure>;
 }
 
-export function ObservationPlot({ items, onReport, series, seriesId }: { seriesId?: string; items: Measure[]; onReport: (ids: string[], expand?: boolean) => void; series?: AtlasReviewedSeries | AtlasBrowserSeries }) {
+export function ObservationPlot({ items, onReport, series, seriesId, evidenceDialog = false, renderLayout }: { evidenceDialog?: boolean; seriesId?: string; items: Measure[]; onReport: (ids: string[], expand?: boolean) => void; series?: AtlasReviewedSeries | AtlasBrowserSeries; renderLayout?: (parts: { caption: ReactNode; plot: ReactNode; details: ReactNode }) => ReactNode }) {
   const reducedMotion = useReducedMotion();
   const transition = { duration: reducedMotion ? 0 : .45, ease: "easeInOut" as const };
   const { ref: chart, size } = useElementSize<SVGSVGElement>();
@@ -80,16 +80,18 @@ export function ObservationPlot({ items, onReport, series, seriesId }: { seriesI
   const [selectionSeries, setSelectionSeries] = useState(seriesId);
   if (selectionSeries !== seriesId) { setSelectionSeries(seriesId); setHovered(null); setFocused(null); }
   const details = useRef<HTMLDivElement>(null);
+  const measuresById = useMemo(() => new Map(items.slice().reverse().map(item => [item.measure_id, item])), [items]);
+  const connectionsById = useMemo(() => new Map(series?.connections.slice().reverse().map(connection => [connection.id, connection])), [series]);
   useEffect(() => {
     details.current?.scrollTo({ top: 0 });
   }, [selection, seriesId]);
   const hoverFigure = (id: string, focus = false) => {
     if (!focus && hovered === id) return;
     if (focus) { setFocused(id); setHovered(null); } else setHovered(id);
-    const connection = series?.connections.find(edge => edge.id === id);
+    const connection = connectionsById.get(id);
     revealAtlasEntries(details.current, connection ? [connection.from_measure_id, connection.to_measure_id] : [id]);
   };
-  const edge = series?.connections.find(e => e.id === selection);
+  const edge = selection ? connectionsById.get(selection) : undefined;
   const selected = items.filter(m => edge ? m.measure_id === edge.from_measure_id || m.measure_id === edge.to_measure_id : m.measure_id === selection);
   const evidenceIds = edge?.evidence_ids ?? series?.members.find(m => m.measure_id === selection)?.evidence_ids ?? [];
   const left = 40, right = (size?.width ?? 0) - 16, bottom = (size?.height ?? 0) - 30;
@@ -102,11 +104,15 @@ export function ObservationPlot({ items, onReport, series, seriesId }: { seriesI
   }, [items, right, bottom, plotHeight]);
   const highlightedEdges = series?.connections.filter(e => e.id === hovered || e.id === focused) ?? [];
   const highlighted = (id: string) => id === hovered || id === focused || highlightedEdges.some(edge => edge.from_measure_id === id || edge.to_measure_id === id);
-  const hoveredMeasure = items.find(m => m.measure_id === hovered);
+  const hoveredMeasure = hovered ? measuresById.get(hovered) : undefined;
   const guide = points.get(hovered ?? focused ?? "");
-  return <figure>
-    <figcaption><strong>{items[0].label}{items[0].unit === "percent" ? " (%)" : ""}</strong><span>{items[0].disease.value} · {items[0].geography.value} · {items[0].count_kind === "interval" ? "Reporting period" : items[0].count_kind === "cumulative" ? "Cumulative" : "Reported values"}</span></figcaption>
-    <div className="atlas-observation-visual">
+  const comparisonEvidence = () => series && <><p>{series.reason}</p>
+        {series.limitations.map(limit => <p key={limit} className="atlas-chart-note">{limit}</p>)}
+        <p className="atlas-chart-note">Source-checked draft · {series.reviewed_by} · {formatDate(series.reviewed_at)}</p>
+        <SeriesEvidence seriesId={series.series_id} evidenceIds={evidenceIds} onReport={onReport} />
+      </>;
+  const caption = <figcaption><strong>{items[0].label}{items[0].unit === "percent" ? " (%)" : ""}</strong><span>{items[0].disease.value} · {items[0].geography.value} · {items[0].count_kind === "interval" ? "Reporting period" : items[0].count_kind === "cumulative" ? "Cumulative" : "Reported values"}</span></figcaption>;
+  const plot = <div className="atlas-observation-visual">
     <svg ref={chart} className="atlas-observation-chart" data-report-ready={Boolean(hoveredMeasure) || undefined} onClick={() => { if (hoveredMeasure) onReport([measureRecord(hoveredMeasure)], true); }} viewBox={size ? `0 0 ${size.width} ${size.height}` : undefined} onPointerLeave={() => setHovered(null)} onPointerMove={event => {
       if (event.pointerType === "touch") return;
       const svg = event.currentTarget, matrix = svg.getScreenCTM();
@@ -126,7 +132,7 @@ export function ObservationPlot({ items, onReport, series, seriesId }: { seriesI
         const a = points.get(connection.from_measure_id)!, b = points.get(connection.to_measure_id)!;
         return <motion.path key={connection.id} className="atlas-observation-connection" data-connection={connection.id} data-highlighted={hovered === connection.id || focused === connection.id || undefined}
           onPointerMove={event => { event.stopPropagation(); hoverFigure(connection.id); }} onFocus={() => hoverFigure(connection.id, true)} onBlur={() => setFocused(current => current === connection.id ? null : current)}
-          initial={reducedMotion ? false : { d: `M${a.x} ${a.y}L${b.x} ${b.y}`, pathLength: 0, opacity: 0 }} animate={{ d: `M${a.x} ${a.y}L${b.x} ${b.y}`, pathLength: 1, opacity: 1 }} transition={transition} role="button" tabIndex={0} aria-label={`Comparison from ${formatDate(items.find(m => m.measure_id === connection.from_measure_id)!.observation_date!)} to ${formatDate(items.find(m => m.measure_id === connection.to_measure_id)!.observation_date!)}`}
+          initial={reducedMotion ? false : { d: `M${a.x} ${a.y}L${b.x} ${b.y}`, pathLength: 0, opacity: 0 }} animate={{ d: `M${a.x} ${a.y}L${b.x} ${b.y}`, pathLength: 1, opacity: 1 }} transition={transition} role="button" tabIndex={0} aria-label={`Comparison from ${formatDate(measuresById.get(connection.from_measure_id)!.observation_date!)} to ${formatDate(measuresById.get(connection.to_measure_id)!.observation_date!)}`}
           aria-pressed={selection === connection.id} onClick={event => { event.stopPropagation(); setSelection(connection.id); }} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelection(connection.id); } }} />;
       })}
       {items.map(m => <motion.circle key={m.measure_id} initial={reducedMotion ? false : { cx: points.get(m.measure_id)!.x, cy: points.get(m.measure_id)!.y, opacity: 0, r: 0 }} animate={{ cx: points.get(m.measure_id)!.x, cy: points.get(m.measure_id)!.y, r: 5, opacity: 1 }} transition={transition} data-conflict={Boolean(m.conflict_set)} data-highlighted={highlighted(m.measure_id) || undefined}
@@ -137,19 +143,16 @@ export function ObservationPlot({ items, onReport, series, seriesId }: { seriesI
       <text x={left} y={size.height - 8}>{formatDate(new Date(from).toISOString())}</text><text x={right} y={size.height - 8} textAnchor="end">{formatDate(new Date(to).toISOString())}</text>
       </>}
     </svg>
-    </div>
-    <motion.div key={seriesId} ref={details} initial={reducedMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={transition} className="atlas-observation-details" role="region" aria-label="Observation details" tabIndex={0}>
+    </div>;
+  const sourceDetails = <motion.div key={seriesId} ref={details} initial={reducedMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={transition} className="atlas-observation-details" role="region" aria-label="Observation details" tabIndex={0}>
     {series && selected.length > 0 && <div className="atlas-observation-selection" aria-label="Selected observation evidence">
       {selected.map(m => <ObservationRow key={m.measure_id} measure={m} onReport={onReport} highlighted={highlighted(m.measure_id)} onHover={setHovered} onFocus={setFocused} publication />)}
-      <AtlasDisclosure unmountOnClose summary={<summary>Comparison method & evidence</summary>}>{() => <><p>{series.reason}</p>
-        {series.limitations.map(limit => <p key={limit} className="atlas-chart-note">{limit}</p>)}
-        <p className="atlas-chart-note">Source-checked draft · {series.reviewed_by} · {formatDate(series.reviewed_at)}</p>
-        <SeriesEvidence seriesId={series.series_id} evidenceIds={evidenceIds} onReport={onReport} />
-      </>}</AtlasDisclosure>
+      {evidenceDialog ? <AtlasScope label="Comparison method & evidence" title={series.label} buttonLabel="Comparison evidence">{comparisonEvidence}</AtlasScope>
+        : <AtlasDisclosure unmountOnClose summary={<summary>Comparison method & evidence</summary>}>{comparisonEvidence}</AtlasDisclosure>}
     </div>}
     <div className="atlas-observation-values" role="group" aria-label="Values & sources">{items.filter(m => !selected.includes(m)).map(m => <ObservationRow key={m.measure_id} measure={m} onReport={onReport} highlighted={highlighted(m.measure_id)} onHover={setHovered} onFocus={setFocused} />)}</div>
-    </motion.div>
-  </figure>;
+    </motion.div>;
+  return renderLayout ? renderLayout({ caption, plot, details: sourceDetails }) : <figure>{caption}{plot}{sourceDetails}</figure>;
 }
 
 

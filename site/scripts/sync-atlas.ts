@@ -1,3 +1,4 @@
+import { createAtlasPublicReader } from "./atlas-public-reader";
 import { requireCurrentPresentation } from "./publish-atlas-presentation";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -13,7 +14,7 @@ import { releaseSchema, verifiedBytes, releaseRoot, type AtlasRelease } from "..
 import type { AtlasPublicationHandoff, AtlasFileReference, AtlasExportReference } from "../src/lib/atlas-vendor/site-types";
 import { validateAtlas } from "./validate-atlas-metrics";
 import { prepareBrowserCandidate, stageBrowserAsset } from "./publish-atlas-browser";
-import { supplementPublicationSchema, prepareSourceSupplement, requireCurrentSourceSupplement, verifyPublishedSourceSupplement } from "./publish-atlas-supplement";
+import { supplementPublicationSchema, prepareSourceSupplement, requireDatedReportRelease, verifyPublishedSourceSupplement } from "./publish-atlas-supplement";
 
 const site = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const hash = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
@@ -32,8 +33,8 @@ export function checkCorrectionTarget(replaces: string, existing: AtlasRelease |
   assert.equal(existing.export_id, replaces, "Correction authorization does not match the published release");
 }
 export function requireSyncAttachments(current: AtlasRelease | null, candidate: AtlasRelease, stageOnly: boolean) {
+  requireDatedReportRelease(candidate);
   if (!current || stageOnly) return;
-  requireCurrentSourceSupplement(current, candidate);
   requireCurrentPresentation(current, candidate);
 }
 export function weeklyCycle(today = new Date()) {
@@ -68,8 +69,8 @@ async function checkedFile(ref: AtlasFileReference) {
   assert.equal(hash(bytes), ref.sha256, ref.path);
   return bytes;
 }
-async function currentRelease() {
-  const response = await fetch(`${hosting.origin}/current.json`, { cache: "no-cache" });
+async function currentRelease(read: (key: string) => Promise<Response>) {
+  const response = await read("current.json");
   if (response.status === 404) return null;
   assert(response.ok, `Cannot read published release: ${response.status}`);
   return releaseSchema.parse(await response.json());
@@ -82,6 +83,12 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
   const lock = resolve(cache, "lock");
   await mkdir(lock);
   try {
+    const pacedRead = createAtlasPublicReader(readIntervalMs);
+    const read = async (key: string) => {
+      const response = await pacedRead(key);
+      assert(response.status !== 429, `Public asset verification hit the read limit; Retry-After=${response.headers.get("Retry-After") ?? "unspecified"}. Check current.json before continuing.`);
+      return response;
+    };
     const handoffPath = resolve(cache, "handoff.json");
     const correction = async () => {
       const bytes = await readFile(correctionPath!);
@@ -98,6 +105,7 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
       return JSON.parse(await readFile(handoffPath, "utf8")) as AtlasPublicationHandoff;
     };
     const first = correctionPath ? await correction() : await handoff();
+    if ("export" in first) assert(!first.source_supplement, "Public handoffs exclude undated source supplements and collections");
     if ("export" in first && (first.network || first.intelligence)) assert(stageOnly, "A release with network or Intelligence assets must stage the base first; activate its complete descriptor through publish-atlas-intelligence");
     const candidate = "export" in first ? first.export : publicationCandidate(first, cycle, initial);
     if (!candidate) { console.log(JSON.stringify({ status: "not_ready", cycle, reasons: "blocking_reasons" in first ? first.blocking_reasons : [] })); return; }
@@ -109,7 +117,7 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
     const bundleBytes = await checkedFile(candidate.structured_data);
     const mapBytes = await checkedFile(candidate.map_snapshot);
     const { bundle } = validateAtlas(candidate.bundle_path, candidate.map_snapshot_path);
-    const existing = await currentRelease();
+    const existing = await currentRelease(read);
     if (existing?.export_id === candidate.export_id) {
       if ("export" in first && first.source_supplement) {
         const supplement = await prepareSourceSupplement(first.source_supplement, existing);
@@ -154,21 +162,12 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
       const path = resolve(cache, name + ".gz");
       await writeFile(path, gzipSync(bytes, { level: 9 }));
       put(`releases/${release.export_id}/${name}.gz`, path, true);
-      await verifiedBytes(await fetch(`${releaseRoot(release)}/${name}`, { cache: "no-cache" }), release.assets[name as keyof typeof assets]);
+      await verifiedBytes(await read(`releases/${release.export_id}/${name}`), release.assets[name as keyof typeof assets]);
     }
-    let lastRead = 0;
-    const readBrowserAsset = async (key: string) => {
-      const wait = readIntervalMs - (Date.now() - lastRead);
-      if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
-      lastRead = Date.now();
-      const response = await fetch(`${hosting.origin}/${key}`, { cache: "no-cache" });
-      assert(response.status !== 429, `Browser asset verification hit the public read limit; Retry-After=${response.headers.get("Retry-After") ?? "unspecified"}. The published release has not changed.`);
-      return response;
-    };
-    for (const ref of browser.files) await stageBrowserAsset(ref.key, await checkedFile(ref), browserDirectory, readBrowserAsset, put);
+    for (const ref of browser.files) await stageBrowserAsset(ref.key, await checkedFile(ref), browserDirectory, read, put);
     if (supplement) {
-      for (const ref of supplement.files) await stageBrowserAsset(ref.key, await checkedFile(ref), browserDirectory, readBrowserAsset, put);
-      await verifyPublishedSourceSupplement(release, readBrowserAsset);
+      for (const ref of supplement.files) await stageBrowserAsset(ref.key, await checkedFile(ref), browserDirectory, read, put);
+      await verifyPublishedSourceSupplement(release, read);
       await writeFile(resolve(cache, `supplement-staged-${supplement.descriptor.sha256}.json`), JSON.stringify({
         status: "verified", export_id: release.export_id, descriptor: supplement.descriptor, authorization_sha256: "export" in first ? first.authorization_sha256 : null, public_files: supplement.files.map(ref => ref.key), activation: "pending",
       }, null, 2));
@@ -184,7 +183,7 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
       assert.deepEqual(final.jobs, first.jobs, "Weekly receipts changed during upload");
     }
     if (supplementAuthorization) await prepareSourceSupplement(supplementAuthorization, release);
-    assert.deepEqual(await currentRelease(), existing, "Published release changed during upload");
+    assert.deepEqual(await currentRelease(read), existing, "Published release changed during upload");
     const releasePath = resolve(cache, "current.json");
     await writeFile(releasePath, JSON.stringify(release));
     if (stageOnly) {
@@ -193,7 +192,7 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
       return;
     }
     put("current.json", releasePath, false);
-    assert.deepEqual(await currentRelease(), release);
+    assert.deepEqual(await currentRelease(read), release);
     await writeFile(resolve(cache, `${correctionPath ? `correction-${release.export_id}` : initial ? "initial" : cycle}.json`), JSON.stringify({ release, handoff: final, browser_handoff: browserReference }, null, 2));
     console.log(JSON.stringify({ status: "published", mode: correctionPath ? "correction" : release.mode, cycle: release.cycle, export_id: release.export_id, url: hosting.origin }));
   } finally { await rm(lock, { recursive: true }); }

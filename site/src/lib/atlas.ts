@@ -83,11 +83,11 @@ export function createAtlas<S extends AtlasMap, B extends AtlasData>(snapshot: S
     }));
   }
   function dateBounds(basis: DateBasis) {
-    const dates = atlas.records.map(r => r[basis].slice(0, 10)).sort();
+    const dates = atlas.records.filter(r => r.publication).map(r => r[basis].slice(0, 10)).sort();
     return [dates[0], dates[dates.length - 1]] as const;
   }
   function windowRecords(from: string, until: string, basis: DateBasis) {
-    return atlas.records.filter(r => from <= r[basis].slice(0, 10) && r[basis].slice(0, 10) <= until);
+    return atlas.records.filter(r => r.publication && from <= r[basis].slice(0, 10) && r[basis].slice(0, 10) <= until);
   }
   function reportDocuments(rows: AtlasRecord[], basis: DateBasis, topic: string | string[] = "", source: string | string[] = "") {
     const topics = new Set(topicIds(topic));

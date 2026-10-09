@@ -1,6 +1,37 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { fitChainMap, chainLandDots, chainBadgePosition, chainEdgeGeometry, chainMapTransform } from "../src/lib/atlas-chain-map";
+import { fitChainMap, chainLandDots, chainBadgePosition, chainEdgeGeometry, chainMapTransform, chainCurveBounds, placeChainInset, chainTimeConnector } from "../src/lib/atlas-chain-map";
+
+test("Timing connectors descend before turning right and retain space around event markers", () => {
+  for (const gap of [0, 4, 20, 24, 30, 200]) {
+    const path = chainTimeConnector({ x: 30, y: 22 }, { x: 30 + gap, y: 66 });
+    assert(path.startsWith('M30 36L30 '));
+    assert(path.endsWith(`L${30 + gap - 16} 66`));
+    assert(!/NaN|Infinity/.test(path));
+    const coordinates = [...path.matchAll(/[MLQ]([^MLQ]+)/g)].flatMap(match => match[1].split(' ').map(Number));
+    for (let i = 1; i < coordinates.length; i += 2) assert(coordinates[i] >= 36 && coordinates[i] <= 66);
+  }
+});
+
+test("Unlocated insets exhaust the corners and keep clear of occupied geometry", () => {
+  const size = { width: 110, height: 96 };
+  const corners = [{ x: 380, y: 10 }, { x: 10, y: 10 }, { x: 380, y: 294 }, { x: 10, y: 294 }];
+  for (const free of corners) {
+    const obstacles = corners.filter(corner => corner !== free).map(corner => ({ ...corner, ...size }));
+    assert.deepEqual(placeChainInset(500, 400, size, obstacles), { ...free, ...size });
+  }
+  assert.deepEqual(placeChainInset(500, 400, size, []), { ...corners[0], ...size });
+  const bounds = chainCurveBounds({ start: { x: 0, y: 0 }, control: { x: 100, y: 200 }, end: { x: 200, y: 0 } });
+  assert.deepEqual(bounds, { x: -10, y: -10, width: 220, height: 120 });
+  const straight = chainCurveBounds({ start: { x: 20, y: 20 }, control: { x: 30, y: 30 }, end: { x: 40, y: 40 } });
+  assert.deepEqual(straight, { x: 10, y: 10, width: 40, height: 40 });
+  const inset = placeChainInset(500, 400, size, [bounds]);
+  assert(inset.x >= bounds.x + bounds.width || inset.y >= bounds.y + bounds.height);
+  for (const outgoing of [true, false]) {
+    const connected = placeChainInset(500, 400, size, [], [{ located: { x: 250, y: 200 }, offset: { x: 55, y: 61 }, outgoing }]);
+    assert.equal(connected.y, 10, "Connections enter below the inset heading");
+  }
+});
 
 test("Chain extents fit regions, date-line crossings and coincident reference points", () => {
   for (const points of [

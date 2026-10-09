@@ -1,12 +1,15 @@
 "use client";
+import { AnimatePresence, motion as m } from "motion/react";
 import { SourceQuotation } from "./atlas-source-text";
 import { memo, useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { ArrowUp, ArrowDown, ArrowUpDown, RotateCcw, ArrowRight, ChevronDown, ExternalLink, FileText, Network, Grid2X2, Rows3, BookOpen, Check, SlidersHorizontal, Activity, CalendarDays, Microscope, Info, TriangleAlert, UserRound, PawPrint, Leaf, Wheat, CircleHelp, MapPin } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, RotateCcw, ArrowRight, ChevronDown, ChevronsDown, ChevronsLeft, ChevronsRight, ExternalLink, FileText, Network, Grid2X2, Rows3, BookOpen, Check, Activity, CalendarDays, Microscope, Info, TriangleAlert, UserRound, PawPrint, Leaf, Wheat, CircleHelp, MapPin } from "lucide-react";
 import { createPortal } from "react-dom";
 import { ReportPagination } from "./atlas-pagination";
 import { revealAtlasEntries } from "@/lib/atlas-detail-scroll";
 import { useAtlas, useAtlasPanelState } from "./atlas-context";
+import { useAtlasContentMotion } from "./use-atlas-content-motion";
 import { useElementSize } from "./use-element-size";
+import { AtlasEntryFilters } from "./atlas-entry-filters";
 import { AtlasScope } from "./atlas-scope";
 import { AtlasDetailStatus, useAtlasDetails } from "./atlas-detail";
 import { AtlasDisclosure } from "./atlas-disclosure";
@@ -22,7 +25,7 @@ import type { AtlasOneHealthNode as Node, AtlasOneHealthDomain as Domain, AtlasS
 import type { AtlasDetailRef } from "@/lib/atlas-browser";
 
 type HealthMode = "network" | "evidence" | "overview" | "timeline" | "sampling" | "environment";
-const panelModes = [...healthViews.slice(0,2),{value:"overview" as const,label:"Overview"},...healthViews.slice(2)];
+const panelModes = [...healthViews,{value:"overview" as const,label:"Overview"}];
 type Relation = AtlasSelectedOneHealth["relations"][number];
 const domains: { id: Domain; label: string }[] = [{ id: "human", label: "People" }, { id: "animal", label: "Animals" }, { id: "environment", label: "Environment" }, { id: "food", label: "Food & commodities" }, { id: "unknown", label: "Unknown" }];
 const findings: Record<Node["finding"], string> = { infection_reported: "Infection reported", illness_reported: "Illness reported", agent_detected: "Detected", agent_not_detected: "Not detected in sampled material", exposure_reported: "Exposure reported", movement_reported: "Movement reported", context: "Context reported", unresolved: "Under investigation" };
@@ -32,26 +35,21 @@ const dateLabel = (node: Node | Relation) => node.observation_date.value ? forma
 
 export const AtlasOneHealth = memo(function AtlasOneHealth({ rows, onReport, footerTarget, mergedTimeline = false, initialReport = "" }: { mergedTimeline?: boolean; initialReport?: string; footerTarget: HTMLElement | null; rows: AtlasRecord[]; onReport: (ids: string[], expand?: boolean) => void }) {
   const { bundle, selectedOneHealth, atlasDocuments, englishTitle } = useAtlas();
+  const content = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useAtlasPanelState<HealthMode>("health.mode", "network");
   const [report, setReport] = useAtlasPanelState("health.report", initialReport);
   const [selection, setSelection] = useAtlasPanelState("health.selection", "");
   const [hover, setHover] = useState({report:"",id:""});
   const main=useRef<HTMLDivElement>(null);
   const figure=useRef<HTMLDivElement>(null);
+  const networkId=useId();
+  const [networkEdges,setNetworkEdges]=useState({down:false,left:false,right:false});
   const nodeEntries=useRef<HTMLDivElement>(null);
   const relationEntries=useRef<HTMLDivElement>(null);
   const [entryFilters,setEntryFilters]=useAtlasPanelState<string[]>("health.filters", []);
+  useAtlasContentMotion(content, mode);
   const [overviewTools,setOverviewTools]=useState<HTMLDivElement|null>(null);
-  const entryFilterMenu=useRef<HTMLDetailsElement>(null);
   const detail = useRef<HTMLElement>(null);
-  useEffect(() => {
-    const close = (event: PointerEvent) => {
-      const menu=entryFilterMenu.current;
-      if (menu && !menu.contains(event.target as globalThis.Node)) menu.open = false;
-    };
-    document.addEventListener("pointerdown", close);
-    return () => document.removeEventListener("pointerdown", close);
-  }, []);
   useEffect(() => { detail.current?.scrollTo({ top: 0 }); }, [selection, report]);
   const ids = useMemo(() => new Set(rows.map(row => row.id)), [rows]);
   const view = useMemo(() => selectedOneHealth(ids), [ids, selectedOneHealth]);
@@ -83,6 +81,26 @@ export const AtlasOneHealth = memo(function AtlasOneHealth({ rows, onReport, foo
       relations:view?.relations.filter(r=>selectedIds?.has(r.from_node_id)&&selectedIds.has(r.to_node_id)) ?? [],
       diagramNodes:nodes.filter(n=>n.scope!=="background"), surveillance:nodes.filter(n=>n.scope==="surveillance") };
   },[view,selectedIds]);
+  useEffect(()=>{
+    const element=figure.current;
+    if (!element || mode!=="network") return;
+    const update=()=>{
+      const down=Math.ceil(element.scrollTop)<element.scrollHeight-element.clientHeight;
+      const left=element.scrollLeft>0;
+      const right=Math.ceil(element.scrollLeft)<element.scrollWidth-element.clientWidth;
+      setNetworkEdges(current=>current.down===down && current.left===left && current.right===right ? current : {down,left,right});
+    };
+    const observer=new ResizeObserver(update);
+    observer.observe(element);
+    if (element.firstElementChild) observer.observe(element.firstElementChild);
+    element.addEventListener("scroll",update,{passive:true});
+    update();
+    return ()=>{observer.disconnect();element.removeEventListener("scroll",update);};
+  },[diagramNodes,mode]);
+  function scrollNetwork(direction:"down"|"left"|"right") {
+    const element=figure.current;
+    if (element) element.scrollBy({top:direction==="down" ? element.clientHeight : 0,left:direction==="down" ? 0 : element.clientWidth*(direction==="left" ? -1 : 1),behavior:matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth"});
+  }
   const reportItems=useMemo<AtlasSelectItem[]>(()=>{
     const views=healthViews.filter(v=>(!mergedTimeline || v.value!=="environment"));
     const labels = new Map<string, number>();
@@ -112,34 +130,32 @@ export const AtlasOneHealth = memo(function AtlasOneHealth({ rows, onReport, foo
   const selected = mode === "evidence" ? relations.find(r => r.id === selection) ?? relations[0] : items.find(n => n.id === selection) ?? relations.find(r => r.id === selection) ?? items[0];
   const review = view.reviews.find(r => r.record_id === current?.id);
   const reviewHelp = review && current && <AtlasScope label="Review scope" title={englishTitle(current.document)}><p>{words(review.outcome)} review</p><p>{review.scope}</p><p>{review.reason}</p>{!relations.some(r=>r.kind==="cross_species_transmission") && <p>No supported cross-species transmission relationship in this selection.</p>}<ul>{review.pending_items.map(item=><li key={item}>{item}</li>)}</ul></AtlasScope>;
-  return <section className="atlas-one-health" aria-label="One Health evidence" onKeyDown={event => {
-    if (event.key !== "Escape") return;
-    const menu=entryFilterMenu.current;
-    if (menu?.open && menu.contains(event.target as globalThis.Node)) { event.stopPropagation(); menu.open = false; menu.querySelector("summary")?.focus(); }
-  }}>
+  return <section className="atlas-one-health" aria-label="One Health evidence">
     <h2 className="sr-only">One Health evidence</h2>
     <div className="atlas-oh-tools atlas-entry-tools atlas-panel-tools"><div className="atlas-oh-view-select"><AtlasSelect label="One Health view" summaryLabel={<span className="atlas-oh-mode-label"><ModeIcon size={14} aria-hidden /><span>{modeItems.find(item => item.value === mode)?.label}</span></span>} value={mode} items={modeItems} onChange={value=>setMode(value as HealthMode)} /></div>
     {mode !== "overview" && current && <AtlasSelect label="One Health report" searchable value={current.id} onChange={selectReport} items={reportItems} />}
     {mode === "overview" && <div ref={setOverviewTools} className="atlas-oh-overview-tools" />}
-    <details ref={entryFilterMenu} className="atlas-oh-entry-filters"><summary aria-label={`Filter One Health entries${entryFilters.length ? `: ${entryFilters.length} active` : ''}`} title="Filter entries"><SlidersHorizontal size={16} aria-hidden />{entryFilters.length>0 && <b>{entryFilters.length}</b>}</summary>
-      <div className="atlas-oh-filter-menu"><header><strong>Find entries</strong><span aria-live="polite">{matching.length} / {reports.length}</span><button type="button" disabled={!entryFilters.length} onClick={()=>setEntryFilters([])}>Clear</button></header>
-        <p>Matches any choice within a group; all selected features. Each entry keeps its full evidence.</p>
-        {[{label:'Content available',items:healthViews.filter(v=>(!mergedTimeline || v.value!=="environment")).map(v=>({value:`view:${v.value}`,label:v.label}))},
-          {label:'Includes domain',items:domains.map(d=>({value:`domain:${d.id}`,label:d.label}))},
-          {label:'Features',items:[...[{value:'feature:dated',label:'Dated panel evidence'},{value:'feature:fraction',label:'Reviewed sample fraction'}],{value:'feature:negative',label:'Negative findings'},{value:'feature:hypothesis',label:'Source hypothesis'}]},
-        ].map(group=><fieldset key={group.label}><legend>{group.label}</legend>{group.items.map(item=><label key={item.value}><input type="checkbox" checked={entryFilters.includes(item.value)} onChange={()=>setEntryFilters(prev=>prev.includes(item.value)?prev.filter(v=>v!==item.value):[...prev,item.value])} />{item.label}</label>)}</fieldset>)}
-      </div>
-    </details></div>
+    <AtlasEntryFilters label="Filter One Health entries" value={entryFilters} onChange={setEntryFilters} count={matching.length} total={reports.length} groups={[
+      { label: "Content available", match: "any", items: healthViews.filter(v => !mergedTimeline || v.value !== "environment").map(v => ({ value: `view:${v.value}`, label: v.label })) },
+      { label: "Includes domain", match: "any", items: domains.map(d => ({ value: `domain:${d.id}`, label: d.label })) },
+      { label: "Features", match: "all", items: [
+        { value: "feature:dated", label: "Dated panel evidence" }, { value: "feature:fraction", label: "Reviewed sample fraction" },
+        { value: "feature:negative", label: "Negative findings" }, { value: "feature:hypothesis", label: "Source hypothesis" },
+      ] },
+    ]} /></div>
     {footerTarget && createPortal(<div className="atlas-view-about"><AtlasScope buttonLabel="About One Health" label="Figure methods & references" title="One Health evidence"><HealthMethods /></AtlasScope></div>, footerTarget)}
+    <div ref={content} className="atlas-oh-content">
     {mode === "overview" ? <HealthOverview toolsTarget={overviewTools} footerTarget={footerTarget} rows={overviewRows} view={view} onOpen={(id,nodeId)=>{setReport(id);setSelection(nodeId ?? "");setMode("network");}} onReport={onReport} /> : current && (mode === "timeline" || mode === "sampling" || mode === "environment") ? <AtlasHealthPanels mergedTimeline={mergedTimeline} key={`${mode}:${current.id}`} mode={mode} view={view} reportId={current.id} nodeIds={selectedIds ?? new Set<string>()} onReport={onReport} /> : current ? <>
       <div className="atlas-oh-layout" data-view={mode}>
         <div ref={main} className="atlas-oh-main">
           <div className="atlas-oh-figure">
-            {mode === "evidence" ? <HealthEvidence relations={relations} selected={selected?.id} onSelect={setSelection} reviewHelp={reviewHelp} /> : <div ref={figure} className="atlas-oh-network"><HealthLanes key={current.id} nodes={diagramNodes} relations={relations} selected={selected?.id} highlighted={highlighted} onHover={id=>highlight(id,true)} onLeave={clearHighlight} onSelect={id=>select(id,true)} /></div>}
+            {mode === "evidence" ? <HealthEvidence relations={relations} selected={selected?.id} onSelect={setSelection} reviewHelp={reviewHelp} /> : <div className="atlas-oh-network-frame"><div ref={figure} id={networkId} className="atlas-oh-network" role="region" aria-label="One Health network diagram" tabIndex={0}><HealthLanes nodes={diagramNodes} relations={relations} selected={selected?.id} highlighted={highlighted} onHover={id=>highlight(id,true)} onLeave={clearHighlight} onSelect={id=>select(id,true)} /></div>
+              {([{direction:"down",label:"More network observations below",Icon:ChevronsDown},{direction:"left",label:"Scroll network left",Icon:ChevronsLeft},{direction:"right",label:"Scroll network right",Icon:ChevronsRight}] as const).map(({direction,label,Icon})=><button key={direction} className="atlas-scroll-cue" data-direction={direction} data-more={networkEdges[direction]} tabIndex={networkEdges[direction] ? 0 : -1} aria-hidden={!networkEdges[direction]} aria-label={label} title={label} aria-controls={networkId} onClick={()=>scrollNetwork(direction)}><Icon size={18} aria-hidden /></button>)}
+            </div>}
             {mode === "network" && <div className="atlas-oh-key">{[...new Set(relations.filter(r=>r.basis!=="source_hypothesis").map(r=>r.kind))].map(kind=><span key={kind}><i data-kind={kind==="genomic_association"?"genomic":undefined} />{relationLabels[kind]}</span>)}{relations.some(r=>r.basis==="source_hypothesis") && <span><i data-kind="hypothesis" />Source hypothesis</span>}{relations.some(r=>r.directed) && <span>→ Source-supported direction</span>}</div>}
           </div>
           {mode === "network" && <><section className="atlas-oh-observations" aria-label="Observation list">
-            <div className="atlas-oh-list-title"><h4><FileText size={14} aria-hidden />Observation list</h4>{reviewHelp}</div>
+            <div className="atlas-oh-list-title"><h3><FileText size={14} aria-hidden />Observation list</h3>{reviewHelp}</div>
             <div className="atlas-oh-entry-panels">
               <section aria-label="Observation nodes"><div ref={nodeEntries} className="atlas-oh-node-entries"><HealthObservationList nodes={items} networkNodes={diagramNodes} selected={selected?.id} highlighted={highlighted} onHover={highlight} onLeave={clearHighlight} onSelect={select} /><SurveillancePanels nodes={surveillance} /></div></section>
               <section aria-label="Observation connections">
@@ -159,6 +175,7 @@ export const AtlasOneHealth = memo(function AtlasOneHealth({ rows, onReport, foo
         <aside ref={detail} className="atlas-oh-detail" aria-label="One Health source details">{selected ? <HealthDetails key={selected.id} item={selected} nodes={items} onReport={onReport} /> : <p>No eligible observations. Try another report or filter.</p>}</aside>
       </div>
     </> : <p className="atlas-empty">{entryFilters.length ? "No entries match these filters. Clear the entry filters or choose another combination." : "No One Health observations within these reporting filters. Unreviewed entries are not evidence of absence."}</p>}
+    </div>
   </section>;
 });
 
@@ -171,10 +188,10 @@ const evidenceTypes: Record<Relation["evidence_types"][number], string> = {
 function HealthEvidence({relations,selected,onSelect,reviewHelp}:{relations:Relation[];selected?:string;onSelect:(id:string)=>void;reviewHelp:ReactNode}) {
   const types = (Object.keys(evidenceTypes) as Relation["evidence_types"]).filter(type=>relations.some(r=>r.evidence_types.includes(type)));
   if (!relations.length) return <p className="atlas-empty">No reviewed relationships in this selection. Observations alone do not establish a connection.</p>;
-  return <><div className="atlas-oh-table atlas-oh-matrix"><table><caption className="sr-only">Relationship evidence types</caption><thead><tr><th scope="col"><div className="atlas-oh-relationship-heading">Relationship{reviewHelp}</div></th>{types.map(type=><th scope="col" key={type} title={words(type)}>{evidenceTypes[type]}</th>)}</tr></thead><tbody>{relations.map(r=><tr key={r.id} data-selected={selected===r.id} onClick={()=>onSelect(r.id)}>
+  return <div className="atlas-oh-table atlas-oh-matrix"><table><caption className="sr-only">Relationship evidence types</caption><thead><tr><th scope="col"><div className="atlas-oh-relationship-heading">Relationship{reviewHelp}</div></th>{types.map(type=><th scope="col" key={type} title={words(type)}>{evidenceTypes[type]}</th>)}</tr></thead><tbody>{relations.map(r=><tr key={r.id} data-selected={selected===r.id} onClick={()=>onSelect(r.id)}>
       <th scope="row"><button aria-pressed={selected===r.id}>{r.label}</button><div className="atlas-oh-relationship-badges"><span className="atlas-oh-list-finding"><Network size={12} aria-hidden />{relationLabels[r.kind]}</span><span className="atlas-select-badge" data-caution={r.basis === "source_hypothesis" || undefined}>{r.basis === "source_hypothesis" ? <CircleHelp size={12} aria-hidden /> : <FileText size={12} aria-hidden />}{r.basis === "source_hypothesis" ? "Source hypothesis" : "Source reported"}</span>{r.contested && <span className="atlas-select-badge" data-caution="true"><TriangleAlert size={12} aria-hidden />Contested</span>}</div></th>
       {types.map(type=><td key={type}>{r.evidence_types.includes(type) ? <button className="atlas-oh-cited" aria-label={`${evidenceTypes[type]} cited for ${r.label}`} aria-pressed={selected===r.id}><Check size={16} aria-hidden /><span>Cited</span></button> : <span aria-label="Evidence type not recorded">—</span>}</td>)}
-    </tr>)}</tbody></table></div><p className="atlas-oh-note">Columns show types cited in this selection. — means this type is not recorded for the relationship, not a negative result. Quotations are linked to the relationship as a whole, not to individual cells.</p></>;
+    </tr>)}</tbody></table></div>;
 }
 
 function HealthOverview({rows,view,onOpen,onReport,footerTarget,toolsTarget}:{toolsTarget:HTMLElement|null;rows:AtlasRecord[];view:AtlasSelectedOneHealth;onOpen:(id:string,nodeId?:string)=>void;onReport:(ids:string[],expand?:boolean)=>void;footerTarget:HTMLElement|null}) {
@@ -256,24 +273,24 @@ function HealthLanes({ nodes, relations, selected, highlighted, onHover, onLeave
   const related = new Set(activeRelation ? [activeRelation.from_node_id,activeRelation.to_node_id] : [active]);
   if (!activeRelation) for (const r of relations) if(r.from_node_id===active || r.to_node_id===active) { related.add(r.from_node_id);related.add(r.to_node_id); }
   if (!nodes.length) return <p className="atlas-empty">No episode or surveillance observations in this selection. Background context remains in the observation list.</p>;
-  return <svg ref={ref} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMinYMin meet" style={{"--atlas-network-min-width":`${minimumWidth}px`} as CSSProperties} role="group" aria-label="One Health evidence network" onPointerLeave={onLeave}>
+  return <m.svg ref={ref} initial={false} animate={{ viewBox: `0 0 ${width} ${height}` }} preserveAspectRatio="xMinYMin meet" style={{"--atlas-network-min-width":`${minimumWidth}px`} as CSSProperties} role="group" aria-label="One Health evidence network" onPointerLeave={onLeave}>
     <defs><marker id={arrow} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10" fill="none" stroke="currentColor" /></marker></defs>
-    {columns.map(column=>{const domain=lanes.find(d=>d.id===column.id)!;const Icon=domainIcons[domain.id];return <g key={column.id} className="atlas-oh-lane-group" data-domain={column.id}><rect x={column.x} y="0" width={column.width} height={height} rx="12" className="atlas-oh-lane" /><foreignObject x={column.x} y="4" width={column.width} height="36"><div className="atlas-oh-lane-title" data-compact={column.width < 120}><Icon size={14} aria-hidden />{column.id === "food" ? "Food" : domain.label}</div></foreignObject></g>;})}
-    {relations.map(r=>{const path=paths.get(r.id);if(!path)return null;return <g key={r.id} data-entry-id={r.id} data-highlighted={highlighted===r.id} role="button" tabIndex={0} aria-label={`${r.label}. ${words(r.kind)}${r.contested ? '. Contested' : ''}`} onClick={()=>onSelect(r.id)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onSelect(r.id);}}} onPointerEnter={()=>onHover(r.id)} onPointerLeave={onLeave} onFocus={()=>onHover(r.id)} onBlur={onLeave} className="atlas-oh-edge" data-dimmed={!!active && !(r.id===active || r.from_node_id===active || r.to_node_id===active)} data-kind={r.kind} data-basis={r.basis} data-selected={selected===r.id} aria-pressed={selected===r.id}><path d={path} stroke="transparent" strokeWidth="12" fill="none" /><path className="atlas-oh-edge-clearance" d={path} /><path className="atlas-oh-edge-line" d={path} markerEnd={r.directed?`url(#${arrow})`:undefined} /></g>;})}
-    {nodes.map((n, index)=>{const p=points.get(n.id)!;return <g key={n.id} data-entry-id={n.id} data-highlighted={highlighted===n.id} role="button" tabIndex={0} aria-label={n.label} onPointerEnter={()=>onHover(n.id)} onPointerLeave={onLeave} onFocus={()=>onHover(n.id)} onBlur={onLeave} data-dimmed={!!active && !related.has(n.id)} data-domain={n.domain} data-selected={selected===n.id} aria-pressed={selected===n.id} className="atlas-oh-node" onClick={()=>onSelect(n.id)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onSelect(n.id);}}}>
-        <g transform={`translate(${p.x},${p.y})`}><NodeShape domain={n.domain} /><text textAnchor="middle" y="5" aria-hidden>{index+1}</text></g>
-        <foreignObject x={p.x-p.width/2+4} y={p.y+24} width={p.width-8} height="80"><div className="atlas-oh-node-label"><strong title={n.label}>{n.label}</strong><span data-negative={n.finding === "agent_not_detected"}>{n.finding === "agent_not_detected" ? "Not detected" : findings[n.finding]}</span></div></foreignObject>
-      </g>;})}
-  </svg>;
+    {columns.map(column=>{const domain=lanes.find(d=>d.id===column.id)!;const Icon=domainIcons[domain.id];return <g key={column.id} className="atlas-oh-lane-group" data-domain={column.id}><m.rect initial={false} animate={{ x: column.x, width: column.width, height }} y="0" rx="12" className="atlas-oh-lane" /><m.foreignObject initial={false} animate={{ x: column.x, width: column.width }} y="4" height="36"><div className="atlas-oh-lane-title" data-compact={column.width < 120}><Icon size={14} aria-hidden />{column.id === "food" ? "Food" : domain.label}</div></m.foreignObject></g>;})}
+    <AnimatePresence initial={false}>{relations.map(r=>{const path=paths.get(r.id);if(!path)return null;return <m.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} key={r.id} data-entry-id={r.id} data-highlighted={highlighted===r.id} role="button" tabIndex={0} aria-label={`${r.label}. ${words(r.kind)}${r.contested ? '. Contested' : ''}`} onClick={()=>onSelect(r.id)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onSelect(r.id);}}} onPointerEnter={()=>onHover(r.id)} onPointerLeave={onLeave} onFocus={()=>onHover(r.id)} onBlur={onLeave} className="atlas-oh-edge" data-dimmed={!!active && !(r.id===active || r.from_node_id===active || r.to_node_id===active)} data-kind={r.kind} data-basis={r.basis} data-selected={selected===r.id} aria-pressed={selected===r.id}><m.path initial={false} animate={{ d: path }} stroke="transparent" strokeWidth="12" fill="none" /><m.path initial={false} className="atlas-oh-edge-clearance" animate={{ d: path }} /><m.path initial={false} className="atlas-oh-edge-line" animate={{ d: path }} markerEnd={r.directed?`url(#${arrow})`:undefined} /></m.g>;})}</AnimatePresence>
+    <AnimatePresence initial={false}>{nodes.map((n, index)=>{const p=points.get(n.id)!;return <m.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} key={n.id} data-entry-id={n.id} data-highlighted={highlighted===n.id} role="button" tabIndex={0} aria-label={n.label} onPointerEnter={()=>onHover(n.id)} onPointerLeave={onLeave} onFocus={()=>onHover(n.id)} onBlur={onLeave} data-dimmed={!!active && !related.has(n.id)} data-domain={n.domain} data-selected={selected===n.id} aria-pressed={selected===n.id} className="atlas-oh-node" onClick={()=>onSelect(n.id)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onSelect(n.id);}}}>
+        <m.g initial={false} animate={{ x: p.x, y: p.y }}><NodeShape domain={n.domain} /><text textAnchor="middle" y="5" aria-hidden>{index+1}</text></m.g>
+        <m.foreignObject initial={false} animate={{ x: p.x-p.width/2+4, y: p.y+24, width: p.width-8 }} height="80"><div className="atlas-oh-node-label"><strong title={n.label}>{n.label}</strong><span data-negative={n.finding === "agent_not_detected"}>{n.finding === "agent_not_detected" ? "Not detected" : findings[n.finding]}</span></div></m.foreignObject>
+      </m.g>;})}</AnimatePresence>
+  </m.svg>;
 }
 
 const domainIcons = { human: UserRound, animal: PawPrint, environment: Leaf, food: Wheat, unknown: CircleHelp };
 function NodeShape({domain}:{domain:Domain}) {return domain==='human'?<circle r="17" />:domain==='environment'?<path d="M0-20L20 0L0 20L-20 0Z" />:<rect x="-17" y="-17" width="34" height="34" rx={domain==='animal'?8:domain==='unknown'?17:1} />;}
 function HealthObservationList({ nodes, networkNodes, selected, highlighted, onHover, onLeave, onSelect }: { nodes: Node[]; networkNodes: Node[] } & HealthInteractions) {
-  return <ul className="atlas-oh-observation-list" aria-label="One Health observations">{nodes.map(node => {
+  return <ul className="atlas-oh-observation-list" aria-label="One Health observations"><AnimatePresence initial={false} mode="popLayout">{nodes.map(node => {
     const index = networkNodes.findIndex(n => n.id === node.id);
     const Icon = domainIcons[node.domain];
-    return <li key={node.id} data-domain={node.domain}>
+    return <m.li layout="position" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} key={node.id} data-domain={node.domain}>
       <button className="atlas-oh-entry" type="button" data-entry-id={node.id} data-highlighted={highlighted===node.id} aria-label={node.label} aria-pressed={selected === node.id} onPointerEnter={()=>onHover(node.id)} onPointerLeave={onLeave} onFocus={()=>onHover(node.id)} onBlur={onLeave} onClick={()=>onSelect(node.id)}>
         <span className="atlas-oh-list-marker" aria-hidden>{index >= 0 ? <svg viewBox="-24 -24 48 48"><NodeShape domain={node.domain} /><text textAnchor="middle" y="5">{index + 1}</text></svg> : <Icon size={20} />}</span>
         <span className="atlas-oh-list-content">
@@ -282,8 +299,8 @@ function HealthObservationList({ nodes, networkNodes, selected, highlighted, onH
         </span>
         <ArrowRight className="atlas-oh-list-open" size={14} aria-hidden />
       </button>
-    </li>;
-  })}</ul>;
+    </m.li>;
+  })}</AnimatePresence></ul>;
 }
 
 const HealthDetails = memo(function HealthDetails({item,nodes,onReport}:{item:Node|Relation;nodes:Node[];onReport:(ids:string[],expand?:boolean)=>void}) {

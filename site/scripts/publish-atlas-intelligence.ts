@@ -1,3 +1,4 @@
+import { createAtlasPublicReader } from "./atlas-public-reader";
 import { preparePresentation, requireCurrentPresentation } from "./publish-atlas-presentation";
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -10,11 +11,11 @@ import { gzipSync } from 'node:zlib';
 import { z } from 'zod';
 import hosting from '../src/content-data/atlas-hosting.json';
 import { intelligenceSchema, validateIntelligenceRelease } from '../src/lib/atlas-intelligence';
-import { releaseSchema, releaseRoot, verifiedBytes } from '../src/lib/atlas-release';
+import { releaseSchema, verifiedBytes } from '../src/lib/atlas-release';
 import { validateNetworkTransport, parseNetworkAnalysis } from '../src/lib/atlas-network-analysis';
 import { correctionSchema } from './sync-atlas';
 import { requireCurrentBrowserDescriptor } from './publish-atlas-browser';
-import { prepareSourceSupplement, requireCurrentSourceSupplement, verifyPublishedSourceSupplement } from './publish-atlas-supplement';
+import { prepareSourceSupplement, requireDatedReportRelease, verifyPublishedSourceSupplement } from './publish-atlas-supplement';
 
 const site = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const hash = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
@@ -43,6 +44,7 @@ async function main() {
     assert(authorization.authorization.thread_id && authorization.authorization.instruction && authorization.authorization.confirmation);
     const receipt = JSON.parse(await readFile(values.release, 'utf8'));
     const base = releaseSchema.parse(receipt.release ?? receipt);
+    requireDatedReportRelease(base);
     const presentation = await preparePresentation(authorization.presentation ?? {}, base);
     const release = releaseSchema.parse({ ...base, ...presentation.descriptors, assets: { ...base.assets, 'network-transport.json': authorization.network.pointer_asset }, intelligence: authorization.intelligence.pointer_descriptor });
     assert.equal(release.export_id, source.export_id);
@@ -88,8 +90,15 @@ async function main() {
       console.log(JSON.stringify({ status: 'validated', export_id: release.export_id, experiment_id: data.experiment_id }));
       return;
     }
+    let activated = false;
+    const pacedRead = createAtlasPublicReader();
+    const read = async (key: string) => {
+      const response = await pacedRead(key);
+      assert(response.status !== 429, `Public read rate limit reached; Retry-After=${response.headers.get("Retry-After") ?? "unspecified"}. ${activated ? "Activation was written; verify current.json." : "The published pointer has not been changed."}`);
+      return response;
+    };
     const current = async () => {
-      const response = await fetch(`${hosting.origin}/current.json`, { cache: 'no-cache' });
+      const response = await read("current.json");
       assert(response.ok, `Cannot read public release: ${response.status}`);
       return releaseSchema.parse(await response.json());
     };
@@ -98,28 +107,27 @@ async function main() {
     assert.equal(release.mode, before.mode);
     assert.equal(release.cycle, before.cycle);
     requireCurrentBrowserDescriptor(before, release);
-    requireCurrentSourceSupplement(before, release);
+    requireDatedReportRelease(release);
     requireCurrentPresentation(before, release);
     if (before.export_id === release.export_id && before.intelligence) assert.deepEqual(before.intelligence, release.intelligence, 'An intervening Intelligence release requires review');
     const directory = resolve(cache, `intelligence-${data.experiment_id}`);
     await mkdir(directory, { recursive: true });
     const put = (key: string, path: string, compressed: boolean) => execFileSync(process.execPath, [resolve(site, 'node_modules/wrangler/bin/wrangler.js'), 'r2', 'object', 'put', `${hosting.bucket}/${key}`, '--file', path, '--remote', '--content-type', key.endsWith('.mjs.gz') ? 'text/javascript' : 'application/json', ...(compressed ? ['--content-encoding', 'gzip'] : [])], { cwd: site, stdio: 'inherit' });
     for (const [key, bytes] of assets) {
-      const url = `${hosting.origin}/${key}`;
       const expected = { bytes: bytes.length, sha256: hash(bytes) };
-      const existing = await fetch(url, { cache: 'no-cache' });
+      const existing = await read(key);
       if (existing.status === 404) {
         const path = resolve(directory, key.replaceAll('/', '_') + '.gz');
         await writeFile(path, gzipSync(bytes, { level: 9 }));
         put(key + '.gz', path, true);
-        await verifiedBytes(await fetch(url, { cache: 'no-cache' }), expected);
+        await verifiedBytes(await read(key), expected);
       } else await verifiedBytes(existing, expected);
     }
     for (const [name, expected] of Object.entries(release.assets))
-      await verifiedBytes(await fetch(`${releaseRoot(release)}/${name}`, { cache: 'no-cache' }), expected);
+      await verifiedBytes(await read(`releases/${release.export_id}/${name}`), expected);
     for (const ref of [...sources, ...Object.values(files), ...Object.values(networkFiles)]) await checked(ref);
     await preparePresentation(authorization.presentation ?? {}, release);
-    await verifyPublishedSourceSupplement(release);
+    await verifyPublishedSourceSupplement(release, read);
     if (correction.source_supplement) await prepareSourceSupplement(correction.source_supplement, release);
     assert.deepEqual(await readFile(values.authorization), authorizationBytes, 'Publication authorization changed');
     assert.deepEqual(await current(), before, 'Public release changed during upload');
@@ -127,6 +135,7 @@ async function main() {
     await writeFile(path, JSON.stringify(release));
     if (values.activate) {
       put('current.json', path, false);
+      activated = true;
       assert.deepEqual(await current(), release);
     }
     const result = { status: values.activate ? 'published' : 'staged', release, authorization_sha256: hash(authorizationBytes), activation_pending: !values.activate };

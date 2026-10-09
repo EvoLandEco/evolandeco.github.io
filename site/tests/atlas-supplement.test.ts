@@ -73,6 +73,19 @@ function synthetic() {
   };
 }
 
+test('Supplement cancellation stops loading and evidence validation', async t => {
+  const data = synthetic();
+  const stopped = AbortSignal.abort();
+  await assert.rejects(validateSourceSupplement(data, data.source_export_id, stopped), { name: 'AbortError' });
+  const controller = new AbortController();
+  const validation = validateSourceSupplement(data, data.source_export_id, controller.signal);
+  controller.abort();
+  await assert.rejects(validation, { name: 'AbortError' });
+  const request = t.mock.method(globalThis, 'fetch', async () => { throw new Error('Unexpected request'); });
+  await assert.rejects(fetchSourceSupplement(releaseSchema.parse(fixture.release), stopped), { name: 'AbortError' });
+  assert.equal(request.mock.callCount(), 0);
+});
+
 
 test('Supplement publication binds authorization, preserves attachments and verifies immutable public files', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'atlas-supplement-publication-'));

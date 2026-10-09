@@ -7,14 +7,20 @@ import type { AtlasBrowserCore, AtlasBrowserMap } from "./atlas-browser";
 
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 const asset = z.object({ sha256: digest, bytes: z.number().int().positive() });
+const supplementDescriptor = z.discriminatedUnion("path", [
+  z.strictObject({ version: z.literal("0.1.0"), source_export_id: digest,
+    path: z.literal("source-supplement.json"), schema_path: z.literal("source-supplement.schema.json"),
+    sha256: digest, bytes: z.number().int().positive().safe(), schema_sha256: z.literal("2314d67db4e9cf1c7c0abab880e5644c21320f2a03fa43bd01a41e6c3015ac01") }),
+  z.strictObject({ version: z.literal("0.1.0"), source_export_id: digest,
+    path: z.literal("source-supplement-collection.json"), schema_path: z.literal("source-supplement-collection.schema.json"),
+    sha256: digest, bytes: z.number().int().positive().max(2_000_000), schema_sha256: z.literal("507299f1b27126249371b2d1c5493400eb71f207b18f00ab7bd4f430739d8997") }),
+]);
 export const releaseSchema = z.object({
   version: z.literal(1), export_id: digest, published_at: z.iso.datetime(),
   cycle: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(), mode: z.enum(["weekly", "initial"]),
   contract_version: z.enum(["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0", "1.6.0", "1.7.0", "1.8.0"]), selector_sha256: digest,
   assets: z.object({ "atlas-site.json": asset, "map.json": asset, "metrics.json": asset, "network-transport.json": asset.optional() }),
-  source_supplement: z.object({ version: z.literal("0.1.0"), source_export_id: digest,
-    path: z.literal("source-supplement.json"), schema_path: z.literal("source-supplement.schema.json"),
-    sha256: digest, bytes: z.number().int().positive(), schema_sha256: z.literal("2314d67db4e9cf1c7c0abab880e5644c21320f2a03fa43bd01a41e6c3015ac01") }).optional(),
+  source_supplement: supplementDescriptor.optional(),
   source_text: z.object({ version: z.literal("0.1.0"), source_export_id: digest, catalogue_sha256: digest,
     path: z.literal("source-text-display.json"), schema_path: z.literal("source-text-display.schema.json"),
     sha256: digest, bytes: z.number().int().positive(), schema_sha256: z.literal("5d31be301360faa5aae9c4dd162511641f346b79bad6d3440b87290eefdacd30") }).optional(),

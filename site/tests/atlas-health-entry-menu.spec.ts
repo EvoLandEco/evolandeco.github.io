@@ -12,7 +12,7 @@ for(const width of [390,1280])test(`One Health entry discovery ${width}`,async({
  await view.locator('summary[aria-label="One Health view"]').click();
  const option=view.getByRole('option',{name:'Sampling',exact:true});await expect(option).toContainText('entries available');await expect(option).toContainText('in this entry');
  await page.screenshot({path:`/tmp/atlas-health-view-menu-${width}.png`});await option.click();
- const filters=view.locator('.atlas-oh-entry-filters');await filters.locator('summary').click();
+ const filters=view.locator('.atlas-entry-filters');await filters.locator('summary').click();
  await filters.getByRole('checkbox',{name:'Sampling',exact:true}).check();
  await filters.getByRole('checkbox',{name:'Reviewed sample fraction',exact:true}).check();
  await expect(view.getByRole('table',{name:'Reviewed sampling and positivity'})).toBeVisible();

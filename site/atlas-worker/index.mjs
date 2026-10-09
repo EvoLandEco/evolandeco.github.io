@@ -17,8 +17,9 @@ const worker = {
     const intelligenceAsset = /^\/intelligence\/[a-f0-9]{64}\/(intelligence|contract\.schema)\.json$/.test(path);
     const browserAsset = /^\/releases\/[a-f0-9]{64}\/browser\/[a-f0-9]{64}\/(?:(?:manifest|release|core|map-core|detail-index|browser-transport\.schema|browser-manifest\.schema)\.json|(?:browser_transport|browser_tables|site_view)\.js|browser\.d\.mts|atlas\.d\.ts|details\/part-\d{5}\.json)$/.test(path);
     const supplementAsset = /^\/releases\/[a-f0-9]{64}\/supplements\/[a-f0-9]{64}\/source-supplement(?:\.schema)?\.json$/.test(path);
+    const supplementCollectionAsset = /^\/releases\/[a-f0-9]{64}\/supplement-collections\/[a-f0-9]{64}\/source-supplement-(?:collection|catalogue)(?:\.schema)?\.json$/.test(path);
     const presentationAsset = /^\/releases\/[a-f0-9]{64}\/presentation\/[a-f0-9]{64}\/(?:source-text-display|watch)(?:\.schema)?\.json$/.test(path);
-    if (!current && !dailyAsset && !releaseAsset && !networkAsset && !intelligenceAsset && !browserAsset && !supplementAsset && !presentationAsset)
+    if (!current && !dailyAsset && !releaseAsset && !networkAsset && !intelligenceAsset && !browserAsset && !supplementAsset && !supplementCollectionAsset && !presentationAsset)
       return new Response("Not found", { status: 404, headers });
     const ip = request.headers.get("CF-Connecting-IP");
     if (!ip) return new Response("Forbidden", { status: 403, headers });

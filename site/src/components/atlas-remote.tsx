@@ -3,7 +3,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { Activity, FileText, RefreshCw } from "lucide-react";
 import Image from "next/image";
 import { createAtlasStore, type AtlasStore } from "@/lib/atlas-store";
-import { fetchAtlasData, releaseRoot, type AtlasRelease, type AtlasLoadProgress } from "@/lib/atlas-release";
+import { fetchAtlasData, type AtlasRelease, type AtlasLoadProgress } from "@/lib/atlas-release";
 import { AtlasContext } from "./atlas-context";
 import { AtlasExplorer } from "./atlas-explorer";
 import { Globe } from "./magicui/globe";
@@ -19,7 +19,7 @@ const LoadingGlobe = memo(Globe);
 
 export function AtlasRemote({ experiment }: { experiment?: AtlasExperiment } = {}) {
   const { arriving } = useAtlasNavigation();
-  const [data, setData] = useState<{ store: AtlasStore; root: string; release: AtlasRelease; analysis: AtlasExperiment }>();
+  const [data, setData] = useState<{ store: AtlasStore; release: AtlasRelease; analysis: AtlasExperiment }>();
   const [daily, setDaily] = useState<DailyState>({ loading: true });
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -31,11 +31,13 @@ export function AtlasRemote({ experiment }: { experiment?: AtlasExperiment } = {
     const controller = new AbortController();
     let store: AtlasStore | undefined;
     fetchAtlasData(controller.signal, value => { if (!controller.signal.aborted) setProgress(value); }).then(async ({ snapshot, bundle, release, browser, scientificManifestSha256 }) => {
-      const presentation = await import("@/lib/atlas-presentation").then(module => module.fetchAtlasPresentation(release, controller.signal));
-      const analysis = experiment ?? await import("@/lib/atlas-intelligence").then(module => module.fetchAtlasIntelligence(release, controller.signal)).catch(() => ({ error: "Analysis could not be verified. Reload to try again." }));
+      const [presentation, analysis] = await Promise.all([
+        import("@/lib/atlas-presentation").then(module => module.fetchAtlasPresentation(release, controller.signal)),
+        experiment ?? import("@/lib/atlas-intelligence").then(module => module.fetchAtlasIntelligence(release, controller.signal)).catch(() => ({ error: "Analysis could not be verified. Reload to try again." })),
+      ]);
       if (!controller.signal.aborted) {
         store = createAtlasStore(snapshot, bundle, browser, presentation.sourceText, presentation.watch);
-        setData({ store, root: releaseRoot(release), release, analysis });
+        setData({ store, release, analysis });
         void import("@/lib/atlas-daily").then(async module => { const daily = await module.fetchDaily(release, scientificManifestSha256, controller.signal); if (daily) module.validateDailyReferences(daily, bundle); return daily; }).then(data => {
           if (!controller.signal.aborted) setDaily({ data });
         }).catch(() => { if (!controller.signal.aborted) setDaily({ error: "Daily reports could not be verified. Reload to try again." }); });
@@ -48,7 +50,7 @@ export function AtlasRemote({ experiment }: { experiment?: AtlasExperiment } = {
     const matches = analysis.data?.source_export_id === data.release.export_id && analysis.data?.input_identity.site_sha256 === data.release.assets["atlas-site.json"].sha256 && analysis.data?.input_identity.selector_sha256 === data.release.selector_sha256;
     const boundExperiment = { ...analysis, data: matches ? analysis.data : undefined,
       error: analysis.data && !matches ? "This analysis belongs to a different ATLAS release. Its results cannot be linked to these reports." : analysis.error };
-    return <AtlasContext value={data.store}><AtlasExplorer downloadRoot={data.root} release={data.release} experiment={boundExperiment} daily={daily} /></AtlasContext>;
+    return <AtlasContext value={data.store}><AtlasExplorer release={data.release} experiment={boundExperiment} daily={daily} /></AtlasContext>;
   }
   const percent = progress.total ? Math.floor(progress.loaded / progress.total * 100) : 0;
   const phase = { release: "Checking the latest release…", download: "Downloading reports and map…", verify: "Checking downloaded data…", prepare: "Preparing reports and source evidence…" }[progress.phase];

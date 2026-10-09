@@ -1,3 +1,4 @@
+import { selectAtlasOption } from './atlas-select-actions';
 import { test, expect } from '@playwright/test';
 
 for (const width of [390, 1466]) test(`English reports, paired quotations and briefing navigation at ${width}px`, async ({ page }) => {
@@ -11,7 +12,7 @@ for (const width of [390, 1466]) test(`English reports, paired quotations and br
   await expect(page.locator('.atlas-disease-ring')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Outbreak watch', exact: true })).toBeVisible();
   await expect(page.locator('.atlas-watch .atlas-scope-trigger')).toHaveCount(0);
-  await expect(page.locator('.atlas-latest-list > li:not([inert]) .atlas-latest-entry')).toHaveCount(7);
+  await expect(page.locator('.atlas-latest-list > li:not([inert]) .atlas-latest-entry')).toHaveCount(width === 390 ? 7 : 9);
   if (width > 1000) await page.getByRole('button', { name: 'Click to enter full screen' }).click();
   await page.getByRole('tab', { name: 'Reports', exact: true }).click();
   const report = page.locator('.atlas-report').filter({ hasText: 'Rospotrebnadzor called reports of a strict quarantine in Irkutsk Region fake' });
@@ -33,13 +34,13 @@ for (const width of [390, 1466]) test(`English reports, paired quotations and br
   await expect(pair.locator('blockquote')).toHaveCount(2);
   await page.screenshot({ path: `/tmp/atlas-translation-${width}.png` });
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  await page.getByRole('button', { name: 'Models', exact: true }).click();
+  await selectAtlasOption(page, 'Analysis view', 'signals');
   await expect(page.getByRole('region', { name: 'Model prediction', exact: true })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Observation details', exact: true })).toBeVisible();
-  await expect(page.getByRole('group', { name: 'Analysis views' }).getByRole('button')).toHaveCount(2);
+  await expect(page.locator('summary[aria-label="Analysis view"]')).toContainText('Signals');
   await page.getByRole('region', { name: 'Model prediction', exact: true }).scrollIntoViewIfNeeded();
   await page.screenshot({ path: `/tmp/atlas-model-observations-${width}.png` });
-  await page.getByRole('tab', { name: 'Geographic links', exact: true }).click();
+  await page.getByRole('tab', { name: 'Journeys', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Journeys & connections' })).toBeVisible();
   await expect(page.locator('.atlas-chain-map')).toBeVisible();
   await expect(page.locator('.atlas-chain-tools summary')).toHaveCSS('border-top-width', '0px');
@@ -47,7 +48,7 @@ for (const width of [390, 1466]) test(`English reports, paired quotations and br
   await page.locator('.atlas-chain-tools').scrollIntoViewIfNeeded();
   await page.screenshot({ path: `/tmp/atlas-journeys-selector-${width}.png` });
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Models', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.atlas-analysis')).toHaveAttribute('data-view', 'signals');
   await page.getByRole('tab', { name: 'Trends', exact: true }).click();
   await expect(page.locator('.atlas-chain-section, .atlas-analysis-observations')).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
