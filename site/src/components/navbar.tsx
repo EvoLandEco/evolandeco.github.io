@@ -39,7 +39,7 @@ export default function Navbar() {
         mobileLabel={pageLabel}
         trailing={<>
           <a className="header-action cv-action" href={portfolio.profile.cvUrl} download aria-label="Download CV" title="Download CV">
-            <FileDown size={18} aria-hidden /><span>Download CV</span>
+            <FileDown size={18} aria-hidden /><span><span className="cv-action-verb">Download </span>CV</span>
           </a>
           <a className="header-action contact-action" href={`mailto:${portfolio.profile.email}`} aria-label="Get in touch" title="Get in touch">
             <Mail size={18} aria-hidden /><span>Get in touch</span>

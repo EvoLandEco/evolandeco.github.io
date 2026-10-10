@@ -5,8 +5,8 @@
     {
       "id": "cv-2026-09",
       "path": "sources/Tianjian_Qin_CV.tex",
-      "sha256": "5d34270262983f64935a7c8398d9d4191272ae8e491e96c9a75bb777279f6f43",
-      "description": "User-supplied September 2026 CV. Public professional facts are transcribed or paraphrased from this source."
+      "sha256": "ab0ca29c2abc1343645cbdb79e2d8b223e83356540146cce897e6adfae368e19",
+      "description": "Academic CV. Public professional facts are transcribed or paraphrased from this source."
     },
     {
       "id": "atlas-project",
@@ -116,7 +116,7 @@
       "primaryUrl": "/research/evolutionary-inference",
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Selected research & software"
+        "section": "Earlier research & software"
       }
     },
     {
@@ -140,7 +140,7 @@
       "primaryUrl": "/research/netforge",
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Selected research & software"
+        "section": "Earlier research & software"
       }
     },
     {
@@ -162,7 +162,7 @@
       "primaryUrl": "/research/herdlink",
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Featured application"
+        "section": "Current projects"
       }
     },
     {
@@ -182,7 +182,7 @@
       "primaryUrl": "/research/one-health",
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Research programmes & funding"
+        "section": "Current projects"
       }
     }
   ],
@@ -198,7 +198,7 @@
       "url": null,
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Research programmes & funding"
+        "section": "Current projects (NextdAI proposal)"
       }
     },
     {
@@ -212,7 +212,7 @@
       "url": null,
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Research programmes & funding"
+        "section": "Current projects"
       }
     },
     {
@@ -226,7 +226,7 @@
       "url": null,
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Research programmes & funding"
+        "section": "Current projects"
       }
     },
     {
@@ -240,7 +240,7 @@
       "url": null,
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Research programmes & funding"
+        "section": "Current projects; Earlier research & software"
       }
     }
   ],
@@ -268,7 +268,7 @@
       "group": null,
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Selected research & software; Research software"
+        "section": "Earlier research & software"
       }
     },
     {
@@ -281,7 +281,7 @@
       "group": null,
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Selected research & software; Research software"
+        "section": "Earlier research & software"
       }
     },
     {
@@ -294,7 +294,7 @@
       "group": null,
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Selected research & software; Research software"
+        "section": "Earlier research & software"
       }
     },
     {
@@ -307,7 +307,7 @@
       "group": null,
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Selected research & software; Research software"
+        "section": "Current projects"
       }
     },
     {
@@ -320,7 +320,7 @@
       "group": "interactive-tools",
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Selected research & software; Research software"
+        "section": "Software contributions"
       }
     },
     {
@@ -333,7 +333,7 @@
       "group": "interactive-tools",
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Selected research & software; Research software"
+        "section": "Software contributions"
       }
     },
     {
@@ -346,7 +346,7 @@
       "group": "interactive-tools",
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Selected research & software; Research software"
+        "section": "Software contributions"
       }
     },
     {
@@ -359,7 +359,7 @@
       "group": "collaborative-packages",
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Selected research & software; Research software"
+        "section": "Software contributions"
       }
     },
     {
@@ -372,7 +372,7 @@
       "group": "collaborative-packages",
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Selected research & software; Research software"
+        "section": "Software contributions"
       }
     },
     {
@@ -385,7 +385,7 @@
       "group": "collaborative-packages",
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Selected research & software; Research software"
+        "section": "Software contributions"
       }
     }
   ],
@@ -396,7 +396,7 @@
       "description": "Interactive network dynamics, lineage simulation, tree reconstruction and browser-based phylogenetic data handling.",
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Research software"
+        "section": "Software contributions"
       }
     },
     {
@@ -405,7 +405,7 @@
       "description": "Phylogenetic statistics, data structures, simulation and inference for diversification and island biogeography.",
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Research software"
+        "section": "Software contributions"
       }
     }
   ],
@@ -1039,7 +1039,7 @@
       ],
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Technical expertise"
+        "section": "Technical expertise; Current projects"
       }
     },
     {
@@ -1243,7 +1243,7 @@
       "url": "https://modahconf2026.sciencesconf.org/program?lang=en",
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Conference presentation"
+        "section": "Talks & workshops"
       }
     }
   ],
@@ -1256,7 +1256,7 @@
       "url": "https://www.sciencedirect.com/journal/journal-of-theoretical-biology/about/news/the-winner-of-the-denise-kirschner-best-student-paper-prize",
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Profile and research experience"
+        "section": "Honours"
       }
     },
     {
@@ -1267,7 +1267,7 @@
       "url": null,
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Seminars, workshops, mentoring & service"
+        "section": "Honours"
       }
     },
     {
@@ -1278,7 +1278,7 @@
       "url": null,
       "evidence": {
         "sourceId": "cv-2026-09",
-        "section": "Seminars, workshops, mentoring & service"
+        "section": "Honours"
       }
     }
   ],
@@ -1298,7 +1298,7 @@
     ],
     "evidence": {
       "sourceId": "cv-2026-09",
-      "section": "Seminars, workshops, mentoring & service"
+      "section": "Teaching, mentoring & service"
     }
   },
   "languages": [

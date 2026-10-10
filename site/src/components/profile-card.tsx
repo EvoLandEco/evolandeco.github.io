@@ -61,7 +61,7 @@ export function ProfileCard() {
           <p className="profile-group">{data.profile.group}</p>
           <p className="profile-country"><MapPin size={14} aria-hidden />{data.profile.country}</p>
           <div className="profile-card-actions">
-            <a href={data.profile.cvUrl} download><FileDown size={16} aria-hidden />Download CV</a>
+            <a className="cv-action" href={data.profile.cvUrl} download><FileDown size={16} aria-hidden />Download CV</a>
             <a href={`mailto:${data.profile.email}`}><Mail size={16} aria-hidden />Get in touch</a>
           </div>
         </div>

@@ -35,7 +35,7 @@ Use the supplied CV and content files for factual claims. Decorative diagrams ar
 - Use the Dock component with regions: portrait left, navigation centre, CV and contact right. Keep the regions visually independent.
 - On wide screens, navigation belongs at the top with quiet hover states. The menu and CV button have pill outlines, and icon controls are circular at every width. On small screens, use the portfolio’s bottom icon dock with spring magnification and tooltips. No text labels in the dock. The space after the portrait holds a rounded page label while the dock is at the bottom: About me, Research, Publications, Software, Blog or Footprint. The top menu and page label align directly after the portrait with a 16px gap. These labels use a pale blue and sage fill, blue text and a fine tinted outline, without a button shadow. Desktop pages have no introductory badges. Below 360px, omit the top page label too.
 - Keep the portrait at about 58px. Hover adds a modest zoom and opens the profile card; tapping can pin it. The card contains the current position and professional identity, with a network background and Magic Card spotlight.
-- Keep “Download CV” visible with a download icon. CV and contact actions share the menu’s surfaces, borders and hover treatment.
+- Give “Download CV” a filled blue and sage pill, a soft highlight and a small hover lift. Show the download icon with “CV” on phones. Use the same treatment in the profile card, preserve keyboard focus and respect reduced motion. Keep contact actions on the menu’s quieter surface.
 
 ## Content patterns
 

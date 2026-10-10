@@ -1137,7 +1137,7 @@ select {
 .dock-regions { gap: 16px; }
 .dock-regions .site-dock { justify-self: start; }
 .dock-regions .site-dock a { padding-inline: 8px; }
-.cv-action { width: auto; padding: 10px 14px; color: var(--primary); border-color: color-mix(in srgb, var(--primary) 35%, var(--border)); background: color-mix(in srgb, var(--primary) 5%, var(--card)); }
+.cv-action { width: auto; padding: 10px 14px; }
 .cv-action span { display: inline; }
 .contact-action { width: 46px; padding: 0; }
 .contact-action span { display: none; }
@@ -1264,8 +1264,9 @@ footer { border-top: 0; text-align: center; justify-content: center; }
 .profile-position p { font-size: 13px; line-height: 1.5; color: var(--muted-foreground); margin: 3px 0 0; }
 .profile-group { font-size: 13px; color: var(--muted-foreground); line-height: 1.6; margin: 12px 0 8px; }
 .profile-country { display: flex; align-items: center; gap: 5px; font-size: 13px; color: var(--muted-foreground); }
-.profile-card-actions { display: flex; gap: 14px; border-top: 1px solid var(--border); padding-top: 8px; }
+.profile-card-actions { display: flex; gap: 10px; border-top: 1px solid var(--border); padding-top: 8px; }
 .profile-card-actions a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-size: 13px; color: var(--primary); }
+.profile-card-actions .cv-action { padding: 8px 12px; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .profile-popover:popover-open { animation: none; } .profile-trigger::after { display: none; } }
 
 .profile-position > img { width: 42px; height: 42px; border-radius: 50%; }
@@ -1314,15 +1315,33 @@ footer { border-top: 0; text-align: center; justify-content: center; }
   backdrop-filter: blur(24px);
   transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
 }
-.dock-trailing .header-action:is(:hover, :focus-visible) {
+.dock-trailing .header-action:not(.cv-action):is(:hover, :focus-visible) {
   background: var(--muted);
   color: var(--foreground);
   border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
   filter: none;
 }
 .dock-trailing .contact-action { width: 44px; }
+.dock-trailing .cv-action, .profile-card-actions .cv-action {
+  border: 1px solid var(--primary);
+  border-radius: 999px;
+  color: var(--primary-foreground);
+  background: linear-gradient(120deg, var(--primary), color-mix(in srgb, var(--primary) 84%, #70ae97));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 22%, transparent), inset 0 1px 0 #ffffff30;
+  font-weight: 600;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.cv-action svg { flex-shrink: 0; transition: transform 180ms ease; }
+.dock-trailing .cv-action:is(:hover, :focus-visible), .profile-card-actions .cv-action:is(:hover, :focus-visible) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--primary) 30%, transparent), inset 0 1px 0 #ffffff40;
+}
+.cv-action:is(:hover, :focus-visible) svg { transform: translateY(1px); }
+.dock-trailing .cv-action:active, .profile-card-actions .cv-action:active { transform: none; }
 @media (prefers-reduced-motion: reduce) {
   .dock-trailing .header-action { transition: none; }
+  .dock-trailing .cv-action:is(:hover, :focus-visible), .profile-card-actions .cv-action:is(:hover, :focus-visible),
+  .cv-action:is(:hover, :focus-visible) svg { transform: none; }
 }
 
 .research-approach { --approach-green: #397e70; --approach-light: #70ae97; }
@@ -1459,8 +1478,8 @@ footer { border-top: 0; text-align: center; justify-content: center; }
   .publications-intro { display: none; }
 }
 @media (max-width: 767px) {
-  .dock-trailing .cv-action { width: 44px; padding: 0; }
-  .dock-trailing .cv-action span { display: none; }
+  .dock-trailing .cv-action { width: auto; padding: 10px 12px; gap: 6px; }
+  .dock-trailing .cv-action .cv-action-verb { display: none; }
 }
 @media (max-width: 359px) {
   .dock-page-label { display: none; }
@@ -1691,7 +1710,7 @@ html[data-magicui-theme-vt="active"]::view-transition-new(root) { clip-path: var
 
 .dark .header-portrait,
 .dark .dock-regions .site-dock,
-.dark .dock-trailing .header-action,
+.dark .dock-trailing .header-action:not(.cv-action),
 .dark button,
 .dark .button,
 .dark .album-open,
