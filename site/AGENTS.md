@@ -1,4 +1,6 @@
-Follow ../handoff/AGENTS.md and its linked specifications. The user authorizes labelled sample photographs while personal albums are empty. Keep website source and public assets in this directory. Preserve unrelated files. Write natural, self-contained copy. Do not use “effectively”, “genuine”, “principled” or “optional” in authored comments or documentation.
+The user authorizes labelled sample photographs while personal albums are empty. Keep website source and public assets in this directory. Preserve unrelated files. Write natural, self-contained copy. Do not use “effectively”, “genuine”, “principled” or “optional” in authored comments or documentation.
+
+Private working directories and CV sources are excluded from the public repository. The website must build using only its tracked public files. The approved CV download is `public/Tianjian-Qin-CV.pdf`.
 
 Before any visual refinement, read [DESIGN.md](DESIGN.md) and apply its design direction. Direct user requests take priority.
 

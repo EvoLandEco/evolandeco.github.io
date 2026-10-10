@@ -14,7 +14,7 @@ Geist is served locally through the `geist` package. Its SIL Open Font License i
 
 ## Content and assets
 
-Professional content derives from the supplied September 2026 CV and structured handoff. The downloadable PDF is a byte-for-byte copy of `CV_Data_Scientist_New.pdf`. Paper titles, author order, contribution markers and programme status follow those sources. The personal photograph seed contains no confirmed travel records.
+Professional content derives from the owner-approved CV at `public/Tianjian-Qin-CV.pdf` and the project sources recorded in `src/content-data/portfolio.json`. CV source files and private working documents stay local. The personal photograph seed contains no confirmed travel records.
 
 The six technical notes live in `content/writing`, with reading documents in `public/reading` and simulations in `public/explorations`. Article and simulation dependencies are contained in `public/notebook-assets`. Technical notes use an isolated reading document to retain their mathematical typesetting and interactive examples within the site shell. The reading view has matching typography, surfaces and project art; the complete text is also rendered on the server.
 

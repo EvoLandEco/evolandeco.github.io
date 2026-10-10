@@ -2,3 +2,14 @@
 .DS_Store
 .pnpm-store/
 .wrangler/
+
+# Private working files and document sources stay on this computer.
+/.idea/
+/handoff/
+/output/
+/.private-repo-backups/
+*.tex
+*.cls
+*.sty
+*.pdf
+!site/public/Tianjian-Qin-CV.pdf
