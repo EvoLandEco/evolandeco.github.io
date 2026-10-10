@@ -4,8 +4,8 @@
   "sources": [
     {
       "id": "cv-2026-09",
-      "path": "sources/Tianjian_Qin_CV.tex",
-      "sha256": "ab0ca29c2abc1343645cbdb79e2d8b223e83356540146cce897e6adfae368e19",
+      "path": "public/Tianjian-Qin-CV.pdf",
+      "sha256": "3e9bdaf27c2657d590b6fd3dadceb99500b1ab6f24d3db95965fd6cab9ded034",
       "description": "Academic CV. Public professional facts are transcribed or paraphrased from this source."
     },
     {
