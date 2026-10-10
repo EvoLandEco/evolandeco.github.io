@@ -132,6 +132,7 @@ export function Approach() {
   );
 }
 const toolCategories: Record<string, string> = {
+  atlas: "Outbreak surveillance",
   evonn: "Neural inference", evesim: "Evolution simulation", netforge: "Contact networks",
   herdlink: "Network exploration", netspectra: "Network statistics", evolab: "Evolution sandbox", miniape: "Phylogenetic utilities",
   treestats: "Tree statistics", ddd: "Diversification", daisie: "Island biodiversity",
@@ -140,7 +141,7 @@ const technologyIcons = {
   "R": "r.svg", "Python": "python.svg", "PyTorch": "pytorch.svg", "C++": "cpp.svg", "Rcpp": "cpp.svg",
   "Vite": "vite.svg", "React": "react.svg", "JavaScript": "javascript.svg", "D3.js": "d3.svg",
 };
-const methodIcons = { "Stochastic block models": Network, "Simulation": ChartNoAxesCombined, "Turf.js": MapPin, "Phylogenetics": GitBranch, "Browser tools": Globe2 };
+const methodIcons = { "Agentic AI": BrainCircuit, "Stochastic block models": Network, "Simulation": ChartNoAxesCombined, "Turf.js": MapPin, "Phylogenetics": GitBranch, "Browser tools": Globe2 };
 const technologyAbbreviations: Record<string, string> = { "Stochastic block models": "SBM", "Simulation": "Sim", "JavaScript": "JS", "Phylogenetics": "Phylo" };
 export function SoftwareTerminal() {
   const panel = useRef<HTMLDivElement>(null);

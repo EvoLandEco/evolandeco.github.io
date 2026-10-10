@@ -7,6 +7,11 @@
       "path": "sources/Tianjian_Qin_CV.tex",
       "sha256": "5d34270262983f64935a7c8398d9d4191272ae8e491e96c9a75bb777279f6f43",
       "description": "User-supplied September 2026 CV. Public professional facts are transcribed or paraphrased from this source."
+    },
+    {
+      "id": "atlas-project",
+      "url": "https://github.com/EvoLandEco/ATLAS",
+      "description": "ATLAS project documentation and owner-confirmed research contributions."
     }
   ],
   "profile": {
@@ -240,6 +245,19 @@
     }
   ],
   "software": [
+    {
+      "id": "atlas",
+      "name": "ATLAS",
+      "role": "Developer",
+      "description": "Agentic outbreak surveillance with source provenance and longitudinal analysis.",
+      "url": "https://github.com/EvoLandEco/ATLAS",
+      "linkKind": "source",
+      "group": null,
+      "evidence": {
+        "sourceId": "atlas-project",
+        "section": "Project documentation and development context"
+      }
+    },
     {
       "id": "evonn",
       "name": "EvoNN",
@@ -1015,8 +1033,8 @@
         "Transformers",
         "Ensemble modelling",
         "Generative modelling",
-        "PyTorch",
-        "PyTorch Geometric",
+        "LLM orchestration",
+        "Evidence extraction",
         "Model benchmarking"
       ],
       "evidence": {
@@ -1194,7 +1212,7 @@
   "talks": [
     {
       "id": "wur-mind-2026",
-      "title": "Networks, Transmission, and Control",
+      "title": "Trade networks, Transmission, Intervention",
       "authors": [
         "Qin, T."
       ],
@@ -1202,7 +1220,7 @@
       "event": "WUR MIND Day 2026",
       "date": "2026-10-06",
       "location": "Impulse Building, Wageningen",
-      "description": "Hosting a workshop on trade networks · 14:10–15:10",
+      "description": "Led a workshop on trade networks · 14:10–15:10",
       "url": null,
       "evidence": {
         "sourceId": "wur-mind-2026-programme",

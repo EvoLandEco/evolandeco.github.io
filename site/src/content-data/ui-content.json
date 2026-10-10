@@ -131,6 +131,11 @@
   ],
   "software": [
     {
+      "id": "atlas",
+      "name": "ATLAS",
+      "role": "Developer"
+    },
+    {
       "id": "evonn",
       "name": "EvoNN",
       "role": "Developer"

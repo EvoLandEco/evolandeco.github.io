@@ -127,7 +127,7 @@ test("Decorative motion settles and respects reduced motion", async ({
   expect(await canvas.getAttribute("data-angle")).toBe(angle);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/software");
-  await expect(page.locator('.terminal-group[data-kind="developed"] .terminal-entry')).toHaveCount(7);
+  await expect(page.locator('.terminal-group[data-kind="developed"] .terminal-entry')).toHaveCount(8);
   await expect(page.getByRole("link", { name: "HerdLink Source", exact: true })).toHaveAttribute("href", "https://github.com/EvoLandEco/herdlink-web");
   await expect(page.locator(".terminal-stack").first()).toContainText("Python");
   await expect(page.locator(".software-terminal")).toContainText("evesim");

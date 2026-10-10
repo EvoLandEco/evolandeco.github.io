@@ -1,5 +1,27 @@
 [
   {
+    "id": "atlas",
+    "title": "ATLAS",
+    "href": "/atlas/",
+    "status": "Research software",
+    "summary": "Agentic outbreak surveillance with source provenance and longitudinal analysis.",
+    "stack": [
+      "Python",
+      "Agentic AI",
+      "React"
+    ],
+    "links": [
+      {
+        "label": "Website",
+        "url": "/atlas/"
+      },
+      {
+        "label": "Source",
+        "url": "https://github.com/EvoLandEco/ATLAS"
+      }
+    ]
+  },
+  {
     "id": "evonn",
     "title": "EvoNN",
     "href": "https://evolandeco.github.io/EvoNN/",

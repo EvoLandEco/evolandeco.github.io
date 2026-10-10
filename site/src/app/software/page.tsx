@@ -16,7 +16,7 @@ export const metadata = {
   alternates: { canonical: "/software" },
 };
 const skillHighlights: Record<string, string> = {
-  ai: "Neural networks · PyTorch",
+  ai: "Neural networks · Agentic workflows",
   modelling: "Stochastic models · Simulation-based inference",
   programming: "Python · R · C/C++ · SQL",
   computing: "Linux · HPC · Docker",
