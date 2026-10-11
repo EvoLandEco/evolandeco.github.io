@@ -6,12 +6,13 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { COMPACT_GROUPING_VERSION } from "../src/lib/atlas-vendor/view.mjs";
 import { createIdentities } from "../src/lib/atlas-identities";
+import { parseAtlasJson } from "../src/lib/atlas-json";
 import type { AtlasSiteBundle, AtlasMapSnapshot } from "../src/lib/atlas-contract";
 
-export function validateAtlas(exportDirectory: string, snapshotPath: string) {
+export async function validateAtlas(exportDirectory: string, snapshotPath: string) {
   const exportRoot = pathToFileURL(resolve(exportDirectory) + "/");
-  const snapshot: AtlasMapSnapshot = JSON.parse(readFileSync(snapshotPath, "utf8"));
-  const bundle: AtlasSiteBundle = JSON.parse(readFileSync(new URL("atlas-site.json", exportRoot), "utf8"));
+  const snapshot = await parseAtlasJson(readFileSync(snapshotPath)) as AtlasMapSnapshot;
+  const bundle = await parseAtlasJson(readFileSync(new URL("atlas-site.json", exportRoot))) as AtlasSiteBundle;
   const manifest = JSON.parse(readFileSync(new URL("manifest.json", exportRoot), "utf8"));
   const { reportOrganizations } = createIdentities(bundle, snapshot);
   const metrics = bundle.metrics;

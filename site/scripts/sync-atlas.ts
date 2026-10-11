@@ -13,11 +13,30 @@ import hosting from "../src/content-data/atlas-hosting.json";
 import { releaseSchema, verifiedBytes, releaseRoot, type AtlasRelease } from "../src/lib/atlas-release";
 import type { AtlasPublicationHandoff, AtlasFileReference, AtlasExportReference } from "../src/lib/atlas-vendor/site-types";
 import { validateAtlas } from "./validate-atlas-metrics";
+import type { AtlasSiteBundle } from "../src/lib/atlas-contract";
 import { prepareBrowserCandidate, stageBrowserAsset } from "./publish-atlas-browser";
 import { supplementPublicationSchema, prepareSourceSupplement, requireDatedReportRelease, verifyPublishedSourceSupplement } from "./publish-atlas-supplement";
 
 const site = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const hash = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
+export function encodeAtlasMetrics(metrics: AtlasSiteBundle["metrics"]) {
+  // Encode each row to stay below the JavaScript string limit for a complete dataset.
+  const chunks: Buffer[] = [Buffer.from("{")], comma = Buffer.from(",");
+  for (const [index, [key, value]] of Object.entries(metrics).entries()) {
+    if (index) chunks.push(comma);
+    chunks.push(Buffer.from(JSON.stringify(key) + ":"));
+    if (Array.isArray(value)) {
+      chunks.push(Buffer.from("["));
+      value.forEach((row, index) => {
+        if (index) chunks.push(comma);
+        chunks.push(Buffer.from(JSON.stringify(row)));
+      });
+      chunks.push(Buffer.from("]"));
+    } else chunks.push(Buffer.from(JSON.stringify(value)));
+  }
+  chunks.push(Buffer.from("}"));
+  return Buffer.concat(chunks);
+}
 const fileReference = z.object({ path: z.string().min(1), bytes: z.number().int().positive(), sha256: z.string().regex(/^[a-f0-9]{64}$/) });
 export const correctionSchema = z.object({
   correction_version: z.literal("1.0.0"), replaces_export_id: z.string().regex(/^[a-f0-9]{64}$/),
@@ -116,7 +135,7 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
     for (const ref of [candidate.manifest, candidate.selector, ...Object.values(candidate.files)]) await checkedFile(ref);
     const bundleBytes = await checkedFile(candidate.structured_data);
     const mapBytes = await checkedFile(candidate.map_snapshot);
-    const { bundle } = validateAtlas(candidate.bundle_path, candidate.map_snapshot_path);
+    const { bundle } = await validateAtlas(candidate.bundle_path, candidate.map_snapshot_path);
     const existing = await currentRelease(read);
     if (existing?.export_id === candidate.export_id) {
       if ("export" in first && first.source_supplement) {
@@ -128,7 +147,7 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
     if ("export" in first) checkCorrectionTarget(first.replaces_export_id, existing);
     assert(!initial || !existing, "Initial publication cannot replace an existing release");
     assert(!existing?.cycle || existing.cycle <= cycle, "Cannot publish an older weekly cycle");
-    const assets = { "atlas-site.json": bundleBytes, "map.json": mapBytes, "metrics.json": Buffer.from(JSON.stringify(bundle.metrics)) };
+    const assets = { "atlas-site.json": bundleBytes, "map.json": mapBytes, "metrics.json": encodeAtlasMetrics(bundle.metrics) };
     let release: AtlasRelease = releaseSchema.parse({ version: 1, export_id: candidate.export_id, published_at: new Date().toISOString(),
       cycle: correctionPath ? existing!.cycle : initial ? null : cycle, mode: correctionPath ? existing!.mode : initial ? "initial" : "weekly", contract_version: candidate.contract_version,
       ...("export" in first ? { correction: { replaces_export_id: first.replaces_export_id, authorization_sha256: first.authorization_sha256 } } : {}),
@@ -145,7 +164,7 @@ export async function syncAtlas(project: string, cycle: string, initial = false,
     let browserReference = "export" in first ? first.browser_validation : undefined;
     if (!browserReference) {
       const browserOut = resolve(browserDirectory, "assets"), browserHandoffPath = resolve(browserDirectory, "handoff.json");
-      execFileSync(process.execPath, ["scripts/export_browser_transport.mjs", "--site", candidate.structured_data.path, "--map", candidate.map_snapshot.path, "--export-id", candidate.export_id, "--out", browserOut], { cwd: project, stdio: "inherit" });
+      execFileSync(process.execPath, ["scripts/export_browser_transport.mjs", "--site", candidate.structured_data.path, "--map", candidate.map_snapshot.path, "--export-id", candidate.export_id, "--out", browserOut, "--max-input-bytes", String(candidate.structured_data.bytes + candidate.map_snapshot.bytes)], { cwd: project, stdio: "inherit" });
       execFileSync(process.execPath, ["scripts/verify_browser_transport.mjs", "--directory", browserOut, "--site", candidate.structured_data.path, "--map", candidate.map_snapshot.path, "--every-record", "--out", browserHandoffPath], { cwd: project, stdio: "inherit" });
       const bytes = await readFile(browserHandoffPath);
       browserReference = { path: browserHandoffPath, bytes: bytes.length, sha256: hash(bytes) };

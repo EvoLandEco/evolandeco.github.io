@@ -1,11 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { weeklyCycle, publicationCandidate, correctionSchema, checkCorrectionTarget, requireSyncAttachments } from "../scripts/sync-atlas";
+import { weeklyCycle, publicationCandidate, correctionSchema, checkCorrectionTarget, requireSyncAttachments, encodeAtlasMetrics } from "../scripts/sync-atlas";
 import { verifiedBytes, parseAtlasJson, releaseSchema, fetchAtlasData, type AtlasLoadProgress } from "../src/lib/atlas-release";
 import fixture from "./atlas-fixture.json";
 import presentationFixture from "./atlas-presentation-fixture.json";
 import type { AtlasPublicationHandoff } from "../src/lib/atlas-vendor/site-types";
+import type { AtlasSiteBundle } from "../src/lib/atlas-contract";
 
 test("Publication requires all three matching weekly receipts", () => {
   assert.equal(weeklyCycle(new Date("2026-09-26T18:00:00Z")), "2026-09-23");
@@ -61,6 +62,8 @@ test("Chunked dataset parsing preserves text and nested values across boundaries
   }
   for (const text of ['{"__proto__":{"value":1},"constructor":2}', '[0,-0,1e3,null,false,"\\ud800"]']) {
     assert.deepEqual(await parseAtlasJson(encode(text)), JSON.parse(text));
+    const padded = Buffer.from("prefix" + text + "suffix");
+    assert.deepEqual(await parseAtlasJson(padded.subarray(6, padded.length - 6)), JSON.parse(text));
   }
   for (const text of ['', '{}{}', '{"value":}', '[1,]', '{"value":1,}']) {
     await assert.rejects(parseAtlasJson(encode(text)));
@@ -69,6 +72,17 @@ test("Chunked dataset parsing preserves text and nested values across boundaries
   const parsing = parseAtlasJson(encode(JSON.stringify({ records: Array(100_000).fill({ value: 1 }) })), controller.signal);
   setTimeout(() => controller.abort(), 0);
   await assert.rejects(parsing, { name: "AbortError" });
+});
+
+test("Metrics serialization preserves exact JSON bytes across collection rows", async () => {
+  const metrics = {
+    contract_version: "0.5.0", coverage: { measure_count: 3 },
+    measures: [{ value: null, missing: "not_reported" }, { value: -1.25, unit: "percentage_points" }, { quote: '鳥 🐦 \n\t"\\' }],
+    records: [], panels: [{ measure_ids: ["a", "b"] }],
+  } as unknown as AtlasSiteBundle["metrics"];
+  const bytes = encodeAtlasMetrics(metrics);
+  assert.deepEqual(bytes, Buffer.from(JSON.stringify(metrics)));
+  assert.deepEqual(await parseAtlasJson(bytes), metrics);
 });
 
 test("Download progress counts decoded stream bytes and preserves checksum validation", async () => {

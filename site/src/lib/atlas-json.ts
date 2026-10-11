@@ -28,16 +28,17 @@ export async function verifiedBytes(response: Response, expected: { sha256: stri
   return bytes;
 }
 
-export async function parseAtlasJson(bytes: ArrayBuffer, signal?: AbortSignal) {
+export async function parseAtlasJson(bytes: ArrayBuffer | Uint8Array, signal?: AbortSignal) {
   // Bound decoded text allocations and let the browser handle input between chunks.
   const parser = new JSONParser({ paths: ["$"], stringBufferSize: 64 * 1024 });
   let result: unknown;
   parser.onValue = ({ value }) => { result = value; };
+  const input = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
   const chunkSize = 1024 * 1024;
   for (let offset = 0; offset < bytes.byteLength; offset += chunkSize) {
     await new Promise(resolve => setTimeout(resolve, 0));
     signal?.throwIfAborted();
-    parser.write(new Uint8Array(bytes, offset, Math.min(chunkSize, bytes.byteLength - offset)));
+    parser.write(input.subarray(offset, offset + chunkSize));
   }
   signal?.throwIfAborted();
   if (!parser.isEnded) parser.end();
