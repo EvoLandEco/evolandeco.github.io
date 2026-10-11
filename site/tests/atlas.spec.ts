@@ -2061,10 +2061,16 @@ for (const reducedMotion of ["reduce", "no-preference"] as const) test(`Globe su
   await dragOverlays(false);
   await page.mouse.move(1, 1);
   const point = await surface();
-  await page.mouse.move(point.x, point.y);
-  await page.mouse.down();
-  await page.mouse.move(point.x + 2, point.y + 1);
-  await page.mouse.up();
+  if (reducedMotion === "reduce") {
+    await page.mouse.move(point.x, point.y);
+    await page.mouse.down();
+    await page.mouse.move(point.x + 2, point.y + 1);
+    await page.mouse.up();
+  } else {
+    const box = (await canvas.boundingBox())!;
+    // Rotating overlays can cross a sampled point; check that the canvas receives the click.
+    await canvas.click({ position: { x: point.x - box.x, y: point.y - box.y } });
+  }
   await expect(atlas).toHaveAttribute("data-fullscreen", "true");
   expect(await page.getByRole("button", { name: /Exit full screen/ }).evaluate(el => {
     const style = getComputedStyle(el);
