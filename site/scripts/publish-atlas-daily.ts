@@ -23,7 +23,8 @@ export async function prepareDailyRelease(directory: string, release: AtlasRelea
   const browserManifestBytes = await readFile(browserManifestPath);
   assert.equal(hash(browserManifestBytes), release.browser.manifest.sha256, 'Weekly browser manifest hash');
   assert.equal(browserManifestBytes.length, release.browser.manifest.bytes, 'Weekly browser manifest size');
-  const browser = validateBrowserManifest(JSON.parse(browserManifestBytes.toString()), release, browserSelectorHashes['0.3.0']);
+  assert(release.browser.transport_version === '0.3.0' || release.browser.transport_version === '0.4.0', 'Unsupported daily browser base');
+  const browser = validateBrowserManifest(JSON.parse(browserManifestBytes.toString()), release, browserSelectorHashes[release.browser.transport_version]);
   const coreBytes = await readFile(resolve(dirname(browserManifestPath), browser.core));
   assert.equal(hash(coreBytes), browser.assets[browser.core].sha256, 'Weekly browser core hash');
   assert.equal(coreBytes.length, browser.assets[browser.core].bytes, 'Weekly browser core size');

@@ -2,7 +2,7 @@
 
 ## Transport versions
 
-The UI requires browser transport 0.3.0, site contract 1.8.0 and metrics 0.4.0. Its byte-preserved producer runtime, declarations and selector live in `src/lib/atlas-vendor/browser/0.3`. Core, map core, detail index, detail partitions and producer handoff must agree with this transport version. The handoff envelope is version 0.1.0.
+The UI accepts browser transport 0.4.0, site contract 1.9.0 and metrics 0.5.0. Its byte-preserved producer runtime, declarations and selector live in `src/lib/atlas-vendor/browser/0.4`. The pinned browser 0.3.0, site 1.8.0 and metrics 0.4.0 release has a separate verified reader. Core, map core, detail index, detail partitions and producer handoff must agree with this transport version. The handoff envelope is version 0.1.0.
 
 Measurement summaries carry `qualifier`, including strict, inclusive and approximate bounds. Summary figures and detail views use the same value formatter. No executable asset is fetched for execution; the manifest must match the bundled runtime. Other transport versions and releases without browser transport are rejected before dataset downloads.
 

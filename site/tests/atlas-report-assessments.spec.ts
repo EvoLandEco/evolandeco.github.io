@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { routeBrowserFixture } from './atlas-browser-fixture.mjs';
-import type { AtlasSiteBundle } from '../src/lib/atlas-vendor/browser/0.3/atlas.js';
+import type { AtlasSiteBundle } from '../src/lib/atlas-vendor/browser/0.4/atlas.js';
 
 test('Dated unresolved reports keep attributed assessments and publishers without logo assets', async ({ page }) => {
   test.skip(!process.env.ATLAS_REPORT_ASSESSMENT_FIXTURE, 'Requires the producer assessment fixture');

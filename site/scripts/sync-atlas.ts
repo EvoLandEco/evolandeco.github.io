@@ -25,7 +25,7 @@ export const correctionSchema = z.object({
   source_supplement: supplementPublicationSchema.optional(),
   network: z.unknown().optional(), intelligence: z.unknown().optional(),
   browser_validation: fileReference.optional(),
-  browser: z.object({ transport_version: z.literal("0.3.0"), manifest: fileReference }).passthrough().optional(),
+  browser: z.object({ transport_version: z.enum(["0.3.0", "0.4.0"]), manifest: fileReference }).passthrough().optional(),
   export: z.object({ bundle_path: z.string().min(1), map_snapshot_path: z.string().min(1) }).passthrough(),
 });
 export function checkCorrectionTarget(replaces: string, existing: AtlasRelease | null) {

@@ -39,7 +39,7 @@ async function checkedJson(ref: FileReference) {
   assert.deepEqual(fingerprint(bytes), { bytes: ref.bytes, sha256: ref.sha256 }, ref.path);
   return JSON.parse(bytes.toString());
 }
-export function attachBrowserDescriptor(base: Record<string, unknown>, descriptor: { sha256: string; bytes: number }, version: "0.3.0" = "0.3.0") {
+export function attachBrowserDescriptor(base: Record<string, unknown>, descriptor: { sha256: string; bytes: number }, version: "0.3.0" | "0.4.0" = "0.3.0") {
   releaseSchema.parse(base);
   const browser = { transport_version: version, manifest: descriptor };
   if (base.browser) assert.deepEqual(base.browser, browser, "Replacing a browser transport requires a separate review");
@@ -55,7 +55,7 @@ const browserHandoffSchema = z.object({
   browser_handoff_version: z.literal("0.1.0"), source_export_id: digest, asset_count: z.number().int().positive(),
   producer_ready: z.literal(true), reconstruction: z.literal(true), all_records_individually: z.literal(true), pinned_selector_parity: z.literal(true),
   source_files_compared: z.tuple([z.literal("site"), z.literal("map")]), selection_cases: z.number().int().positive(),
-  browser: z.object({ transport_version: z.literal("0.3.0"), source_export_id: digest, scientific_contract: z.string(), directory: z.string().refine(isAbsolute), manifest: file, source: z.record(z.string(), z.unknown()) }),
+  browser: z.object({ transport_version: z.enum(["0.3.0", "0.4.0"]), source_export_id: digest, scientific_contract: z.string(), directory: z.string().refine(isAbsolute), manifest: file, source: z.record(z.string(), z.unknown()) }),
 });
 export function checkBrowserHandoff(handoff: unknown, manifest: AtlasBrowserManifest, reference: FileReference) {
   const parsed = browserHandoffSchema.parse(handoff);
@@ -84,7 +84,7 @@ export async function prepareBrowserCandidate(handoffReference: FileReference, r
   const files = Object.entries(manifest.assets).map(([name, expected]) => ({ key: `${prefix}/${name}`, ...expected, path: resolve(directory, name) }));
   for (const ref of files) await checkedFile(ref);
   for (const name of [...Object.keys(pins), "browser.d.mts", "atlas.d.ts"]) {
-    const bytes = await readFile(resolve(site, "src/lib/atlas-vendor/browser", "0.3", name));
+    const bytes = await readFile(resolve(site, "src/lib/atlas-vendor/browser", version.slice(0, 3), name));
     assert.equal(hash(bytes), manifest.assets[name]?.sha256, `Bundled browser runtime or type mismatch: ${name}`);
   }
   const core = await checkedJson({ path: resolve(directory, manifest.core), ...manifest.assets[manifest.core] });

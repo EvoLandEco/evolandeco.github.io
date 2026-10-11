@@ -7,7 +7,7 @@ import { AtlasDetailStatus, useAtlasDetails } from "./atlas-detail";
 import { CountryText } from "./atlas-location-badges";
 import { useElementSize } from "./use-element-size";
 import type { AtlasReviewedSeries } from "@/lib/atlas-contract";
-import type { AtlasBrowserSeries } from "@/lib/atlas-vendor/browser/0.3/browser_transport.js";
+import type { AtlasBrowserSeries } from "@/lib/atlas-browser";
 import { useAtlas, useAtlasPanelState } from "./atlas-context";
 import { GitBranch, ExternalLink, TriangleAlert } from "lucide-react";
 import { visibleMeasure, metricValue, measureRecord, type Measure } from "@/lib/atlas-metrics";
@@ -27,7 +27,7 @@ function MeasureDetailContent({ measure }: { measure: Measure }) {
   return <>
     <div className="atlas-scope-value"><strong>{metricValue(m)}</strong><p><CountryText>{[m.geography.value, m.period_label].filter(Boolean).join(" · ")}</CountryText></p></div>
     <div className="atlas-measure-details">
-    <dl>{[["Count type", m.count_kind], ["Disease", m.disease.value], ["Population", m.population.value], ["Case definition", m.case_definition.value], ["Scope", m.stratum.value], ["Denominator", m.denominator === null ? null : String(m.denominator)], ["Denominator population", m.denominator_population.value], ["Authority", m.origin_authority.value]].filter(([, value]) => value !== null).map(([label, value]) => <div key={label}><dt>{label}</dt><dd><CountryText>{value}</CountryText></dd></div>)}</dl>
+    <dl>{[["Count type", m.count_kind], ["Unit", m.percentage_point_comparison ? "Percentage points" : null], ["Comparison", m.percentage_point_comparison?.comparison ?? null], ["Baseline", m.percentage_point_comparison?.baseline ?? null], ["Difference", m.percentage_point_comparison ? "Comparison − baseline" : null], ["Disease", m.disease.value], ["Population", m.population.value], ["Case definition", m.case_definition.value], ["Scope", m.stratum.value], ["Denominator", m.denominator === null ? null : String(m.denominator)], ["Denominator population", m.denominator_population.value], ["Authority", m.origin_authority.value]].filter(([, value]) => value !== null).map(([label, value]) => <div key={label}><dt>{label}</dt><dd><CountryText>{value}</CountryText></dd></div>)}</dl>
     {m.semantic_note && <p><CountryText>{m.semantic_note}</CountryText></p>}
     {m.source_date_warning && <span className="atlas-status" data-tone="warning"><TriangleAlert size={13} aria-hidden />Source date mismatch</span>}
     {m.evidence_references.map((ref, i) => <div key={i}>{ref.quotes.map((quote, j) => <SourceQuotation key={j} quote={quote} recordId={ref.record_id} claimIndex={ref.claim_index} quoteIndex={ref.quote_indexes[j]} />)}</div>)}
@@ -96,11 +96,11 @@ export function ObservationPlot({ items, onReport, series, seriesId, evidenceDia
   const evidenceIds = edge?.evidence_ids ?? series?.members.find(m => m.measure_id === selection)?.evidence_ids ?? [];
   const left = 40, right = (size?.width ?? 0) - 16, bottom = (size?.height ?? 0) - 30;
   const plotHeight = bottom - 18;
-  const { from, to, top, points } = useMemo(() => {
+  const { from, to, lower, upper, points } = useMemo(() => {
     const dates = items.map(m => Date.parse(m.observation_date!));
-    const from = Math.min(...dates), to = Math.max(...dates), top = Math.max(...items.map(m => m.value!), 1);
-    const points = new Map(items.map((m, i) => [m.measure_id, { x: left + (to === from ? .5 : (dates[i] - from) / (to - from)) * (right - left), y: bottom - m.value! / top * plotHeight }]));
-    return { from, to, top, points };
+    const from = Math.min(...dates), to = Math.max(...dates), lower = Math.min(0, ...items.map(m => m.value!)), upper = Math.max(...items.map(m => m.value!), lower === 0 ? 1 : 0);
+    const points = new Map(items.map((m, i) => [m.measure_id, { x: left + (to === from ? .5 : (dates[i] - from) / (to - from)) * (right - left), y: bottom - (m.value! - lower) / (upper - lower) * plotHeight }]));
+    return { from, to, lower, upper, points };
   }, [items, right, bottom, plotHeight]);
   const highlightedEdges = series?.connections.filter(e => e.id === hovered || e.id === focused) ?? [];
   const highlighted = (id: string) => id === hovered || id === focused || highlightedEdges.some(edge => edge.from_measure_id === id || edge.to_measure_id === id);
@@ -111,7 +111,7 @@ export function ObservationPlot({ items, onReport, series, seriesId, evidenceDia
         <p className="atlas-chart-note">Source-checked draft · {series.reviewed_by} · {formatDate(series.reviewed_at)}</p>
         <SeriesEvidence seriesId={series.series_id} evidenceIds={evidenceIds} onReport={onReport} />
       </>;
-  const caption = <figcaption><strong>{items[0].label}{items[0].unit === "percent" ? " (%)" : ""}</strong><span>{items[0].disease.value} · {items[0].geography.value} · {items[0].count_kind === "interval" ? "Reporting period" : items[0].count_kind === "cumulative" ? "Cumulative" : "Reported values"}</span></figcaption>;
+  const caption = <figcaption><strong>{items[0].label}{items[0].unit === "percentage_points" ? " (pp)" : items[0].unit === "percent" ? " (%)" : ""}</strong><span>{items[0].disease.value} · {items[0].geography.value} · {items[0].count_kind === "interval" ? "Reporting period" : items[0].count_kind === "cumulative" ? "Cumulative" : "Reported values"}</span></figcaption>;
   const plot = <div className="atlas-observation-visual">
     <svg ref={chart} className="atlas-observation-chart" data-report-ready={Boolean(hoveredMeasure) || undefined} onClick={() => { if (hoveredMeasure) onReport([measureRecord(hoveredMeasure)], true); }} viewBox={size ? `0 0 ${size.width} ${size.height}` : undefined} onPointerLeave={() => setHovered(null)} onPointerMove={event => {
       if (event.pointerType === "touch") return;
@@ -126,7 +126,7 @@ export function ObservationPlot({ items, onReport, series, seriesId, evidenceDia
       hoverFigure(nearest.measure_id);
     }} role="group" aria-label={`${items[0].label}: ${series ? "reviewed reporting series" : "separate source observations"}`}>
       {size && <>
-      {[0, .5, 1].map(fraction => <g key={fraction}><path d={`M${left} ${bottom - fraction * plotHeight}H${right}`} className="atlas-observation-axis" /><text x={left - 8} y={bottom + 4 - fraction * plotHeight} textAnchor="end">{new Intl.NumberFormat("en", { notation: "compact" }).format(top * fraction)}</text></g>)}
+      {[0, .5, 1].map(fraction => <g key={fraction}><path d={`M${left} ${bottom - fraction * plotHeight}H${right}`} className="atlas-observation-axis" /><text x={left - 8} y={bottom + 4 - fraction * plotHeight} textAnchor="end">{new Intl.NumberFormat("en", { notation: "compact" }).format(lower + (upper - lower) * fraction)}</text></g>)}
       {guide && <path className="atlas-observation-guide" d={`M${guide.x} 18V${bottom}`} aria-hidden="true" />}
       {series?.connections.map(connection => {
         const a = points.get(connection.from_measure_id)!, b = points.get(connection.to_measure_id)!;

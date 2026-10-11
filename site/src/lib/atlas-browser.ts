@@ -1,24 +1,30 @@
 import { z } from "zod";
 import { parseAtlasJson, verifiedBytes } from "./atlas-json";
 import type { AtlasRelease } from "./atlas-release";
-import type { AtlasSiteBundle, AtlasMapSnapshot, AtlasReviewedSeries } from "./atlas-vendor/browser/0.3/atlas.js";
-import * as transport from "./atlas-vendor/browser/0.3/browser_transport.js";
-export { hydrateBrowserView } from "./atlas-vendor/browser/0.3/browser_transport.js";
-export type AtlasBrowserCore = transport.AtlasBrowserCore;
-export type AtlasBrowserData = Omit<transport.AtlasBrowserData, "contract_version"> & { contract_version: "1.8.0" };
-export type { AtlasBrowserMeasure, AtlasBrowserSelector, AtlasBrowserMap, AtlasBrowserManifest, AtlasBrowserSelection, AtlasBrowserSeries, AtlasBrowserDetailIndex, AtlasBrowserDetailPartition } from "./atlas-vendor/browser/0.3/browser_transport.js";
-import type { AtlasBrowserManifest, AtlasBrowserDetailIndex, AtlasBrowserDetailPartition } from "./atlas-vendor/browser/0.3/browser_transport.js";
+import type { AtlasSiteBundle, AtlasMapSnapshot, AtlasReviewedSeries } from "./atlas-vendor/browser/0.4/atlas.js";
+import * as transport from "./atlas-vendor/browser/0.4/browser_transport.js";
+import * as transport03 from "./atlas-vendor/browser/0.3/browser_transport.js";
+export { hydrateBrowserView } from "./atlas-vendor/browser/0.4/browser_transport.js";
+export type AtlasBrowserCore = transport.AtlasBrowserCore | transport03.AtlasBrowserCore;
+export type AtlasBrowserData = Omit<transport.AtlasBrowserData, "contract_version"> & { contract_version: "1.8.0" | "1.9.0" };
+export type { AtlasBrowserMeasure, AtlasBrowserSelector, AtlasBrowserSelection, AtlasBrowserSeries } from "./atlas-vendor/browser/0.4/browser_transport.js";
+export type AtlasBrowserMap = transport.AtlasBrowserMap | transport03.AtlasBrowserMap;
+export type AtlasBrowserManifest = transport.AtlasBrowserManifest | transport03.AtlasBrowserManifest;
+export type AtlasBrowserDetailIndex = transport.AtlasBrowserDetailIndex | transport03.AtlasBrowserDetailIndex;
+export type AtlasBrowserDetailPartition = transport.AtlasBrowserDetailPartition | transport03.AtlasBrowserDetailPartition;
 
 function requireCurrentCore(core: AtlasBrowserCore) {
-  if (core.metadata.contract_version !== "1.8.0" || core.metadata.metrics.contract_version !== "0.4.0") throw new Error("ATLAS requires site contract 1.8.0 and metrics 0.4.0");
+  const current = core.transport_version === "0.4.0" && core.metadata.contract_version === "1.9.0" && core.metadata.metrics.contract_version === "0.5.0";
+  const supported = core.transport_version === "0.3.0" && core.metadata.contract_version === "1.8.0" && core.metadata.metrics.contract_version === "0.4.0";
+  if (!current && !supported) throw new Error("ATLAS browser version or source mismatch");
 }
 export function decodeBrowserCore(core: AtlasBrowserCore, exportId: string): AtlasBrowserData {
   requireCurrentCore(core);
-  return transport.decodeBrowserCore(core, exportId) as AtlasBrowserData;
+  return (core.transport_version === "0.4.0" ? transport.decodeBrowserCore(core, exportId) : transport03.decodeBrowserCore(core, exportId)) as AtlasBrowserData;
 }
 export function prepareBrowserView(core: AtlasBrowserCore, exportId: string) {
   requireCurrentCore(core);
-  const { data, select } = transport.prepareBrowserView(core, exportId);
+  const { data, select } = core.transport_version === "0.4.0" ? transport.prepareBrowserView(core, exportId) : transport03.prepareBrowserView(core, exportId);
   return { data: data as AtlasBrowserData, select };
 }
 
@@ -26,7 +32,7 @@ const digest = z.string().regex(/^[a-f0-9]{64}$/);
 const asset = z.strictObject({ sha256: digest, bytes: z.number().int().positive().safe() });
 const file = asset.extend({ path: z.string().min(1) });
 const manifestSchema = z.strictObject({
-  transport_version: z.literal("0.3.0"), source_export_id: digest,
+  transport_version: z.enum(["0.3.0", "0.4.0"]), source_export_id: digest,
   source: z.strictObject({ manifest: file, site: file, map: file, metrics_sha256: digest, site_contract_version: z.string(), selector: file }),
   core: z.string(), map_core: z.string(), detail_index: z.string(), selector: z.string(),
   assets: z.record(z.string(), asset.extend({ kind: z.string() })),

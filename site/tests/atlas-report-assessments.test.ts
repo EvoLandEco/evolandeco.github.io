@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { healthPanelsFixture } from "./atlas-health-panels-fixture";
-import type { AtlasReportAssessment, AtlasSiteBundle } from "../src/lib/atlas-vendor/browser/0.3/atlas.js";
-import { selectView } from "../src/lib/atlas-vendor/browser/0.3/site_view.js";
+import type { AtlasReportAssessment, AtlasSiteBundle } from "../src/lib/atlas-vendor/browser/0.4/atlas.js";
+import { selectView } from "../src/lib/atlas-vendor/browser/0.4/site_view.js";
 import { createResearch } from "../src/lib/atlas-comparisons";
 import { createIdentities } from "../src/lib/atlas-identities";
 

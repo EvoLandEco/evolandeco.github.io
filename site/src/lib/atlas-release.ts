@@ -18,7 +18,7 @@ const supplementDescriptor = z.discriminatedUnion("path", [
 export const releaseSchema = z.object({
   version: z.literal(1), export_id: digest, published_at: z.iso.datetime(),
   cycle: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(), mode: z.enum(["weekly", "initial"]),
-  contract_version: z.enum(["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0", "1.6.0", "1.7.0", "1.8.0"]), selector_sha256: digest,
+  contract_version: z.enum(["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0", "1.6.0", "1.7.0", "1.8.0", "1.9.0"]), selector_sha256: digest,
   assets: z.object({ "atlas-site.json": asset, "map.json": asset, "metrics.json": asset, "network-transport.json": asset.optional() }),
   source_supplement: supplementDescriptor.optional(),
   source_text: z.object({ version: z.literal("0.1.0"), source_export_id: digest, catalogue_sha256: digest,
@@ -29,18 +29,24 @@ export const releaseSchema = z.object({
     sha256: digest, bytes: z.number().int().positive(), schema_sha256: z.literal("6029955be2f9c4e22c247c1f0e9a127c6251b422463d242b9a35a75101579caa") }).optional(),
   correction: z.object({ replaces_export_id: digest, authorization_sha256: digest }).optional(),
   intelligence: z.object({ experiment_id: digest, schema_version: z.literal("0.2.0"), asset }).optional(),
-  browser: z.object({ transport_version: z.enum(["0.1.0", "0.2.0", "0.3.0"]), manifest: asset }).optional(),
+  browser: z.object({ transport_version: z.enum(["0.1.0", "0.2.0", "0.3.0", "0.4.0"]), manifest: asset }).optional(),
 });
-export const uiReleaseSchema = releaseSchema.extend({
-  contract_version: z.literal(atlasContractVersion),
-  selector_sha256: z.literal(atlasSelectorSha256),
-  browser: z.object({ transport_version: z.literal("0.3.0"), manifest: asset }),
-});
+export const uiReleaseSchema = z.union([
+  releaseSchema.extend({ contract_version: z.literal(atlasContractVersion), selector_sha256: z.literal(atlasSelectorSha256),
+    browser: z.object({ transport_version: z.literal("0.4.0"), manifest: asset }) }),
+  releaseSchema.extend({ contract_version: z.literal("1.8.0"), selector_sha256: z.literal("eeb1ed08365086de8f97a1b952405927f9948f3c61ffde538f401dab4c083136"),
+    browser: z.object({ transport_version: z.literal("0.3.0"), manifest: asset }) }),
+]);
 export type AtlasRelease = z.infer<typeof releaseSchema>;
 export type AtlasLoadProgress = { phase: "release" | "download" | "verify" | "prepare"; loaded: number; total: number };
 export const atlasOrigin = process.env.NEXT_PUBLIC_ATLAS_DATA_ORIGIN ?? hosting.origin;
 export function releaseRoot(release: AtlasRelease) { return `${atlasOrigin}/releases/${release.export_id}`; }
 export const browserSelectorHashes = {
+ "0.4.0": {
+  "browser_transport.js": "c25a9011f52a095127ddf1ac378bb23c746c85c3c832cfa1fd05eac71ebde826",
+  "browser_tables.js": "85bf1c68d9c8138f493db232028918142819e6334eb3b9313bc89612a840e3a3",
+  "site_view.js": "bb0452225290142c59ff19ce3827bfd4a0a12fa7cd7937f60742ad09e1ad8d92"
+ },
  "0.3.0": {
   "browser_transport.js": "89b041aa41b019ff86147541aaa06f70acc3750c3c1f35922d6bab25251a3af8",
   "browser_tables.js": "8bcb8842d6cd0f17ac8ff51451d28b2e1116b936fdf4c4ad611f62cb2e6f6208",

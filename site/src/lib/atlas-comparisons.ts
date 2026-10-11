@@ -1,6 +1,6 @@
 import type { AtlasData, AtlasSiteBundle, AtlasReportAssessment } from "./atlas-contract";
 import type { AtlasBrowserSelector } from "./atlas-browser";
-import { selectView as selectAssessedView } from "./atlas-vendor/browser/0.3/site_view.js";
+import { selectView as selectAssessedView } from "./atlas-vendor/browser/0.4/site_view.js";
 import type { AtlasOneHealthOptions, AtlasSelectedOneHealth } from "./atlas-contract";
 function selectResearch(bundle: AtlasSiteBundle, ids: string[], options: AtlasOneHealthOptions = {}) {
   const { publication_from: from, publication_until: until } = bundle.snapshot;

@@ -10,7 +10,7 @@ import { healthPanelsFixture } from "./atlas-health-panels-fixture";
 
 test("Current browser decoder preserves qualifiers and rejects older transports", () => {
   const source = healthPanelsFixture(), exportId = "a".repeat(64);
-  for (const version of ["0.3.0"] as const) {
+  for (const version of ["0.3.0", "0.4.0"] as const) {
     const specs = tables03;
     const strings: string[] = [];
     const text = (value: unknown) => { assert.equal(typeof value, "string"); strings.push(String(value)); return strings.length - 1; };
@@ -25,14 +25,14 @@ test("Current browser decoder preserves qualifiers and rejects older transports"
       }));
     }
     const core = { transport_version: version, source_export_id: exportId, strings, eligibility_record_sets: [], tables,
-      metadata: { contract_version: source.contract_version, snapshot: source.snapshot, reviewed_chains: [], metrics: { contract_version: source.metrics.contract_version, coverage: source.metrics.coverage } } } as AtlasBrowserCore;
+      metadata: { contract_version: version === "0.4.0" ? "1.9.0" : source.contract_version, snapshot: source.snapshot, reviewed_chains: [], metrics: { contract_version: version === "0.4.0" ? "0.5.0" : source.metrics.contract_version, coverage: source.metrics.coverage } } } as AtlasBrowserCore;
     const decoded = decodeBrowserCore(core, exportId);
     assert.deepEqual(decoded.metrics.measures.map(metricValue), [">10", "<10", "≥10", "≤10"]);
     const wrongVersion = structuredClone(core);
     Object.assign(wrongVersion, { transport_version: "0.2.0" });
     assert.throws(() => decodeBrowserCore(wrongVersion, exportId), /version or source mismatch/);
     for (const [name, expected] of Object.entries(browserSelectorHashes[version])) {
-      const bytes = readFileSync(new URL(`../src/lib/atlas-vendor/browser/0.3/${name}`, import.meta.url));
+      const bytes = readFileSync(new URL(`../src/lib/atlas-vendor/browser/${version.slice(0, 3)}/${name}`, import.meta.url));
       assert.equal(createHash("sha256").update(bytes).digest("hex"), expected);
     }
   }
