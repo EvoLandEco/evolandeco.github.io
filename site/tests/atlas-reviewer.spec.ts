@@ -66,6 +66,6 @@ test('Reports explains a blocked sign-in window', async ({page}) => {
   await page.getByRole('tab', {name: 'Reports', exact: true}).click();
   await page.getByRole('button', {name: 'Reviewer login', exact: true}).click();
   await page.getByRole('button', {name: 'Continue to sign-in', exact: true}).click();
-  await expect(page.getByRole('alert')).toHaveText('Allow the sign-in window in your browser, then try again.');
+  await expect(page.locator('.atlas-reviewer-sign-in').getByRole('alert')).toHaveText('Allow the sign-in window in your browser, then try again.');
   await expect(page.getByRole('button', {name: 'Close reviewer inbox', exact: true})).toBeVisible();
 });
