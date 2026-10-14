@@ -1,3 +1,6 @@
+import { groupReportMeasures } from "@/lib/atlas-report-details";
+import { SourceVersionLink } from "./atlas-report-sources";
+import type { AtlasMeasure } from "@/lib/atlas-contract";
 import { SourceQuotation } from "./atlas-source-text";
 import { motion, useReducedMotion } from "motion/react";
 import { memo, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction, type ReactNode } from "react";
@@ -14,33 +17,55 @@ import { visibleMeasure, metricValue, measureRecord, type Measure } from "@/lib/
 import { revealAtlasEntries } from "@/lib/atlas-detail-scroll";
 import { formatDate, sourceName } from "@/lib/atlas";
 
-function MeasureDetails({ measure: m }: { measure: Measure }) {
+function MeasureDetails({ measure: m, versions }: { measure: Measure; versions?: AtlasMeasure[] }) {
   return <AtlasScope label="Scope & source" title={m.label}>
-    <MeasureDetailContent measure={m} />
+    <MeasureDetailContent measure={m} versions={versions} />
   </AtlasScope>;
 }
 
-function MeasureDetailContent({ measure }: { measure: Measure }) {
+function MeasureDetailContent({ measure, versions }: { measure: Measure; versions?: AtlasMeasure[] }) {
+  const { atlasDocuments, sourceText } = useAtlas();
   const { data, error, retry } = useAtlasDetails([{ collection: "metrics.measures", id: measure.measure_id }]);
   if (!data) return <AtlasDetailStatus error={error} retry={retry} />;
   const m = data.get("metrics.measures", measure.measure_id);
+  const evidence = new Map<string, { quote: string; ref: AtlasMeasure["evidence_references"][number]; index: number; documents: Set<string> }>();
+  for (const version of versions ?? [m]) for (const ref of version.evidence_references) ref.quotes.forEach((quote, index) => {
+    const text = sourceText?.claims.get(JSON.stringify([ref.record_id, ref.claim_index, ref.quote_indexes[index]]));
+    const translation = text?.english_translation_id ? sourceText?.translations.get(text.english_translation_id) : undefined;
+    const key = JSON.stringify([quote, text?.language_tag, translation?.text, translation?.review_status, translation?.origin, versions ? null : [ref.record_id, ref.claim_index, index]]);
+    const group = evidence.get(key) ?? { quote, ref, index, documents: new Set<string>() };
+    group.documents.add(ref.document_id); evidence.set(key, group);
+  });
   return <>
     <div className="atlas-scope-value"><strong>{metricValue(m)}</strong><p><CountryText>{[m.geography.value, m.period_label].filter(Boolean).join(" · ")}</CountryText></p></div>
     <div className="atlas-measure-details">
     <dl>{[["Count type", m.count_kind], ["Unit", m.percentage_point_comparison ? "Percentage points" : null], ["Comparison", m.percentage_point_comparison?.comparison ?? null], ["Baseline", m.percentage_point_comparison?.baseline ?? null], ["Difference", m.percentage_point_comparison ? "Comparison − baseline" : null], ["Disease", m.disease.value], ["Population", m.population.value], ["Case definition", m.case_definition.value], ["Scope", m.stratum.value], ["Denominator", m.denominator === null ? null : String(m.denominator)], ["Denominator population", m.denominator_population.value], ["Authority", m.origin_authority.value]].filter(([, value]) => value !== null).map(([label, value]) => <div key={label}><dt>{label}</dt><dd><CountryText>{value}</CountryText></dd></div>)}</dl>
     {m.semantic_note && <p><CountryText>{m.semantic_note}</CountryText></p>}
     {m.source_date_warning && <span className="atlas-status" data-tone="warning"><TriangleAlert size={13} aria-hidden />Source date mismatch</span>}
-    {m.evidence_references.map((ref, i) => <div key={i}>{ref.quotes.map((quote, j) => <SourceQuotation key={j} quote={quote} recordId={ref.record_id} claimIndex={ref.claim_index} quoteIndex={ref.quote_indexes[j]} />)}</div>)}
+    {[...evidence].map(([key, group]) => <div key={key}><SourceQuotation quote={group.quote} recordId={group.ref.record_id} claimIndex={group.ref.claim_index} quoteIndex={group.ref.quote_indexes[group.index]} />
+      {versions && versions.length > 1 && <div className="atlas-source-references">{[...group.documents].map(id => <SourceVersionLink key={id} document={atlasDocuments.get(id)!} />)}</div>}
+    </div>)}
     <a href={m.source_url} target="_blank" rel="noopener noreferrer">{m.source_id} · {formatDate(m.publication)} <ExternalLink size={12} aria-hidden /></a>
     </div>
   </>;
 }
 
-export function MetricFigures({ kind, ids, recordIds, compact = false, exclude }: { kind: string; ids: string[]; recordIds: Set<string>; compact?: boolean; exclude?: Set<string> }) {
+export function MetricFigures({ kind, ids, recordIds, compact = false, exclude, combineVersions = false }: { kind: string; ids: string[]; recordIds: Set<string>; compact?: boolean; exclude?: Set<string>; combineVersions?: boolean }) {
   const { panelMeasures, compactPanelFigures } = useAtlas();
   const shown = compact ? compactPanelFigures(kind, ids, recordIds)
     : panelMeasures(kind, ids, recordIds).filter(m => !exclude?.has(m.measure_id)).map(m => [m]);
   if (!shown.length) return null;
+  if (combineVersions) return <ReportMetricFigures measures={shown.flat()} />;
+  return <MetricFigureList shown={shown} compact={compact} />;
+}
+
+function ReportMetricFigures({ measures }: { measures: Measure[] }) {
+  const { data, error, retry } = useAtlasDetails(measures.map(m => ({ collection: "metrics.measures" as const, id: m.measure_id })));
+  if (!data) return <AtlasDetailStatus error={error} retry={retry} />;
+  return <MetricFigureList shown={groupReportMeasures(measures.map(m => data.get("metrics.measures", m.measure_id)))} compact={false} versions />;
+}
+
+function MetricFigureList({ shown, compact, versions = false }: { shown: Measure[][]; compact: boolean; versions?: boolean }) {
   const contexts = shown.map(([m]) => [m.geography.value,
     compact ? m.count_kind === "point" ? "Reported" : m.count_kind === "interval" ? "In period" : "Cumulative" : null,
     m.period_label || (m.observation_date ? formatDate(m.observation_date) : null)].filter(Boolean).join(" · "));
@@ -51,7 +76,7 @@ export function MetricFigures({ kind, ids, recordIds, compact = false, exclude }
       const m = group[0];
       return <div className="atlas-measure" key={group.map(m => m.measure_id).join(":")}>
       <strong>{metricValue(m)}</strong><div className="atlas-measure-heading"><span className="atlas-measure-label"><CountryText>{m.label}</CountryText></span></div>
-      {!compact && <MeasureDetails measure={m} />}
+      {!compact && <MeasureDetails measure={m} versions={versions ? group as AtlasMeasure[] : undefined} />}
       {!sharedContext && <small><CountryText>{contexts[index]}</CountryText></small>}
       {compact && <small className="atlas-measure-sources">{[...new Set(group.map(m => sourceName(m.source_id)))].join(" · ")}</small>}
       {m.conflict_set && <span className="atlas-status" data-tone="warning"><GitBranch size={12} aria-hidden />Conflicting totals</span>}

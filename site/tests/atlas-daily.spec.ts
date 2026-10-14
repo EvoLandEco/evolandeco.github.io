@@ -360,3 +360,35 @@ for (const width of [390, 1466]) test(`Daily watch board supports empty and mult
   await expect(page.locator('.atlas-latest-list')).toContainText('Investigation in France');
   await expect(page.getByRole('button', { name: 'Daily sources', exact: true })).toHaveCount(0);
 });
+
+
+test('Repeated daily versions share findings and quotations with both source references', async ({ page }) => {
+  const fixture = await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
+  const manifest = JSON.parse(fixture.bodies[`/releases/${fixture.release.export_id}/browser/${fixture.release.browser.manifest.sha256}/manifest.json`].toString());
+  const data = dailyFixture(releaseSchema.parse(fixture.release), manifest.source.manifest.sha256);
+  data.documents[0].base_document_ids = [bundle.documents[0].id];
+  data.documents.push({ ...data.documents[0], id: 'daily_alias', review_id: 'review_alias', finding_ids: ['finding_alias'], url: 'https://example.org/alias' });
+  data.findings.push({ ...data.findings[0], id: 'finding_alias', document_id: 'daily_alias', review_id: 'review_alias', evidence_ids: ['evidence_alias'] });
+  data.evidence.push({ ...data.evidence[0], id: 'evidence_alias', document_id: 'daily_alias' });
+  await page.route(/\/daily\//, route => route.fulfill({ contentType: 'application/json', body: JSON.stringify(route.request().url().endsWith('current.json') ? dailyPointer(data) : data) }));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/atlas/');
+  await expect(page.locator('.atlas-daily-watch')).toBeVisible();
+  await page.locator('summary[aria-label="Reporting source"]').click();
+  const menu = page.getByRole('dialog', { name: 'Reporting source', exact: true });
+  await menu.getByRole('checkbox', { name: 'Santé publique France', exact: true }).check();
+  await menu.getByRole('searchbox').press('Escape');
+  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+  const report = page.locator('.atlas-daily-report').filter({ hasText: 'Investigation in France' });
+  await report.locator(':scope > summary').click();
+  await expect(report.locator('.atlas-claim > p')).toHaveText(['12 reported cases in France.']);
+  await expect(report.locator('.atlas-daily-processing')).toHaveCount(1);
+  await report.locator('.atlas-source-versions > summary').click();
+  await expect(report.locator('.atlas-source-versions a')).toHaveCount(2);
+  for (const link of await report.locator('.atlas-source-versions a').all()) await expect(link).toHaveAttribute('target', '_blank');
+  await report.locator('.atlas-claim summary').click();
+  await expect(report.locator('.atlas-claim blockquote')).toHaveText([data.evidence[0].quote, data.evidence[0].translation!.text]);
+  await expect(report.locator('.atlas-claim [data-source-version]')).toHaveCount(2);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await report.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+});

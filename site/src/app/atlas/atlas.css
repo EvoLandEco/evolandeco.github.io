@@ -1861,3 +1861,7 @@ html[data-atlas-connection-transition]::view-transition-new(root) { animation: n
 .atlas-reviewer-sign-in .atlas-dataset-button { margin: auto; }
 
 .atlas-page[data-fullscreen] .atlas-reviewer { height: 100%; overflow: hidden; }
+
+.atlas-source-references { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-block: 6px 12px; font-size: 12px; }
+.atlas-source-references a { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 5px; color: var(--primary); }
+.atlas-version-review + .atlas-version-review { margin-top: 16px; }

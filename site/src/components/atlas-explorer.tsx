@@ -1,6 +1,6 @@
 "use client";
 import { dailySelection, pendingDailyDocuments, reportChronology, highlightedReportIds, type DailyState, type DailyDocument, type DailySelection } from "@/lib/atlas-daily";
-import { DailyReport, DailyProcessing, DailyVersion } from "./atlas-daily";
+import { DailyReport, DailyProcessing, DailyVersions } from "./atlas-daily";
 import { SourceQuotation, OriginalTitle } from "./atlas-source-text";
 import type { AtlasExperiment } from "@/lib/atlas-intelligence";
 import type { AtlasRelease } from '@/lib/atlas-release';
@@ -41,6 +41,8 @@ import { AtlasChains } from "./atlas-chains";
 import { AtlasTrends } from "./atlas-trends";
 import { MetricFigures, ObservationHistory } from "./atlas-metrics";
 import { SourceComparisons, ComparisonBadge } from "./atlas-comparisons";
+import { groupReportClaims, internalVersionComparison } from "@/lib/atlas-report-details";
+import { ReportSourceVersions, ReportClaimEvidence } from "./atlas-report-sources";
 import { useAtlas, AtlasWorkspaceContext, AtlasPanelStateContext, useAtlasPanelState } from "./atlas-context";
 
 const AtlasAnalysis = dynamic(() => import("./atlas-analysis").then(module => module.AtlasAnalysis));
@@ -762,7 +764,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
           {documents.length === 0 && <p className="atlas-empty">No reports in this selection. Widen the dates or clear the focus.</p>}
           {topic.length > 0 && <ObservationHistory topicIds={topicIds(topic)} recordIds={recordIds} onReport={showReports} />}
           </div>
-          <AnimatePresence initial={false} mode="popLayout">{pageDocuments.map(({ records, dailyVersions, weeklyVersions, id }) => !records.length && dailyView ? <DailyReport key={id} documents={dailyVersions} selection={dailyView} highlighted={evidence.has(id) || reportJump?.documentId === id} /> : <Report key={id} daily={dailyVersions} dailyView={dailyView} versions={weeklyVersions} records={records} basis={basis} highlighted={evidence.has(id) || reportJump?.documentId === id} recordIds={recordIds} onReport={openReports} relationships={reportRelationships} riskRecords={riskRecords} onAssessment={showAssessment} onRisk={showRisk} />)}</AnimatePresence>
+          <AnimatePresence initial={false} mode="popLayout">{pageDocuments.map(({ records, dailyVersions, id }) => !records.length && dailyView ? <DailyReport key={id} documents={dailyVersions} selection={dailyView} highlighted={evidence.has(id) || reportJump?.documentId === id} /> : <Report key={id} daily={dailyVersions} dailyView={dailyView} records={records} basis={basis} highlighted={evidence.has(id) || reportJump?.documentId === id} recordIds={recordIds} onReport={openReports} relationships={reportRelationships} riskRecords={riskRecords} onAssessment={showAssessment} onRisk={showRisk} />)}</AnimatePresence>
         </div>}
         {tab === "analysis" && <AtlasAnalysis view={analysisView} onView={changeAnalysisView} spatialCount={spatialEntries.length} relationshipCount={relationshipEntries.length} connectionTools={<>
           <AtlasSelect key={analysisView} label={showingSpatial ? "Spatial link" : "Report relationship"} searchable disabled={!connectionItems.length} value={showingSpatial ? selectedLink : relationshipEntries.find(assessment => reportJump?.headingId === `atlas-assessment-${assessment.id}`)?.id ?? ""} items={connectionItems}
@@ -955,42 +957,65 @@ function GeographicRoute({ link }: { link: AtlasLink }) {
 }
 
 
-const Report = memo(function Report({ ref, records, versions, basis, daily, dailyView, highlighted, recordIds, onReport, relationships, riskRecords, onAssessment, onRisk }: { ref?: Ref<HTMLDetailsElement>; versions?: AtlasRecord[][]; daily?: DailyDocument[]; dailyView?: DailySelection; relationships: Map<string, AtlasAssessment[]>; riskRecords: Set<string>; onAssessment: (id: string) => void; onRisk: (id: string) => void; records: AtlasRecord[]; basis: DateBasis; highlighted: boolean; recordIds: Set<string>; onReport: (ids: string[]) => void }) {
+const Report = memo(function Report({ ref, records, basis, daily, dailyView, highlighted, recordIds, onReport, relationships, riskRecords, onAssessment, onRisk }: { ref?: Ref<HTMLDetailsElement>; daily?: DailyDocument[]; dailyView?: DailySelection; relationships: Map<string, AtlasAssessment[]>; riskRecords: Set<string>; onAssessment: (id: string) => void; onRisk: (id: string) => void; records: AtlasRecord[]; basis: DateBasis; highlighted: boolean; recordIds: Set<string>; onReport: (ids: string[]) => void }) {
   const { sourceName, atlasDocuments, reportOrganizations, reportComparisons, assertions, englishTitle } = useAtlas();
   const [open, setOpen] = useAtlasPanelState(`report.${records[0].document_id}.open`, false);
   const [loaded, setLoaded] = useState(open);
   const first = records[0];
   const document = atlasDocuments.get(first.document_id)!;
   const organization = reportOrganizations[first.source];
-  const comparisons = reportComparisons(recordIds, records.map(r => r.id));
-  const comparedMeasures = new Set(comparisons.flatMap(c => c.participant_ids).map(id => assertions.get(id)!.measure_id).filter((id): id is string => id !== null));
+  const members = new Set(records.map(r => r.id));
+  const groupedVersions = new Set(records.map(r => r.document_id)).size > 1;
+  const comparisons = reportComparisons(recordIds, [...members]);
+  const displayedComparisons = comparisons.filter(c => !groupedVersions || !internalVersionComparison(c, members, assertions));
+  const comparedMeasures = new Set(displayedComparisons.flatMap(c => c.participant_ids).map(id => assertions.get(id)!.measure_id).filter((id): id is string => id !== null));
   return <m.details ref={ref} layout="position" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} open={open} className="atlas-report" id={`atlas-report-${first.document_id}`} data-evidence={highlighted} onToggle={event => { if (event.target !== event.currentTarget) return; setOpen(event.currentTarget.open); if (event.currentTarget.open) setLoaded(true); }}>
     <summary onClick={event => { if (event.currentTarget.parentElement?.hasAttribute("open")) keepHeadingVisible(event.currentTarget); }}><span className="atlas-timeline-node institution-logo atlas-source-logo">{organization.logo ? <Image src={`/logos/atlas/${organization.logo}`} alt={organization.name} width={32} height={32} unoptimized /> : <Building2 size={20} role="img" aria-label={organization.name} />}</span><span className="atlas-report-date"><time dateTime={document[basis]}>{formatDate(document[basis])}</time><small>{sourceName(first.source)}</small></span>
       <span className="atlas-report-summary">{highlighted && <span className="sr-only">Relevant report. </span>}<strong>{englishTitle(document)}</strong>
         {!!daily?.length && <DailyProcessing document={daily.find(doc => doc.processing_status === "weekly_review_pending") ?? daily[0]} />}
         {comparisons.filter((c, i) => comparisons.findIndex(other => other.kind === c.kind) === i).map(c => <ComparisonBadge key={c.kind} comparison={c} />)}</span><span className="atlas-expand" aria-hidden><ChevronDown size={17} /></span></summary>
-    {loaded && daily && dailyView && daily.map(doc => <div className="atlas-report-body" key={doc.id}><DailyVersion document={doc} selection={dailyView} /></div>)}
-    {loaded && (versions ?? [records]).map(group => <ReportBody key={group[0].document_id} records={group} basis={basis} recordIds={recordIds} onReport={onReport} relationships={relationships} riskRecords={riskRecords} onAssessment={onAssessment} onRisk={onRisk} comparedMeasures={comparedMeasures} />)}
+    {loaded && !!daily?.length && dailyView && <div className="atlas-report-body"><DailyVersions documents={daily} selection={dailyView} /></div>}
+    {loaded && <ReportBody records={records} basis={basis} recordIds={recordIds} onReport={onReport} relationships={relationships} riskRecords={riskRecords} onAssessment={onAssessment} onRisk={onRisk} comparedMeasures={comparedMeasures} />}
   </m.details>;
 });
 
 function ReportBody({ records, basis, recordIds, onReport, relationships, riskRecords, onAssessment, onRisk, comparedMeasures }: { records: AtlasRecord[]; basis: DateBasis; recordIds: Set<string>; onReport: (ids: string[]) => void; relationships: Map<string, AtlasAssessment[]>; riskRecords: Set<string>; onAssessment: (id: string) => void; onRisk: (id: string) => void; comparedMeasures: Set<string> }) {
-  const { atlasDocuments, tracks } = useAtlas();
-  const document = atlasDocuments.get(records[0].document_id)!;
-  const { data, error, retry } = useAtlasDetails(records.map(record => ({ collection: "map.records", id: record.id })));
+  const { atlasDocuments, tracks, reportComparisons, assertions } = useAtlas();
+  const documents = [...new Set(records.map(record => record.document_id))].map(id => atlasDocuments.get(id)!);
+  const document = documents[0];
+  const ids = new Set(records.map(r => r.id));
+  const internal = reportComparisons(recordIds, [...ids]).filter(c => documents.length > 1 && internalVersionComparison(c, ids, assertions));
+  const { data, error, retry } = useAtlasDetails([...records.map(record => ({ collection: "map.records" as const, id: record.id })), ...internal.map(c => ({ collection: "comparisons" as const, id: c.id }))]);
   if (!data) return <AtlasDetailStatus error={error} retry={retry} />;
+  const full = records.map(record => data.get("map.records", record.id));
+  const shownRecords = new Set<string>();
+  const findings = groupReportClaims(full).map(references => {
+    const members = [...new Map(references.map(ref => [ref.record.id, ref.record])).values()].filter(record => !shownRecords.has(record.id));
+    members.forEach(record => shownRecords.add(record.id));
+    return { references, members };
+  });
+  const empty = full.filter(record => !record.claims.length);
+  if (empty.length) findings.push({ references: [], members: empty });
   return <ReportCountryFlags value={true}><div className="atlas-report-body"><div className="atlas-item-meta atlas-report-meta"><span><CalendarDays size={14} aria-hidden />{basis === "publication" ? `Captured ${formatDate(document.capture)}` : `Published ${formatDate(document.publication)}`}</span><a href={document.url} target="_blank" rel="noopener noreferrer">Read source <ExternalLink size={14} aria-hidden /></a></div>
       <OriginalTitle document={document} />
-      <SourceComparisons recordIds={recordIds} reportIds={records.map(r => r.id)} onReport={onReport} />
-      {records.map(summary => data.get("map.records", summary.id)).map(record => <div key={record.id}><h3><CountryText>{tracks.get(record.track)?.label}</CountryText></h3>
-        {(relationships.has(record.id) || riskRecords.has(record.id)) && <div className="atlas-report-assessment-links">
-          {relationships.has(record.id) && <details><EvidenceSummary kind="relationships" count={relationships.get(record.id)!.length} />
-            <ol>{relationships.get(record.id)!.map(assessment => <li key={assessment.id}><button data-assessment-id={assessment.id} onClick={() => onAssessment(assessment.id)}><span><strong>{assessment.status}</strong>{(assessment.from || assessment.to) && <small>{[assessment.from, assessment.to].filter(Boolean).join(" → ")}</small>}</span><ArrowRight size={14} aria-hidden /></button></li>)}</ol>
-          </details>}
-          {riskRecords.has(record.id) && <button onClick={() => onRisk(record.id)}><ShieldCheck size={14} aria-hidden />Source risk assessment<ArrowRight size={14} aria-hidden /></button>}
-        </div>}
-        <ReportSourceAssessments recordIds={recordIds} recordId={record.id} />
-        <MetricFigures kind="record" ids={[record.id]} recordIds={recordIds} exclude={comparedMeasures} />{record.claims.map(claim => <div className="atlas-claim" key={claim.claim_index}><p><CountryText>{claim.text}</CountryText></p>{claim.quotes.length > 0 && <AtlasDisclosure summary={<EvidenceSummary kind="quotation" />}>{() => claim.quotes.map((q, i) => <SourceQuotation key={i} quote={q} recordId={record.id} claimIndex={claim.claim_index} quoteIndex={i} />)}</AtlasDisclosure>}</div>)}</div>)}
+      <ReportSourceVersions documents={documents} comparisons={internal.map(c => data.get("comparisons", c.id))} />
+      <SourceComparisons recordIds={recordIds} reportIds={records.map(r => r.id)} onReport={onReport} groupedVersions={documents.length > 1} />
+      {findings.map(({ references, members }) => {
+        const claim = references[0]?.claim;
+        const titles = [...new Set(members.map(record => tracks.get(record.track)?.label).filter(title => title && title !== claim?.text))];
+        const assessments = [...new Map(members.flatMap(record => relationships.get(record.id) ?? []).map(a => [a.id, a])).values()];
+        const risks = members.filter(record => riskRecords.has(record.id));
+        return <div key={references[0] ? `${references[0].record.id}:${references[0].claim.claim_index}` : members[0].id} className="atlas-report-finding">
+          {titles.map(title => <h3 key={title}><CountryText>{title}</CountryText></h3>)}
+          {(assessments.length > 0 || risks.length > 0) && <div className="atlas-report-assessment-links">
+            {assessments.length > 0 && <details><EvidenceSummary kind="relationships" count={assessments.length} /><ol>{assessments.map(assessment => <li key={assessment.id}><button data-assessment-id={assessment.id} onClick={() => onAssessment(assessment.id)}><span><strong>{assessment.status}</strong>{(assessment.from || assessment.to) && <small>{[assessment.from, assessment.to].filter(Boolean).join(" → ")}</small>}</span><ArrowRight size={14} aria-hidden /></button></li>)}</ol></details>}
+            {risks.map(record => <button key={record.id} onClick={() => onRisk(record.id)}><ShieldCheck size={14} aria-hidden />Source risk assessment<ArrowRight size={14} aria-hidden /></button>)}
+          </div>}
+          {members.map(record => <ReportSourceAssessments key={record.id} recordIds={recordIds} recordId={record.id} />)}
+          {members.length > 0 && <MetricFigures kind="record" ids={members.map(record => record.id)} recordIds={recordIds} exclude={comparedMeasures} combineVersions={documents.length > 1} />}
+          {claim && <div className="atlas-claim"><p><CountryText>{claim.text}</CountryText></p>{claim.quotes.length > 0 && <AtlasDisclosure summary={<EvidenceSummary kind="quotation" />}>{() => <ReportClaimEvidence references={references} />}</AtlasDisclosure>}</div>}
+        </div>;
+      })}
     </div></ReportCountryFlags>;
 }
 

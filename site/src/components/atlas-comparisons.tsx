@@ -6,6 +6,7 @@ import { EvidenceSummary } from "./atlas-evidence-summary";
 import { CountryText } from "./atlas-location-badges";
 import { useAtlas } from "./atlas-context";
 import { BadgeCheck, CircleHelp, ExternalLink, GitBranch, Layers, TriangleAlert } from "lucide-react";
+import { internalVersionComparison } from "@/lib/atlas-report-details";
 import { type Comparison } from "@/lib/atlas-comparisons";
 import { metricValue } from "@/lib/atlas-metrics";
 import { formatDate } from "@/lib/atlas";
@@ -22,9 +23,10 @@ export function ComparisonBadge({ comparison: c }: { comparison: Comparison }) {
   return <span className="atlas-status" data-tone={c.status === "unresolved" ? "warning" : "info"}><Icon size={13} aria-hidden />{labels[c.kind]}</span>;
 }
 
-export function SourceComparisons({ recordIds, reportIds, onReport }: { recordIds: Set<string>; reportIds: string[]; onReport: (ids: string[]) => void }) {
-  const { channels, atlasDocuments: documents, reportComparisons, measures } = useAtlas();
-  const comparisons = reportComparisons(recordIds, reportIds);
+export function SourceComparisons({ recordIds, reportIds, onReport, groupedVersions = false }: { recordIds: Set<string>; reportIds: string[]; onReport: (ids: string[]) => void; groupedVersions?: boolean }) {
+  const { channels, atlasDocuments: documents, reportComparisons, measures, assertions } = useAtlas();
+  const members = new Set(reportIds);
+  const comparisons = reportComparisons(recordIds, reportIds).filter(c => !groupedVersions || !internalVersionComparison(c, members, assertions));
   const { data, error, retry } = useAtlasDetails([
     ...comparisons.map(c => ({ collection: "comparisons" as const, id: c.id })),
     ...[...new Set(comparisons.flatMap(c => c.participant_ids))].map(id => ({ collection: "assertions" as const, id })),

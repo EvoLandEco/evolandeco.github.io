@@ -6,6 +6,8 @@ import { useAtlasPanelState } from "./atlas-context";
 import { sourceLogos } from "@/lib/atlas-identities";
 import { CountryText, ReportCountryFlags } from "./atlas-location-badges";
 import { PairedQuotation, TranslatedTitle } from "./atlas-source-text";
+import { groupDailyFindings } from "@/lib/atlas-report-details";
+import { SourceVersionLink } from "./atlas-report-sources";
 import { AtlasDisclosure } from "./atlas-disclosure";
 import { EvidenceSummary } from "./atlas-evidence-summary";
 import { formatDate } from "@/lib/atlas";
@@ -27,18 +29,27 @@ export function DailyWatchCard({ item, onReports }: { item: DailyWatch; onReport
     <button className="atlas-briefing-link atlas-watch-reports" onClick={() => onReports(item)}><FileText size={14} aria-hidden />View reports<ArrowRight size={14} aria-hidden /></button>
   </article>;
 }
-export function DailyVersion({ document, selection }: { document: DailyDocument; selection: DailySelection }) {
+export function DailyVersions({ documents, selection }: { documents: DailyDocument[]; selection: DailySelection }) {
+  const document = documents[0], ids = new Set(documents.map(row => row.id));
+  const findings = groupDailyFindings(selection.findings.filter(finding => ids.has(finding.document_id)), selection.evidence);
+  const limitations = [...new Set(documents.flatMap(doc => doc.limitations))];
   return <ReportCountryFlags value={true}><section className="atlas-daily-version" aria-label={`Daily version captured ${formatDate(document.capture, "Europe/Amsterdam")}`}>
     <div className="atlas-item-meta atlas-report-meta"><span><CalendarDays size={14} aria-hidden />Captured {formatDate(document.capture, "Europe/Amsterdam")}</span><a href={document.url} target="_blank" rel="noopener noreferrer">Read source <ExternalLink size={14} aria-hidden /></a></div>
+    {documents.length > 1 && <AtlasDisclosure className="atlas-source-versions" summary={<EvidenceSummary kind="versions" count={documents.length} />}>{() => <div className="atlas-source-references">{documents.map(doc => <SourceVersionLink key={doc.id} document={doc} />)}</div>}</AtlasDisclosure>}
     {document.title_translation && <TranslatedTitle title={document.title} language={document.language_tag} translation={document.title_translation} />}
-    {selection.findings.filter(finding => finding.document_id === document.id).map(finding => <div className="atlas-claim" key={finding.id}>
-      <p><CountryText>{finding.text}</CountryText></p>
-      <AtlasDisclosure summary={<EvidenceSummary kind="quotation" />}>{() => <>
-        <div className="atlas-item-meta atlas-report-meta"><span>{statuses[finding.status]} · {finding.attribution.value ?? document.source_name}{finding.statement_kind !== "source_statement" && ` · ${finding.statement_kind === "analyst_hypothesis" ? "Analyst hypothesis" : "Attributed hypothesis"}`}</span>{finding.observation_period.value && <span>{finding.observation_period.value}</span>}</div>
-        {finding.evidence_ids.map(id => { const evidence = selection.evidence.find(row => row.id === id)!; return <PairedQuotation key={id} quote={evidence.quote} language={evidence.language_tag} translation={evidence.translation} />; })}
-      </>}</AtlasDisclosure>
-    </div>)}
-    {!!document.limitations.length && <AtlasDisclosure summary={<EvidenceSummary kind="scope" />}>{() => document.limitations.map(text => <p key={text}>{text}</p>)}</AtlasDisclosure>}
+    {findings.map(group => {
+      const finding = group[0];
+      const sources = documents.filter(doc => group.some(row => row.document_id === doc.id));
+      return <div className="atlas-claim" key={finding.id}>
+        <p><CountryText>{finding.text}</CountryText></p>
+        <AtlasDisclosure summary={<EvidenceSummary kind="quotation" />}>{() => <>
+          <div className="atlas-item-meta atlas-report-meta"><span>{statuses[finding.status]} · {finding.attribution.value ?? sources[0].source_name}{finding.statement_kind !== "source_statement" && ` · ${finding.statement_kind === "analyst_hypothesis" ? "Analyst hypothesis" : "Attributed hypothesis"}`}</span>{finding.observation_period.value && <span>{finding.observation_period.value}</span>}</div>
+          {finding.evidence_ids.map(id => { const evidence = selection.evidence.find(row => row.id === id)!; return <PairedQuotation key={id} quote={evidence.quote} language={evidence.language_tag} translation={evidence.translation} />; })}
+          {sources.length > 1 && <div className="atlas-source-references">{sources.map(doc => <SourceVersionLink key={doc.id} document={doc} />)}</div>}
+        </>}</AtlasDisclosure>
+      </div>;
+    })}
+    {!!limitations.length && <AtlasDisclosure summary={<EvidenceSummary kind="scope" />}>{() => limitations.map(text => <p key={text}>{text}</p>)}</AtlasDisclosure>}
   </section></ReportCountryFlags>;
 }
 export function DailyReport({ ref, documents, selection, highlighted }: { ref?: Ref<HTMLDetailsElement>; documents: DailyDocument[]; selection: DailySelection; highlighted: boolean }) {
@@ -49,6 +60,6 @@ export function DailyReport({ ref, documents, selection, highlighted }: { ref?: 
     <summary><span className="atlas-timeline-node institution-logo atlas-source-logo">{logo ? <Image src={`/logos/atlas/${logo}`} alt={document.source_name} width={32} height={32} unoptimized /> : <Building2 size={20} aria-hidden />}</span>
       <span className="atlas-report-date">{document.publication ? <time dateTime={document.publication}>{formatDate(document.publication, "Europe/Amsterdam")}</time> : "Undated"}<small>{document.source_name}</small></span>
       <span className="atlas-report-summary"><strong>{dailyTitle(document)}</strong><DailyProcessing document={documents.find(doc => doc.processing_status === "weekly_review_pending") ?? document} /></span><span className="atlas-expand" aria-hidden><ChevronDown size={17} /></span></summary>
-    {open && <div className="atlas-report-body atlas-daily-body">{documents.map(doc => <DailyVersion key={doc.id} document={doc} selection={selection} />)}</div>}
+    {open && <div className="atlas-report-body atlas-daily-body"><DailyVersions documents={documents} selection={selection} /></div>}
   </m.details>;
 }

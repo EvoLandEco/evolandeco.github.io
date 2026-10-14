@@ -1,6 +1,7 @@
 import { ChevronDown, GitBranch, FileText, MapPin, Quote, ScanLine } from "lucide-react";
 
 const disclosures = {
+  versions: { label: "Source versions", Icon: FileText },
   source: { label: "Source evidence", Icon: FileText },
   scope: { label: "Evidence & scope", Icon: ScanLine },
   location: { label: "Evidence & location detail", Icon: MapPin },
