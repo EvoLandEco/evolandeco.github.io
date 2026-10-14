@@ -10,7 +10,7 @@ for (const width of [390, 1466]) test(`Reports reviewer login, close and draft p
   await context.route('https://atlas-reviewer-inbox.evolandeco-github-io.workers.dev/atlas/review/', route => {
     visits++;
     return route.fulfill({contentType: 'text/html', body: `<!doctype html><html lang="en"><title>Review fixture</title><body>
-      <main><h1>Review issues</h1><label>Rationale<textarea></textarea></label></main>
+      <button onclick="parent.postMessage({type:'atlas-review-close'},'http://127.0.0.1:3000')">Close reviewer inbox</button><main><h1>Review issues</h1><label>Rationale<textarea></textarea></label></main>
       <script>addEventListener('message', event => {if (event.data.type === 'atlas-review-theme') document.documentElement.dataset.theme = event.data.theme;});parent.postMessage({type:'atlas-review-ready',ready:true},'http://127.0.0.1:3000');</script>
       </body></html>`});
   });
@@ -50,13 +50,17 @@ for (const width of [390, 1466]) test(`Reports reviewer login, close and draft p
   await expect(close).toBeVisible();
   await signInWindow.getByRole('button', {name: 'Verify sign-in'}).click();
   await frame.getByLabel('Rationale').fill('Unsubmitted review text');
-  await close.click();
+  await expect(close).toHaveCount(0);
+  await page.evaluate(() => window.dispatchEvent(new MessageEvent('message', {origin: 'https://atlas-reviewer-inbox.evolandeco-github-io.workers.dev', source: window, data: {type: 'atlas-review-close'}})));
+  await page.evaluate(() => window.dispatchEvent(new MessageEvent('message', {origin: 'https://example.org', source: document.querySelector<HTMLIFrameElement>('#atlas-reviewer-frame')!.contentWindow, data: {type: 'atlas-review-close'}})));
+  await expect(page.locator('#atlas-reviewer-frame')).toBeVisible();
+  await frame.getByRole('button', {name: 'Close reviewer inbox', exact: true}).click();
   await page.getByRole('button', {name: 'Reviewer login', exact: true}).click();
   await expect(frame.getByLabel('Rationale')).toHaveValue('Unsubmitted review text');
   await expect(frame.locator('html')).toHaveAttribute('data-theme', /light|dark/);
   expect(visits).toBe(1);
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await expect(close).toBeVisible();
+  await expect(frame.getByRole('button', {name: 'Close reviewer inbox', exact: true})).toBeVisible();
 });
 
 test('Reports explains a blocked sign-in window', async ({page}) => {

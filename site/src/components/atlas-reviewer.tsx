@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { useTheme } from "next-themes";
 
 const origin = "https://atlas-reviewer-inbox.evolandeco-github-io.workers.dev";
 
-export function AtlasReviewer({ hidden }: { hidden: boolean }) {
+export function AtlasReviewer({ hidden, onReady, onClose }: { hidden: boolean; onReady: (ready: boolean) => void; onClose: () => void }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const signInWindow = useRef<Window | null>(null);
   const { resolvedTheme } = useTheme();
@@ -17,19 +17,21 @@ export function AtlasReviewer({ hidden }: { hidden: boolean }) {
     signInWindow.current = window.open(`${origin}/atlas/review/sign-in`, "atlas-review-sign-in", "popup,width=480,height=640");
     setBlocked(!signInWindow.current);
   }
+  const receive = useEffectEvent((event: MessageEvent) => {
+    if (event.origin !== origin) return;
+    if (signInWindow.current && event.source === signInWindow.current && event.data?.type === "atlas-review-signed-in") {
+      signInWindow.current?.close();
+      signInWindow.current = null;
+      setSignedIn(true);
+    }
+    if (event.source === frame.current?.contentWindow && event.data?.type === "atlas-review-close") onClose();
+    if (event.source === frame.current?.contentWindow && event.data?.type === "atlas-review-ready") {
+      setReady(event.data.ready === true);
+      onReady(event.data.ready === true);
+      if (event.data.ready === false) setSignedIn(false);
+    }
+  });
   useEffect(() => {
-    const receive = (event: MessageEvent) => {
-      if (event.origin !== origin) return;
-      if (signInWindow.current && event.source === signInWindow.current && event.data?.type === "atlas-review-signed-in") {
-        signInWindow.current?.close();
-        signInWindow.current = null;
-        setSignedIn(true);
-      }
-      if (event.source === frame.current?.contentWindow && event.data?.type === "atlas-review-ready") {
-        setReady(event.data.ready === true);
-        if (event.data.ready === false) setSignedIn(false);
-      }
-    };
     window.addEventListener("message", receive);
     return () => { window.removeEventListener("message", receive); signInWindow.current?.close(); };
   }, []);

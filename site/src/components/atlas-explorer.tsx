@@ -82,6 +82,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
   const coverageScroll = useRef<HTMLDivElement>(null);
   const reviewerEntry = useRef<HTMLButtonElement>(null);
   const [reviewerOpen, setReviewerOpen] = useState(false);
+  const [reviewerReady, setReviewerReady] = useState(false);
   const [reviewerVisited, setReviewerVisited] = useState(false);
   const reportsPosition = useRef({ page: 0, panel: 0 });
   function openReviewer() {
@@ -89,7 +90,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
     flushSync(() => { setReviewerVisited(true); setReviewerOpen(true); });
     workspaceScroll.current?.scrollTo({ top: 0, behavior: "instant" });
     toolbar.current?.scrollIntoView({ block: "start", behavior: "instant" });
-    document.getElementById("atlas-review-close")?.focus({ preventScroll: true });
+    document.getElementById(reviewerReady ? "atlas-reviewer-frame" : "atlas-review-close")?.focus({ preventScroll: true });
   }
   function closeReviewer() {
     flushSync(() => setReviewerOpen(false));
@@ -720,7 +721,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
           }} aria-selected={requestedTab === id} aria-busy={requestedTab === id && requestedTab !== tab || undefined} aria-controls="atlas-panel" onClick={() => changeTab(id)}><Icon size={16} aria-hidden /><span>{label}</span>{id !== "trends" && id !== "one-health" && id !== "analysis" && <b>{id === "reports" ? documents.length : id === "links" ? chains.length : new Set(filtered.map(r => r.source)).size}</b>}</button>)}</div>
         {process.env.NEXT_PUBLIC_SHOW_APPEARANCE !== "false" && <Settings inline />}
       </div>
-      {tab === "reports" && <div className="atlas-report-tools atlas-panel-tools" data-timeline={!reviewerOpen && window[1] === max && documents.length > 0 || undefined}>
+      {tab === "reports" && (!reviewerOpen || !reviewerReady) && <div className="atlas-report-tools atlas-panel-tools" data-timeline={!reviewerOpen && window[1] === max && documents.length > 0 || undefined}>
           {reviewerOpen ? <div className="atlas-reviewer-tools"><strong><ShieldCheck size={16} aria-hidden />Reviewer inbox</strong><button id="atlas-review-close" className="atlas-dataset-button" onClick={closeReviewer}><X size={16} aria-hidden /><span>Close reviewer inbox</span></button></div> : <div className="atlas-report-context">
             <div className="atlas-timeline-next">
               <span className="atlas-timeline-next-label">
@@ -748,7 +749,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
       <div className="atlas-workspace-scroll" ref={workspaceScroll}>
       <Suspense fallback={<p className="atlas-empty" role="status">Loading view…</p>}>
       <div ref={content} id="atlas-panel" role="tabpanel" aria-labelledby={`atlas-tab-${tab}`} aria-busy={requestedTab !== tab}>
-        {reviewerVisited && <AtlasReviewer hidden={!showingReports || !reviewerOpen} />}
+        {reviewerVisited && <AtlasReviewer hidden={!showingReports || !reviewerOpen} onReady={setReviewerReady} onClose={closeReviewer} />}
         {showingReports && <div className="atlas-report-list" hidden={reviewerOpen}>
           <div className="atlas-report-prelude">
           <h2 className="sr-only" id="atlas-report-heading" tabIndex={-1}>Report chronology</h2>
