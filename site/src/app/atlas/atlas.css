@@ -1864,4 +1864,5 @@ html[data-atlas-connection-transition]::view-transition-new(root) { animation: n
 
 .atlas-source-references { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-block: 6px 12px; font-size: 12px; }
 .atlas-source-references a { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 5px; color: var(--primary); }
+.atlas-version-review { position: relative; padding-right: 38px; }
 .atlas-version-review + .atlas-version-review { margin-top: 16px; }
