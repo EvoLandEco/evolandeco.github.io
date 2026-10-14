@@ -22,7 +22,7 @@ for (const width of [390, 1466]) test(`Reports reviewer login, close and draft p
   const first = reports.locator('.atlas-report').first();
   await first.locator(':scope > summary').click();
   const reportId = await first.getAttribute('id');
-  const chronology = await reports.innerText();
+  const reportIds = await reports.locator('.atlas-report').evaluateAll(entries => entries.map(entry => entry.id));
   expect(visits).toBe(0);
   await page.getByRole('button', {name: 'Reviewer login', exact: true}).click();
   const close = page.getByRole('button', {name: 'Close reviewer inbox', exact: true});
@@ -33,7 +33,7 @@ for (const width of [390, 1466]) test(`Reports reviewer login, close and draft p
   await expect(frame.getByRole('button', {name: 'Sign in', exact: true})).toBeVisible();
   await close.click();
   await expect(page.getByRole('button', {name: 'Reviewer login', exact: true})).toBeFocused();
-  await expect(reports).toHaveText(chronology);
+  expect(await reports.locator('.atlas-report').evaluateAll(entries => entries.map(entry => entry.id))).toEqual(reportIds);
   await expect(page.locator(`#${reportId}`)).toHaveAttribute('open', '');
   await page.getByRole('button', {name: 'Reviewer login', exact: true}).click();
   await frame.getByRole('button', {name: 'Sign in', exact: true}).click();
