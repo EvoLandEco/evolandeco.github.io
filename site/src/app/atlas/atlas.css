@@ -1638,7 +1638,7 @@ html[data-atlas-reports-transition]::view-transition-new(atlas-reports-tab-indic
 .atlas-chain-tools .atlas-select-count { flex-shrink: 0; }
 @container atlas-workspace (min-width: 621px) {
   .atlas-page:not([data-fullscreen]) .atlas-chain-section { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; }
-  .atlas-page:not([data-fullscreen]) .atlas-chain-section > header { margin: 0; white-space: nowrap; }
+  .atlas-page:not([data-fullscreen]) .atlas-chain-section > header { margin: 0; }
   .atlas-page:not([data-fullscreen]) .atlas-chain-figure { grid-column: 1 / -1; margin: 0; }
 }
 
