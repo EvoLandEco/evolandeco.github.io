@@ -1,3 +1,4 @@
+import type { AtlasRelease } from "./atlas-release";
 import type { AtlasData, AtlasMap, AtlasMapSnapshot, AtlasSelectionView } from "./atlas-contract";
 
 export type AtlasRecord = Omit<AtlasMapSnapshot["records"][number], "claims">;
@@ -32,6 +33,9 @@ export function supported(support: (string | number)[][], rows: AtlasRecord[] | 
 }
 export function dayNumber(date: string) { return Date.parse(date + "T00:00:00Z") / 86400000; }
 export function dayDate(day: number) { return new Date(day * 86400000).toISOString().slice(0, 10); }
+export function nextWeeklyReview(release: Pick<AtlasRelease, "mode" | "cycle">) {
+  return release.mode === "weekly" && release.cycle !== null ? dayDate(dayNumber(release.cycle) + 7) : null;
+}
 export function monthsBefore(date: string, months: number) {
   const [year, month, day] = date.split("-").map(Number);
   const lastDay = new Date(Date.UTC(year, month - months, 0)).getUTCDate();

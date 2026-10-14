@@ -12,7 +12,7 @@ import { AtlasDetailStatus, useAtlasDetails } from "./atlas-detail";
 import { memo, Suspense, useCallback, useDeferredValue, useId, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type Ref } from "react";
 import { flushSync } from "react-dom";
 import { Building2, SlidersHorizontal, GitBranch, ShieldCheck, FlaskConical, HeartHandshake, Maximize2, Minimize2, ChartNoAxesCombined, Activity, ArrowRight, CalendarDays, ChevronRight, ArrowLeftRight, MapPin, ExternalLink, FileText, Globe2, Info, Network, RefreshCw, RotateCcw, ScanLine, TriangleAlert, ChevronDown, X } from "lucide-react";
-import { groupGeographicLinks, dayDate, dayNumber, monthsBefore, formatDate, linkLabels, supported, topicIds, reportsPerPage, type AtlasRecord, type AtlasTrack, type AtlasLink, type AtlasAssessment, type DateBasis } from "@/lib/atlas";
+import { groupGeographicLinks, dayDate, dayNumber, nextWeeklyReview, monthsBefore, formatDate, linkLabels, supported, topicIds, reportsPerPage, type AtlasRecord, type AtlasTrack, type AtlasLink, type AtlasAssessment, type DateBasis } from "@/lib/atlas";
 import { Globe, type GlobeLink, type GlobeHover, type GlobeAnchor } from "./magicui/globe";
 import { GlobeDragHint } from "./magicui/globe-navigation";
 import { globeLocationCenter } from "./magicui/globe-effects";
@@ -248,6 +248,9 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
   const dailyCapturedAt = daily.data && Date.parse(daily.data.knowledge_cutoff) > Date.parse(atlas.snapshot.captured_at)
     ? daily.data.knowledge_cutoff : undefined;
   const capturedAt = dailyCapturedAt ?? atlas.snapshot.captured_at;
+  const nextReview = nextWeeklyReview(release);
+  const plannedDate = nextReview ?? atlas.snapshot.next_update_date;
+  const planLabel = nextReview ? "Next review" : "Collection plan";
   const min = daily.data && daily.data.publication_from < weeklyMin ? daily.data.publication_from : weeklyMin;
   const max = daily.data && daily.data.publication_until > weeklyMax ? daily.data.publication_until : weeklyMax;
   const [knownBounds, setKnownBounds] = useState([min, max]);
@@ -727,7 +730,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
               <span className="atlas-timeline-next-label">
                 <span><span>Captured</span><time dateTime={capturedAt}>{formatDate(capturedAt, dailyCapturedAt ? "Europe/Amsterdam" : "UTC")}</time></span>
                 <RefreshCw size={14} aria-hidden />
-                <span title={`Planned review · ${atlas.snapshot.schedule_timezone}`}><span>Next review <span className="sr-only">(planned)</span></span><time dateTime={atlas.snapshot.next_update_date}>{formatDate(atlas.snapshot.next_update_date)}</time></span>
+                <span title={nextReview ? `Weekly cycle ${release.cycle} completed · Next planned review · ${atlas.snapshot.schedule_timezone}` : `Collection planned after source capture · ${atlas.snapshot.schedule_timezone}`}><span>{planLabel} <span className="sr-only">(planned)</span></span><time dateTime={plannedDate}>{formatDate(plannedDate)}</time></span>
               </span>
               <div className="atlas-coverage-control">
                 <AtlasScope buttonLabel="Source coverage" label="Source coverage" title="Source coverage" icon={Network}>{close => <>

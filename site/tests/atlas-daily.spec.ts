@@ -38,9 +38,10 @@ test('Source filters list collected sources and retain weekly sources with no da
   await expect(page.locator('.atlas-daily-report')).toHaveCount(2);
 });
 
-test('Reports dates include daily captures and retain the weekly review schedule', async ({ page }) => {
+test('Reports dates distinguish daily captures from the completed weekly cycle', async ({ page }) => {
   const captured = '2026-10-07T12:00:00Z', review = '2026-10-14';
   const fixture = await routeBrowserFixture(page, { ...bundle, snapshot: { ...bundle.snapshot, captured_at: captured, next_update_date: review } }, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
+  fixture.bodies['/current.json'] = Buffer.from(JSON.stringify({ ...fixture.release, mode: 'weekly', cycle: '2026-10-14' }));
   const manifest = JSON.parse(fixture.bodies[`/releases/${fixture.release.export_id}/browser/${fixture.release.browser.manifest.sha256}/manifest.json`].toString());
   const data = dailyFixture(releaseSchema.parse(fixture.release), manifest.source.manifest.sha256);
   let cutoff: string | undefined;
@@ -61,10 +62,15 @@ test('Reports dates include daily captures and retain the weekly review schedule
       const dates = page.locator('.atlas-timeline-next time');
       await expect(dates.nth(0)).toHaveAttribute('datetime', expected);
       await expect(dates.nth(0)).toHaveText(label);
-      await expect(dates.nth(1)).toHaveAttribute('datetime', review);
+      await expect(dates.nth(1)).toHaveAttribute('datetime', '2026-10-21');
       await expect(page.locator('.atlas-timeline-next')).toContainText('Next review');
     }
   }
+  fixture.bodies['/current.json'] = Buffer.from(JSON.stringify(fixture.release));
+  await page.goto('/atlas/');
+  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+  await expect(page.locator('.atlas-timeline-next')).toContainText('Collection plan');
+  await expect(page.locator('.atlas-timeline-next time').nth(1)).toHaveAttribute('datetime', review);
 });
 
 test('Reset clears every watch report highlight through either reset control', async ({ page }) => {

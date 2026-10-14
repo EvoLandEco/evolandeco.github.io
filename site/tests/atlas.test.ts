@@ -1,8 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { bundle, atlas, mappedTracks, atlasDocuments, dateBounds, windowRecords, reportDocuments } from "./atlas-fixture";
-import { dayDate, dayNumber, monthsBefore, supported, topicIds, groupGeographicLinks } from "../src/lib/atlas";
+import { dayDate, dayNumber, nextWeeklyReview, monthsBefore, supported, topicIds, groupGeographicLinks } from "../src/lib/atlas";
 import { createAtlas } from "../src/lib/atlas";
+
+test("Weekly review dates follow the completed cycle across calendar boundaries", () => {
+  assert.equal(nextWeeklyReview({ mode: "weekly", cycle: "2026-10-14" }), "2026-10-21");
+  assert.equal(nextWeeklyReview({ mode: "weekly", cycle: "2026-10-21" }), "2026-10-28");
+  assert.equal(nextWeeklyReview({ mode: "weekly", cycle: "2026-12-30" }), "2027-01-06");
+  assert.equal(nextWeeklyReview({ mode: "initial", cycle: null }), null);
+  assert.equal(nextWeeklyReview({ mode: "weekly", cycle: null }), null);
+});
 
 test("Snapshot dates describe the capture and planned update", () => {
   assert.equal(atlas.snapshot.captured_at, atlas.records.map(r => r.capture).sort().at(-1));
