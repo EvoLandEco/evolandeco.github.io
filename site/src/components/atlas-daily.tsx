@@ -45,11 +45,11 @@ export function DailyVersions({ documents, selection }: { documents: DailyDocume
         <AtlasDisclosure summary={<EvidenceSummary kind="quotation" />}>{() => <>
           <div className="atlas-item-meta atlas-report-meta"><span>{statuses[finding.status]} · {finding.attribution.value ?? sources[0].source_name}{finding.statement_kind !== "source_statement" && ` · ${finding.statement_kind === "analyst_hypothesis" ? "Analyst hypothesis" : "Attributed hypothesis"}`}</span>{finding.observation_period.value && <span>{finding.observation_period.value}</span>}</div>
           {finding.evidence_ids.map(id => { const evidence = selection.evidence.find(row => row.id === id)!; return <PairedQuotation key={id} quote={evidence.quote} language={evidence.language_tag} translation={evidence.translation} />; })}
-          {sources.length > 1 && <div className="atlas-source-references">{sources.map(doc => <SourceVersionLink key={doc.id} document={doc} />)}</div>}
+          {documents.length > 1 && <div className="atlas-source-references">{sources.map(doc => <SourceVersionLink key={doc.id} document={doc} />)}</div>}
         </>}</AtlasDisclosure>
       </div>;
     })}
-    {!!limitations.length && <AtlasDisclosure summary={<EvidenceSummary kind="scope" />}>{() => limitations.map(text => <p key={text}>{text}</p>)}</AtlasDisclosure>}
+    {!!limitations.length && <AtlasDisclosure summary={<EvidenceSummary kind="scope" />}>{() => limitations.map(text => <div key={text}><p>{text}</p>{documents.length > 1 && <div className="atlas-source-references">{documents.filter(doc => doc.limitations.includes(text)).map(doc => <SourceVersionLink key={doc.id} document={doc} />)}</div>}</div>)}</AtlasDisclosure>}
   </section></ReportCountryFlags>;
 }
 export function DailyReport({ ref, documents, selection, highlighted }: { ref?: Ref<HTMLDetailsElement>; documents: DailyDocument[]; selection: DailySelection; highlighted: boolean }) {

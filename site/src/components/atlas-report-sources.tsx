@@ -28,7 +28,7 @@ export function ReportSourceVersions({ documents, comparisons }: { documents: At
   </>}</AtlasDisclosure>;
 }
 
-export function ReportClaimEvidence({ references }: { references: ReturnType<typeof groupReportClaims>[number] }) {
+export function ReportClaimEvidence({ references, versioned }: { references: ReturnType<typeof groupReportClaims>[number]; versioned: boolean }) {
   const { atlasDocuments, sourceText } = useAtlas();
   const quotations = new Map<string, { quote: string; quoteIndex: number; references: typeof references }>();
   for (const ref of references) ref.claim.quotes.forEach((quote, quoteIndex) => {
@@ -42,7 +42,7 @@ export function ReportClaimEvidence({ references }: { references: ReturnType<typ
     const { record, claim } = group.references[0];
     const documents = [...new Set(group.references.map(ref => ref.record.document_id))].map(id => atlasDocuments.get(id)!);
     return <div key={key}><SourceQuotation quote={group.quote} recordId={record.id} claimIndex={claim.claim_index} quoteIndex={group.quoteIndex} />
-      {references.length > 1 && <div className="atlas-source-references">{documents.map(document => <SourceVersionLink key={document.id} document={document} />)}</div>}
+      {versioned && <div className="atlas-source-references">{documents.map(document => <SourceVersionLink key={document.id} document={document} />)}</div>}
     </div>;
   });
 }

@@ -43,7 +43,7 @@ function MeasureDetailContent({ measure, versions }: { measure: Measure; version
     {m.semantic_note && <p><CountryText>{m.semantic_note}</CountryText></p>}
     {m.source_date_warning && <span className="atlas-status" data-tone="warning"><TriangleAlert size={13} aria-hidden />Source date mismatch</span>}
     {[...evidence].map(([key, group]) => <div key={key}><SourceQuotation quote={group.quote} recordId={group.ref.record_id} claimIndex={group.ref.claim_index} quoteIndex={group.ref.quote_indexes[group.index]} />
-      {versions && versions.length > 1 && <div className="atlas-source-references">{[...group.documents].map(id => <SourceVersionLink key={id} document={atlasDocuments.get(id)!} />)}</div>}
+      {versions && <div className="atlas-source-references">{[...group.documents].map(id => <SourceVersionLink key={id} document={atlasDocuments.get(id)!} />)}</div>}
     </div>)}
     <a href={m.source_url} target="_blank" rel="noopener noreferrer">{m.source_id} · {formatDate(m.publication)} <ExternalLink size={12} aria-hidden /></a>
     </div>

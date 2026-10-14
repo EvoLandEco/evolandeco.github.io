@@ -1013,7 +1013,7 @@ function ReportBody({ records, basis, recordIds, onReport, relationships, riskRe
           </div>}
           {members.map(record => <ReportSourceAssessments key={record.id} recordIds={recordIds} recordId={record.id} />)}
           {members.length > 0 && <MetricFigures kind="record" ids={members.map(record => record.id)} recordIds={recordIds} exclude={comparedMeasures} combineVersions={documents.length > 1} />}
-          {claim && <div className="atlas-claim"><p><CountryText>{claim.text}</CountryText></p>{claim.quotes.length > 0 && <AtlasDisclosure summary={<EvidenceSummary kind="quotation" />}>{() => <ReportClaimEvidence references={references} />}</AtlasDisclosure>}</div>}
+          {claim && <div className="atlas-claim"><p><CountryText>{claim.text}</CountryText></p>{claim.quotes.length > 0 && <AtlasDisclosure summary={<EvidenceSummary kind="quotation" />}>{() => <ReportClaimEvidence references={references} versioned={documents.length > 1} />}</AtlasDisclosure>}</div>}
         </div>;
       })}
     </div></ReportCountryFlags>;
