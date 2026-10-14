@@ -11,7 +11,7 @@ import { AtlasDisclosure } from "./atlas-disclosure";
 import { AtlasDetailStatus, useAtlasDetails } from "./atlas-detail";
 import { memo, Suspense, useCallback, useDeferredValue, useId, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type Ref } from "react";
 import { flushSync } from "react-dom";
-import { LogIn, Building2, SlidersHorizontal, GitBranch, ShieldCheck, FlaskConical, HeartHandshake, Maximize2, Minimize2, ChartNoAxesCombined, Activity, ArrowRight, CalendarDays, ChevronRight, ArrowLeftRight, MapPin, ExternalLink, FileText, Globe2, Info, Network, RefreshCw, RotateCcw, ScanLine, TriangleAlert, ChevronDown, X } from "lucide-react";
+import { Building2, SlidersHorizontal, GitBranch, ShieldCheck, FlaskConical, HeartHandshake, Maximize2, Minimize2, ChartNoAxesCombined, Activity, ArrowRight, CalendarDays, ChevronRight, ArrowLeftRight, MapPin, ExternalLink, FileText, Globe2, Info, Network, RefreshCw, RotateCcw, ScanLine, TriangleAlert, ChevronDown, X } from "lucide-react";
 import { groupGeographicLinks, dayDate, dayNumber, monthsBefore, formatDate, linkLabels, supported, topicIds, reportsPerPage, type AtlasRecord, type AtlasTrack, type AtlasLink, type AtlasAssessment, type DateBasis } from "@/lib/atlas";
 import { Globe, type GlobeLink, type GlobeHover, type GlobeAnchor } from "./magicui/globe";
 import { GlobeDragHint } from "./magicui/globe-navigation";
@@ -740,7 +740,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
                   </div>
                   {sourcePageCount > 1 && <ReportPagination inline entity="Topic" position="bottom" index={sourcePageIndex} items={sourcePageItems} onChange={index => changeEntryPage("sources", index)} />}
                 </>}</AtlasScope>
-                <button ref={reviewerEntry} className="atlas-dataset-button atlas-reviewer-login" aria-controls="atlas-panel" onClick={openReviewer}><LogIn size={15} aria-hidden /><span>Reviewer login</span></button>
+                <button ref={reviewerEntry} className="atlas-dataset-button" aria-label="Reviewer portal" title="Reviewer portal" aria-controls="atlas-panel" onClick={openReviewer}><ShieldCheck size={15} aria-hidden /><span>Reviewer portal</span></button>
               </div>
             </div>
           </div>}
