@@ -71,7 +71,7 @@ export const AtlasTrends = memo(function AtlasTrends({ networkOverview, rows, re
       const group = groups.get(row.document_id) ?? [];
       group.push(row); groups.set(row.document_id, group);
     }
-    const publications = reportChronology([...groups.values()], dailyDocuments, id => atlasDocuments.get(id)!);
+    const publications = reportChronology([...groups.values()], dailyDocuments, id => atlasDocuments.get(id)!, dailyState?.data?.documents);
     const view = selectedResearch(recordIds);
     const counts = new Map<string, number>();
     for (const entry of publications) {
@@ -86,7 +86,7 @@ export const AtlasTrends = memo(function AtlasTrends({ networkOverview, rows, re
       cursor.setUTCMonth(cursor.getUTCMonth() + 1);
     }
     return { latest: publications, months, measured: view.numeric_coverage.records_with_measures, documents: publications.length };
-  }, [rows, recordIds, atlasDocuments, window, selectedResearch, dailyDocuments]);
+  }, [rows, recordIds, atlasDocuments, window, selectedResearch, dailyDocuments, dailyState?.data]);
   const { latest } = data;
   function latestEntry(entry: (typeof latest)[number], index: number) {
     const dailyDocument = entry.dailyVersions[0];

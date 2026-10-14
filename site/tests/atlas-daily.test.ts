@@ -156,6 +156,30 @@ test('Publisher version bindings retain scientific and daily versions without cl
   assert.throws(() => validateDailyReferences(data, base));
 });
 
+test('Integrated daily bindings group weekly captures without restoring omitted evidence', () => {
+  const data = dailyFixture(release);
+  data.documents[0].base_document_ids = ['weekly_a', 'weekly_b'];
+  data.reconciliations.push({ review_id: 'review_daily', weekly_export_id: release.export_id, record_ids: ['weekly_b_record'], disposition: 'integrated', reason: 'Integrated source review.', reviewed_at: data.knowledge_cutoff, reviewed_by: 'fixture', weekly_inbox_sha256: 'c'.repeat(64) });
+  const selection = dailySelection(data, ['2026-10-01', '2026-10-07'], [], [], data.generated_at);
+  const daily = pendingDailyDocuments(selection, new Set(['weekly_b_record']));
+  assert.deepEqual(daily.map(document => document.id), ['daily_latest']);
+  const records = ['weekly_a', 'weekly_b'].map(id => [{ id: id + '_record', document_id: id }] as import('../src/lib/atlas').AtlasRecord[]);
+  const dates = (id: string) => ({ publication: '2026-10-07', capture: id === 'weekly_a' ? '2026-10-07T08:00:00Z' : '2026-10-08T08:00:00Z' });
+  const entries = reportChronology(records, daily, dates, data.documents);
+  assert.equal(entries.length, 2);
+  const shared = entries.find(entry => entry.records.length)!;
+  assert.equal(shared.id, 'weekly_b');
+  assert.deepEqual(shared.weeklyVersions, [records[1], records[0]]);
+  assert.equal(shared.dailyVersions.length, 0);
+  assert.deepEqual([...highlightedReportIds(entries, ['weekly_a_record'], [])], ['weekly_b']);
+  assert.deepEqual([...highlightedReportIds(entries, [], ['weekly_a'])], ['weekly_b']);
+  const filtered = reportChronology([records[0]], [], dates, data.documents);
+  assert.equal(filtered.length, 1);
+  assert.deepEqual(filtered[0].records, records[0]);
+  assert.equal(filtered[0].dailyVersions.length, 0);
+  assert.equal(reportChronology(records, [], dates, data.documents).length, 1);
+});
+
 test('Sealed daily data retains verification while public selection excludes undated support', async () => {
   const data = dailyFixture(release);
   data.documents[0].publication = null;

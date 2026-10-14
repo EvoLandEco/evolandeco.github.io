@@ -13,7 +13,8 @@ import { dailyTitle, type DailyDocument, type DailySelection, type DailyWatch } 
 
 const statuses = { reported: "Source reported", source_suspected: "Source suspected", source_probable: "Source probable", source_confirmed: "Source confirmed", source_ruled_out: "Source ruled out", unconfirmed: "Unconfirmed", disputed: "Disputed", unresolved: "Unresolved" };
 export function DailyProcessing({ document }: { document: DailyDocument }) {
-  return <span className="atlas-status atlas-daily-processing"><Timer size={12} aria-hidden />{document.processing_status === "weekly_review_pending" ? "Weekly review pending" : "Weekly reviewed"}</span>;
+  if (document.processing_status !== "weekly_review_pending") return null;
+  return <span className="atlas-status atlas-daily-processing"><Timer size={12} aria-hidden />Weekly review pending</span>;
 }
 export function DailyWatchCard({ item, onReports }: { item: DailyWatch; onReports: (item: DailyWatch) => void }) {
   const AttentionIcon = item.attention === "heightened" ? TriangleAlert : item.attention === "urgent" ? Siren : Eye;

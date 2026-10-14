@@ -1,11 +1,32 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { dailySelection, reportChronology, reportPublicationMonth } from '../src/lib/atlas-daily';
+import { dailySelection, reportChronology, reportPublicationMonth, highlightedReportIds } from '../src/lib/atlas-daily';
 import { formatDate, type AtlasRecord } from '../src/lib/atlas';
 import type { AtlasRelease } from '../src/lib/atlas-release';
 import { dailyFixture } from './atlas-daily-fixture';
 
 const release = { export_id: 'a'.repeat(64), assets: { 'atlas-site.json': { sha256: 'b'.repeat(64), bytes: 1 }, 'map.json': { sha256: 'c'.repeat(64), bytes: 1 } } } as AtlasRelease;
+
+test('Identical publisher captures share one entry without merging dates, changed content or sources', () => {
+  const records = ['older', 'newer'].map(document_id => [{ id: `${document_id}:0`, document_id }] as AtlasRecord[]);
+  const document = { channel_id: 'who-don', url: 'https://example.org/report', content_url: 'https://example.org/report.pdf', publication: '2026-09-25T12:00:00Z', capture: '2026-09-26T12:00:00Z', raw_sha256: 'a'.repeat(64), text_sha256: 'b'.repeat(64) };
+  const newer = { ...document, capture: '2026-09-27T12:00:00Z' };
+  const entries = reportChronology(records, [], id => id === 'older' ? document : newer);
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].id, 'newer');
+  assert.deepEqual(entries[0].weeklyVersions, [records[1], records[0]]);
+  assert.deepEqual(entries[0].records, [...records[1], ...records[0]]);
+  assert.deepEqual([...highlightedReportIds(entries, ['older:0'], [])], ['newer']);
+  for (const field of ['channel_id', 'url', 'content_url', 'publication', 'raw_sha256', 'text_sha256'] as const) {
+    for (const value of ['', field === 'publication' ? '2026-09-24T12:00:00Z' : 'different']) {
+      const changed = { ...newer, [field]: value };
+      assert.equal(reportChronology(records, [], id => id === 'older' ? document : changed).length, 2, field);
+    }
+  }
+  const filtered = reportChronology([records[0]], [], () => document);
+  assert.equal(filtered.length, 1);
+  assert.deepEqual(filtered[0].records, records[0]);
+});
 
 test('Report chronology orders instants across offsets and fractional precision', () => {
   const document = dailyFixture(release).documents[1];

@@ -297,7 +297,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
     return entries;
   }, [assessments, recordIds]);
   const riskRecords = useMemo(() => new Set(experiment?.data?.risk_profiles.map(profile => profile.record_id)), [experiment]);
-  const documents = useMemo(() => reportChronology(reportDocuments(filtered, basis, topic, source), dailyDocuments, id => atlasDocuments.get(id)!), [filtered, basis, topic, source, reportDocuments, dailyDocuments, atlasDocuments]);
+  const documents = useMemo(() => reportChronology(reportDocuments(filtered, basis, topic, source), dailyDocuments, id => atlasDocuments.get(id)!, daily.data?.documents), [filtered, basis, topic, source, reportDocuments, dailyDocuments, atlasDocuments, daily.data]);
   const facetScope = [places, diseases, includeContext, kind];
   const reportScope = JSON.stringify([basis, window, topic, source, ...facetScope]);
   const entryScope = JSON.stringify([reportScope, kind, spatialFilters, relationshipFilters]);
@@ -445,7 +445,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
     const broaden = ids.some(id => !candidateIds.has(id));
     const targetDocuments = reportDocuments(broaden ? rows : candidates, basis, topics, sources);
     if (broaden) { setPlaces([]); setDiseases([]); }
-    const targetChronology = reportChronology(targetDocuments, !topics.length && (!diseases.length || broaden) && !kind.length && daily.data ? pendingDailyDocuments(dailySelection(daily.data, window, sources, broaden ? [] : places), new Set(bundle.records.map(row => row.id))) : [], id => atlasDocuments.get(id)!);
+    const targetChronology = reportChronology(targetDocuments, !topics.length && (!diseases.length || broaden) && !kind.length && daily.data ? pendingDailyDocuments(dailySelection(daily.data, window, sources, broaden ? [] : places), new Set(bundle.records.map(row => row.id))) : [], id => atlasDocuments.get(id)!, daily.data?.documents);
     const targets = highlightedReportIds(targetChronology, ids, documentIds);
     const index = targetChronology.findIndex(entry => targets.has(entry.id));
     setTopic(topics); setSource(sources); setTab("reports"); setHover(null);
@@ -469,7 +469,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
     const known = ids.filter(id => lookup.has(id));
     if (known.every(id => recordIds.has(id))) { showReports(known, expand); return; }
     const targetIds = new Set(known);
-    const allDocuments = reportChronology(reportDocuments(windowRecords(min, max, basis), basis, [], []), daily.data ? pendingDailyDocuments(dailySelection(daily.data, [min, max], [], []), new Set(bundle.records.map(row => row.id))) : [], id => atlasDocuments.get(id)!);
+    const allDocuments = reportChronology(reportDocuments(windowRecords(min, max, basis), basis, [], []), daily.data ? pendingDailyDocuments(dailySelection(daily.data, [min, max], [], []), new Set(bundle.records.map(row => row.id))) : [], id => atlasDocuments.get(id)!, daily.data?.documents);
     const index = allDocuments.findIndex(entry => entry.records.some(record => targetIds.has(record.id)));
     setWindow([min, max]); setPreset(3); setTopic([]); setSource([]); setPlaces([]); setDiseases([]); setIncludeContext(false); setKind([]); setReportEvidence({ recordIds: known, documentIds: [] });
     setTab("reports");

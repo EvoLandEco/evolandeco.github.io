@@ -5,6 +5,29 @@ import { bundle } from './atlas-fixture';
 import { releaseSchema } from '../src/lib/atlas-release';
 import { dailyFixture, dailyPointer } from './atlas-daily-fixture';
 
+test('Integrated version bindings group Trends and Reports while retaining both source captures', async ({ page }) => {
+  const fixture = await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
+  const manifest = JSON.parse(fixture.bodies[`/releases/${fixture.release.export_id}/browser/${fixture.release.browser.manifest.sha256}/manifest.json`].toString());
+  const data = dailyFixture(releaseSchema.parse(fixture.release), manifest.source.manifest.sha256);
+  const [newer, older] = bundle.documents.filter(document => document.channel_id === 'who-don').sort((a, b) => b.publication.localeCompare(a.publication));
+  data.documents[0].base_document_ids = [newer.id, older.id];
+  data.reconciliations.push({ review_id: data.documents[0].review_id!, weekly_export_id: fixture.release.export_id, record_ids: newer.record_ids, disposition: 'integrated', reason: 'Integrated source review.', reviewed_at: data.knowledge_cutoff, reviewed_by: 'fixture', weekly_inbox_sha256: 'c'.repeat(64) });
+  await page.route(/\/daily\//, route => route.fulfill({ contentType: 'application/json', body: JSON.stringify(route.request().url().endsWith('current.json') ? dailyPointer(data) : data) }));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/atlas/');
+  await expect(page.locator('.atlas-daily-watch')).toBeVisible();
+  await expect(page.locator(`[data-report-id="${newer.id}"]`)).toHaveCount(1);
+  await expect(page.locator(`[data-report-id="${older.id}"]`)).toHaveCount(0);
+  await page.locator('.atlas-daily-watch').getByRole('button', { name: 'View reports', exact: true }).click();
+  const report = page.locator(`#atlas-report-${newer.id}`);
+  await expect(report).toHaveAttribute('data-evidence', 'true');
+  await expect(page.locator(`#atlas-report-${older.id}`)).toHaveCount(0);
+  await expect(report.locator('.atlas-daily-processing')).toHaveCount(0);
+  await report.locator(':scope > summary').click();
+  await expect(report.getByRole('link', { name: 'Read source', exact: true })).toHaveCount(2);
+  await expect(report.locator('.atlas-daily-version')).toHaveCount(0);
+});
+
 for (const width of [390, 1466]) test(`Scientific evidence highlights retain daily reports and use merged pagination at ${width}px`, async ({ page }) => {
   const fixture = await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
   const manifest = JSON.parse(fixture.bodies[`/releases/${fixture.release.export_id}/browser/${fixture.release.browser.manifest.sha256}/manifest.json`].toString());

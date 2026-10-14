@@ -156,6 +156,7 @@ for (const width of [390, 1466]) test(`Daily reports retain evidence and stay ou
   const browserManifest = JSON.parse(fixture.bodies[`/releases/${fixture.release.export_id}/browser/${fixture.release.browser.manifest.sha256}/manifest.json`].toString());
   const data = dailyFixture(releaseSchema.parse(fixture.release), browserManifest.source.manifest.sha256);
   data.documents[1].publication = '2026-10-06';
+  data.reconciliations.push({ review_id: data.documents[1].review_id!, weekly_export_id: fixture.release.export_id, record_ids: [], disposition: 'reviewed_not_exported', reason: 'Reviewed source retained outside the scientific export.', reviewed_at: data.knowledge_cutoff, reviewed_by: 'fixture', weekly_inbox_sha256: 'c'.repeat(64) });
   await page.route(/\/daily\//, route => route.fulfill({ contentType: 'application/json', body: JSON.stringify(route.request().url().endsWith('current.json') ? dailyPointer(data) : data) }));
   await page.setViewportSize({ width, height: 832 }); await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.install({ time: new Date('2026-10-07T12:00:00Z') });
@@ -187,8 +188,8 @@ for (const width of [390, 1466]) test(`Daily reports retain evidence and stay ou
   await page.getByRole('tab', { name: 'Trends', exact: true }).click();
   await latest.filter({ hasText: 'Latest daily report' }).click();
   await expect(page.locator('#atlas-report-daily_latest')).toHaveAttribute('open', '');
-  await expect(page.locator('#atlas-report-daily_latest')).toContainText('Weekly review pending');
-  await expect(page.locator('#atlas-report-daily_latest .atlas-daily-processing')).toHaveCount(1);
+  await expect(page.locator('#atlas-report-daily_latest')).not.toContainText('Weekly reviewed');
+  await expect(page.locator('#atlas-report-daily_latest .atlas-daily-processing')).toHaveCount(0);
   await expect(page.locator('#atlas-report-daily_latest > summary img')).toHaveAttribute('src', '/logos/atlas/spf.svg');
   await page.getByRole('tab', { name: 'Trends', exact: true }).click();
   await expect(page.locator('.atlas-daily-watch details')).toHaveCount(0);

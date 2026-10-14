@@ -119,7 +119,8 @@ export function pendingDailyDocuments(selection: DailySelection, weeklyRecordIds
   const integrated = new Set(selection.reconciliations.filter(row => row.disposition === "integrated" && row.record_ids.length && row.record_ids.every(id => weeklyRecordIds.has(id))).map(row => row.review_id));
   return selection.documents.filter(doc => !(doc.processing_status === "weekly_reviewed" && doc.review_id && integrated.has(doc.review_id)));
 }
-export function reportChronology(weekly: AtlasRecord[][], daily: DailyData["documents"], dates: (id: string) => { publication: string; capture: string }) {
+type ReportDocument = Pick<AtlasData["documents"][number], "publication" | "capture"> & Partial<AtlasData["documents"][number]>;
+export function reportChronology(weekly: AtlasRecord[][], daily: DailyData["documents"], dates: (id: string) => ReportDocument, bindings = daily) {
   type Entry = { id: string; records: AtlasRecord[]; weeklyVersions: AtlasRecord[][]; dailyVersions: DailyData["documents"]; publication: string; capture: string };
   const parent = new Map<string, string>();
   function root(id: string): string {
@@ -128,11 +129,19 @@ export function reportChronology(weekly: AtlasRecord[][], daily: DailyData["docu
     if (next === id) return id;
     const result = root(next); parent.set(id, result); return result;
   }
-  for (const document of daily) for (const base of document.base_document_ids) parent.set(root(document.id), root(base));
+  for (const document of bindings) for (const base of document.base_document_ids) parent.set(root(document.id), root(base));
   const entries = new Map<string, Entry>();
   const timestamp = (value: string) => value ? Date.parse(value) : -Infinity;
   const chronological = (a: { publication: string; capture: string; id: string }, b: { publication: string; capture: string; id: string }) => timestamp(b.publication) - timestamp(a.publication) || timestamp(b.capture) - timestamp(a.capture) || a.id.localeCompare(b.id);
   const weeklyEntries = weekly.map(records => ({ records, id: records[0].document_id, ...dates(records[0].document_id) })).sort(chronological);
+  const captures = new Map<string, string>();
+  for (const document of weeklyEntries) {
+    const identity = [document.channel_id, document.url, document.content_url, document.publication, document.raw_sha256, document.text_sha256];
+    if (!identity.every(value => value)) continue;
+    const key = JSON.stringify(identity), existing = captures.get(key);
+    if (existing) parent.set(root(document.id), root(existing));
+    else captures.set(key, document.id);
+  }
   for (const entry of weeklyEntries) {
     const key = root(entry.id), existing = entries.get(key);
     if (existing) { existing.records.push(...entry.records); existing.weeklyVersions.push(entry.records); }
