@@ -5,7 +5,7 @@ import { bundle } from './atlas-fixture';
 import { releaseSchema } from '../src/lib/atlas-release';
 import { dailyFixture, dailyPointer } from './atlas-daily-fixture';
 
-test('Integrated version bindings group Trends and Reports while retaining both source captures', async ({ page }) => {
+test('Integrated version bindings share one report body and preserve both source captures', async ({ page }) => {
   const fixture = await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
   const manifest = JSON.parse(fixture.bodies[`/releases/${fixture.release.export_id}/browser/${fixture.release.browser.manifest.sha256}/manifest.json`].toString());
   const data = dailyFixture(releaseSchema.parse(fixture.release), manifest.source.manifest.sha256);
@@ -24,7 +24,13 @@ test('Integrated version bindings group Trends and Reports while retaining both 
   await expect(page.locator(`#atlas-report-${older.id}`)).toHaveCount(0);
   await expect(report.locator('.atlas-daily-processing')).toHaveCount(0);
   await report.locator(':scope > summary').click();
-  await expect(report.getByRole('link', { name: 'Read source', exact: true })).toHaveCount(2);
+  await expect(report.locator(':scope > .atlas-report-body')).toHaveCount(1);
+  await expect(report.getByRole('link', { name: 'Read source', exact: true })).toHaveCount(1);
+  await report.locator('.atlas-source-versions > summary').click();
+  const versions = report.locator('.atlas-source-versions [data-source-version]');
+  await expect(versions).toHaveCount(2);
+  expect(await versions.evaluateAll(links => links.map(link => link.getAttribute('data-source-version')))).toEqual([newer.id, older.id]);
+  expect(await versions.evaluateAll(links => links.map(link => link.getAttribute('href')))).toEqual([newer.url, older.url]);
   await expect(report.locator('.atlas-daily-version')).toHaveCount(0);
 });
 
