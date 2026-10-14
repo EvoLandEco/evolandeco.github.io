@@ -1,11 +1,16 @@
 import { z } from "zod";
 import textSchema from "./atlas-vendor/presentation/0.1/source-text-display.schema.json";
+import exactTextSchema from "./atlas-vendor/presentation/0.1.1/source-text-display.schema.json";
 import watchSchema from "./atlas-vendor/presentation/0.1/watch.schema.json";
 import { releaseRoot, verifiedBytes, type AtlasRelease } from "./atlas-release";
 import { indexSourceText, type SourceTextData } from "./atlas-source-text";
 
 export const presentationSchemas = { source_text: textSchema, watch: watchSchema };
-const parsers = { source_text: z.fromJSONSchema(textSchema as Parameters<typeof z.fromJSONSchema>[0]), watch: z.fromJSONSchema(watchSchema as Parameters<typeof z.fromJSONSchema>[0]) };
+const textParsers = {
+  "0.1.0": z.fromJSONSchema(textSchema as Parameters<typeof z.fromJSONSchema>[0]),
+  "0.1.1": z.fromJSONSchema(exactTextSchema as Parameters<typeof z.fromJSONSchema>[0]),
+};
+const watchParser = z.fromJSONSchema(watchSchema as Parameters<typeof z.fromJSONSchema>[0]);
 export type WatchData = { watch_version: "0.1.0"; source_export_id: string; source_site_sha256: string; map_snapshot_sha256: string;
   review_scope: string; limitations: string[]; items: { id: string; label: string; reason_for_attention: string; follow_up_question: string;
     record_id: string; record_ids: string[]; document_ids: string[]; evidence_ids: string[]; assertion_ids: string[];
@@ -15,7 +20,10 @@ export type WatchData = { watch_version: "0.1.0"; source_export_id: string; sour
 export type PresentationKind = "source_text" | "watch";
 function requireValid(value: unknown, message: string): asserts value { if (!value) throw new Error(`Invalid ATLAS presentation: ${message}`); }
 export function validatePresentation(kind: PresentationKind, value: unknown, release: AtlasRelease) {
-  const data = parsers[kind].parse(value) as Record<string, unknown>;
+  const descriptor = release[kind];
+  requireValid(descriptor, "missing presentation descriptor");
+  const parser = kind === "watch" ? watchParser : textParsers[descriptor.version];
+  const data = parser.parse(value) as Record<string, unknown>;
   requireValid(data.source_export_id === release.export_id, "scientific export binding");
   if (kind === "watch") {
     requireValid(data.source_site_sha256 === release.assets["atlas-site.json"].sha256 && data.map_snapshot_sha256 === release.assets["map.json"].sha256, "watch source binding");

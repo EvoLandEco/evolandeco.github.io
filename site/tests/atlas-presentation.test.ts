@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import fixture from "./atlas-presentation-fixture.json";
-import { releaseSchema } from "../src/lib/atlas-release";
+import { releaseSchema, sourceTextSchemaHashes } from "../src/lib/atlas-release";
 import { validatePresentation } from "../src/lib/atlas-presentation";
 import { indexSourceText, type SourceTextData } from "../src/lib/atlas-source-text";
 import { selectWatch } from "../src/lib/atlas-vendor/presentation/0.1/watch-view.mjs";
@@ -26,6 +26,25 @@ test("Paired source text keeps exact targets, draft status and claim coordinates
     (data: typeof fixture.text) => { data.translations[0].original_text_id = "missing"; },
     (data: typeof fixture.text) => { data.claim_bindings[0].evidence_ids = ["unrelated"]; },
   ]) { const data = structuredClone(fixture.text); mutate(data); assert.throws(() => validatePresentation("source_text", data, release)); }
+});
+test("Source text versions require their pinned schema and matching payload", async () => {
+  for (const version of ["0.1.0", "0.1.1"] as const) {
+    const descriptor = { ...release.source_text!, version, schema_sha256: sourceTextSchemaHashes[version] };
+    const candidate = releaseSchema.parse({ ...release, source_text: descriptor });
+    const data = { ...structuredClone(fixture.text), display_version: version };
+    const text = validatePresentation("source_text", data, candidate) as SourceTextData;
+    const binding = text.claim_bindings[0];
+    assert.equal(indexSourceText(text).claims.get(JSON.stringify([binding.record_id, binding.claim_index, binding.quote_index]))?.id, binding.text_id);
+    const directory = version === "0.1.0" ? "0.1" : version;
+    const schema = await readFile(new URL(`../src/lib/atlas-vendor/presentation/${directory}/source-text-display.schema.json`, import.meta.url));
+    assert.equal(createHash("sha256").update(schema).digest("hex"), descriptor.schema_sha256);
+    const other = version === "0.1.0" ? "0.1.1" : "0.1.0";
+    assert.throws(() => releaseSchema.parse({ ...candidate, source_text: { ...descriptor, schema_sha256: sourceTextSchemaHashes[other] } }));
+    assert.throws(() => validatePresentation("source_text", { ...data, display_version: other }, candidate));
+    const unrelated = structuredClone(data);
+    unrelated.claim_bindings[0].evidence_ids = ["unrelated"];
+    assert.throws(() => validatePresentation("source_text", unrelated, candidate));
+  }
 });
 test("Watch selection requires every supporting record and honors review cutoff", () => {
   const data = validatePresentation("watch", fixture.watch, release) as WatchData;

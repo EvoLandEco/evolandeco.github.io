@@ -7,6 +7,10 @@ import type { AtlasBrowserCore, AtlasBrowserMap } from "./atlas-browser";
 
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 const asset = z.object({ sha256: digest, bytes: z.number().int().positive() });
+export const sourceTextSchemaHashes = {
+  "0.1.0": "5d31be301360faa5aae9c4dd162511641f346b79bad6d3440b87290eefdacd30",
+  "0.1.1": "d7cdc05568c53763212cabec631da840578636dd953f3796fd2881a250ddf66c",
+} as const;
 const supplementDescriptor = z.discriminatedUnion("path", [
   z.strictObject({ version: z.literal("0.1.0"), source_export_id: digest,
     path: z.literal("source-supplement.json"), schema_path: z.literal("source-supplement.schema.json"),
@@ -21,9 +25,10 @@ export const releaseSchema = z.object({
   contract_version: z.enum(["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0", "1.6.0", "1.7.0", "1.8.0", "1.9.0"]), selector_sha256: digest,
   assets: z.object({ "atlas-site.json": asset, "map.json": asset, "metrics.json": asset, "network-transport.json": asset.optional() }),
   source_supplement: supplementDescriptor.optional(),
-  source_text: z.object({ version: z.literal("0.1.0"), source_export_id: digest, catalogue_sha256: digest,
+  source_text: z.object({ version: z.enum(["0.1.0", "0.1.1"]), source_export_id: digest, catalogue_sha256: digest,
     path: z.literal("source-text-display.json"), schema_path: z.literal("source-text-display.schema.json"),
-    sha256: digest, bytes: z.number().int().positive(), schema_sha256: z.literal("5d31be301360faa5aae9c4dd162511641f346b79bad6d3440b87290eefdacd30") }).optional(),
+    sha256: digest, bytes: z.number().int().positive(), schema_sha256: digest })
+    .refine(descriptor => descriptor.schema_sha256 === sourceTextSchemaHashes[descriptor.version], "Source text schema does not match its version").optional(),
   watch: z.object({ version: z.literal("0.1.0"), source_export_id: digest,
     path: z.literal("watch.json"), schema_path: z.literal("watch.schema.json"),
     sha256: digest, bytes: z.number().int().positive(), schema_sha256: z.literal("6029955be2f9c4e22c247c1f0e9a127c6251b422463d242b9a35a75101579caa") }).optional(),
