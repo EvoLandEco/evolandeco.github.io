@@ -203,10 +203,6 @@ html[data-atlas-transition]::view-transition-new(root) { animation: atlas-fade .
 .atlas-about-ui { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 12px; }
 .atlas-about-repo { display: inline-flex; align-items: center; gap: 8px; color: var(--primary); font-size: 14px; }
 .atlas-about-section { margin-top: 24px; }
-.atlas-about-credits { display: grid; gap: 10px; margin: 0; font-size: 13px; }
-.atlas-about-credits > div { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: baseline; gap: 12px; }
-.atlas-about-credits dt { color: var(--muted-foreground); }
-.atlas-about-credits dd { margin: 0; font-weight: 550; }
 .atlas-about-methods { display: grid; gap: 14px; margin: 0; }
 .atlas-about-methods dt { font-weight: 550; }
 .atlas-about-methods dd { margin: 3px 0 0; color: var(--muted-foreground); }

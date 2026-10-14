@@ -156,9 +156,10 @@ test('ATLAS full-screen workspace preserves interactions and restores the page',
   const datasetDialog = page.getByRole('dialog', { name: 'About ATLAS', exact: true });
   await expect(datasetDialog).toBeVisible();
   await expect(datasetDialog.getByRole('link', { name: 'EvoLandEco/ATLAS on GitHub' })).toHaveAttribute('href', 'https://github.com/EvoLandEco/ATLAS');
-  await expect(datasetDialog.locator('.atlas-about-credits')).toContainText('GPT-6 Astra');
-  await expect(datasetDialog.locator('.atlas-about-credits')).toContainText('MagicUI');
-  await expect(datasetDialog.locator('.atlas-about-credits')).toContainText('Cloudflare R2');
+  await expect(datasetDialog.locator('#atlas-about-technology + dl dt')).toHaveText(['Frontend', 'Backend', 'Storage']);
+  await expect(datasetDialog.locator('#atlas-about-technology + dl')).toContainText('GPT-6 Astra');
+  await expect(datasetDialog.locator('#atlas-about-technology + dl')).toContainText('MagicUI');
+  await expect(datasetDialog.locator('#atlas-about-technology + dl')).toContainText('Cloudflare R2');
   await expect(datasetDialog.getByRole('link', { name: /Download (dataset|measurements)/ })).toHaveCount(0);
   expect(await scroller.evaluate(el => el.scrollHeight <= el.clientHeight)).toBe(true);
   await page.screenshot({ path: '/tmp/atlas-dataset-dialog.png' });
@@ -183,7 +184,7 @@ test('ATLAS full-screen workspace preserves interactions and restores the page',
   await expect(datasetDialog).toBeVisible();
   const mobileDialog = await datasetDialog.boundingBox();
   expect(mobileDialog!.width).toBeLessThan(390);
-  await expect(datasetDialog.locator('.atlas-about-credits')).toBeVisible();
+  await expect(datasetDialog.locator('#atlas-about-technology + dl')).toBeVisible();
   expect(await datasetDialog.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
   await page.screenshot({ path: '/tmp/atlas-about-mobile.png' });
   await datasetDialog.getByRole('button', { name: 'Close About ATLAS' }).click();

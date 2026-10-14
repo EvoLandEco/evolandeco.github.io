@@ -792,28 +792,28 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
           <span className="atlas-status"><GitBranch size={13} aria-hidden />ATLAS UI v{atlasUI.version}</span>
           <span className="atlas-status" data-tone="warning"><FlaskConical size={13} aria-hidden />{atlasUI.status}</span>
         </div>
-        <p>ATLAS UI visualizes exports produced by ATLAS, bringing source documents, extracted findings and their supporting quotations into one view.</p>
+        <p>ATLAS brings source reports, extracted findings and supporting quotations into one research workspace. The UI release identifies the interface; the research snapshot describes the evidence it displays.</p>
         <a className="atlas-about-repo" href="https://github.com/EvoLandEco/ATLAS" target="_blank" rel="noopener noreferrer"><GitBranch size={16} aria-hidden /><span>EvoLandEco/ATLAS</span><ExternalLink size={13} aria-hidden /><span className="sr-only"> on GitHub</span></a>
         <section className="atlas-about-section" aria-labelledby="atlas-about-technology">
-          <h3 id="atlas-about-technology"><FlaskConical size={16} aria-hidden />Built with</h3>
-          <dl className="atlas-about-credits">
-            <div><dt>AI engine</dt><dd>GPT-6 Astra</dd></div>
-            <div><dt>Interface backbone</dt><dd>MagicUI</dd></div>
-            <div><dt>Dataset storage &amp; delivery</dt><dd>Cloudflare R2</dd></div>
+          <h3 id="atlas-about-technology"><FlaskConical size={16} aria-hidden />How ATLAS works</h3>
+          <dl className="atlas-about-methods">
+            <div><dt>Frontend</dt><dd>ATLAS UI is a Next.js and React interface built with MagicUI. It presents reports, supporting evidence and the reviewer workspace.</dd></div>
+            <div><dt>Backend</dt><dd>ATLAS is the Python workflow that captures sources, extracts findings with GPT-6 Astra, records scientific review and produces validated exports. Cloudflare Workers serve datasets and reviewer requests.</dd></div>
+            <div><dt>Storage</dt><dd>Cloudflare R2 stores versioned dataset files, and Cloudflare D1 holds reviewer records. ATLAS manages the source archive and scientific ledger.</dd></div>
           </dl>
         </section>
         <section className="atlas-about-section" aria-labelledby="atlas-about-snapshot">
           <h3 id="atlas-about-snapshot"><CalendarDays size={16} aria-hidden />Research snapshot</h3>
           <p>{formatDate(atlas.snapshot.publication_from)} – {formatDate(atlas.snapshot.publication_until)} · {atlas.snapshot.selected_document_count} reports from a corpus of {atlas.snapshot.corpus_document_count}.</p>
-          <p>{metrics.coverage.measure_count} source-checked measurements across {metrics.coverage.records_with_measures} report entries; {metrics.coverage.pending_candidate_count} candidates await review. Editorial acceptance is pending. Figures retain their source scope and observation dates; comparability remains under review.</p>
+          <p>{metrics.coverage.measure_count} source-checked measurements across {metrics.coverage.records_with_measures} report entries; {metrics.coverage.pending_candidate_count} candidates await review. Editorial acceptance is pending. Figures carry their source scope and observation dates; comparability remains under review.</p>
           <p>Extracted findings and proposed relationships are provided for research review, not as an accepted event registry or a measure of transmission risk.</p>
         </section>
         <section className="atlas-about-section" aria-labelledby="atlas-about-reading">
           <h3 id="atlas-about-reading"><FileText size={16} aria-hidden />Reading the evidence</h3>
           <dl className="atlas-about-methods">
             <div><dt>Dates &amp; scope</dt><dd>Dates refer to publication or capture, not outbreak onset. Relationships appear when every supporting report falls inside the selected window; later assessments use their own supporting documents.</dd></div>
-            <div><dt>Locations &amp; links</dt><dd>Globe points use reviewed locations and retain the available precision. Routes group endpoint pairs by their latest supporting publication. Travel, shared events and hypotheses require explicit source support; shared bulletin coverage appears in the source network.</dd></div>
-            <div><dt>Source fidelity</dt><dd>Conflicting accounts remain visible, and hypotheses stay distinct from established routes. Place names identify reporting locations without taking a position on sovereignty or boundaries. Source titles and quotations retain their original wording.</dd></div>
+            <div><dt>Locations &amp; links</dt><dd>Globe points use reviewed locations at the available precision. Routes group endpoint pairs by their latest supporting publication. Travel, shared events and hypotheses require explicit source support; shared bulletin coverage appears in the source network.</dd></div>
+            <div><dt>Source fidelity</dt><dd>Conflicting accounts remain visible, and hypotheses stay distinct from established routes. Place names identify reporting locations without taking a position on sovereignty or boundaries. Source titles and quotations use the original wording.</dd></div>
           </dl>
         </section>
       </div>

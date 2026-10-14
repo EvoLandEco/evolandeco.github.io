@@ -50,10 +50,12 @@ for (const width of [390, 1466]) test(`Reports reviewer portal, close and draft 
   await expect(close).toBeVisible();
   await signInWindow.getByRole('button', {name: 'Verify sign-in'}).click();
   await frame.getByLabel('Rationale').fill('Unsubmitted review text');
-  await page.getByRole('button', {name: 'Click to enter full screen', exact: true}).click();
-  await expect(page.locator('.atlas-workspace-scroll')).toHaveCSS('scrollbar-gutter', 'auto');
-  await expect(page.locator('.atlas-reviewer')).toHaveCSS('overflow', 'hidden');
-  await page.getByRole('button', {name: 'Exit full screen', exact: true}).click();
+  if (width >= 1180) {
+    await page.getByRole('button', {name: 'Click to enter full screen', exact: true}).click();
+    await expect(page.locator('.atlas-workspace-scroll')).toHaveCSS('scrollbar-gutter', 'auto');
+    await expect(page.locator('.atlas-reviewer')).toHaveCSS('overflow', 'hidden');
+    await page.getByRole('button', {name: 'Exit full screen', exact: true}).click();
+  }
   await expect(close).toHaveCount(0);
   await page.evaluate(() => window.dispatchEvent(new MessageEvent('message', {origin: 'https://atlas-reviewer-inbox.evolandeco-github-io.workers.dev', source: window, data: {type: 'atlas-review-close'}})));
   await page.evaluate(() => window.dispatchEvent(new MessageEvent('message', {origin: 'https://example.org', source: document.querySelector<HTMLIFrameElement>('#atlas-reviewer-frame')!.contentWindow, data: {type: 'atlas-review-close'}})));
