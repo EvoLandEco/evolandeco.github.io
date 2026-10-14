@@ -5,7 +5,7 @@ import { AtlasDetailStatus, useAtlasDetails } from "./atlas-detail";
 import { EvidenceSummary } from "./atlas-evidence-summary";
 import { CountryText } from "./atlas-location-badges";
 import { useAtlas } from "./atlas-context";
-import { BadgeCheck, CircleHelp, Copy, ExternalLink, GitBranch, Layers, TriangleAlert } from "lucide-react";
+import { BadgeCheck, CircleHelp, ExternalLink, GitBranch, Layers, TriangleAlert } from "lucide-react";
 import { type Comparison } from "@/lib/atlas-comparisons";
 import { metricValue } from "@/lib/atlas-metrics";
 import { formatDate } from "@/lib/atlas";
@@ -17,7 +17,8 @@ const labels: Record<string, string> = {
 };
 
 export function ComparisonBadge({ comparison: c }: { comparison: Comparison }) {
-  const Icon = c.status === "unresolved" ? TriangleAlert : c.kind === "republication" ? Copy : c.kind === "different_scope" ? Layers : GitBranch;
+  if (c.kind === "republication") return null;
+  const Icon = c.status === "unresolved" ? TriangleAlert : c.kind === "different_scope" ? Layers : GitBranch;
   return <span className="atlas-status" data-tone={c.status === "unresolved" ? "warning" : "info"}><Icon size={13} aria-hidden />{labels[c.kind]}</span>;
 }
 

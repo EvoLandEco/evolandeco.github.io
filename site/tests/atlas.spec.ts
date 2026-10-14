@@ -1199,6 +1199,8 @@ test("ATLAS assertion branches show section evidence and respect partial windows
   await page.getByRole("tab", { name: "Reports", exact: true }).click();
   await select(page, 'Reporting topic', 'Lassa fever · Nigeria');
   const report = page.locator('#atlas-report-doc_380dc945a639019612fbbdd0');
+  await expect(report.locator('summary').first()).toContainText('Conflicting assertions');
+  await expect(report.locator('summary').first()).toContainText('Different scope');
   await report.locator('summary').first().click();
   await expect(report.locator('.atlas-comparison')).toHaveCount(2);
   await expect(report.locator('.atlas-comparison[data-kind="contradiction"] .atlas-assertion > strong')).toHaveText(['increase', '17 in week 31; 4 in week 32']);
@@ -1212,7 +1214,8 @@ test("ATLAS assertion branches show section evidence and respect partial windows
   await page.getByLabel('Reset all', { exact: true }).click();
   await select(page, 'Reporting topic', 'Cholera · Central African Republic');
   const repeated = page.locator('.atlas-comparison[data-kind="republication"]').first();
-  await page.locator('.atlas-report > summary').filter({ hasText: 'Repeated reporting' }).first().click();
+  await expect(page.locator('.atlas-report > summary .atlas-status').filter({ hasText: 'Repeated reporting' })).toHaveCount(0);
+  await page.locator('#atlas-report-doc_896dcec376a62991248eccb8 > summary').click();
   await expect(repeated).toBeVisible();
   await repeated.locator('.atlas-assertion-report').last().click();
   await expect(page.locator('.atlas-report[data-evidence="true"][open]')).toBeVisible();
