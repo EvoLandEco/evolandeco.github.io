@@ -11,7 +11,7 @@ import { AtlasDisclosure } from "./atlas-disclosure";
 import { AtlasDetailStatus, useAtlasDetails } from "./atlas-detail";
 import { memo, Suspense, useCallback, useDeferredValue, useId, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type Ref } from "react";
 import { flushSync } from "react-dom";
-import { Building2, SlidersHorizontal, GitBranch, ShieldCheck, FlaskConical, HeartHandshake, Maximize2, Minimize2, ChartNoAxesCombined, Activity, ArrowRight, CalendarDays, ChevronRight, ArrowLeftRight, MapPin, ExternalLink, FileText, Globe2, Info, Network, RefreshCw, RotateCcw, ScanLine, TriangleAlert, ChevronDown, X } from "lucide-react";
+import { LogIn, Building2, SlidersHorizontal, GitBranch, ShieldCheck, FlaskConical, HeartHandshake, Maximize2, Minimize2, ChartNoAxesCombined, Activity, ArrowRight, CalendarDays, ChevronRight, ArrowLeftRight, MapPin, ExternalLink, FileText, Globe2, Info, Network, RefreshCw, RotateCcw, ScanLine, TriangleAlert, ChevronDown, X } from "lucide-react";
 import { groupGeographicLinks, dayDate, dayNumber, monthsBefore, formatDate, linkLabels, supported, topicIds, reportsPerPage, type AtlasRecord, type AtlasTrack, type AtlasLink, type AtlasAssessment, type DateBasis } from "@/lib/atlas";
 import { Globe, type GlobeLink, type GlobeHover, type GlobeAnchor } from "./magicui/globe";
 import { GlobeDragHint } from "./magicui/globe-navigation";
@@ -27,6 +27,7 @@ import { AtlasSelect, type AtlasSelectItem } from "./atlas-select";
 import { AtlasEntryFilters } from "./atlas-entry-filters";
 import { reportingFacets } from "@/lib/atlas-reporting-filters";
 import { AtlasScope } from "./atlas-scope";
+import { AtlasReviewer } from "./atlas-reviewer";
 import { CountryText, ReportCountryFlags, LocationBadges, LocationSymbol } from "./atlas-location-badges";
 import { BeamStroke, BeamGradientStops } from "./magicui/animated-beam";
 import Image from "next/image";
@@ -79,6 +80,23 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
   const toolbar = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const coverageScroll = useRef<HTMLDivElement>(null);
+  const reviewerEntry = useRef<HTMLButtonElement>(null);
+  const [reviewerOpen, setReviewerOpen] = useState(false);
+  const [reviewerVisited, setReviewerVisited] = useState(false);
+  const reportsPosition = useRef({ page: 0, panel: 0 });
+  function openReviewer() {
+    reportsPosition.current = { page: document.scrollingElement?.scrollTop ?? 0, panel: workspaceScroll.current?.scrollTop ?? 0 };
+    flushSync(() => { setReviewerVisited(true); setReviewerOpen(true); });
+    workspaceScroll.current?.scrollTo({ top: 0, behavior: "instant" });
+    toolbar.current?.scrollIntoView({ block: "start", behavior: "instant" });
+    document.getElementById("atlas-review-close")?.focus({ preventScroll: true });
+  }
+  function closeReviewer() {
+    flushSync(() => setReviewerOpen(false));
+    document.scrollingElement?.scrollTo({ top: reportsPosition.current.page, behavior: "instant" });
+    workspaceScroll.current?.scrollTo({ top: reportsPosition.current.panel, behavior: "instant" });
+    reviewerEntry.current?.focus({ preventScroll: true });
+  }
   const reducedMotion = useReducedMotion();
   const [reportTransition, setReportTransition] = useState(false);
   const reportsTransition = useRef<ViewTransition | null>(null);
@@ -448,7 +466,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
     const targetChronology = reportChronology(targetDocuments, !topics.length && (!diseases.length || broaden) && !kind.length && daily.data ? pendingDailyDocuments(dailySelection(daily.data, window, sources, broaden ? [] : places), new Set(bundle.records.map(row => row.id))) : [], id => atlasDocuments.get(id)!, daily.data?.documents);
     const targets = highlightedReportIds(targetChronology, ids, documentIds);
     const index = targetChronology.findIndex(entry => targets.has(entry.id));
-    setTopic(topics); setSource(sources); setTab("reports"); setHover(null);
+    setTopic(topics); setSource(sources); setTab("reports"); setReviewerOpen(false); setHover(null);
     setReportEvidence({ recordIds: ids, documentIds });
     setReportPage({ scope: JSON.stringify([basis, window, topics, sources, broaden ? [] : places, broaden ? [] : diseases, includeContext, kind]), index: index < 0 ? 0 : Math.floor(index / reportsPerPage) });
     setReportJump({ documentId: index < 0 ? null : targetChronology[index].id, expand });
@@ -457,7 +475,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
   const showDailyReport = useCallback((id: string) => {
     const index = documents.findIndex(entry => entry.dailyVersions.some(document => document.id === id));
     if (index < 0) return;
-    setTab("reports"); setReportEvidence({ recordIds: [], documentIds: [id] });
+    setTab("reports"); setReviewerOpen(false); setReportEvidence({ recordIds: [], documentIds: [id] });
     setReportPage({ scope: reportScope, index: Math.floor(index / reportsPerPage) });
     setReportJump({ documentId: documents[index].id, expand: true });
   }, [documents, reportScope]);
@@ -472,7 +490,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
     const allDocuments = reportChronology(reportDocuments(windowRecords(min, max, basis), basis, [], []), daily.data ? pendingDailyDocuments(dailySelection(daily.data, [min, max], [], []), new Set(bundle.records.map(row => row.id))) : [], id => atlasDocuments.get(id)!, daily.data?.documents);
     const index = allDocuments.findIndex(entry => entry.records.some(record => targetIds.has(record.id)));
     setWindow([min, max]); setPreset(3); setTopic([]); setSource([]); setPlaces([]); setDiseases([]); setIncludeContext(false); setKind([]); setReportEvidence({ recordIds: known, documentIds: [] });
-    setTab("reports");
+    setTab("reports"); setReviewerOpen(false);
     setReportPage({ scope: JSON.stringify([basis, [min, max], [], [], [], [], false, []]), index: Math.max(0, Math.floor(index / reportsPerPage)) });
     setReportJump({ documentId: index < 0 ? null : allDocuments[index].id, expand });
   };
@@ -515,7 +533,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
     const update = (transitioning = false) => {
       flushSync(() => {
         setReportTransition(transitioning);
-        setTab("reports"); clearReportEvidence();
+        setTab("reports"); setReviewerOpen(false); clearReportEvidence();
         setReportPage({ scope: reportScope, index: 0 });
       });
       workspaceScroll.current?.scrollTo({ top: 0, behavior: "instant" });
@@ -551,7 +569,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
   const showPeriod = useCallback((month: string) => {
     const from = month + "-01", until = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0)).toISOString().slice(0, 10);
     changeWindow(from < window[0] ? window[0] : from, until > window[1] ? window[1] : until);
-    setTab("reports"); setReportJump({ documentId: null });
+    setTab("reports"); setReviewerOpen(false); setReportJump({ documentId: null });
   }, [changeWindow, window]);
   function changeReportPage(index: number) {
     if (!Number.isInteger(index) || index < 0 || index >= pageCount) return;
@@ -702,8 +720,8 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
           }} aria-selected={requestedTab === id} aria-busy={requestedTab === id && requestedTab !== tab || undefined} aria-controls="atlas-panel" onClick={() => changeTab(id)}><Icon size={16} aria-hidden /><span>{label}</span>{id !== "trends" && id !== "one-health" && id !== "analysis" && <b>{id === "reports" ? documents.length : id === "links" ? chains.length : new Set(filtered.map(r => r.source)).size}</b>}</button>)}</div>
         {process.env.NEXT_PUBLIC_SHOW_APPEARANCE !== "false" && <Settings inline />}
       </div>
-      {tab === "reports" && <div className="atlas-report-tools atlas-panel-tools" data-timeline={showingReports && window[1] === max && documents.length > 0 || undefined}>
-          <div className="atlas-report-context">
+      {tab === "reports" && <div className="atlas-report-tools atlas-panel-tools" data-timeline={!reviewerOpen && window[1] === max && documents.length > 0 || undefined}>
+          {reviewerOpen ? <div className="atlas-reviewer-tools"><strong><ShieldCheck size={16} aria-hidden />Reviewer inbox</strong><button id="atlas-review-close" className="atlas-dataset-button" onClick={closeReviewer}><X size={16} aria-hidden /><span>Close reviewer inbox</span></button></div> : <div className="atlas-report-context">
             <div className="atlas-timeline-next">
               <span className="atlas-timeline-next-label">
                 <span><span>Captured</span><time dateTime={capturedAt}>{formatDate(capturedAt, dailyCapturedAt ? "Europe/Amsterdam" : "UTC")}</time></span>
@@ -721,15 +739,17 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
                   </div>
                   {sourcePageCount > 1 && <ReportPagination inline entity="Topic" position="bottom" index={sourcePageIndex} items={sourcePageItems} onChange={index => changeEntryPage("sources", index)} />}
                 </>}</AtlasScope>
+                <button ref={reviewerEntry} className="atlas-dataset-button atlas-reviewer-login" aria-controls="atlas-reviewer-frame" onClick={openReviewer}><LogIn size={15} aria-hidden /><span>Reviewer login</span></button>
               </div>
             </div>
-          </div>
+          </div>}
       </div>}
       </div>
       <div className="atlas-workspace-scroll" ref={workspaceScroll}>
       <Suspense fallback={<p className="atlas-empty" role="status">Loading view…</p>}>
       <div ref={content} id="atlas-panel" role="tabpanel" aria-labelledby={`atlas-tab-${tab}`} aria-busy={requestedTab !== tab}>
-        {showingReports && <div className="atlas-report-list">
+        {reviewerVisited && <AtlasReviewer hidden={!showingReports || !reviewerOpen} />}
+        {showingReports && <div className="atlas-report-list" hidden={reviewerOpen}>
           <div className="atlas-report-prelude">
           <h2 className="sr-only" id="atlas-report-heading" tabIndex={-1}>Report chronology</h2>
           <p className="sr-only" role="status">{documents.length ? `${pageIndex * reportsPerPage + 1}–${Math.min((pageIndex + 1) * reportsPerPage, documents.length)} of ${documents.length} reports` : "0 reports"}</p>
@@ -763,7 +783,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
       </Suspense>
 
     </div>
-    <footer className="atlas-workspace-footer">
+    <footer className="atlas-workspace-footer" hidden={showingReports && reviewerOpen}>
       <AtlasScope buttonLabel="About ATLAS" label="About ATLAS" title="ATLAS">
       <div className="atlas-literature atlas-methods">
         <p className="atlas-about-name">Agentic Tracking and Longitudinal Analysis for Surveillance</p>
@@ -802,7 +822,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
         resetAll();
       }}><SlidersHorizontal size={14} aria-hidden /><span>{activeFilters.length ? "Filtered view" : "Selection active"}</span><strong><span>Reset</span><RotateCcw size={13} aria-hidden /></strong></button>}
       <div ref={setFooterTarget} className="atlas-footer-navigation">
-        {showingReports && pageCount > 1 && <ReportPagination position="bottom" index={pageIndex} items={pageItems} onChange={changeReportPage} />}
+        {showingReports && !reviewerOpen && pageCount > 1 && <ReportPagination position="bottom" index={pageIndex} items={pageItems} onChange={changeReportPage} />}
         {showingSpatial && linkPageCount > 1 && <ReportPagination entity="Geographic link" position="bottom" index={linkPageIndex} items={linkPageItems} onChange={index => changeEntryPage("links", index)} />}
         {showingRelationships && assessmentPageCount > 1 && <ReportPagination entity="Assessment" position="bottom" index={assessmentPageIndex} items={assessmentPageItems} onChange={index => changeEntryPage("assessments", index)} />}
       </div>
