@@ -1849,14 +1849,15 @@ html[data-atlas-connection-transition]::view-transition-new(root) { animation: n
 .atlas-reviewer-tools > strong { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; color: var(--primary); }
 .atlas-reviewer-frame { display: block; width: 100%; height: calc(100dvh - var(--atlas-toolbar-height, 60px) - 32px); min-height: 440px; border: 0; }
 .atlas-reviewer[hidden], .atlas-report-list[hidden], .atlas-workspace-footer[hidden] { display: none; }
-.atlas-page[data-fullscreen] .atlas-workspace-scroll:has(.atlas-reviewer:not([hidden])) { display: grid; grid-template-rows: minmax(0, 1fr); overflow: hidden; }
+.atlas-page[data-fullscreen] .atlas-workspace-scroll:has(.atlas-reviewer:not([hidden])) { display: grid; grid-template-rows: minmax(0, 1fr); overflow: hidden; scrollbar-gutter: auto; }
 .atlas-page[data-fullscreen] #atlas-panel:has(.atlas-reviewer:not([hidden])) { min-height: 0; }
 .atlas-page[data-fullscreen] .atlas-reviewer-frame { height: 100%; min-height: 0; }
 
 .atlas-reviewer { min-width: 0; min-height: 0; }
-.atlas-reviewer-sign-in { max-width: 440px; margin: 64px auto; padding: 0 20px; text-align: center; }
+.atlas-reviewer-sign-in { max-width: 400px; margin: clamp(32px, 10vh, 80px) auto; padding: 0 20px; text-align: center; }
+.atlas-reviewer-sign-in > svg { display: block; margin: 0 auto 20px; width: 44px; height: 44px; padding: 11px; border: 1px solid color-mix(in srgb, var(--atlas-green) 20%, var(--border)); border-radius: 50%; background: color-mix(in srgb, var(--atlas-green) 6%, var(--background)); color: var(--atlas-green); }
 .atlas-reviewer-sign-in h2 { font-size: 22px; font-weight: 500; letter-spacing: -.5px; }
 .atlas-reviewer-sign-in p { margin: 12px 0 24px; color: var(--muted-foreground); font-size: 14px; line-height: 1.7; }
 .atlas-reviewer-sign-in .atlas-dataset-button { margin: auto; }
 
-.atlas-page[data-fullscreen] .atlas-reviewer { height: 100%; overflow: auto; }
+.atlas-page[data-fullscreen] .atlas-reviewer { height: 100%; overflow: hidden; }

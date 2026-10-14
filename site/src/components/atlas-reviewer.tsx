@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, ShieldCheck } from "lucide-react";
 import { useTheme } from "next-themes";
 
 const origin = "https://atlas-reviewer-inbox.evolandeco-github-io.workers.dev";
@@ -44,8 +44,8 @@ export function AtlasReviewer({ hidden, onReady, onClose }: { hidden: boolean; o
   return <div className="atlas-reviewer" hidden={hidden}>
     {signedIn ? <iframe ref={frame} id="atlas-reviewer-frame" className="atlas-reviewer-frame" title="Reviewer inbox" src={`${origin}/atlas/review/`} referrerPolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox" /> :
       <section className="atlas-reviewer-sign-in" aria-labelledby="atlas-reviewer-title">
-        <h2 id="atlas-reviewer-title">Sign in to review</h2>
-        <p>Use your reviewer email to sign in through Cloudflare. The inbox opens here after verification.</p>
+        <ShieldCheck aria-hidden /><h2 id="atlas-reviewer-title">Reviewer portal</h2>
+        <p>Sign in with your reviewer email to open the inbox.</p>
         <button className="atlas-dataset-button" onClick={signIn}><ExternalLink size={16} aria-hidden /><span>Continue to sign-in</span></button>
         {blocked && <p role="alert">Allow the sign-in window in your browser, then try again.</p>}
       </section>}
