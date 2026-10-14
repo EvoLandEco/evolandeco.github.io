@@ -739,7 +739,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
                   </div>
                   {sourcePageCount > 1 && <ReportPagination inline entity="Topic" position="bottom" index={sourcePageIndex} items={sourcePageItems} onChange={index => changeEntryPage("sources", index)} />}
                 </>}</AtlasScope>
-                <button ref={reviewerEntry} className="atlas-dataset-button atlas-reviewer-login" aria-controls="atlas-reviewer-frame" onClick={openReviewer}><LogIn size={15} aria-hidden /><span>Reviewer login</span></button>
+                <button ref={reviewerEntry} className="atlas-dataset-button atlas-reviewer-login" aria-controls="atlas-panel" onClick={openReviewer}><LogIn size={15} aria-hidden /><span>Reviewer login</span></button>
               </div>
             </div>
           </div>}
