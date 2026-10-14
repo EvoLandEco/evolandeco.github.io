@@ -1212,14 +1212,14 @@
   "talks": [
     {
       "id": "wur-mind-2026",
-      "title": "Trade networks, Transmission, Intervention",
+      "title": "Trade Networks, Transmission, Intervention",
       "authors": [
         "Qin, T."
       ],
       "kind": "Workshop",
       "event": "WUR MIND Day 2026",
       "date": "2026-10-06",
-      "location": "Impulse Building, Wageningen",
+      "location": "Wageningen, Netherlands",
       "description": "Led a workshop on trade networks · 14:10–15:10",
       "url": null,
       "evidence": {
@@ -1244,6 +1244,30 @@
       "evidence": {
         "sourceId": "cv-2026-09",
         "section": "Talks & workshops"
+      }
+    },
+    {
+      "id": "invasion-biology-2018",
+      "title": "Phylogenetic Diversity Predicts Invasion Resistance in Wetland Plant Communities",
+      "authors": [
+        "Qin, T.",
+        "Zhou, J.",
+        "Guan, Y.",
+        "Zhang, M.",
+        "Luo, F.",
+        "Dong, B.",
+        "Li, H.",
+        "Yu, F."
+      ],
+      "kind": "Oral presentation",
+      "event": "Fifth National Conference on Invasion Biology",
+      "date": "2018-08-05",
+      "location": "Urumqi, China",
+      "description": "Conference held 3–6 August 2018",
+      "url": "https://www.ipmchina.net/a/xhdt/huiyitongzhi/2018/0717/930.html",
+      "evidence": {
+        "sourceId": "invasion-biology-2018-programme",
+        "section": "Programme PDF pages 1–2 and 9; submitted abstract dated 19 July 2018. English title translated from 系统发育多样性有效评估湿地植物群落入侵抵抗力."
       }
     }
   ],

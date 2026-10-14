@@ -74,9 +74,8 @@ export default function Home() {
               date={t.date}
               title={t.title}
               location={`${t.event} · ${t.location}`}
-              icon={t.kind === "Workshop" ? <InstitutionLogo name="Wageningen University & Research" /> : <span className="institution-logo"><span className="institution-symbol"><Image src="/logos/modah-favicon.png" alt="ModAH" width={100} height={100} unoptimized /></span></span>}
+              icon={t.id === "invasion-biology-2018" ? <InstitutionLogo name="Institute of Plant Protection, Chinese Academy of Agricultural Sciences" /> : t.kind === "Workshop" ? <InstitutionLogo name="Wageningen University & Research" /> : <span className="institution-logo"><span className="institution-symbol"><Image src="/logos/modah-favicon.png" alt="ModAH" width={100} height={100} unoptimized /></span></span>}
             >
-              {t.description && <p>{t.description}</p>}
               <div>
                 {t.url ? <a className="timeline-link" href={t.url}>
                   <Mic size={13} aria-hidden />

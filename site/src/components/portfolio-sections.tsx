@@ -13,6 +13,7 @@ export function SectionHeading({ label, title, description }: { label: string; t
 }
 
 const institutions: Record<string, { file: string; url: string; className?: string }> = {
+  "Institute of Plant Protection, Chinese Academy of Agricultural Sciences": { file: "ipp-caas.png", url: "https://ipp.caas.cn/en/" },
   "Wageningen University & Research": { file: "wur-symbol.svg", url: "https://www.wur.nl/en" },
   "University of Groningen": { file: "rug-symbol.svg", url: "https://www.rug.nl/" },
   "Beijing Forestry University": { file: "bfu.png", url: "https://www.bjfu.edu.cn/", className: "institution-logo-bfu" },
