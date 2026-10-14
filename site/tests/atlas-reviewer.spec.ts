@@ -3,14 +3,14 @@ import {readFileSync} from 'node:fs';
 import {routeBrowserFixture} from './atlas-browser-fixture.mjs';
 import {bundle} from './atlas-fixture';
 
-for (const width of [390, 1466]) test(`Reports reviewer login, close and draft preservation at ${width}px`, async ({page}) => {
+for (const width of [390, 1466]) test(`Reports reviewer login, close and draft preservation at ${width}px`, async ({page, context}) => {
   await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
   let visits = 0;
-  await page.route('https://atlas-reviewer-inbox.evolandeco-github-io.workers.dev/atlas/review/', route => {
+  await context.route('https://atlas-reviewer-inbox.evolandeco-github-io.workers.dev/atlas/review/sign-in', route => route.fulfill({contentType: 'text/html', body: `<!doctype html><title>Sign-in fixture</title><button onclick="opener.postMessage({type:'atlas-review-signed-in'},'http://127.0.0.1:3000');window.close()">Verify sign-in</button>`}));
+  await context.route('https://atlas-reviewer-inbox.evolandeco-github-io.workers.dev/atlas/review/', route => {
     visits++;
     return route.fulfill({contentType: 'text/html', body: `<!doctype html><html lang="en"><title>Review fixture</title><body>
-      <button onclick="this.hidden=true;document.querySelector('main').hidden=false">Sign in</button>
-      <main hidden><h1>Review issues</h1><label>Rationale<textarea></textarea></label></main>
+      <main><h1>Review issues</h1><label>Rationale<textarea></textarea></label></main>
       <script>addEventListener('message', event => {if (event.data.type === 'atlas-review-theme') document.documentElement.dataset.theme = event.data.theme;});parent.postMessage({type:'atlas-review-ready',ready:true},'http://127.0.0.1:3000');</script>
       </body></html>`});
   });
@@ -30,13 +30,25 @@ for (const width of [390, 1466]) test(`Reports reviewer login, close and draft p
   await expect(close).toBeVisible();
   await expect(reports).toBeHidden();
   await expect(page.getByRole('button', {name: 'Next report page'})).toHaveCount(0);
-  await expect(frame.getByRole('button', {name: 'Sign in', exact: true})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'Continue to sign-in', exact: true})).toBeVisible();
+  await page.evaluate(() => window.dispatchEvent(new MessageEvent('message', {origin: 'https://atlas-reviewer-inbox.evolandeco-github-io.workers.dev', source: window, data: {type: 'atlas-review-signed-in'}})));
+  await page.evaluate(() => window.dispatchEvent(new MessageEvent('message', {origin: 'https://atlas-reviewer-inbox.evolandeco-github-io.workers.dev', source: null, data: {type: 'atlas-review-signed-in'}})));
+  await expect(page.locator('#atlas-reviewer-frame')).toHaveCount(0);
+  const cancelled = page.waitForEvent('popup');
+  await page.getByRole('button', {name: 'Continue to sign-in', exact: true}).click();
+  const cancelledWindow = await cancelled;
+  await expect(cancelledWindow.getByRole('button', {name: 'Verify sign-in'})).toBeVisible();
   await close.click();
+  await expect.poll(() => cancelledWindow.isClosed()).toBe(true);
   await expect(page.getByRole('button', {name: 'Reviewer login', exact: true})).toBeFocused();
   expect(await reports.locator('.atlas-report').evaluateAll(entries => entries.map(entry => entry.id))).toEqual(reportIds);
   await expect(page.locator(`#${reportId}`)).toHaveAttribute('open', '');
   await page.getByRole('button', {name: 'Reviewer login', exact: true}).click();
-  await frame.getByRole('button', {name: 'Sign in', exact: true}).click();
+  const signingIn = page.waitForEvent('popup');
+  await page.getByRole('button', {name: 'Continue to sign-in', exact: true}).click();
+  const signInWindow = await signingIn;
+  await expect(close).toBeVisible();
+  await signInWindow.getByRole('button', {name: 'Verify sign-in'}).click();
   await frame.getByLabel('Rationale').fill('Unsubmitted review text');
   await close.click();
   await page.getByRole('button', {name: 'Reviewer login', exact: true}).click();
@@ -45,4 +57,15 @@ for (const width of [390, 1466]) test(`Reports reviewer login, close and draft p
   expect(visits).toBe(1);
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await expect(close).toBeVisible();
+});
+
+test('Reports explains a blocked sign-in window', async ({page}) => {
+  await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
+  await page.addInitScript(() => { window.open = () => null; });
+  await page.goto('/atlas/');
+  await page.getByRole('tab', {name: 'Reports', exact: true}).click();
+  await page.getByRole('button', {name: 'Reviewer login', exact: true}).click();
+  await page.getByRole('button', {name: 'Continue to sign-in', exact: true}).click();
+  await expect(page.getByRole('alert')).toHaveText('Allow the sign-in window in your browser, then try again.');
+  await expect(page.getByRole('button', {name: 'Close reviewer inbox', exact: true})).toBeVisible();
 });

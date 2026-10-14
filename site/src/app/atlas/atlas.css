@@ -1848,8 +1848,16 @@ html[data-atlas-connection-transition]::view-transition-new(root) { animation: n
 .atlas-reviewer-tools { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 12px; }
 .atlas-reviewer-tools > strong { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; color: var(--primary); }
 .atlas-reviewer-frame { display: block; width: 100%; height: calc(100dvh - var(--atlas-toolbar-height, 60px) - var(--atlas-report-tools-height, 60px) - 32px); min-height: 440px; border: 0; }
-.atlas-reviewer-frame[hidden], .atlas-report-list[hidden], .atlas-workspace-footer[hidden] { display: none; }
+.atlas-reviewer[hidden], .atlas-report-list[hidden], .atlas-workspace-footer[hidden] { display: none; }
 .atlas-page .atlas-coverage-control > .atlas-reviewer-login { width: auto; flex-basis: auto; gap: 6px; padding: 0 10px; border-radius: 8px; font-size: 12px; }
-.atlas-page[data-fullscreen] .atlas-workspace-scroll:has(.atlas-reviewer-frame:not([hidden])) { display: grid; grid-template-rows: minmax(0, 1fr); overflow: hidden; }
-.atlas-page[data-fullscreen] #atlas-panel:has(.atlas-reviewer-frame:not([hidden])) { min-height: 0; }
+.atlas-page[data-fullscreen] .atlas-workspace-scroll:has(.atlas-reviewer:not([hidden])) { display: grid; grid-template-rows: minmax(0, 1fr); overflow: hidden; }
+.atlas-page[data-fullscreen] #atlas-panel:has(.atlas-reviewer:not([hidden])) { min-height: 0; }
 .atlas-page[data-fullscreen] .atlas-reviewer-frame { height: 100%; min-height: 0; }
+
+.atlas-reviewer { min-width: 0; min-height: 0; }
+.atlas-reviewer-sign-in { max-width: 440px; margin: 64px auto; padding: 0 20px; text-align: center; }
+.atlas-reviewer-sign-in h2 { font-size: 22px; font-weight: 500; letter-spacing: -.5px; }
+.atlas-reviewer-sign-in p { margin: 12px 0 24px; color: var(--muted-foreground); font-size: 14px; line-height: 1.7; }
+.atlas-reviewer-sign-in .atlas-dataset-button { margin: auto; }
+
+.atlas-page[data-fullscreen] .atlas-reviewer { height: 100%; overflow: auto; }
