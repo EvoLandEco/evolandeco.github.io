@@ -795,11 +795,11 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
         <p>ATLAS brings source reports, extracted findings and supporting quotations into one research workspace. The UI release identifies the interface; the research snapshot describes the evidence it displays.</p>
         <a className="atlas-about-repo" href="https://github.com/EvoLandEco/ATLAS" target="_blank" rel="noopener noreferrer"><GitBranch size={16} aria-hidden /><span>EvoLandEco/ATLAS</span><ExternalLink size={13} aria-hidden /><span className="sr-only"> on GitHub</span></a>
         <section className="atlas-about-section" aria-labelledby="atlas-about-technology">
-          <h3 id="atlas-about-technology"><FlaskConical size={16} aria-hidden />How ATLAS works</h3>
-          <dl className="atlas-about-methods">
-            <div><dt>Frontend</dt><dd>ATLAS UI is a Next.js and React interface built with MagicUI. It presents reports, supporting evidence and the reviewer workspace.</dd></div>
-            <div><dt>Backend</dt><dd>ATLAS is the Python workflow that captures sources, extracts findings with GPT-6 Astra, records scientific review and produces validated exports. Cloudflare Workers serve datasets and reviewer requests.</dd></div>
-            <div><dt>Storage</dt><dd>Cloudflare R2 stores versioned dataset files, and Cloudflare D1 holds reviewer records. ATLAS manages the source archive and scientific ledger.</dd></div>
+          <h3 id="atlas-about-technology"><FlaskConical size={16} aria-hidden />Tech stack</h3>
+          <dl className="atlas-about-credits">
+            <div><dt>Frontend</dt><dd>Next.js · React · MagicUI</dd></div>
+            <div><dt>Backend</dt><dd>Python · GPT-6 Astra · Cloudflare Workers</dd></div>
+            <div><dt>Storage</dt><dd>Cloudflare R2 · D1</dd></div>
           </dl>
         </section>
         <section className="atlas-about-section" aria-labelledby="atlas-about-snapshot">
