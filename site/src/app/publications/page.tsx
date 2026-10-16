@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { LoadingImage } from "@/components/loading-image";
-import { ArrowUpRight, BookOpen, GraduationCap } from "lucide-react";
+import { BookOpen, FileText, GraduationCap } from "lucide-react";
 import data from "@/content-data/portfolio.json";
 import { selectedPublications } from "@/lib/selected-publications";
 import { Paper } from "@/components/papers";
@@ -23,7 +23,10 @@ export default function Publications() {
               <h2>Diversification Models and Neural Inference</h2>
               <p className="thesis-institution"><Image src="/logos/rug-symbol.svg" alt="" width={14} height={21} unoptimized />{phd.institution}</p>
               <p>Exploring evolutionary diversification through stochastic models, phylogenies and neural inference.</p>
-              <a className="thesis-read" href={phd.thesisUrl!}><BookOpen size={17} aria-hidden /> Read the thesis <ArrowUpRight size={16} aria-hidden /><span className="thesis-format">PDF</span></a>
+              <div className="thesis-actions">
+                <a className="thesis-read" href={phd.thesisUrl!}><BookOpen size={16} aria-hidden /> Read thesis <span className="thesis-format">PDF</span></a>
+                <a className="thesis-read thesis-propositions" href="/Tianjian-Qin-Propositions.pdf"><FileText size={16} aria-hidden /> Propositions <span className="thesis-format">PDF</span></a>
+              </div>
             </div>
           </article>
       </section>

@@ -1424,16 +1424,22 @@ footer { border-top: 0; text-align: center; justify-content: center; }
 .thesis-copy h2 { font-size: 29px; line-height: 1.2; letter-spacing: -.035em; margin-bottom: 12px; }
 .thesis-copy p { font-size: 16px; line-height: 1.7; color: var(--muted-foreground); margin-bottom: 18px; }
 .thesis-copy .thesis-institution { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 18px; }
-.thesis-read { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; min-height: 44px; color: var(--primary); font-size: 15px; }
-.thesis-format { font-size: 11px; padding: 2px 5px; border: 1px solid var(--border); border-radius: 4px; }
+.thesis-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.thesis-read { --thesis-action: var(--primary); display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 9px 11px; border: 1px solid color-mix(in srgb, var(--thesis-action) 24%, transparent); border-radius: 99px; background: color-mix(in srgb, var(--thesis-action) 7%, var(--background)); color: var(--thesis-action); font-size: 14px; font-weight: 500; white-space: nowrap; transition: background-color .2s, border-color .2s; }
+.thesis-read:hover { color: var(--thesis-action); background: color-mix(in srgb, var(--thesis-action) 14%, var(--background)); border-color: color-mix(in srgb, var(--thesis-action) 45%, transparent); }
+.thesis-read:focus-visible { outline: 2px solid var(--thesis-action); outline-offset: 4px; }
+.thesis-propositions { --thesis-action: #387c69; }
+.dark .thesis-propositions { --thesis-action: #99cfbc; }
+.thesis-format { font-size: 10px; letter-spacing: .04em; opacity: .8; }
 .publication-group { margin-top: 36px; }
 .publication-group > h2 { font-size: 21px; padding-bottom: 8px; }
 @media (max-width: 639px) {
   .thesis-layout { grid-template-columns: 1fr; padding: 20px 0; gap: 28px; }
   .thesis-book { width: 190px; margin: auto; }
   .thesis-copy h2 { font-size: 26px; }
+  .thesis-read { flex: 1; }
 }
-@media (prefers-reduced-motion: reduce) { .thesis-book { transition: none; transform: none; } .thesis-book:is(:hover, :focus-visible) { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .thesis-read { transition: none; } .thesis-book { transition: none; transform: none; } .thesis-book:is(:hover, :focus-visible) { transform: none; } }
 
 .publication-group:not(:has(.paper:not([hidden]))) { display: none; }
 
