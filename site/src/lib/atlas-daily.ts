@@ -1,20 +1,24 @@
 import { z } from "zod";
 import schema021 from "./atlas-vendor/daily/0.2.1/daily.schema.json";
 import schema022 from "./atlas-vendor/daily/0.2.2/daily.schema.json";
+import schema023 from "./atlas-vendor/daily/0.2.3/daily.schema.json";
 import { selectDaily as selectDaily021 } from "./atlas-vendor/daily/0.2.1/daily-view.mjs";
 import { selectDaily as selectDaily022 } from "./atlas-vendor/daily/0.2.2/daily-view.mjs";
+import { selectDaily as selectDaily023 } from "./atlas-vendor/daily/0.2.3/daily-view.mjs";
 import type { DailyData as Daily021 } from "./atlas-vendor/daily/0.2.1/daily";
 import type { DailyData as Daily022 } from "./atlas-vendor/daily/0.2.2/daily";
-export type DailyData = Daily021 | Daily022;
+import type { DailyData as Daily023 } from "./atlas-vendor/daily/0.2.3/daily";
+export type DailyData = Daily021 | Daily022 | Daily023;
 import { atlasOrigin, verifiedBytes, type AtlasRelease } from "./atlas-release";
 import type { AtlasData } from "./atlas-contract";
 import type { AtlasRecord } from "./atlas";
 export type { DailyDocument, DailyFinding, DailyEvidence, DailyWatch } from "./atlas-vendor/daily/0.2.1/daily";
-export type DailySelection = ReturnType<typeof selectDaily021>;
+export type DailySelection = ReturnType<typeof selectDaily021> | ReturnType<typeof selectDaily023>;
 export type DailyState = { data?: DailyData; error?: string; loading?: boolean };
 export const dailyPins = {
   "0.2.1": { schema: "91c8f56346d966f095006d3d0932c3f96d3d9a703312f6190ef8bbc957599c06", selector: "76a1c662f49d9e0fcc5e26e8f90f92be96abc765f9c3b2f824335364568fb5e0" },
   "0.2.2": { schema: "c9f07d7a5caa67407d902d6351badf7c4cf9e748437311287f12764ac2dced70", selector: "2444ebf378f61e01358fb581372a1e2d70c6061cf20cbea0aa4cf0bf6fa319b5" },
+  "0.2.3": { schema: "41815368158b92c9af6f7f521218c43c44e705683e88aefdfd3d017652cd8c97", selector: "3d52a2afc069e878b576d303300cec26d300b84ce9bcfd9b6eba8de34432ba90" },
 };
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 const pointerFields = { version: z.literal(1), daily_id: digest,
@@ -23,13 +27,16 @@ const pointerFields = { version: z.literal(1), daily_id: digest,
 export const dailyPointerSchema = z.discriminatedUnion("daily_version", [
   z.strictObject({ ...pointerFields, daily_version: z.literal("0.2.1"), schema_sha256: z.literal(dailyPins["0.2.1"].schema), selector_sha256: z.literal(dailyPins["0.2.1"].selector) }),
   z.strictObject({ ...pointerFields, daily_version: z.literal("0.2.2"), schema_sha256: z.literal(dailyPins["0.2.2"].schema), selector_sha256: z.literal(dailyPins["0.2.2"].selector) }),
+  z.strictObject({ ...pointerFields, daily_version: z.literal("0.2.3"), schema_sha256: z.literal(dailyPins["0.2.3"].schema), selector_sha256: z.literal(dailyPins["0.2.3"].selector) }),
 ]);
 export type DailyPointer = z.infer<typeof dailyPointerSchema>;
 const parsers = {
   "0.2.1": z.fromJSONSchema(schema021 as Parameters<typeof z.fromJSONSchema>[0]),
   "0.2.2": z.fromJSONSchema(schema022 as Parameters<typeof z.fromJSONSchema>[0]),
+  "0.2.3": z.fromJSONSchema(schema023 as Parameters<typeof z.fromJSONSchema>[0]),
 };
 function selectDaily(data: DailyData, ...args: Parameters<typeof selectDaily021> extends [unknown, ...infer Rest] ? Rest : never): DailySelection {
+  if (data.daily_version === "0.2.3") return selectDaily023(data, ...args);
   return data.daily_version === "0.2.1" ? selectDaily021(data, ...args) : selectDaily022(data, ...args);
 }
 function requireValid(value: unknown, message: string): asserts value { if (!value) throw new Error(`Invalid ATLAS daily data: ${message}`); }
@@ -37,7 +44,7 @@ const timestamp = (value: string) => z.iso.datetime({ offset: true }).parse(valu
 const language = (value: string) => { new Intl.Locale(value); };
 export async function validateDaily(value: unknown, release: AtlasRelease, manifestSha256: string, signal?: AbortSignal): Promise<DailyData> {
   signal?.throwIfAborted();
-  const { daily_version: version } = z.object({ daily_version: z.enum(["0.2.1", "0.2.2"]) }).parse(value);
+  const { daily_version: version } = z.object({ daily_version: z.enum(["0.2.1", "0.2.2", "0.2.3"]) }).parse(value);
   const data = parsers[version].parse(value) as DailyData;
   requireValid(data.base_source_export_id === release.export_id && data.base_site_sha256 === release.assets["atlas-site.json"].sha256 && data.base_map_snapshot_sha256 === release.assets["map.json"].sha256 && data.base_manifest_sha256 === manifestSha256, "weekly source binding");
   timestamp(data.generated_at); timestamp(data.knowledge_cutoff);
@@ -46,7 +53,7 @@ export async function validateDaily(value: unknown, release: AtlasRelease, manif
   const index = <T extends { id: string }>(rows: T[]) => { const map = new Map(rows.map(row => [row.id, row])); requireValid(map.size === rows.length, "duplicate identity"); return map; };
   const docs = index(data.documents), findings = index(data.findings), evidence = index(data.evidence), assessments = index(data.watch_assessments); index(data.watch_items);
   for (const doc of docs.values()) {
-    if (data.daily_version === "0.2.2") requireValid(doc.publication !== null, "report publication date");
+    if (data.daily_version !== "0.2.1") requireValid(doc.publication !== null, "report publication date");
     timestamp(doc.capture); if (doc.reviewed_at) timestamp(doc.reviewed_at);
     if (doc.publication) { if (doc.publication.includes("T")) timestamp(doc.publication); else z.iso.date().parse(doc.publication); }
     for (const url of [doc.url, doc.content_url]) requireValid(["https:", "http:"].includes(new URL(url).protocol), "source URL");
@@ -88,11 +95,19 @@ export async function validateDaily(value: unknown, release: AtlasRelease, manif
   return data;
 }
 export function validateDailyReferences(data: DailyData, weekly: Pick<AtlasData, "documents" | "channels">) {
-  const documents = new Set(weekly.documents.map(doc => doc.id));
+  const documents = new Map(weekly.documents.map(doc => [doc.id, doc]));
   const channels = new Map(weekly.channels.map(channel => [channel.id, channel.acquisition_source]));
   for (const doc of data.documents) {
     requireValid(doc.base_document_ids.every(id => documents.has(id)), "publication version binding");
     requireValid(doc.channel_id === null || channels.get(doc.channel_id) === doc.source_id, "source channel binding");
+  }
+  if (data.daily_version === "0.2.3") for (const binding of data.publication_bindings) {
+    timestamp(binding.reviewed_at);
+    requireValid(new Set(binding.document_versions.map(version => version.document_id)).size === binding.document_versions.length, "duplicate publication version");
+    for (const version of binding.document_versions) {
+      const document = documents.get(version.document_id);
+      if (document) requireValid(document.raw_sha256 === version.raw_sha256 && document.text_sha256 === version.source_text_sha256, "historical publication version hash");
+    }
   }
 }
 export async function fetchDaily(release: AtlasRelease, manifestSha256: string, signal?: AbortSignal) {
@@ -120,7 +135,7 @@ export function pendingDailyDocuments(selection: DailySelection, weeklyRecordIds
   return selection.documents.filter(doc => !(doc.processing_status === "weekly_reviewed" && doc.review_id && integrated.has(doc.review_id)));
 }
 type ReportDocument = Pick<AtlasData["documents"][number], "publication" | "capture"> & Partial<AtlasData["documents"][number]>;
-export function reportChronology(weekly: AtlasRecord[][], daily: DailyData["documents"], dates: (id: string) => ReportDocument, bindings = daily) {
+export function reportChronology(weekly: AtlasRecord[][], daily: DailyData["documents"], dates: (id: string) => ReportDocument, bindings = daily, publicationBindings: Daily023["publication_bindings"] = []) {
   type Entry = { id: string; records: AtlasRecord[]; weeklyVersions: AtlasRecord[][]; dailyVersions: DailyData["documents"]; publication: string; capture: string };
   const parent = new Map<string, string>();
   function root(id: string): string {
@@ -129,6 +144,7 @@ export function reportChronology(weekly: AtlasRecord[][], daily: DailyData["docu
     if (next === id) return id;
     const result = root(next); parent.set(id, result); return result;
   }
+  for (const binding of publicationBindings) for (const version of binding.document_versions) parent.set(root(version.document_id), root(binding.document_versions[0].document_id));
   for (const document of bindings) for (const base of document.base_document_ids) parent.set(root(document.id), root(base));
   const entries = new Map<string, Entry>();
   const timestamp = (value: string) => value ? Date.parse(value) : -Infinity;

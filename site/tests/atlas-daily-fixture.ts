@@ -1,7 +1,7 @@
 import type { DailyData } from "../src/lib/atlas-vendor/daily/0.2.1/daily";
 import { createHash } from 'node:crypto';
 import type { AtlasRelease } from '../src/lib/atlas-release';
-import { dailyPins } from '../src/lib/atlas-daily';
+import { dailyPins, type DailyData as SupportedDailyData } from '../src/lib/atlas-daily';
 export const dailyHash = (value: Uint8Array | string) => createHash('sha256').update(value).digest('hex');
 export function dailyFixture(release: AtlasRelease, manifestHash = 'c'.repeat(64)): DailyData {
   const date = '2026-10-07T08:00:00Z', quote = 'Enquête en France : 12 cas signalés.';
@@ -15,7 +15,7 @@ export function dailyFixture(release: AtlasRelease, manifestHash = 'c'.repeat(64
   data.watch_assessments = structuredClone(data.watch_items);
   return data;
 }
-export function dailyPointer(data: DailyData) {
+export function dailyPointer(data: SupportedDailyData) {
   const bytes = Buffer.from(JSON.stringify(data));
-  return { version: 1 as const, daily_version: '0.2.1' as const, daily_id: data.daily_id, base_source_export_id: data.base_source_export_id, base_manifest_sha256: data.base_manifest_sha256, published_at: data.generated_at, asset: { sha256: dailyHash(bytes), bytes: bytes.length }, schema_sha256: dailyPins["0.2.1"].schema, selector_sha256: dailyPins["0.2.1"].selector };
+  return { version: 1 as const, daily_version: data.daily_version, daily_id: data.daily_id, base_source_export_id: data.base_source_export_id, base_manifest_sha256: data.base_manifest_sha256, published_at: data.generated_at, asset: { sha256: dailyHash(bytes), bytes: bytes.length }, schema_sha256: dailyPins[data.daily_version].schema, selector_sha256: dailyPins[data.daily_version].selector };
 }

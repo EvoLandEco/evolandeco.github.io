@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { validateDaily, dailySelection, pendingDailyDocuments, reportChronology, highlightedReportIds, validateDailyReferences, dailyPins, fetchDaily } from '../src/lib/atlas-daily';
 import { selectDaily } from '../src/lib/atlas-vendor/daily/0.2.1/daily-view.mjs';
 import { dailyFixture, dailyHash, dailyPointer } from './atlas-daily-fixture';
+import { bundle } from './atlas-fixture';
 import type { AtlasRelease } from '../src/lib/atlas-release';
 const release = { export_id: 'a'.repeat(64), assets: { 'atlas-site.json': { sha256: 'b'.repeat(64), bytes: 1 }, 'map.json': { sha256: 'c'.repeat(64), bytes: 1 } } } as AtlasRelease;
 test('Daily selections preserve bindings, source evidence, cutoffs and exact weekly reconciliation', async () => {
@@ -209,4 +210,45 @@ test('Daily 0.2.2 uses exact version pins and requires report publication dates'
   dailyPointerSchema.parse({ ...old, daily_version: '0.2.2', schema_sha256: pins.schema, selector_sha256: pins.selector });
   data.documents[0].publication = null;
   await assert.rejects(validateDaily(data, release, data.base_manifest_sha256));
+});
+
+test('Daily 0.2.3 preserves historical identity metadata and verifies available scientific version hashes', async () => {
+  const { dailyPointerSchema } = await import('../src/lib/atlas-daily');
+  const { selectDaily } = await import('../src/lib/atlas-vendor/daily/0.2.3/daily-view.mjs');
+  const binding = { document_versions: ['weekly_a', 'weekly_b'].map(document_id => ({ document_id, raw_sha256: '1'.repeat(64), source_text_sha256: '2'.repeat(64) })), assertion_ids: ['assertion'], comparison_ids: ['comparison'], evidence_ids: ['evidence'], reason: 'Reviewed versions of the same publisher edition.', reviewed_at: '2026-10-07T08:00:00Z', reviewed_by: 'fixture' };
+  const data = { ...dailyFixture(release), daily_version: '0.2.3' as const, publication_bindings: [binding] };
+  const base = { documents: binding.document_versions.map(version => ({ ...bundle.documents[0], id: version.document_id, raw_sha256: version.raw_sha256, text_sha256: version.source_text_sha256 })), channels: [] };
+  const pins = dailyPins['0.2.3'];
+  assert.equal(dailyHash(readFileSync('src/lib/atlas-vendor/daily/0.2.3/daily.schema.json')), pins.schema);
+  assert.equal(dailyHash(readFileSync('src/lib/atlas-vendor/daily/0.2.3/daily-view.mjs')), pins.selector);
+  await validateDaily(data, release, data.base_manifest_sha256);
+  validateDailyReferences(data, base);
+  validateDailyReferences(data, { ...base, documents: base.documents.slice(0, 1) });
+  dailyPointerSchema.parse(dailyPointer(data));
+  assert.throws(() => dailyPointerSchema.parse({ ...dailyPointer(data), schema_sha256: dailyPins['0.2.2'].schema }));
+  for (const [window, sources, countries] of [
+    [['2026-10-01', '2026-10-07'], ['other-source'], []],
+    [['2026-10-01', '2026-10-07'], [], ['DE']],
+    [['2026-10-08', '2026-10-08'], [], []],
+  ] as [[string, string], string[], string[]][]) {
+    const selection = dailySelection(data, window, sources, countries, data.generated_at);
+    assert.equal(selection.documents.length, 0);
+    assert('publication_bindings' in selection);
+    assert.deepEqual(selection.publication_bindings, [binding]);
+  }
+  const earlier = selectDaily(data, '2026-10-01', '2026-10-07', 'publication', '2026-10-07T07:59:00Z');
+  assert.equal(earlier.documents.length, 0);
+  assert.deepEqual(earlier.publication_bindings, [binding]);
+  for (const field of ['raw_sha256', 'source_text_sha256'] as const) {
+    const invalid = structuredClone(data);
+    invalid.publication_bindings[0].document_versions[0][field] = 'f'.repeat(64);
+    assert.throws(() => validateDailyReferences(invalid, base), /historical publication version hash/);
+  }
+  const duplicate = structuredClone(data);
+  duplicate.publication_bindings[0].document_versions.push(binding.document_versions[0]);
+  assert.throws(() => validateDailyReferences(duplicate, base), /duplicate publication version/);
+  await assert.rejects(validateDaily({ ...data, publication_bindings: undefined }, release, data.base_manifest_sha256));
+  await assert.rejects(validateDaily({ ...data, base_source_export_id: '9'.repeat(64) }, release, data.base_manifest_sha256), /weekly source binding/);
+  data.documents[0].publication = null;
+  await assert.rejects(validateDaily(data, release, data.base_manifest_sha256), /publication/);
 });

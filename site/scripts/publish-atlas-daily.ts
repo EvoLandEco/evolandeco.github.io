@@ -16,7 +16,7 @@ const site = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const hash = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 const asset = z.strictObject({ sha256: digest, bytes: z.number().int().positive() });
-const manifestSchema = z.strictObject({ daily_version: z.enum(['0.2.1', '0.2.2']), daily_id: digest, base_source_export_id: digest,
+const manifestSchema = z.strictObject({ daily_version: z.enum(['0.2.1', '0.2.2', '0.2.3']), daily_id: digest, base_source_export_id: digest,
   files: z.strictObject({ 'daily.json': asset, 'daily.schema.json': asset, 'daily-view.mjs': asset, 'validation.json': asset }) });
 export async function prepareDailyRelease(directory: string, release: AtlasRelease, browserManifestPath: string) {
   assert(release.browser, 'Weekly browser transport is required');
