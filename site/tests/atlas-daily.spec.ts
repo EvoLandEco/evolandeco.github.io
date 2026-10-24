@@ -194,7 +194,8 @@ for (const width of [390, 1466]) test(`Daily reports retain evidence and stay ou
   await page.goto('/atlas/');
   await expect(page.locator('.atlas-daily-watch')).toContainText('12 reported cases in France');
   await expect(page.getByRole('heading', { name: 'Reporting activity', exact: true })).toBeVisible();
-  await expect(page.locator('.atlas-disease-ring')).toBeVisible();
+  await expect(page.locator('.atlas-attention-empty')).toContainText('Weekly review pending');
+  await expect(page.locator('.atlas-attention-empty')).toContainText(/1\s*–\s*7 Oct 2026/);
   if (width === 1466) {
     await page.getByRole('button', { name: 'Click to enter full screen' }).click();
     const watch = await page.locator('.atlas-watch').boundingBox(), latest = await page.locator('.atlas-latest').boundingBox();
