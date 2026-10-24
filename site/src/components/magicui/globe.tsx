@@ -3,11 +3,16 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useMemo, useId, useSta
 import createGlobe from "cobe";
 import { motion, motionValue } from "motion/react";
 import { AnimatedBeam, BeamStroke, BeamGradientStops } from "./animated-beam";
-import { drawGlobeEffects, prepareGlobeArc, globeProjection, globePoint, GLOBE_RADIUS, focusOrientation, rimIndicator, separateGlobeRoutes } from "./globe-effects";
+import { drawGlobeEffects, prepareGlobeArc, globeProjection, globePoint, GLOBE_RADIUS, focusOrientation, separateGlobeRoutes } from "./globe-effects";
 import { useTheme } from "next-themes";
 import { createGlobeMarkers } from "./globe-markers";
 import { createGlobeRoutes } from "./globe-routes";
+import { createGlobeMapProjection, drawGlobeMap, globeMapLand, globeMapProjection, globeMapTransition, mapNodePose } from "./globe-map";
+import { networkLayout, networkCurve, networkProjection, networkSurface, viewMix, type GlobeMode } from "./globe-network";
+import { drawNetworkSurface } from "./globe-network-surface";
+import { GlobeNetworkGroups, type GeographyPaint } from "./globe-network-groups";
 import { RotateCcw } from "lucide-react";
+import { createPortal } from "react-dom";
 import "./globe-navigation.css";
 
 // Decorative connections illustrate a global research network.
@@ -35,7 +40,7 @@ const connections = [
   [8, 6],
 ];
 
-export type GlobeNode = { id: string; label: string; location: [number, number] };
+export type GlobeNode = { id: string; label: string; location: [number, number]; countries?: string[] };
 export type GlobeLink = { id: string; label: string; from: [number, number]; to: [number, number]; type: string; directed?: boolean; count?: number; groupId?: string };
 export type GlobeAnchor = { x: number; y: number; target: string } | null;
 export type GlobeHover = { kind: "node" | "link"; id: string } | null;
@@ -49,6 +54,8 @@ export function Globe({
   linkStyle = "solid",
   rotating = true,
   fullscreen = false,
+  projection = "globe",
+  controls,
   onDragStart,
   nodes, links, layoutLinks, selected, focus, locate, onSelect, onLink, onHover, annotation, onAnnotationMove,
 }: {
@@ -56,6 +63,8 @@ export function Globe({
   visible: boolean;
   rotating?: boolean;
   fullscreen?: boolean;
+  projection?: GlobeMode;
+  controls?: HTMLElement | null;
   onDragStart?: () => void;
   linkStyle?: "solid" | "dashed" | "pulse";
   nodes?: GlobeNode[];
@@ -81,7 +90,18 @@ export function Globe({
   }, [geographic, layoutRoutes]);
   const routeBends = useMemo(() => routes.map(route => routeLayout.get(route.groupId ?? route.id)), [routes, routeLayout]);
   const curves = useMemo(() => routes.map((route, i) => prepareGlobeArc(route.from, route.to, geographic, routeBends[i])), [routes, geographic, routeBends]);
+  const network = useMemo(() => networkLayout(nodes?.map(node => node.location) ?? [], geographic ? routes : []), [geographic, nodes, routes]);
+  const geography = useRef<GeographyPaint>(null);
+  const [selectedContinents, setSelectedContinents] = useState<string[]>([]);
+  const networkCurves = useMemo(() => geographic ? routes.map(route => networkCurve(
+    network.positions.get(route.from.join(","))!, network.positions.get(route.to.join(","))!, network.bends.get(route.groupId ?? route.id),
+  )) : [], [geographic, routes, network]);
   const nodePoints = useMemo(() => nodes?.map(node => globePoint(node.location).map(v => v * GLOBE_RADIUS) as [number, number, number]), [nodes]);
+  const flatNodes = useMemo(() => nodePoints?.map(globeMapProjection(0, 0, 1)), [nodePoints]);
+  const networkNodes = useMemo(() => nodes?.map(node => {
+    const key = node.location.join(","), isolated = network.isolated.has(key);
+    return { ...networkSurface(network.positions.get(key)!), size: isolated ? .62 : 1.08, rim: 0, opacity: isolated ? .5 : 1 };
+  }), [nodes, network]);
   const routePaths = useRef<(SVGPathElement | null)[]>([]);
   const routeHalos = useRef<(SVGPathElement | null)[]>([]);
   const routeHits = useRef<(SVGPathElement | null)[]>([]);
@@ -92,15 +112,28 @@ export function Globe({
   const routeCounts = useRef<(SVGGElement | null)[]>([]);
   const routeGroups = useRef<(SVGGElement | null)[]>([]);
   const routeGeometry = useMemo(() => routes.map(() => ({
-    line: new Float32Array(384), trail: new Float32Array(384),
+    line: new Float32Array(768), trail: new Float32Array(768),
     arrow: new Float32Array(8), gradient: new Float32Array(4),
   })), [routes]);
   const pins = useRef<(SVGGElement | null)[]>([]);
   const markers = useRef<(SVGGElement | null)[]>([]);
   const rimArrows = useRef<(SVGGElement | null)[]>([]);
   const haloId = useId();
-  const [tilted, setTilted] = useState(Math.abs(lastTilt - NORMAL_TILT) > .02);
+  const tiltReset = useRef<HTMLButtonElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
+  const mapCanvas = useRef<HTMLCanvasElement>(null);
+  const networkCanvas = useRef<HTMLCanvasElement>(null);
+  const [land, setLand] = useState<[number, number, number][]>([]);
+  const mapProjection = useMemo(() => createGlobeMapProjection([...land, ...curves.flatMap(curve => curve.points)]), [land, curves]);
+  const mapMix = useRef(0);
+  const networkMix = useRef(0);
+  const morph = useRef(0);
+  useEffect(() => {
+    if (!geographic) return;
+    let mounted = true;
+    void globeMapLand().then(points => { if (mounted) setLand(points); });
+    return () => { mounted = false; };
+  }, [geographic]);
   const markerCanvas = useRef<HTMLCanvasElement>(null);
   const routeCanvas = useRef<HTMLCanvasElement>(null);
   const markerLayer = useRef<HTMLDivElement>(null);
@@ -144,12 +177,13 @@ export function Globe({
   const drag = useRef<{ x: number; y: number; angle: number; tilt: number; width: number; pointerId: number; target: Element } | null>(null);
   const dragFrame = useRef(0);
   useEffect(() => () => cancelAnimationFrame(dragFrame.current), []);
-  function highlight(item: GlobeHover) { if (drag.current) return; hover.current = item; onHover?.(item); paint.current(); }
+  const highlight = useCallback((item: GlobeHover) => {
+    if (drag.current || hover.current?.kind === item?.kind && hover.current?.id === item?.id) return;
+    hover.current = item; onHover?.(item); paint.current();
+  }, [onHover]);
   const renderCamera = useCallback(() => {
     lastAngle = angle.current;
     lastTilt = tilt.current;
-    renderer.current?.update({ phi: angle.current, theta: tilt.current });
-    setTilted(Math.abs(tilt.current - NORMAL_TILT) > .02);
     if (canvas.current) {
       canvas.current.dataset.angle = angle.current.toFixed(5);
       canvas.current.dataset.tilt = tilt.current.toFixed(5);
@@ -172,6 +206,7 @@ export function Globe({
     flight.current = requestAnimationFrame(move);
   }, [visible, renderCamera]);
   const releaseDrag = useCallback(() => {
+    cancelAnimationFrame(dragFrame.current); dragFrame.current = 0;
     const gesture = drag.current;
     drag.current = null;
     if (gesture?.target.hasPointerCapture(gesture.pointerId)) gesture.target.releasePointerCapture(gesture.pointerId);
@@ -219,6 +254,10 @@ export function Globe({
     function resize() {
       markerRenderer.current?.resize(width, height);
       routeRenderer.current?.resize(width, height);
+      const surfaceWidth = Math.round(width * Math.min(devicePixelRatio, 1.5));
+      for (const surface of [mapCanvas.current, networkCanvas.current]) {
+        if (surface && surface.width !== surfaceWidth) surface.width = surface.height = surfaceWidth;
+      }
       paint.current();
     }
     function resolutionChanged() {
@@ -234,7 +273,7 @@ export function Globe({
       const style = getComputedStyle(el!);
       width = parseFloat(style.width); height = parseFloat(style.height);
       if (batch) {
-        batch.resize(width, height);
+        resize();
         configureMarkers.current();
       }
       paint.current();
@@ -336,8 +375,8 @@ export function Globe({
       if (effects.current) {
         effects.current.width = Math.round(entry.contentRect.width * dpr);
         effects.current.height = effects.current.width;
-        paint.current();
       }
+      paint.current();
     });
     observer.observe(el);
     return () => {
@@ -350,10 +389,21 @@ export function Globe({
     if (!visible || !canvas.current) return;
     const el = canvas.current;
     const dark = resolvedTheme === "dark";
+    let projectedPhi = NaN, projectedTheta = NaN, projectedMap = NaN, projectedNetwork = NaN;
+    let projects: ReturnType<typeof globeProjection>[] = [];
+    const projections = () => {
+      if (angle.current !== projectedPhi || tilt.current !== projectedTheta || mapMix.current !== projectedMap || networkMix.current !== projectedNetwork) {
+        const geographicProject = mapProjection(angle.current, tilt.current, mapMix.current);
+        projects = curves.map((_, i) => nodes ? networkProjection(geographicProject, networkCurves[i], networkMix.current) : geographicProject);
+        projectedPhi = angle.current; projectedTheta = tilt.current; projectedMap = mapMix.current; projectedNetwork = networkMix.current;
+      }
+      return projects;
+    };
     paintArrows.current = () => {
-      const project = globeProjection(angle.current, tilt.current);
+      const projects = projections();
       const batch = routeRenderer.current;
       if (nodes) routes.forEach(({ directed, type }, i) => {
+        const project = projects[i];
         if (!directed && type !== "movement") return;
         const length = type === "movement" ? .45 : .22;
         const cycle = (clock.current / (type === "movement" ? 5000 : 5400) + .35 + i * .19) % 1;
@@ -374,13 +424,59 @@ export function Globe({
         if (gradient && trail.path) for (const coordinate of ["x1", "y1", "x2", "y2"] as const) gradient.setAttribute(coordinate, String(trail[type === "movement" ? ({ x1: "x2", y1: "y2", x2: "x1", y2: "y1" } as const)[coordinate] : coordinate]));
       });
     };
-    let paintedPhi = NaN, paintedTheta = NaN, paintedMarkers = markerRenderer.current, paintedRoutes = routeRenderer.current;
+    let paintedPhi = NaN, paintedTheta = NaN, paintedMix = NaN, paintedNetwork = NaN, paintedMarkers = markerRenderer.current, paintedRoutes = routeRenderer.current;
+    let globePhi = NaN, globeTheta = NaN;
+    let mapPhi = NaN, mapTheta = NaN, mapProgress = NaN, mapWidth = NaN, networkWidth = NaN;
+    let poses: (NonNullable<typeof networkNodes>[number] | null)[] = [];
     paint.current = (drawOverlays = true) => {
       const batch = markerRenderer.current;
       const routeBatch = routeRenderer.current;
-      const project = globeProjection(angle.current, tilt.current);
-      if (angle.current !== paintedPhi || tilt.current !== paintedTheta || batch !== paintedMarkers || routeBatch !== paintedRoutes) {
+      const mix = mapMix.current, net = networkMix.current;
+      if (batch) nodes?.forEach((_, i) => {
+        const pin = pins.current[i];
+        batch.active(i, !!pin?.matches(':hover, :focus-visible, [data-selected="true"]'), !!pin?.matches(":focus-visible"));
+      });
+      tiltReset.current?.setAttribute("aria-disabled", String(!visible || (projection === "network"
+        ? net !== 1 || !selectedContinents.length
+        : projection !== "globe" || mix !== 0 || net !== 0 || Math.abs(tilt.current - NORMAL_TILT) <= .02)));
+      const transition = globeMapTransition(angle.current, tilt.current, mix);
+      const sphere = globeProjection(transition.phi, transition.theta);
+      const projects = projections();
+      const nodePose = (index: number) => {
+        if (net === 1) return networkNodes![index];
+        const start = mapNodePose(sphere(nodePoints![index]), flatNodes![index], transition.unfold);
+        if (!net) return start ? { ...start, size: 1 } : null;
+        const end = networkNodes![index];
+        return { x: (start?.x ?? 0) * (1 - net) + end.x * net, y: (start?.y ?? 0) * (1 - net) + end.y * net,
+          rotation: (start?.rotation ?? 0) * (1 - net) + end.rotation * net, scale: (start?.scale ?? 1) * (1 - net) + end.scale * net,
+          size: 1 + (end.size - 1) * net,
+          rim: (start?.rim ?? 0) * (1 - net), opacity: (start?.opacity ?? 0) * (1 - net) + end.opacity * net };
+      };
+      const globeOpacity = (1 - transition.surface) * (1 - net);
+      el.style.opacity = String(globeOpacity);
+      if (globeOpacity > 0 && (transition.phi !== globePhi || transition.theta !== globeTheta)) {
+        renderer.current?.update({ phi: transition.phi, theta: transition.theta });
+        globePhi = transition.phi; globeTheta = transition.theta;
+      }
+      el.dataset.mapMix = mix === 0 || mix === 1 ? mix.toFixed(4) : String(mix);
+      el.dataset.networkMix = net === 0 || net === 1 ? net.toFixed(4) : String(net);
+      if (mapCanvas.current) mapCanvas.current.style.opacity = String(1 - net);
+      if (mapCanvas.current && net < 1 && (mapWidth !== mapCanvas.current.width || mapPhi !== transition.phi || mapTheta !== transition.theta || mapProgress !== mix)) {
+        drawGlobeMap(mapCanvas.current, land, angle.current, tilt.current, mix, dark, mapProjection);
+        mapWidth = mapCanvas.current.width; mapPhi = transition.phi; mapTheta = transition.theta; mapProgress = mix;
+      }
+      if (networkCanvas.current) {
+        networkCanvas.current.style.opacity = String(net);
+        if (net > 0 && networkWidth !== networkCanvas.current.width) {
+          drawNetworkSurface(networkCanvas.current, network.groups, dark);
+          networkWidth = networkCanvas.current.width;
+        }
+      }
+      if (angle.current !== paintedPhi || tilt.current !== paintedTheta || mix !== paintedMix || net !== paintedNetwork || batch !== paintedMarkers || routeBatch !== paintedRoutes) {
+      poses = nodes?.map((_, i) => nodePose(i)) ?? [];
+      geography.current?.paint(poses, net);
       routes.forEach((_, i) => {
+        const project = projects[i];
         const path = curves[i].path(project);
         if (nodes) {
           if (routeHits.current[i]?.getAttribute("d") !== path) routeHits.current[i]?.setAttribute("d", path);
@@ -403,39 +499,39 @@ export function Globe({
         }
       });
       nodes?.forEach((_, i) => {
-        const position = project(nodePoints![i]);
-        const rim = position.visible ? null : rimIndicator(position);
-        const anchor = position.visible ? position : rim;
+        const anchor = poses[i];
         const pin = pins.current[i];
         if (pin) {
           if (anchor) pin.setAttribute("transform", `translate(${500 + anchor.x * 480},${500 - anchor.y * 480})`);
-          if (pin.dataset.occluded !== String(!position.visible)) pin.dataset.occluded = String(!position.visible);
+          const occluded = anchor?.rim === 1;
+          if (pin.dataset.occluded !== String(occluded)) pin.dataset.occluded = String(occluded);
           const visibility = anchor ? "visible" : "hidden";
           if (pin.style.visibility !== visibility) {
             pin.style.visibility = visibility;
             pin.setAttribute("tabindex", anchor ? "0" : "-1");
             pin.setAttribute("aria-hidden", String(!anchor));
           }
-          if (!batch && position.visible) markers.current[i]?.setAttribute("transform", `rotate(${Math.atan2(-position.y, position.x) * 180 / Math.PI}) scale(${Math.abs(position.z) / GLOBE_RADIUS},1)`);
-          if (!batch && rim && rimArrows.current[i]) {
-            rimArrows.current[i]!.setAttribute("transform", `rotate(${rim.angle})`);
-            rimArrows.current[i]!.style.opacity = String(rim.opacity);
+          if (!batch && anchor) {
+            const marker = markers.current[i], rim = rimArrows.current[i];
+            if (marker) {
+              marker.setAttribute("transform", `rotate(${anchor.rotation * 180 / Math.PI}) scale(${anchor.scale * anchor.size},${anchor.size})`);
+              marker.style.opacity = String((1 - anchor.rim) * anchor.opacity);
+            }
+            if (rim) {
+              rim.setAttribute("transform", `rotate(${anchor.rotation * 180 / Math.PI})`);
+              rim.style.display = anchor.rim > 0 ? "block" : "none";
+              rim.style.opacity = String(anchor.rim * anchor.opacity);
+            }
           }
         }
         batch?.pose(i, anchor ? 500 + anchor.x * 480 : 0, anchor ? 500 - anchor.y * 480 : 0,
-          position.visible ? Math.atan2(-position.y, position.x) : (rim?.angle ?? 0) * Math.PI / 180,
-          position.visible ? Math.abs(position.z) / GLOBE_RADIUS : 1,
-          anchor ? Number(!position.visible) : -1, rim?.opacity ?? 1);
+          anchor?.rotation ?? 0, anchor?.scale ?? 1, anchor?.rim ?? -1, anchor?.opacity ?? 0, anchor?.size ?? 1);
       });
-      paintedPhi = angle.current; paintedTheta = tilt.current;
+      paintedPhi = angle.current; paintedTheta = tilt.current; paintedMix = mix; paintedNetwork = net;
       paintedMarkers = batch;
       paintedRoutes = routeBatch;
       }
       if (batch) {
-        nodes?.forEach((_, i) => {
-          const pin = pins.current[i];
-          batch.active(i, !!pin?.matches(':hover, :focus-visible, [data-selected="true"]'), !!pin?.matches(":focus-visible"));
-        });
         batch.upload();
         if (drawOverlays) batch.draw();
       }
@@ -447,13 +543,12 @@ export function Globe({
         if (target?.kind === "node") {
           const index = nodes?.findIndex(n => n.id === target.id) ?? -1;
           if (index >= 0) {
-            const point = project(nodePoints![index]);
-            anchor = point.visible ? point : rimIndicator(point);
+            anchor = poses[index];
           }
         } else if (target?.kind === "link") {
           const index = routes.findIndex(r => r.id === target.id);
           const link = routes[index];
-          if (link) anchor = curves[index].anchor(project);
+          if (link) anchor = curves[index].anchor(projects[index]);
         }
         onMove(anchor ? { x: 500 + anchor.x * 480, y: 500 - anchor.y * 480, target: `${target?.kind}:${target?.id}` } : null);
       }
@@ -475,7 +570,23 @@ export function Globe({
       paint.current = () => {};
       paintArrows.current = () => {};
     };
-  }, [visible, resolvedTheme, beamPaths, arrows, trails, routes, nodes, curves, nodePoints, routeGeometry, drawRoutes]);
+  }, [visible, resolvedTheme, beamPaths, arrows, trails, routes, nodes, curves, nodePoints, flatNodes, networkNodes, routeGeometry, drawRoutes, land, network, networkCurves, mapProjection, projection, selectedContinents.length]);
+  useLayoutEffect(() => {
+    const from = { map: mapMix.current, network: networkMix.current }, to = viewMix(from, projection, 1);
+    if (from.map === to.map && from.network === to.network) { paint.current(); return; }
+    releaseDrag();
+    cancelAnimationFrame(flight.current); flight.current = 0;
+    const started = performance.now(), duration = 1100 * Math.max(Math.abs(to.map - from.map), Math.abs(to.network - from.network));
+    const update = (time: number) => {
+      const progress = !playing || !visible || !duration ? 1 : Math.min(1, (time - started) / duration);
+      const next = viewMix(from, projection, progress);
+      mapMix.current = next.map; networkMix.current = next.network;
+      paint.current();
+      morph.current = progress < 1 ? requestAnimationFrame(update) : 0;
+    };
+    if (projection !== "map" || land.length) update(started);
+    return () => { cancelAnimationFrame(morph.current); morph.current = 0; };
+  }, [projection, playing, visible, land, releaseDrag]);
   useEffect(() => {
     if (!locate || !visible || document.hidden) return;
     const elapsed = performance.now() - locate.startedAt;
@@ -488,7 +599,7 @@ export function Globe({
     });
     return () => animations.forEach(animation => animation.cancel());
   }, [locate, visible, playing]);
-  useLayoutEffect(() => { paint.current(); }, [selected, playing]);
+  useLayoutEffect(() => { paint.current(); }, [selected, playing, fullscreen, controls]);
   useEffect(() => {
     if (!visible) return;
     const continuous = playing && (!nodes || nodes.length > 0 || rotating || routes.some(route => route.directed || route.type === "movement"));
@@ -499,12 +610,17 @@ export function Globe({
       if (continuous || transitioning) frame = requestAnimationFrame(animate);
     };
     const animate = (t: number) => {
-      if (!playing || (last && t - last < 1000 / 30)) { draw(t); return; }
-      last = t - (t - last) % (1000 / 30);
+      if (morph.current) { rendered = t; frame = requestAnimationFrame(animate); return; }
+      if (!playing) { draw(t); return; }
+      if (!nodes) {
+        if (last && t - last < 1000 / 30) { draw(t); return; }
+        last = t - (t - last) % (1000 / 30);
+      }
       const elapsed = rendered ? t - rendered : 0;
       rendered = t;
-      if (flight.current || drag.current) { draw(t); return; }
-      const turning = !hover.current && rotatingRef.current;
+      if (flight.current) { frame = requestAnimationFrame(animate); return; }
+      if (drag.current) { draw(t); return; }
+      const turning = projection === "globe" && !hover.current && rotatingRef.current;
       if (turning) angle.current += elapsed / 1000 * 0.08;
       clock.current += elapsed;
       lastAngle = angle.current;
@@ -512,21 +628,20 @@ export function Globe({
       if (turning || !nodes) paint.current(false);
       else paintArrows.current();
       draw(t);
-      if (turning) renderer.current?.update({ phi: angle.current, theta: tilt.current });
       if (turning && canvas.current) canvas.current.dataset.angle = angle.current.toFixed(5);
     };
     frame = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(frame);
-  }, [playing, visible, nodes, rotating, routes, activeRoute, drawRoutes]);
+  }, [playing, visible, nodes, rotating, routes, activeRoute, drawRoutes, projection]);
   useEffect(() => {
-    if (!visible || (!focus && !overview.current)) return;
+    if (!visible || projection !== "globe" || morph.current || (!focus && !overview.current)) return;
     const from = { phi: angle.current, theta: tilt.current };
     if (focus && !overview.current) overview.current = from;
     const target = focus ? focusOrientation(focus, from.phi) : overview.current!;
     flyTo(target, 650);
     if (!focus) overview.current = null;
     return () => { cancelAnimationFrame(flight.current); flight.current = 0; };
-  }, [focus, visible, flyTo]);
+  }, [focus, visible, flyTo, projection]);
   function paintDrag() {
     dragFrame.current = 0;
     renderCamera();
@@ -534,16 +649,16 @@ export function Globe({
   function finishDrag(event: PointerEvent<HTMLCanvasElement | HTMLDivElement>) {
     const gesture = drag.current;
     if (!gesture || gesture.pointerId !== event.pointerId) return;
+    const pending = dragFrame.current;
     releaseDrag();
-    if (dragFrame.current) {
-      cancelAnimationFrame(dragFrame.current);
-      paintDrag();
-    }
+    if (pending) paintDrag();
   }
   function handleClickCapture(event: MouseEvent<HTMLCanvasElement | HTMLDivElement>) {
     if (event.detail && moved.current) { event.preventDefault(); event.stopPropagation(); }
   }
   function handlePointerDown(event: PointerEvent<HTMLCanvasElement | HTMLDivElement>) {
+    moved.current = false;
+    if (projection !== "globe" || morph.current) return;
     if (!event.isPrimary || event.button !== 0 || drag.current || !canvas.current || !(event.target instanceof Element)) return;
     cancelAnimationFrame(flight.current); flight.current = 0;
     highlight(null);
@@ -565,10 +680,57 @@ export function Globe({
     if (fullscreen) tilt.current = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, gesture.tilt + (event.clientY - gesture.y) / gesture.width * 3));
     if (!dragFrame.current) dragFrame.current = requestAnimationFrame(paintDrag);
   }
+  // Pointer previews wait for camera centering; clicks and keyboard focus remain available.
+  const routeTargets = useMemo(() => routes.map((route, i) => <path key={route.groupId ?? route.id} ref={el => { routeHits.current[i] = el; }} fill="none" stroke="transparent" strokeWidth={18} className="atlas-link-target"
+          role="button" tabIndex={0} aria-label={route.label} aria-description={route.count && route.count > 1 ? `${route.count} links between these locations` : undefined} onPointerMove={() => { if (!flight.current) highlight({ kind: "link", id: route.id }); }} onPointerLeave={() => highlight(null)} onFocus={() => highlight({ kind: "link", id: route.id })} onBlur={() => highlight(null)} onClick={() => { highlight(null); onLink?.(route.id); }}
+          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); highlight(null); onLink?.(route.id); } }}></path>), [routes, highlight, onLink]);
+  const nodeElements = useMemo(() => nodes?.map((node, i) => ({ node, i })).sort((a, b) => Number(a.node.id === selected) - Number(b.node.id === selected)).map(({ node, i }) => <g key={node.id} ref={el => { pins.current[i] = el; }} className="atlas-globe-pin"
+          data-selected={selected === node.id} data-network-isolated={network.isolated.has(node.location.join(","))} role="button" tabIndex={0} aria-label={node.label} onPointerMove={() => { if (!flight.current) highlight({ kind: "node", id: node.id }); }} onPointerLeave={() => highlight(null)} onFocus={() => highlight({ kind: "node", id: node.id })} onBlur={() => highlight(null)} onClick={() => { highlight(null); onSelect?.(node.id); }}
+          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); highlight(null); onSelect?.(node.id); } }}>
+          <g ref={el => { markers.current[i] = el; }} className="atlas-event-marker" aria-hidden="true">
+            <circle className="atlas-event-halo" r="18" fill={`url(#${haloId})`} />
+            <circle className="atlas-event-pulse" r="10" style={{ animationDelay: `${-i * .37}s` }} />
+            <circle className="atlas-event-ring" r="7" />
+            <circle className="atlas-event-core" r="3.5" />
+            <circle className="atlas-event-spark" r="1.3" />
+          </g>
+          <g ref={el => { rimArrows.current[i] = el; }} className="atlas-rim-arrow" aria-hidden="true">
+            <path className="atlas-rim-glow" d="M-3 -5L2 0L-3 5" />
+            <path className="atlas-rim-chevron" d="M-3 -5L2 0L-3 5" />
+          </g>
+          {locate?.ids.includes(node.id) && <g className="atlas-locate-beacon" aria-hidden="true">
+            <circle r="30" fill={`url(#${haloId}-locate)`} />
+            <circle r="13" fill="none" stroke="var(--atlas-locate)" strokeWidth="2.5" />
+            <circle r="5" fill="var(--atlas-locate)" />
+            <circle r="1.5" fill="var(--background)" />
+          </g>}
+          <circle className="atlas-globe-hit" r="11" />
+        </g>), [nodes, selected, network, highlight, onSelect, haloId, locate]);
+  const routeElements = useMemo(() => routes.map((route, i) => <g key={`visual:${route.groupId ?? route.id}`} ref={el => { routeGroups.current[i] = el; }} className="atlas-route" data-kind={route.type} data-active={activeRoute === route.id} aria-hidden="true">
+          <path ref={el => { routeHalos.current[i] = el; }} className="atlas-route-halo" />
+          <path ref={el => { routePaths.current[i] = el; }} className="atlas-route-line" />
+          {route.type === "movement" ? <g className="atlas-travel-beam globe-beam-green">
+            <defs><linearGradient id={`${haloId}-trail-${i}`} ref={el => { trailGradients.current[i] = el; }} gradientUnits="userSpaceOnUse">
+              <BeamGradientStops start="#58ac8b" end="var(--atlas-travel-head)" projected />
+            </linearGradient></defs>
+            <BeamStroke path={trails[i]} gradientId={`${haloId}-trail-${i}`} width={2} glow />
+          </g> : route.directed && <><defs><linearGradient id={`${haloId}-trail-${i}`} ref={el => { trailGradients.current[i] = el; }} gradientUnits="userSpaceOnUse">
+            <stop offset="0" stopColor="var(--atlas-beam)" stopOpacity="0" />
+            <stop offset=".2" stopColor="var(--atlas-beam)" stopOpacity=".06" />
+            <stop offset=".5" stopColor="var(--atlas-beam)" stopOpacity=".3" />
+            <stop offset=".8" stopColor="var(--atlas-beam)" stopOpacity=".7" />
+            <stop offset="1" stopColor="var(--atlas-beam)" stopOpacity="1" />
+          </linearGradient></defs><motion.path d={trails[i]} className="atlas-route-trail-halo" style={{ stroke: `url(#${haloId}-trail-${i})` }} /><motion.path d={trails[i]} className="atlas-route-beam" style={{ stroke: `url(#${haloId}-trail-${i})` }} /><motion.path d={arrows[i]} className="atlas-route-arrow-halo" /><motion.path d={arrows[i]} className="atlas-route-arrow" /></>}
+          {route.count && route.count > 1 && <g ref={el => { routeCounts.current[i] = el; }} className="atlas-route-count"><circle r="13" /><text textAnchor="middle" dy=".35em">{route.count}</text></g>}
+        </g>), [routes, activeRoute, haloId, trails, arrows]);
   return (
     <>
-      <div className="globe-camera-viewport"><div className="globe-camera-scene">
+      <div className="globe-camera-viewport"><div className="globe-camera-scene" data-projection={projection}>
       <canvas ref={canvas} aria-hidden="true" onClickCapture={handleClickCapture} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={finishDrag} onLostPointerCapture={finishDrag} onPointerCancel={finishDrag} />
+      {geographic && <><canvas ref={mapCanvas} className="globe-map-surface" aria-hidden="true" /><canvas ref={networkCanvas} className="globe-network-surface" aria-hidden="true" /></>}
+      {nodes && <GlobeNetworkGroups ref={geography} nodes={nodes} componentOf={network.componentOf} isolated={network.isolated} enabled={fullscreen && projection === "network"}
+        regions={selectedContinents} onRegionsChange={setSelectedContinents}
+        activeCountries={annotation?.kind === "node" ? nodes.find(node => node.id === annotation.id)?.countries ?? [] : []} />}
       {!nodes && beamPaths.map((path, i) => linkStyle === "dashed" ? (
         <svg key={i} aria-hidden="true" viewBox="0 0 1000 1000"
           className="globe-dashed-link" data-playing={playing && visible}>
@@ -593,62 +755,25 @@ export function Globe({
       ))}
       {nodes && <div ref={markerLayer} className="atlas-globe-pins" role="group" onClickCapture={handleClickCapture} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={finishDrag} onLostPointerCapture={finishDrag} onPointerCancel={finishDrag} data-playing={playing && visible} aria-label="Reporting locations and geographic links">
         <svg viewBox="0 0 1000 1000">
-        {routes.map((route, i) => <path key={route.groupId ?? route.id} ref={el => { routeHits.current[i] = el; }} fill="none" stroke="transparent" strokeWidth={18} className="atlas-link-target"
-          role="button" tabIndex={0} aria-label={route.label} aria-description={route.count && route.count > 1 ? `${route.count} links between these locations` : undefined} onPointerEnter={() => highlight({ kind: "link", id: route.id })} onPointerLeave={() => highlight(null)} onFocus={() => highlight({ kind: "link", id: route.id })} onBlur={() => highlight(null)} onClick={() => { highlight(null); onLink?.(route.id); }}
-          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); highlight(null); onLink?.(route.id); } }}></path>)}
+        {routeTargets}
         </svg>
         <canvas ref={markerCanvas} className="atlas-marker-canvas" aria-hidden="true" />
         <svg viewBox="0 0 1000 1000">
         <defs><radialGradient id={haloId}><stop offset="0" stopColor="var(--atlas-marker-halo)" stopOpacity=".45" /><stop offset="1" stopColor="var(--atlas-marker-halo)" stopOpacity="0" /></radialGradient><radialGradient id={`${haloId}-locate`}><stop offset="0" stopColor="var(--atlas-locate)" stopOpacity=".8" /><stop offset="1" stopColor="var(--atlas-locate)" stopOpacity="0" /></radialGradient></defs>
-        {nodes.map((node, i) => ({ node, i })).sort((a, b) => Number(a.node.id === selected) - Number(b.node.id === selected)).map(({ node, i }) => <g key={node.id} ref={el => { pins.current[i] = el; }} className="atlas-globe-pin"
-          data-selected={selected === node.id} role="button" tabIndex={0} aria-label={node.label} onPointerEnter={() => highlight({ kind: "node", id: node.id })} onPointerLeave={() => highlight(null)} onFocus={() => highlight({ kind: "node", id: node.id })} onBlur={() => highlight(null)} onClick={() => { highlight(null); onSelect?.(node.id); }}
-          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); highlight(null); onSelect?.(node.id); } }}>
-          <g ref={el => { markers.current[i] = el; }} className="atlas-event-marker" aria-hidden="true">
-            <circle className="atlas-event-halo" r="18" fill={`url(#${haloId})`} />
-            <circle className="atlas-event-pulse" r="10" style={{ animationDelay: `${-i * .37}s` }} />
-            <circle className="atlas-event-ring" r="7" />
-            <circle className="atlas-event-core" r="3.5" />
-            <circle className="atlas-event-spark" r="1.3" />
-          </g>
-          <g ref={el => { rimArrows.current[i] = el; }} className="atlas-rim-arrow" aria-hidden="true">
-            <path className="atlas-rim-glow" d="M-3 -5L2 0L-3 5" />
-            <path className="atlas-rim-chevron" d="M-3 -5L2 0L-3 5" />
-          </g>
-          {locate?.ids.includes(node.id) && <g className="atlas-locate-beacon" aria-hidden="true">
-            <circle r="30" fill={`url(#${haloId}-locate)`} />
-            <circle r="13" fill="none" stroke="var(--atlas-locate)" strokeWidth="2.5" />
-            <circle r="5" fill="var(--atlas-locate)" />
-            <circle r="1.5" fill="var(--background)" />
-          </g>}
-          <circle className="atlas-globe-hit" r="11" />
-        </g>)}
-        {routes.map((route, i) => <g key={`visual:${route.groupId ?? route.id}`} ref={el => { routeGroups.current[i] = el; }} className="atlas-route" data-kind={route.type} data-active={annotation?.kind === "link" && annotation.id === route.id} aria-hidden="true">
-          <path ref={el => { routeHalos.current[i] = el; }} className="atlas-route-halo" />
-          <path ref={el => { routePaths.current[i] = el; }} className="atlas-route-line" />
-          {route.type === "movement" ? <g className="atlas-travel-beam globe-beam-green">
-            <defs><linearGradient id={`${haloId}-trail-${i}`} ref={el => { trailGradients.current[i] = el; }} gradientUnits="userSpaceOnUse">
-              <BeamGradientStops start="#58ac8b" end="var(--atlas-travel-head)" projected />
-            </linearGradient></defs>
-            <BeamStroke path={trails[i]} gradientId={`${haloId}-trail-${i}`} width={2} glow />
-          </g> : route.directed && <><defs><linearGradient id={`${haloId}-trail-${i}`} ref={el => { trailGradients.current[i] = el; }} gradientUnits="userSpaceOnUse">
-            <stop offset="0" stopColor="var(--atlas-beam)" stopOpacity="0" />
-            <stop offset=".2" stopColor="var(--atlas-beam)" stopOpacity=".06" />
-            <stop offset=".5" stopColor="var(--atlas-beam)" stopOpacity=".3" />
-            <stop offset=".8" stopColor="var(--atlas-beam)" stopOpacity=".7" />
-            <stop offset="1" stopColor="var(--atlas-beam)" stopOpacity="1" />
-          </linearGradient></defs><motion.path d={trails[i]} className="atlas-route-trail-halo" style={{ stroke: `url(#${haloId}-trail-${i})` }} /><motion.path d={trails[i]} className="atlas-route-beam" style={{ stroke: `url(#${haloId}-trail-${i})` }} /><motion.path d={arrows[i]} className="atlas-route-arrow-halo" /><motion.path d={arrows[i]} className="atlas-route-arrow" /></>}
-          {route.count && route.count > 1 && <g ref={el => { routeCounts.current[i] = el; }} className="atlas-route-count"><circle r="13" /><text textAnchor="middle" dy=".35em">{route.count}</text></g>}
-        </g>)}
+        {nodeElements}
+        {routeElements}
         </svg>
         <canvas ref={routeCanvas} className="atlas-route-canvas" aria-hidden="true" />
       </div>}
       {!nodes && <canvas ref={effects} className="globe-effects" aria-hidden="true" />}
       </div></div>
-      {fullscreen && visible && geographic && tilted && <button className="globe-tilt-reset" aria-label="Reset globe tilt" onClick={event => {
+      {fullscreen && geographic && controls && createPortal(<button ref={tiltReset} className="atlas-tilt-reset" aria-label={projection === "network" ? "Clear continent selection" : "Reset globe tilt"} title={projection === "network" ? "Clear continent selection" : "Reset globe tilt"} aria-disabled="true" onClick={() => {
+        if (!visible || morph.current) return;
+        if (projection === "network") { setSelectedContinents([]); return; }
+        if (projection !== "globe" || Math.abs(tilt.current - NORMAL_TILT) <= .02) return;
         if (overview.current) overview.current.theta = NORMAL_TILT;
         flyTo({ phi: angle.current, theta: NORMAL_TILT });
-        if (event.detail === 0) event.currentTarget.closest(".atlas-page")?.querySelector<HTMLButtonElement>(".atlas-fullscreen-exit")?.focus({ preventScroll: true });
-      }}><RotateCcw aria-hidden />Reset tilt</button>}
+      }}><RotateCcw size={15} aria-hidden /></button>, controls)}
     </>
   );
 }

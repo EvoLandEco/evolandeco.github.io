@@ -27,7 +27,7 @@ function revealRisk(root: HTMLElement | null, id: string, behavior: ScrollBehavi
   card.scrollIntoView({ block: "start", behavior });
 }
 
-export const AtlasAnalysis = memo(function AtlasAnalysis({ experiment, rows, seriesId, onSeries, onReport, footerTarget, initialRiskRecord, onOneHealth, view, onView, spatial, relationships, connectionTools, spatialCount, relationshipCount }: Props & { view: AnalysisView; onView: (view: AnalysisView) => void; spatial: ReactNode; relationships: ReactNode; connectionTools: ReactNode; spatialCount: number; relationshipCount: number; initialRiskRecord: string; onOneHealth: (id: string) => void; footerTarget: HTMLElement | null; seriesId: string; onSeries: (id: string) => void }) {
+export const AtlasAnalysis = memo(function AtlasAnalysis({ experiment, rows, recordIds, seriesId, onSeries, onReport, footerTarget, initialRiskRecord, onOneHealth, view, onView, spatial, relationships, connectionTools, spatialCount, relationshipCount }: Props & { recordIds: Set<string>; view: AnalysisView; onView: (view: AnalysisView) => void; spatial: ReactNode; relationships: ReactNode; connectionTools: ReactNode; spatialCount: number; relationshipCount: number; initialRiskRecord: string; onOneHealth: (id: string) => void; footerTarget: HTMLElement | null; seriesId: string; onSeries: (id: string) => void }) {
   const [riskFilters, setRiskFilters] = useAtlasPanelState<string[]>("analysis.riskFilters", []);
   const [signalFilters, setSignalFilters] = useAtlasPanelState<string[]>("analysis.signalFilters", []);
   const [riskId, setRiskId] = useAtlasPanelState("analysis.risk", experiment.data?.risk_profiles.find(profile => profile.record_id === initialRiskRecord)?.id ?? "");
@@ -39,7 +39,7 @@ export const AtlasAnalysis = memo(function AtlasAnalysis({ experiment, rows, ser
     active?.transition.skipTransition(); active?.clear();
   }, []);
   const content = useRef<HTMLDivElement>(null);
-  const observations = useObservationSeries(rows);
+  const observations = useObservationSeries(recordIds);
   useAtlasContentMotion(content, view);
   const data = useMemo(() => {
     if (!experiment.data) return;

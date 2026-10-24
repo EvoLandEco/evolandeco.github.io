@@ -79,6 +79,127 @@ async function reportingState(page: Page) {
   }));
 }
 
+for (const kind of ["link", "node"] as const) test(`Selecting a ${kind} keeps its card pinned throughout the camera flight`, async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  const errors = await openAtlas(page);
+  const point = await overlayPoint(page, kind === "link" ? ".atlas-link-target" : ".atlas-globe-pin");
+  await page.mouse.move(point.x, point.y);
+  const card = page.locator(".atlas-callout-card");
+  await expect(card).toBeVisible();
+  const title = await card.locator(".atlas-callout-title").textContent();
+  const before = await pose(page);
+  await page.mouse.click(point.x, point.y);
+  await expect(card).toHaveAttribute("data-pinned", "true");
+  const samples = await page.evaluate(() => new Promise<{ title: string | null; pinned: string | undefined; visible: string; same: boolean; x: number; y: number }[]>(resolve => {
+    const card = document.querySelector<HTMLElement>(".atlas-callout-card")!;
+    const samples: { title: string | null; pinned: string | undefined; visible: string; same: boolean; x: number; y: number }[] = [];
+    const start = performance.now();
+    const sample = (time: number) => {
+      const current = document.querySelector<HTMLElement>(".atlas-callout-card")!;
+      const box = current.getBoundingClientRect();
+      samples.push({ title: current.querySelector(".atlas-callout-title")!.textContent, pinned: current.dataset.pinned,
+        visible: getComputedStyle(current).visibility, same: current === card, x: box.x, y: box.y });
+      if (time - start < 850) requestAnimationFrame(sample); else resolve(samples);
+    };
+    requestAnimationFrame(sample);
+  }));
+  expect(samples.length).toBeGreaterThan(10);
+  expect([...new Set(samples.map(sample => sample.title))]).toEqual([title]);
+  expect(samples.every(sample => sample.pinned === "true" && sample.visible === "visible" && sample.same)).toBe(true);
+  expect(Math.max(...samples.map(sample => sample.x)) - Math.min(...samples.map(sample => sample.x))).toBeLessThan(1);
+  expect(Math.max(...samples.map(sample => sample.y)) - Math.min(...samples.map(sample => sample.y))).toBeLessThan(1);
+  expect(await pose(page)).not.toEqual(before);
+
+  // Moving geometry can enter a stationary pointer without a pointermove event.
+  await page.locator('.atlas-globe-pin').first().dispatchEvent("pointerover", { pointerType: "mouse" });
+  await expect(card).toHaveAttribute("data-pinned", "true");
+  const other = await overlayPoint(page, '.atlas-globe-pin');
+  await page.mouse.move(other.x, other.y);
+  await expect(page.getByRole("tooltip")).toBeVisible();
+  await page.mouse.move(5, 5);
+  await expect(card).toHaveAttribute("data-pinned", "true");
+  await expect(card.locator(".atlas-callout-title")).toHaveText(title!);
+  expect(errors).toEqual([]);
+});
+
+for (const kind of ["link", "node"] as const) test(`Pointer previews wait for the ${kind} centering flight to finish`, async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  const errors = await openAtlas(page);
+  const point = await overlayPoint(page, kind === "link" ? ".atlas-link-target" : ".atlas-globe-pin");
+  await page.mouse.click(point.x, point.y);
+  const card = page.getByRole("region", { name: "Selected map item" });
+  await expect(card).toBeVisible();
+  const title = await card.locator(".atlas-callout-title").textContent();
+  const result = await page.evaluate(() => new Promise<{ pinned: boolean; titles: (string | null)[]; poses: number; previews: number }>(resolve => {
+    const canvas = document.querySelector<HTMLElement>('[data-testid="atlas-globe"] canvas')!;
+    const start = performance.now(), titles = new Set<string | null>(), poses = new Set<string>();
+    let pinned = true, previews = 0;
+    const sample = (time: number) => {
+      const card = document.querySelector<HTMLElement>(".atlas-callout-card")!;
+      pinned &&= card.dataset.pinned === "true";
+      titles.add(card.querySelector(".atlas-callout-title")!.textContent);
+      poses.add(`${canvas.dataset.angle}:${canvas.dataset.tilt}`);
+      if (time - start >= 300) { resolve({ pinned, titles: [...titles], poses: poses.size, previews }); return; }
+      const targets = document.querySelectorAll(".atlas-link-target, .atlas-globe-pin");
+      targets[previews++ % targets.length].dispatchEvent(new PointerEvent("pointermove", { bubbles: true, pointerType: "mouse" }));
+      requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  }));
+  expect(result.previews).toBeGreaterThan(5);
+  expect(result.poses).toBeGreaterThan(5);
+  expect(result.pinned).toBe(true);
+  expect(result.titles).toEqual([title]);
+
+  await page.evaluate(() => new Promise<void>(resolve => {
+    const canvas = document.querySelector<HTMLElement>('[data-testid="atlas-globe"] canvas')!;
+    let previous = "", still = 0;
+    const sample = () => {
+      const pose = `${canvas.dataset.angle}:${canvas.dataset.tilt}`;
+      still = pose === previous ? still + 1 : 0; previous = pose;
+      if (still === 3) resolve(); else requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  }));
+  const hoverPoint = await overlayPoint(page, ".atlas-globe-pin");
+  await page.mouse.move(hoverPoint.x, hoverPoint.y);
+  await expect(page.getByRole("tooltip")).toBeVisible();
+  await page.mouse.move(5, 5);
+  await expect(card).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("The pinned connector follows the globe through hover scaling", async ({ page }) => {
+  const errors = await openAtlas(page, false);
+  const pin = page.locator('.atlas-globe-pin').first();
+  await pin.focus();
+  await page.keyboard.press("Enter");
+  const card = page.getByRole("region", { name: "Selected map item" });
+  await expect(card).toBeVisible();
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  const initial = await page.getByTestId("atlas-globe").boundingBox();
+  const point = await surface(page, "ne");
+  await page.mouse.move(point.x, point.y);
+  await expect.poll(async () => (await page.getByTestId("atlas-globe").boundingBox())!.width).toBeGreaterThan(initial!.width * 1.02);
+  const box = await card.boundingBox();
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + 10);
+  const distances = await page.evaluate(() => new Promise<number[]>(resolve => {
+    const distances: number[] = [], start = performance.now();
+    const sample = (time: number) => {
+      const pin = document.querySelector<SVGGElement>('.atlas-globe-pin[data-selected="true"]')!;
+      const dot = document.querySelector<SVGCircleElement>('.atlas-callout-connector circle')!;
+      const p = new DOMPoint().matrixTransform(pin.getScreenCTM()!);
+      const q = new DOMPoint(dot.cx.baseVal.value, dot.cy.baseVal.value).matrixTransform(dot.getScreenCTM()!);
+      distances.push(Math.hypot(p.x - q.x, p.y - q.y));
+      if (time - start < 500) requestAnimationFrame(sample); else resolve(distances);
+    };
+    requestAnimationFrame(sample);
+  }));
+  expect(distances.length).toBeGreaterThan(10);
+  expect(Math.max(...distances)).toBeLessThan(1);
+  expect(errors).toEqual([]);
+});
+
 test("Fullscreen drag rotates both axes and tilt reset preserves reporting choices", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   const errors = await openAtlas(page, false);
@@ -113,12 +234,13 @@ test("Fullscreen drag rotates both axes and tilt reset preserves reporting choic
   expect(Math.abs(dragged.angle - before.angle)).toBeGreaterThan(.05);
   expect(Math.abs(dragged.tilt - before.tilt)).toBeGreaterThan(.05);
   await expect(reset).toBeVisible();
+  await expect(reset).toHaveAttribute("aria-disabled", "false");
   await expect(page.locator(".globe-view-controls, [data-globe-view]")).toHaveCount(0);
   expect(await reportingState(page)).toEqual(state);
   await reset.click();
   await expect.poll(async () => (await pose(page)).tilt).toBe(initial.tilt);
   expect((await pose(page)).angle).toBe(dragged.angle);
-  await expect(reset).toHaveCount(0);
+  await expect(reset).toHaveAttribute("aria-disabled", "true");
   expect(await reportingState(page)).toEqual(state);
   await expect(page.getByRole("button", { name: "Clear globe selection" })).toHaveCount(0);
   expect(errors).toEqual([]);
@@ -133,16 +255,18 @@ test("Tilt reset is keyboard operable in compact fullscreen with reduced motion"
   await dragSurface(page, 30, 60);
   const dragged = await pose(page);
   await expect(reset).toBeVisible();
+  await expect(reset).toHaveAttribute("aria-disabled", "false");
   await reset.focus();
   await expect(reset).toBeFocused();
   await reset.press("Enter");
   await expect.poll(async () => (await pose(page)).tilt).toBe(initial.tilt);
   expect((await pose(page)).angle).toBe(dragged.angle);
-  await expect(reset).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /Exit full screen/ })).toBeFocused();
+  await expect(reset).toHaveAttribute("aria-disabled", "true");
+  await expect(reset).toBeFocused();
   expect(await reportingState(page)).toEqual(state);
   await dragSurface(page, 0, -45);
   await expect(reset).toBeVisible();
+  await expect(reset).toHaveAttribute("aria-disabled", "false");
   await page.getByRole("button", { name: /Exit full screen/ }).click();
   await expect(reset).toHaveCount(0);
   await expect(page.locator(".globe-view-controls, [data-globe-view]")).toHaveCount(0);
@@ -191,6 +315,40 @@ test("Cancelled and overlay drags preserve globe selection controls", async ({ p
   await clear.click();
   await expect.poll(() => pose(page)).toEqual(beforeSelection);
   await expect(page.locator(".atlas-page")).toHaveAttribute("data-fullscreen", "true");
+  expect(errors).toEqual([]);
+});
+
+test("Crossing the normal tilt keeps the drag surface and camera controls fixed", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  const errors = await openAtlas(page);
+  const canvas = page.getByTestId("atlas-globe").locator("canvas").first();
+  const reset = page.getByRole("button", { name: "Reset globe tilt", exact: true });
+  const layout = () => page.locator(".atlas-page").evaluate(element => new Promise(resolve => requestAnimationFrame(() => {
+    const box = (selector: string) => {
+      const rect = element.querySelector(selector)!.getBoundingClientRect();
+      return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+    };
+    resolve({ canvas: box('[data-testid="atlas-globe"] canvas'), reset: box('.atlas-tilt-reset'), toggle: box('.atlas-projection-slider [aria-label="Map view"]') });
+  })));
+  const initial = await pose(page), before = await layout();
+  const width = (await canvas.boundingBox())!.width;
+  const resetBox = (await reset.boundingBox())!, toggleBox = (await page.getByRole("radio", { name: "Map view", exact: true }).boundingBox())!;
+  expect(resetBox.x + resetBox.width).toBeLessThan(toggleBox.x);
+  await expect(reset).toHaveAttribute("aria-disabled", "true");
+  await expect(page.getByTestId("atlas-globe").locator(".atlas-tilt-reset")).toHaveCount(0);
+  const point = await surface(page, "ne");
+  await page.mouse.move(point.x, point.y);
+  await page.mouse.down();
+  for (const dy of [35, 0, -35, 0, 60]) {
+    await page.mouse.move(point.x + 25, point.y + dy, { steps: 4 });
+    expect(await layout()).toEqual(before);
+    expect((await pose(page)).tilt).toBeCloseTo(initial.tilt + dy / width * 3, 4);
+    await expect(reset).toHaveAttribute("aria-disabled", String(dy === 0));
+  }
+  await page.mouse.up();
+  await reset.click();
+  await expect.poll(async () => (await pose(page)).tilt).toBe(initial.tilt);
+  expect(await layout()).toEqual(before);
   expect(errors).toEqual([]);
 });
 

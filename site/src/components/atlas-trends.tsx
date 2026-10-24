@@ -6,22 +6,24 @@ import { memo, useMemo, useLayoutEffect, useId, useState, useContext, useCallbac
 import { flushSync } from "react-dom";
 import { AnimatePresence, animate, motion as m, useMotionValue, useTransform, useReducedMotion } from "motion/react";
 import Image from "next/image";
-import { ArrowLeft, ArrowRight, Expand, ChevronDown, ChevronLeft, ChevronRight, ChevronsDown, Newspaper, Radar, Activity, ChartPie, Building2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Expand, ChevronDown, ChevronLeft, ChevronRight, ChevronsDown, Newspaper, Radar, Activity, ChartPie, Building2, Timer } from "lucide-react";
 import { useAtlas, useAtlasPanelState, AtlasWorkspaceContext } from "./atlas-context";
 import { useElementSize } from "./use-element-size";
 import { ReportCountryFlags } from "./atlas-location-badges";
 import { formatDate, type AtlasRecord } from "@/lib/atlas";
-import { attentionSelection } from "@/lib/atlas-attention";
+import { attentionHasPendingReview, attentionSelection } from "@/lib/atlas-attention";
 
 export const AtlasTrends = memo(function AtlasTrends({ networkOverview, rows, recordIds, window, onReport, onBrowseReports, daily, dailyDocuments = [], dailyState, dailyExcluded, onDailyReport, onWatchReports, onPeriod }: { networkOverview: ReactNode; rows: AtlasRecord[]; recordIds: Set<string>; window: [string, string]; onReport: (ids: string[], expand?: boolean) => void; onBrowseReports: () => void; daily?: DailySelection; dailyDocuments?: DailyDocument[]; dailyState?: DailyState; dailyExcluded?: boolean; onDailyReport: (id: string) => void; onWatchReports: (item: DailyWatch) => void; onPeriod: (month: string) => void }) {
   const { atlasDocuments, englishTitle, sourceName, reportOrganizations, selectedResearch } = useAtlas();
   const fullscreen = useContext(AtlasWorkspaceContext);
+  const attentionDescriptionId = useId();
   const [attentionDays, setAttentionDays] = useAtlasPanelState<7 | 30>("trends.attention-period", 7);
   const attention = useMemo(() => {
     const selection = attentionSelection(rows, window, attentionDays);
     return { ...selection, composition: selectedResearch(selection.ids).disease_composition };
   }, [rows, window, attentionDays, selectedResearch]);
   const attentionDates = `${formatDate(attention.from)} to ${formatDate(attention.until)}`;
+  const attentionPending = attentionHasPendingReview(dailyDocuments, attention.from, attention.until);
   const { ref: latestBody, size: latestSize } = useElementSize<HTMLDivElement>();
   const latestRowHeight = 84;
   const latestCount = latestSize ? Math.max(1, Math.floor((latestSize.height - latestRowHeight) / latestRowHeight)) : fullscreen ? 1 : 7;
@@ -114,10 +116,11 @@ export const AtlasTrends = memo(function AtlasTrends({ networkOverview, rows, re
       <section className="atlas-trend-coverage" aria-labelledby="atlas-coverage-title">
         <header><ChartPie size={17} aria-hidden /><h2 id="atlas-coverage-title">{attention.composition ? "Attention" : "Figure coverage"}</h2>
           {attention.composition && <span className="atlas-attention-period" role="group" aria-label="Reporting attention period">
-            <button title={`Switch to ${attentionDays === 7 ? "Monthly (30 days)" : "Weekly (7 days)"}. Current publication dates: ${attentionDates}. Daily reports without topic classifications are excluded.`} onClick={() => setAttentionDays(days => days === 7 ? 30 : 7)}>{attentionDays === 7 ? "Weekly" : "Monthly"}</button>
+            <button aria-describedby={attentionDescriptionId} onClick={() => setAttentionDays(days => days === 7 ? 30 : 7)}>{attentionDays === 7 ? "Weekly" : "Monthly"}</button>
+            <span id={attentionDescriptionId} className="sr-only">{`Switch to ${attentionDays === 7 ? "Monthly (30 days)" : "Weekly (7 days)"}. Current publication dates: ${attentionDates}. Daily reports without topic classifications are excluded.`}</span>
           </span>}
         </header>
-        {attention.composition ? <DiseaseRing composition={attention.composition} dates={attentionDates} onReport={onReport} /> : <>
+        {attention.composition ? attention.composition.denominator > 0 ? <DiseaseRing composition={attention.composition} dates={attentionDates} onReport={onReport} /> : <AttentionEmpty pending={attentionPending} from={attention.from} until={attention.until} /> : <>
         <svg viewBox="10 10 124 124" role="img" aria-label={`${data.measured} of ${rows.length} records have extracted figures`}>
           <circle cx="72" cy="72" r="58" className="atlas-coverage-track" />
           <circle cx="72" cy="72" r="58" pathLength="100" strokeDasharray={`${coverage} ${100 - coverage}`} transform="rotate(-90 72 72)" className="atlas-coverage-value" />
@@ -143,6 +146,16 @@ export const AtlasTrends = memo(function AtlasTrends({ networkOverview, rows, re
     </section></div>
   </div>;
 });
+
+function AttentionEmpty({ pending, from, until }: { pending: boolean; from: string; until: string }) {
+  const dates = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })
+    .formatRange(new Date(`${from}T00:00:00Z`), new Date(`${until}T00:00:00Z`));
+  return <div className="atlas-attention-empty" role="status" data-pending={pending}>
+    {pending ? <Timer size={22} aria-hidden /> : <ChartPie size={22} aria-hidden />}
+    <strong>{pending ? "Weekly review pending" : "No matching report entries"}</strong>
+    <span>Coverage <span>{dates}</span></span>
+  </div>;
+}
 
 function ReportingActivity({ months, onPeriod, windowKey }: { windowKey: string; months: { month: string; count: number }[]; onPeriod: (month: string) => void }) {
   const bars = useRef<HTMLDivElement>(null);

@@ -60,6 +60,8 @@ Use `0.MINOR.PATCH` during experimental development:
 
 For each UI release, set the metadata, add a dated entry below describing its scope and supported export contracts, and run type, lint and relevant browser checks before publishing. Increment once per release, rather than for every edit.
 
+**0.8.0 · Experimental · 24 October 2026** — Globe, Winkel Tripel map and network views share a segmented mode selector and continuous transitions. Network view supports continent selection and geographic highlights. Camera interaction, pinned report cards and rendering retain stable geometry during navigation. Reporting controls, review dates, attention coverage, tooltips and fullscreen spacing use consistent states. Analysis offers Signals, Spatial links, Report relationships and Risk assessments. Supports site contract `1.9.0`, metrics `0.5.0`, Browser transport `0.4.0` and daily contract `0.2.3`.
+
 **0.6.1 · Experimental · 9 October 2026** — Analysis groups signals, spatial links, report relationships and risk assessments with shared selectors, filters and expandable cards. Journeys includes event sequences and evidence digests. One Health has refined network routing, timeline layer switches and responsive observation lists. Report disclosures use a quieter style; narrow layouts retain compact controls. Supports site contract `1.8.0`, metrics `0.4.0`, Browser transport `0.3.0`, daily contracts `0.2.1` and `0.2.2`, and watch method `daily-watch-1.0.2`.
 
 **0.5.3 · Experimental · 8 October 2026** — Searchable Journeys, Models and Signals series selectors share One Health menu styling, keyboard controls and structured choices. Requires site contract `1.8.0`, metrics `0.4.0`, Browser transport `0.3.0` and daily contract `0.2.1`.

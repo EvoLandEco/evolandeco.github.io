@@ -10,6 +10,7 @@ type Route = {
   gradient: Float32Array;
   anchor: [number, number, boolean];
   halo: Stroke; base: Stroke; beam: Stroke[]; arrowHalo: Stroke; arrowLine: Stroke;
+  beamRadii: number[]; version: number;
   dash: number[]; dashOffset: number;
   color: RGB; start: RGB; end: RGB; shadow: RGBA; background: RGB;
   kind: number; opacity: number;
@@ -268,6 +269,13 @@ export function createGlobeRoutes(canvas: HTMLCanvasElement) {
     };
     function styles(targets = routes) {
       styledSelection = routes.find(route => route.group.dataset.active === 'true')?.group;
+      const animations = new Map<Element, Animation[]>();
+      for (const animation of routes[0]?.group.parentElement?.getAnimations({ subtree: true }) ?? []) {
+        const target = (animation.effect as KeyframeEffect | null)?.target;
+        if (!(target instanceof Element) || animation.playState !== 'running' && !animation.pending) continue;
+        const entries = animations.get(target) ?? [];
+        entries.push(animation); animations.set(target, entries);
+      }
       for (const r of targets) {
         const s = getComputedStyle(r.group), line = r.group.querySelector('.atlas-route-line');
         const lineStyle = line ? getComputedStyle(line) : null;
@@ -284,13 +292,15 @@ export function createGlobeRoutes(canvas: HTMLCanvasElement) {
         r.beam = travel ? [...travel.querySelectorAll(':scope > path')].map(stroke)
           : [stroke(r.group.querySelector('.atlas-route-trail-halo')), stroke(r.group.querySelector('.atlas-route-beam'))];
         while (r.beam.length < 3) r.beam.push({ radius: 0, alpha: 0 });
+        r.beamRadii = r.beam.map(stroke => stroke.radius);
         const shadow = travel ? getComputedStyle(travel).filter.match(/rgba?\([^)]+\)|#[\da-f]+/i)?.[0] : undefined;
         r.shadow = shadow ? rgba(shadow) : [0, 0, 0, 0];
         r.arrowHalo = stroke(r.group.querySelector('.atlas-route-arrow-halo')); r.arrowLine = stroke(r.group.querySelector('.atlas-route-arrow'));
         const text = r.group.querySelector('.atlas-route-count text'), circle = r.group.querySelector('.atlas-route-count circle');
         r.text = text?.textContent ?? ''; r.background = circle ? rgb(getComputedStyle(circle).fill) : [0, 0, 0];
         if (text) { const t = getComputedStyle(text); r.font = t.font; r.fontSize = parseFloat(t.fontSize); }
-        r.animations = r.group.getAnimations().filter(a => a.playState === 'running' || a.pending);
+        r.animations = animations.get(r.group) ?? [];
+        r.version++;
       }
       dirty = glyphDirty = true;
     }
@@ -347,7 +357,8 @@ export function createGlobeRoutes(canvas: HTMLCanvasElement) {
       allocated = true;
     }
     let allocated = false, kernelReady = false, packedSegments = new Float32Array(1024), segmentLength = 0;
-    type Tile = { route: Route; bounds: number[]; beam: number[]; x: number; y: number };
+    type Tile = { route: Route; bounds: number[]; beam: number[]; x: number; y: number;
+      version: number; segments: Float32Array; length: number; dx: number; dy: number; left: number; top: number; right: number; bottom: number };
     let layout: Tile[] = [], ordered: Tile[] = [];
     const expand = (bounds: number[], x: number, y: number, padding: number) => {
       bounds[0] = Math.min(bounds[0], x - padding); bounds[1] = Math.min(bounds[1], y - padding);
@@ -362,12 +373,17 @@ export function createGlobeRoutes(canvas: HTMLCanvasElement) {
       return bounds[0] < bounds[2] && bounds[1] < bounds[3];
     };
     const segmentClip = new Float32Array(4);
+    const reserveSegments = (length: number) => {
+      if (segmentLength + length <= packedSegments.length) return;
+      const next = new Float32Array(Math.max(packedSegments.length * 2, segmentLength + length));
+      next.set(packedSegments); packedSegments = next;
+    };
     const append = (x1: number, y1: number, x2: number, y2: number, radii: number[], kind: number, dx: number, dy: number) => {
       x1 = x1 * scale + dx; y1 = y1 * scale + dy; x2 = x2 * scale + dx; y2 = y2 * scale + dy;
       const padding = Math.max(radii[0], radii[1], radii[2]) * scale + 1;
       if (Math.max(x1, x2) + padding <= segmentClip[0] || Math.max(y1, y2) + padding <= segmentClip[1]
         || Math.min(x1, x2) - padding >= segmentClip[2] || Math.min(y1, y2) - padding >= segmentClip[3]) return;
-      if (segmentLength + 12 > packedSegments.length) { const next = new Float32Array(packedSegments.length * 2); next.set(packedSegments); packedSegments = next; }
+      reserveSegments(12);
       packedSegments[segmentLength++] = x1; packedSegments[segmentLength++] = y1;
       packedSegments[segmentLength++] = x2; packedSegments[segmentLength++] = y2;
       packedSegments[segmentLength++] = radii[0] * scale; packedSegments[segmentLength++] = radii[1] * scale;
@@ -401,16 +417,21 @@ export function createGlobeRoutes(canvas: HTMLCanvasElement) {
       let area = 0, widest = 1;
       for (const t of layout) {
         const r = t.route, b = t.bounds, beam = t.beam;
-        b[0] = b[1] = beam[0] = beam[1] = Infinity; b[2] = b[3] = beam[2] = beam[3] = -Infinity;
-        boundsOf(b, r.line, Math.max(r.halo.radius, r.base.radius) * scale + 1);
+        beam[0] = beam[1] = Infinity; beam[2] = beam[3] = -Infinity;
+        // Retained tile bounds let moving beams reuse the packed static strokes.
+        if (t.version === r.version) { b[2] += b[0]; b[3] += b[1]; }
+        else {
+          b[0] = b[1] = Infinity; b[2] = b[3] = -Infinity;
+          boundsOf(b, r.line, Math.max(r.halo.radius, r.base.radius) * scale + 1);
+        }
         boundsOf(b, r.arrow, Math.max(r.arrowHalo.radius, r.arrowLine.radius) * scale + 1);
-        boundsOf(beam, r.trail, Math.max(...r.beam.map(s => s.radius)) * scale + (r.shadow[3] ? radius : 0) + 1);
+        boundsOf(beam, r.trail, Math.max(...r.beamRadii) * scale + (r.shadow[3] ? radius : 0) + 1);
         if (r.trail.length) { expand(b, beam[0], beam[1], 0); expand(b, beam[2], beam[3], 0); }
         if (r.anchor[2] && r.text) expand(b, r.anchor[0] * scale, r.anchor[1] * scale,
           Math.max(13.75 * scale + 1, r.glyph[2] / 2 + 1, r.glyph[3] / 2 + 1));
         if (b[2] <= 0 || b[3] <= 0 || b[0] >= canvas.width || b[1] >= canvas.height) continue;
         // The separable blur reads source pixels outside the visible canvas.
-        const support = r.trail.length && r.shadow[3] ? radius : 0;
+        const support = r.shadow[3] ? radius : 0;
         clipBounds(b, support);
         b[0] = Math.floor(b[0]); b[1] = Math.floor(b[1]); b[2] = Math.ceil(b[2]) - b[0]; b[3] = Math.ceil(b[3]) - b[1];
         if (r.trail.length && clipBounds(beam, support)) { beam[0] = Math.floor(beam[0]); beam[1] = Math.floor(beam[1]); beam[2] = Math.ceil(beam[2]) - beam[0]; beam[3] = Math.ceil(beam[3]) - beam[1]; }
@@ -445,17 +466,38 @@ export function createGlobeRoutes(canvas: HTMLCanvasElement) {
       for (const t of ordered) {
         const r = t.route, b = t.bounds, dx = t.x - b[0], dy = t.y - b[1];
         segmentClip[0] = t.x; segmentClip[1] = t.y; segmentClip[2] = t.x + b[2]; segmentClip[3] = t.y + b[3];
-        if (r.dash.length) {
-          packPath(r.line, [r.halo.radius, 0, 0], 1, dx, dy);
-          packPath(r.line, [0, r.base.radius, 0], 1, dx, dy, r.dash, r.dashOffset);
-        } else packPath(r.line, [r.halo.radius, r.base.radius, 0], 1, dx, dy);
-        packPath(r.trail, r.beam.map(s => s.radius), 0, dx, dy);
+        if (t.version === r.version && t.dx === dx && t.dy === dy && t.left === segmentClip[0] && t.top === segmentClip[1]
+          && t.right === segmentClip[2] && t.bottom === segmentClip[3]) {
+          reserveSegments(t.length);
+          packedSegments.set(t.segments.subarray(0, t.length), segmentLength); segmentLength += t.length;
+        } else {
+          const start = segmentLength;
+          if (r.dash.length) {
+            packPath(r.line, [r.halo.radius, 0, 0], 1, dx, dy);
+            packPath(r.line, [0, r.base.radius, 0], 1, dx, dy, r.dash, r.dashOffset);
+          } else packPath(r.line, [r.halo.radius, r.base.radius, 0], 1, dx, dy);
+          t.length = segmentLength - start;
+          if (t.segments.length < t.length) t.segments = new Float32Array(t.length);
+          t.segments.set(packedSegments.subarray(start, segmentLength));
+          t.version = r.version; t.dx = dx; t.dy = dy;
+          t.left = segmentClip[0]; t.top = segmentClip[1]; t.right = segmentClip[2]; t.bottom = segmentClip[3];
+        }
+        packPath(r.trail, r.beamRadii, 0, dx, dy);
         packPath(r.arrow, [r.arrowHalo.radius, r.arrowLine.radius, 0], 2, dx, dy);
-        packedTiles.set([t.x, t.y, b[2], b[3], b[0], b[1], r.gradient[0] * scale + dx, r.gradient[1] * scale + dy,
-          r.gradient[2] * scale + dx, r.gradient[3] * scale + dy, r.opacity, ...r.beam.map(s => s.alpha),
-          t.beam[0] + dx, t.beam[1] + dy, t.beam[2], t.beam[3], r.halo.alpha, r.base.alpha, r.arrowHalo.alpha, r.arrowLine.alpha,
-          ...r.color, ...r.start, ...r.end, ...r.shadow, r.anchor[0] * scale + dx, r.anchor[1] * scale + dy, 13 * scale,
-          Number(r.anchor[2] && !!r.text), ...r.glyph, ...r.background, r.kind], at);
+        packedTiles[at] = t.x; packedTiles[at + 1] = t.y; packedTiles[at + 2] = b[2]; packedTiles[at + 3] = b[3];
+        packedTiles[at + 4] = b[0]; packedTiles[at + 5] = b[1];
+        packedTiles[at + 6] = r.gradient[0] * scale + dx; packedTiles[at + 7] = r.gradient[1] * scale + dy;
+        packedTiles[at + 8] = r.gradient[2] * scale + dx; packedTiles[at + 9] = r.gradient[3] * scale + dy;
+        packedTiles[at + 10] = r.opacity;
+        for (let i = 0; i < 3; i++) packedTiles[at + 11 + i] = r.beam[i].alpha;
+        packedTiles[at + 14] = t.beam[0] + dx; packedTiles[at + 15] = t.beam[1] + dy;
+        packedTiles[at + 16] = t.beam[2]; packedTiles[at + 17] = t.beam[3];
+        packedTiles[at + 18] = r.halo.alpha; packedTiles[at + 19] = r.base.alpha;
+        packedTiles[at + 20] = r.arrowHalo.alpha; packedTiles[at + 21] = r.arrowLine.alpha;
+        packedTiles.set(r.color, at + 22); packedTiles.set(r.start, at + 25); packedTiles.set(r.end, at + 28); packedTiles.set(r.shadow, at + 31);
+        packedTiles[at + 35] = r.anchor[0] * scale + dx; packedTiles[at + 36] = r.anchor[1] * scale + dy;
+        packedTiles[at + 37] = 13 * scale; packedTiles[at + 38] = Number(r.anchor[2] && !!r.text);
+        packedTiles.set(r.glyph, at + 39); packedTiles.set(r.background, at + 43); packedTiles[at + 46] = r.kind;
         at += tileStride; drawnRoutes.push(r);
       }
       gl.bindBuffer(gl.ARRAY_BUFFER, segments);
@@ -533,7 +575,7 @@ export function createGlobeRoutes(canvas: HTMLCanvasElement) {
             return route;
           }
           const entry: Route = { group, category: group.dataset.kind, line: empty(), trail: empty(), arrow: empty(), gradient: new Float32Array(4),
-          anchor: [0, 0, false], halo: { radius: 0, alpha: 0 }, base: { radius: 0, alpha: 0 }, beam: [],
+          anchor: [0, 0, false], halo: { radius: 0, alpha: 0 }, base: { radius: 0, alpha: 0 }, beam: [], beamRadii: [], version: 0,
           arrowHalo: { radius: 0, alpha: 0 }, arrowLine: { radius: 0, alpha: 0 }, dash: [], dashOffset: 0,
           color: [0, 0, 0], start: [0, 0, 0], end: [0, 0, 0], shadow: [0, 0, 0, 0], background: [0, 0, 0],
           kind: 0, opacity: 1, text: '', font: '13px sans-serif', fontSize: 13, glyph: [0, 0, 0, 0], animations: [],
@@ -541,7 +583,8 @@ export function createGlobeRoutes(canvas: HTMLCanvasElement) {
           added.push(entry);
           return entry;
         });
-        layout = routes.map(route => ({ route, bounds: [0, 0, 0, 0], beam: [0, 0, 0, 0], x: 0, y: 0 }));
+        layout = routes.map(route => ({ route, bounds: [0, 0, 0, 0], beam: [0, 0, 0, 0], x: 0, y: 0,
+          version: -1, segments: new Float32Array(0), length: 0, dx: 0, dy: 0, left: 0, top: 0, right: 0, bottom: 0 }));
         dirty = true;
         if (selectionChanged) styles();
         else if (added.length) styles(added);
@@ -551,6 +594,7 @@ export function createGlobeRoutes(canvas: HTMLCanvasElement) {
         const r = routes[index]; if (!r) return;
         if (length || r.line.length) dirty = true;
         r.line.values = values; r.line.length = length;
+        r.version++;
       },
       trail(index: number, values: Float32Array, length: number, x1: number, y1: number, x2: number, y2: number) {
         const r = routes[index]; if (!r) return;
@@ -583,6 +627,7 @@ export function createGlobeRoutes(canvas: HTMLCanvasElement) {
         try { checkAllocation(); }
         catch (error) { if (!(error instanceof RouteResourceError)) throw error; available = false; return; }
         kernelReady = true; dirty = glyphDirty = true;
+        for (const route of routes) route.version++;
       },
       draw,
       destroy,

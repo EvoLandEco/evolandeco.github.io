@@ -1,6 +1,22 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { attentionSelection } from '../src/lib/atlas-attention';
+import { attentionHasPendingReview, attentionSelection } from '../src/lib/atlas-attention';
+
+test('Pending attention requires an unreconciled report within the publication period', () => {
+  const pending = (publication: string | null) => ({ publication, processing_status: 'weekly_review_pending' as const });
+  assert.equal(attentionHasPendingReview([pending('2026-10-01'), pending('2026-10-08'), pending(null)], '2026-10-02', '2026-10-07'), false);
+  for (const date of ['2026-10-02', '2026-10-07']) assert.equal(attentionHasPendingReview([pending(date)], '2026-10-02', '2026-10-07'), true);
+  assert.equal(attentionHasPendingReview([{ publication: '2026-10-07', processing_status: 'weekly_reviewed' }], '2026-10-02', '2026-10-07'), false);
+  assert.equal(attentionHasPendingReview([], '2026-10-02', '2026-10-07'), false);
+});
+
+test('Pending attention uses Amsterdam publication dates across daylight saving changes', () => {
+  for (const [timestamp, date] of [['2026-03-29T22:30:00Z', '2026-03-30'], ['2026-10-25T23:30:00Z', '2026-10-26']]) {
+    const document = { publication: timestamp, processing_status: 'weekly_review_pending' as const };
+    assert.equal(attentionHasPendingReview([document], date, date), true);
+    assert.equal(attentionHasPendingReview([document], timestamp.slice(0, 10), timestamp.slice(0, 10)), false);
+  }
+});
 
 test('Weekly attention includes both publication boundaries and excludes surrounding days', () => {
   const rows = [

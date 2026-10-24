@@ -11,9 +11,10 @@ import { AtlasDisclosure } from "./atlas-disclosure";
 import { AtlasDetailStatus, useAtlasDetails } from "./atlas-detail";
 import { memo, Suspense, useCallback, useDeferredValue, useId, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type Ref } from "react";
 import { flushSync } from "react-dom";
-import { Building2, SlidersHorizontal, GitBranch, ShieldCheck, FlaskConical, HeartHandshake, Maximize2, Minimize2, ChartNoAxesCombined, Activity, ArrowRight, CalendarDays, ChevronRight, ArrowLeftRight, MapPin, ExternalLink, FileText, Globe2, Info, Network, RefreshCw, RotateCcw, ScanLine, TriangleAlert, ChevronDown, X } from "lucide-react";
+import { Building2, Eye, SlidersHorizontal, GitBranch, ShieldCheck, FlaskConical, HeartHandshake, Maximize2, Minimize2, ChartNoAxesCombined, Activity, ArrowRight, CalendarDays, ChevronRight, ArrowLeftRight, MapPin, Map as MapIcon, ExternalLink, FileText, Globe2, Info, Network, Waypoints, RefreshCw, RotateCcw, ScanLine, TriangleAlert, ChevronDown, X } from "lucide-react";
 import { groupGeographicLinks, dayDate, dayNumber, nextWeeklyReview, monthsBefore, formatDate, linkLabels, supported, topicIds, reportsPerPage, type AtlasRecord, type AtlasTrack, type AtlasLink, type AtlasAssessment, type DateBasis } from "@/lib/atlas";
 import { Globe, type GlobeLink, type GlobeHover, type GlobeAnchor } from "./magicui/globe";
+import type { GlobeMode } from "./magicui/globe-network";
 import { GlobeDragHint } from "./magicui/globe-navigation";
 import { globeLocationCenter } from "./magicui/globe-effects";
 import { AuroraText } from "./magicui/aurora-text";
@@ -47,6 +48,8 @@ import { useAtlas, AtlasWorkspaceContext, AtlasPanelStateContext, useAtlasPanelS
 
 const AtlasAnalysis = dynamic(() => import("./atlas-analysis").then(module => module.AtlasAnalysis));
 const AtlasGlobe = memo(Globe);
+const dailyCaptureDay = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Amsterdam", year: "numeric", month: "2-digit", day: "2-digit" });
+const globeModes = [["globe", "Globe", Globe2], ["map", "Map", MapIcon], ["network", "Network", Waypoints]] as const;
 const evidenceTabs = [ ["trends", "Trends", ChartNoAxesCombined], ["analysis", "Analysis", FlaskConical], ["links", "Journeys", Globe2], ["one-health", "One Health", HeartHandshake], ["reports", "Reports", FileText] ] as const;
 type Tab = typeof evidenceTabs[number][0];
 const relationshipTypeLabel = (type: string) => type.charAt(0).toUpperCase() + type.slice(1).replaceAll("_", " ");
@@ -124,6 +127,8 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
   const viewTransition = useRef<ViewTransition | null>(null);
   const [wide, setWide] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [projection, setProjection] = useState<GlobeMode>("globe");
+  const [globeControls, setGlobeControls] = useState<HTMLDivElement | null>(null);
   const [dragHint, setDragHint] = useState<number | null>(0);
   const [surfaceHover, setSurfaceHover] = useState(false);
   useEffect(() => {
@@ -175,7 +180,8 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
     const canvas = event.currentTarget.querySelector("canvas");
     if (!canvas || event.target !== canvas) return false;
     const box = canvas.getBoundingClientRect();
-    return Math.hypot((event.clientX - box.left) / box.width - .5, (event.clientY - box.top) / box.height - .5) < .38;
+    const x = (event.clientX - box.left) / box.width - .5, y = (event.clientY - box.top) / box.height - .5;
+    return projection === "network" ? Math.abs(x) < .48 && Math.abs(y) < .48 : projection === "map" ? Math.abs(x) < .48 && Math.abs(y) < .3 : Math.hypot(x, y) < .38;
   }
   function overSurface(event: React.PointerEvent<HTMLDivElement>) {
     setSurfaceHover(wide && !fullscreen && !event.buttons && onGlobeSurface(event));
@@ -251,6 +257,8 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
     ? daily.data.knowledge_cutoff : undefined;
   const capturedAt = dailyCapturedAt ?? atlas.snapshot.captured_at;
   const nextReview = nextWeeklyReview(release);
+  const capturedDay = dailyCapturedAt ? dailyCaptureDay.format(new Date(capturedAt)) : new Date(capturedAt).toISOString().slice(0, 10);
+  const reviewOverdue = nextReview !== null && capturedDay > nextReview;
   const plannedDate = nextReview ?? atlas.snapshot.next_update_date;
   const planLabel = nextReview ? "Next review" : "Collection plan";
   const min = daily.data && daily.data.publication_from < weeklyMin ? daily.data.publication_from : weeklyMin;
@@ -292,7 +300,9 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
     && (!topic.length || topicIds(topic).some(id => l.from.track === id || l.to.track === id)) && (!source.length || l.support.some(([id]) => source.includes(lookup.get(String(id))!.source)))), [atlas.map_links, recordIds, kind, topic, source, lookup]);
   const chains = useMemo(() => selectedResearch(recordIds).reviewed_chains, [selectedResearch, recordIds]);
   const linkGroups = useMemo(() => groupGeographicLinks(eligibleLinks, lookup), [eligibleLinks, lookup]);
-  const links = useMemo(() => linkGroups.map(group => (group.entries.find(e => e.link.id === selectedLink) ?? group.entries.at(-1)!).link), [linkGroups, selectedLink]);
+  const selectedGroup = linkGroups.find(group => group.entries.some(entry => entry.link.id === selectedLink));
+  const selectedVersion = selectedGroup && selectedGroup.entries.at(-1)!.link.id !== selectedLink ? selectedLink : undefined;
+  const links = useMemo(() => linkGroups.map(group => (group.entries.find(e => e.link.id === selectedVersion) ?? group.entries.at(-1)!).link), [linkGroups, selectedVersion]);
   const assessments = useMemo(() => atlas.relationships.filter(a => supported(a.support, recordIds) && (!topic.length || topicIds(topic).includes(a.track))
     && (!source.length || a.support.some(([id]) => source.includes(lookup.get(id)!.source)))), [atlas.relationships, recordIds, topic, source, lookup]);
   const spatialEntries = useMemo(() => linkGroups.filter(group => !spatialFilters.length || group.entries.some(entry => spatialFilters.includes(entry.link.type))).map(group => ({
@@ -366,8 +376,9 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
   const calloutNode = calloutTarget?.kind === "node" ? globeNodes.find(n => n.id === calloutTarget.id) : undefined;
   const calloutLink = calloutTarget?.kind === "link" ? atlas.map_links.find(l => l.id === calloutTarget.id) : undefined;
   const calloutGroup = calloutLink ? linkGroups.find(group => group.entries.some(e => e.link.id === calloutLink.id)) : undefined;
-  const calloutReports = calloutNode ? (filtered).filter(r => calloutNode.records.includes(r.id) && (!source.length || source.includes(r.source))) : [];
-  const calloutRecords = calloutLink ? calloutLink.support.flatMap(([id]) => { const record = lookup.get(String(id)); return record ? [record] : []; }) : calloutReports;
+  const calloutReports = useMemo(() => calloutNode ? filtered.filter(r => calloutNode.records.includes(r.id) && (!source.length || source.includes(r.source))) : [], [calloutNode, filtered, source]);
+  const calloutRecords = useMemo(() => calloutLink ? calloutLink.support.flatMap(([id]) => { const record = lookup.get(String(id)); return record ? [record] : []; }) : calloutReports, [calloutLink, calloutReports, lookup]);
+  const calloutFigures = useMemo(() => (calloutLink || calloutNode) && <MetricFigures kind={calloutLink ? "geographic_link" : "topic"} ids={calloutLink ? [calloutLink.id] : calloutNode!.topics} recordIds={new Set(calloutRecords.map(r => r.id))} compact />, [calloutLink, calloutNode, calloutRecords]);
   const calloutDocumentCount = new Set(calloutRecords.map(r => r.document_id)).size;
   const calloutLatest = calloutRecords.map(r => r[basis]).sort().at(-1);
   const calloutEndpoints = calloutLink ? countriesForLink(calloutLink) : [];
@@ -612,14 +623,14 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
     {fullscreen && <button ref={exit} className="atlas-fullscreen-exit" onClick={() => changeFullscreen(false)}><Minimize2 size={17} aria-hidden />Exit full screen<span>Esc</span></button>}
       <p>Follow the reports.<br /><span>Explore the connections.</span></p>
     </header>
-    <section ref={panel} className="atlas-observatory" aria-label="Surveillance globe">
+    <section ref={panel} className="atlas-observatory" aria-label={`Surveillance ${projection}`}>
       <div className="atlas-globe-space"><div className="atlas-globe-frame globe-frame" data-testid="atlas-globe" data-expand-hint={wide && !fullscreen && surfaceHover && !hover || undefined} onPointerMove={overSurface} onPointerLeave={event => { if (!(event.relatedTarget instanceof Node) || !entrance.current?.contains(event.relatedTarget)) setSurfaceHover(false); }} onClick={event => {
         if (!event.defaultPrevented && onGlobeSurface(event)) changeFullscreen(true);
       }}>
-        <AtlasGlobe fullscreen={fullscreen} playing={motion.playing} rotating={!fullscreen && !topic.length && !selectedLink} visible={motion.visible || arriving} onDragStart={dismissDragHint}
+        <AtlasGlobe controls={globeControls} projection={projection} fullscreen={fullscreen} playing={motion.playing} rotating={!fullscreen && !topic.length && !selectedLink} visible={motion.visible || arriving} onDragStart={dismissDragHint}
           nodes={arriving ? undefined : globeNodes} links={arriving ? undefined : globeLinks} layoutLinks={arriving ? undefined : globeLayout}
           selected={selectedNode?.id} focus={focus} locate={locate} onSelect={choosePoint} onLink={chooseLink} onHover={setHover} annotation={calloutTarget} onAnnotationMove={moveCallout} />
-        {!arriving && dragHint !== null && (dragHint === 0 || fullscreen) && <GlobeDragHint key={dragHint} visible={motion.visible} onComplete={() => setDragHint(null)} />}
+        {projection === "globe" && !arriving && dragHint !== null && (dragHint === 0 || fullscreen) && <GlobeDragHint key={dragHint} visible={motion.visible} onComplete={() => setDragHint(null)} />}
       </div></div>
       {calloutTarget && (calloutNode || calloutLink) && <GlobeCallout key={calloutGroup?.id ?? `${calloutTarget.kind}:${calloutTarget.id}`} point={calloutPoint} targetKey={`${calloutTarget.kind}:${calloutTarget.id}`} pinned={!hover}>
         {!hover && <button aria-label="Clear globe selection" onClick={() => { clearSelection(); (fullscreen ? exit : entrance).current?.focus({ preventScroll: true }); }}><X size={14} /></button>}
@@ -639,7 +650,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
         {calloutGroup && calloutGroup.entries.length > 1 && (hover
           ? <span className="atlas-link-count">{calloutGroup.entries.length} links</span>
           : <LinkHistory group={calloutGroup} selected={calloutLink!.id} onChange={chooseLink} />)}
-        <MetricFigures kind={calloutLink ? "geographic_link" : "topic"} ids={calloutLink ? [calloutLink.id] : calloutNode!.topics} recordIds={new Set(calloutRecords.map(r => r.id))} compact />
+        {calloutFigures}
         {!hover && <a className="atlas-callout-action" href="#atlas-panel" onClick={e => { e.preventDefault(); viewEvidence(); }}>View evidence <ArrowRight size={14} aria-hidden /></a>}
 
       </GlobeCallout>}
@@ -661,13 +672,33 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
       </div>
     </section>
     <div className="atlas-controls atlas-reveal">
-      <div className="atlas-time-heading"><CalendarDays size={17} aria-hidden /><strong>Reporting window</strong>
-        <div className="atlas-date-presets" role="group" aria-label="Reporting window presets" data-custom={preset === null} style={{ "--preset-index": preset ?? 0 } as CSSProperties}>
-          {[3, 6, 12, 0].map((months, index) => <button key={months} aria-label={months === 0 ? "All dates" : months === 12 ? "1 year" : `${months} months`} aria-pressed={preset === index} onClick={() => {
-            const from = months ? monthsBefore(window[1], months) : min;
-            changeWindow(from < min ? min : from, months ? window[1] : max);
-            setPreset(index);
-          }}>{months === 0 ? "All" : months === 12 ? "1y" : `${months}m`}</button>)}
+      <div className="atlas-time-heading">
+        <div className="atlas-window-control">
+          <span className="atlas-control-label"><CalendarDays size={17} aria-hidden /><strong>Reporting window</strong></span>
+          <div className="atlas-date-presets" role="group" aria-label="Reporting window presets" data-custom={preset === null} style={{ "--preset-index": preset ?? 0 } as CSSProperties}>
+            {[3, 6, 12, 0].map((months, index) => <button key={months} aria-label={months === 0 ? "All dates" : months === 12 ? "1 year" : `${months} months`} aria-pressed={preset === index} onClick={() => {
+              const from = months ? monthsBefore(window[1], months) : min;
+              changeWindow(from < min ? min : from, months ? window[1] : max);
+              setPreset(index);
+            }}>{months === 0 ? "All" : months === 12 ? "1y" : `${months}m`}</button>)}
+          </div>
+        </div>
+        <div className="atlas-view-control">
+          <span className="atlas-control-label"><Eye size={17} aria-hidden /><strong>View</strong></span>
+          <div className="atlas-view-pill" role="group" aria-label="View controls">
+            <div ref={setGlobeControls} className="atlas-camera-controls" />
+            <div className="atlas-projection-slider" role="radiogroup" aria-label="Visualization mode" style={{ "--view-index": globeModes.findIndex(([mode]) => mode === projection) } as CSSProperties}>
+              {globeModes.map(([mode, label, Icon], index) => <button key={mode} role="radio" aria-label={`${label} view`} aria-checked={projection === mode} tabIndex={projection === mode ? 0 : -1} title={`${label} view`}
+                onClick={() => setProjection(mode)} onKeyDown={event => {
+                  const next = event.key === "Home" ? 0 : event.key === "End" ? 2
+                    : event.key === "ArrowRight" || event.key === "ArrowDown" ? (index + 1) % 3
+                    : event.key === "ArrowLeft" || event.key === "ArrowUp" ? (index + 2) % 3 : null;
+                  if (next === null) return;
+                  event.preventDefault(); setProjection(globeModes[next][0]);
+                  event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("button")[next].focus();
+                }}><Icon size={15} aria-hidden /><span>{label}</span></button>)}
+            </div>
+          </div>
         </div>
       </div>
       <div className="atlas-ranges" style={{ "--range-start": `${startPercent}%`, "--range-end": `${endPercent}%` } as CSSProperties}>
@@ -730,10 +761,10 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
       {tab === "reports" && (!reviewerOpen || !reviewerReady) && <div className="atlas-report-tools atlas-panel-tools" data-timeline={!reviewerOpen && window[1] === max && documents.length > 0 || undefined}>
           {reviewerOpen ? <div className="atlas-reviewer-tools"><strong><ShieldCheck size={16} aria-hidden />Reviewer inbox</strong><button id="atlas-review-close" className="atlas-dataset-button" onClick={closeReviewer}><X size={16} aria-hidden /><span>Close reviewer inbox</span></button></div> : <div className="atlas-report-context">
             <div className="atlas-timeline-next">
-              <span className="atlas-timeline-next-label">
+              <span className="atlas-timeline-next-label" data-overdue={reviewOverdue || undefined}>
                 <span><span>Captured</span><time dateTime={capturedAt}>{formatDate(capturedAt, dailyCapturedAt ? "Europe/Amsterdam" : "UTC")}</time></span>
-                <RefreshCw size={14} aria-hidden />
-                <span title={nextReview ? `Weekly cycle ${release.cycle} completed · Next planned review · ${atlas.snapshot.schedule_timezone}` : `Collection planned after source capture · ${atlas.snapshot.schedule_timezone}`}><span>{planLabel} <span className="sr-only">(planned)</span></span><time dateTime={plannedDate}>{formatDate(plannedDate)}</time></span>
+                {reviewOverdue ? <TriangleAlert size={14} aria-hidden /> : <RefreshCw size={14} aria-hidden />}
+                <span title={nextReview ? `Weekly cycle ${release.cycle} completed · ${reviewOverdue ? "Review overdue" : "Next planned review"} · ${atlas.snapshot.schedule_timezone}` : `Collection planned after source capture · ${atlas.snapshot.schedule_timezone}`}><span>{planLabel} <span className="sr-only">({reviewOverdue ? "overdue" : "planned"})</span></span><time dateTime={plannedDate}>{formatDate(plannedDate)}</time></span>
               </span>
               <div className="atlas-coverage-control">
                 <AtlasScope buttonLabel="Source coverage" label="Source coverage" title="Source coverage" icon={Network}>{close => <>
@@ -767,7 +798,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
           </div>
           <AnimatePresence initial={false} mode="popLayout">{pageDocuments.map(({ records, dailyVersions, id }) => !records.length && dailyView ? <DailyReport key={id} documents={dailyVersions} selection={dailyView} highlighted={evidence.has(id) || reportJump?.documentId === id} /> : <Report key={id} daily={dailyVersions} dailyView={dailyView} records={records} basis={basis} highlighted={evidence.has(id) || reportJump?.documentId === id} recordIds={recordIds} onReport={openReports} relationships={reportRelationships} riskRecords={riskRecords} onAssessment={showAssessment} onRisk={showRisk} />)}</AnimatePresence>
         </div>}
-        {tab === "analysis" && <AtlasAnalysis view={analysisView} onView={changeAnalysisView} spatialCount={spatialEntries.length} relationshipCount={relationshipEntries.length} connectionTools={<>
+        {tab === "analysis" && <AtlasAnalysis recordIds={recordIds} view={analysisView} onView={changeAnalysisView} spatialCount={spatialEntries.length} relationshipCount={relationshipEntries.length} connectionTools={<>
           <AtlasSelect key={analysisView} label={showingSpatial ? "Spatial link" : "Report relationship"} searchable disabled={!connectionItems.length} value={showingSpatial ? selectedLink : relationshipEntries.find(assessment => reportJump?.headingId === `atlas-assessment-${assessment.id}`)?.id ?? ""} items={connectionItems}
             summaryLabel={<span className="atlas-select-choice"><span className="atlas-select-choice-title">{connectionItems.length ? showingSpatial ? "Find a spatial link" : "Find a relationship" : "No matching entries"}</span><small className="atlas-select-count" title={`${connectionItems.length} entries available`}>{connectionItems.length}</small></span>}
             onChange={id => { setConnectionSelection(value => value + 1); if (showingSpatial) chooseLink(id); else showAssessment(id); }} />
@@ -1135,8 +1166,30 @@ function GlobeCallout({ point, targetKey, pinned, children }: { point: MotionVal
     };
     const observer = new ResizeObserver(() => measure.current());
     observer.observe(element); observer.observe(parent); observer.observe(globe);
+    let frame = 0;
+    const followTransform = () => {
+      measure.current();
+      frame = requestAnimationFrame(followTransform);
+    };
+    const startTransform = (event: Event) => {
+      if (event.target !== globe || (event as TransitionEvent).propertyName !== "transform" || frame) return;
+      frame = requestAnimationFrame(followTransform);
+    };
+    const endTransform = (event: Event) => {
+      if (event.target !== globe || (event as TransitionEvent).propertyName !== "transform") return;
+      cancelAnimationFrame(frame); frame = 0; measure.current();
+    };
+    globe.addEventListener("transitionrun", startTransform);
+    globe.addEventListener("transitionend", endTransform);
+    globe.addEventListener("transitioncancel", endTransform);
+    if (globe.getAnimations().some(animation => animation instanceof CSSTransition && animation.transitionProperty === "transform" && animation.playState === "running")) frame = requestAnimationFrame(followTransform);
     measure.current();
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect(); cancelAnimationFrame(frame);
+      globe.removeEventListener("transitionrun", startTransform);
+      globe.removeEventListener("transitionend", endTransform);
+      globe.removeEventListener("transitioncancel", endTransform);
+    };
   }, [draw]);
   return <div className="atlas-callout">
     <svg className="atlas-callout-connector" ref={connector} aria-hidden="true"><path /><circle r="3" /></svg>

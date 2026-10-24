@@ -2,15 +2,13 @@ import { memo, useMemo } from "react";
 import { useAtlas } from "./atlas-context";
 import { ObservationPlot } from "./atlas-metrics";
 import { visibleMeasure } from "@/lib/atlas-metrics";
-import type { AtlasRecord } from "@/lib/atlas";
 import { CalendarDays, ChartNoAxesCombined, CircleHelp, Clock3, Gauge, Layers3, ScanLine } from "lucide-react";
 import { AtlasSelect } from "./atlas-select";
 import styles from "./atlas-analysis.module.css";
 
-export function useObservationSeries(rows: AtlasRecord[]) {
+export function useObservationSeries(ids: Set<string>) {
   const { metrics, measures, selectedResearch } = useAtlas();
   return useMemo(() => {
-    const ids = new Set(rows.map(r => r.id));
     const view = selectedResearch(ids);
     const eligible = new Set(view.panels.flatMap(p => p.measure_ids));
     const reviewed = view.reviewed_series;
@@ -19,7 +17,7 @@ export function useObservationSeries(rows: AtlasRecord[]) {
       .filter(s => new Set(s.items.map(m => m.observation_date)).size > 1);
     const series = [...reviewed.map(review => ({ id: review.series_id, review, items: review.members.map(m => measures.get(m.measure_id)!) })), ...unreviewed];
     return series;
-  }, [rows, metrics, measures, selectedResearch]);
+  }, [ids, metrics, measures, selectedResearch]);
 }
 
 export function observationSeriesLabel(series: ReturnType<typeof useObservationSeries>[number]) {
@@ -36,11 +34,11 @@ export const AtlasObservations = memo(function AtlasObservations({ selected, onR
       <ObservationPlot evidenceDialog seriesId={selected.id} series={selected.review} items={selected.items} onReport={onReport} renderLayout={({ caption, plot, details }) => <div className={styles.signalEvaluation}>
         <section className={styles.prediction} aria-label="Model prediction">
           <figure className={`${styles.chart} ${styles.observationFigure}`}>{plot}{caption}</figure>
-          <div className={styles.figureSummary}><dl className={styles.numbers}>{["Central estimate", "Held-out count", "Target WIS"].map(label => <div key={label}><dt>{label}</dt><dd data-unavailable>Unavailable</dd></div>)}</dl><div className={styles.figureHelp}><button disabled className="atlas-scope-trigger" aria-label="Prediction details unavailable" title="No model evaluation is published for this series"><CircleHelp size={14} aria-hidden /></button></div></div>
+          <div className={styles.figureSummary}><dl className={styles.numbers}>{["Central estimate", "Held-out count", "Target WIS"].map(label => <div key={label}><dt>{label}</dt><dd data-unavailable>Unavailable</dd></div>)}</dl><div className={styles.figureHelp}><button disabled className="atlas-scope-trigger" aria-label="Prediction details unavailable"><CircleHelp size={14} aria-hidden /></button></div></div>
         </section>
         <section className={styles.countChecks} aria-label="Count checks">
           <div className={`${styles.unavailableMessage} ${styles.unavailablePlot}`}><ChartNoAxesCombined size={24} aria-hidden /><strong>Reported observations only</strong><p>No model predictions or baseline checks are published for this series.</p></div>
-          <div className={styles.figureSummary}><dl className={styles.numbers}>{["Checked", "Above threshold"].map(label => <div key={label}><dt>{label}</dt><dd data-unavailable>Unavailable</dd></div>)}</dl><div className={styles.figureHelp}><button disabled className="atlas-scope-trigger" aria-label="Count check details unavailable" title="No baseline checks are published for this series"><CircleHelp size={14} aria-hidden /></button></div></div>
+          <div className={styles.figureSummary}><dl className={styles.numbers}>{["Checked", "Above threshold"].map(label => <div key={label}><dt>{label}</dt><dd data-unavailable>Unavailable</dd></div>)}</dl><div className={styles.figureHelp}><button disabled className="atlas-scope-trigger" aria-label="Count check details unavailable"><CircleHelp size={14} aria-hidden /></button></div></div>
         </section>
         <div className={styles.evaluationDetails}>
           <section className={`${styles.detailPanel} ${styles.reportedSources}`} aria-label="Observations and sources"><header className={styles.detailHeading}><h3><ChartNoAxesCombined size={14} aria-hidden />Observations</h3><span>{selected.items.length} source entries</span></header>{details}</section>

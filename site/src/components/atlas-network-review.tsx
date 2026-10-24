@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchNetworkAnalysis, selectNetworkReview, type NetworkAnalysis } from '@/lib/atlas-network-analysis';
 import type { AtlasRelease } from '@/lib/atlas-release';
 
-export function AtlasNetworkReview({ release, linkIds, recordIds }: { recordIds: ReadonlySet<string>; release: AtlasRelease; linkIds: string[] }) {
+export function AtlasNetworkReview({ release, linkIds, recordIds, compact = false }: { recordIds: ReadonlySet<string>; release: AtlasRelease; linkIds: string[]; compact?: boolean }) {
   const [analysis, setAnalysis] = useState<NetworkAnalysis>();
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -16,6 +16,11 @@ export function AtlasNetworkReview({ release, linkIds, recordIds }: { recordIds:
   if (error) return <p role="alert">Network analysis could not be verified. <button onClick={() => { setError(false); setAttempt(n => n + 1); }}>Retry analysis</button></p>;
   if (!analysis) return <p role="status">Loading reviewed network evidence…</p>;
   const { units, groups, reviewed, assessed, unresolved, partialUnits } = selectNetworkReview(analysis, linkIds, recordIds);
+  if (compact) return <section aria-label="Network evidence review">
+    <p><strong>{units.length} → {partialUnits}</strong> statement units after correcting fully selected repeat-report groups.</p>
+    <dl><div><dt>Identity assessed</dt><dd>{assessed} / {units.length}</dd></div><div><dt>Identity unresolved</dt><dd>{unresolved}</dd></div><div><dt>Repeat groups</dt><dd>{groups.length} ({reviewed} statements)</dd></div></dl>
+    <p>This partial correction covers eligible movement and shared-event statements. It is not a count of independent episodes, journeys or people. Hypotheses are outside this review.</p>
+  </section>;
   return <section aria-label="Network evidence review">
     <h3>Evidence review · Research preview</h3>
     <p><strong>{units.length} → {partialUnits}</strong> statement units after correcting known repeat reports in this selection. This is a partial correction, not a count of independent episodes, journeys or people.</p>

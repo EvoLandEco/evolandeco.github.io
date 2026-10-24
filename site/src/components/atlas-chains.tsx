@@ -287,7 +287,7 @@ function ChainLand({ frame, dots, reducedMotion }: { frame: MapFrame; dots: stri
 function ChainReview({ chain }: { chain: AtlasSelectedChain }) {
   const dialog = useRef<HTMLDialogElement>(null);
   return <>
-    <button className="atlas-scope-trigger atlas-chain-review-trigger" aria-label="Scope & review" title="Scope & review" aria-haspopup="dialog" onClick={event => { event.currentTarget.focus({ preventScroll: true }); dialog.current?.showModal(); }}>?</button>
+    <button className="atlas-scope-trigger atlas-chain-review-trigger" aria-label="Scope & review" aria-haspopup="dialog" onClick={event => { event.currentTarget.focus({ preventScroll: true }); dialog.current?.showModal(); }}>?</button>
     <dialog ref={dialog} className="atlas-scope-dialog atlas-chain-review" aria-label="Scope & review" onKeyDown={event => {
       event.stopPropagation();
       if (event.key === "Tab") { event.preventDefault(); dialog.current?.querySelector('button')?.focus(); }

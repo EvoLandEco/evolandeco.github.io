@@ -2,19 +2,6 @@
 .globe-camera-scene { transform-origin: center; }
 .globe-camera-scene > canvas { position: absolute; inset: 0; }
 .atlas-page[data-fullscreen] :is(.globe-camera-scene canvas, .atlas-globe-pins) { touch-action: none; }
-.atlas-page[data-fullscreen] .globe-tilt-reset {
-  position: absolute; left: 50%; bottom: 2%; z-index: 6; transform: translateX(-50%);
-  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-  min-height: 40px; padding: 8px 14px; border: 1px solid transparent; border-radius: 999px;
-  color: var(--primary-foreground); background: var(--primary);
-  font-size: 12px; font-weight: 550; line-height: 1.2; white-space: nowrap;
-  box-shadow: 0 3px 13px color-mix(in srgb, var(--primary) 18%, transparent);
-  pointer-events: auto; transition: background .18s;
-}
-.atlas-page[data-fullscreen] .globe-tilt-reset:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--primary) 88%, var(--foreground)); }
-.atlas-page[data-fullscreen] .globe-tilt-reset:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
-.globe-tilt-reset svg { width: 16px; height: 16px; }
-@media (prefers-reduced-motion: reduce) { .atlas-page[data-fullscreen] .globe-tilt-reset { transition: none; } }
 .globe-drag-hint {
   position: absolute; inset: 0; z-index: 5; pointer-events: none;
   container-type: inline-size; color: var(--primary);
@@ -55,4 +42,44 @@
     from { opacity: 1; }
     to { opacity: 0; }
   }
+}
+.globe-map-surface, .globe-network-surface { pointer-events: none; }
+.globe-camera-scene:not([data-projection="globe"]) > canvas { cursor: default; }
+.globe-network-geography { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
+.globe-network-geography [style] { --geo-color: var(--geo-light); }
+.dark .globe-network-geography [style] { --geo-color: var(--geo-dark); }
+.globe-geography-envelopes { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.globe-country-envelope {
+  fill: var(--geo-color); fill-opacity: .08; stroke: var(--geo-color); stroke-opacity: .36;
+  stroke-width: 1.2; vector-effect: non-scaling-stroke;
+  transition: fill-opacity .25s, stroke-opacity .25s;
+}
+.globe-geography-member { opacity: 0; transition: opacity .25s; }
+.globe-geography-member circle { stroke: var(--geo-color); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.globe-network-geography[data-inspecting="true"] .globe-country-envelope { fill-opacity: .015; stroke-opacity: .07; }
+.globe-network-geography .globe-country-envelope[data-active="true"] { fill-opacity: .18; stroke-opacity: .9; }
+.globe-network-geography .globe-geography-member[data-active="true"] { opacity: 1; }
+.globe-geography-member[data-active="true"] circle { stroke-width: 2; fill: var(--geo-color); fill-opacity: .12; }
+.globe-continent-envelope { fill: var(--geo-color); fill-opacity: .08; stroke: var(--geo-color); stroke-width: 1.4; stroke-opacity: .72; stroke-dasharray: 3 5; vector-effect: non-scaling-stroke; opacity: 0; transition: opacity .25s; }
+.globe-continent-envelope[data-active="true"] { opacity: 1; }
+.globe-geography-controls { position: absolute; inset: 0; z-index: 6; font-size: 11px; container-type: inline-size; }
+.globe-geography-controls > * { pointer-events: auto; }
+.globe-network-geography[data-enabled="false"] .globe-geography-controls { visibility: hidden; }
+.globe-continent-key {
+  position: absolute; inset: auto 0 0; display: flex; align-items: center; justify-content: center; gap: 3px;
+  overflow-x: auto; scrollbar-width: none; padding: 0; color: var(--muted-foreground); white-space: nowrap;
+}
+.globe-continent-key > svg { flex: none; margin-right: 3px; }
+.atlas-page .globe-continent-key button {
+  display: flex; align-items: center; gap: 4px; flex: none; min-height: 24px; padding: 3px 5px; border: 0; border-radius: 999px; font-size: 11px;
+  color: var(--muted-foreground); background: transparent; transition: color .2s, background .2s;
+}
+.atlas-page .globe-continent-key button > span { width: 7px; height: 7px; border: 1px solid var(--geo-color); background: color-mix(in srgb, var(--geo-color) 18%, transparent); border-radius: 50%; }
+.atlas-page .globe-continent-key button:is(:hover, [aria-pressed="true"]) { color: var(--foreground); background: color-mix(in srgb, var(--geo-color) 12%, transparent); }
+.globe-geography-controls button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+@container (max-width: 520px) {
+  .globe-continent-key { justify-content: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .globe-network-geography * { transition: none !important; }
 }

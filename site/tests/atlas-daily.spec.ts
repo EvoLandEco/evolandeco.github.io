@@ -49,9 +49,16 @@ test('Reports dates distinguish daily captures from the completed weekly cycle',
     ? route.fulfill({ contentType: 'application/json', body: JSON.stringify(route.request().url().endsWith('current.json') ? dailyPointer(data) : data) })
     : route.fulfill({ status: 404, body: '' }));
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  for (const [value, expected, label] of [[undefined, captured, '7 Oct 2026'], ['2026-10-07T08:00:00Z', captured, '7 Oct 2026'], ['2026-10-08T06:00:00Z', '2026-10-08T06:00:00Z', '8 Oct 2026']] as const) {
+  for (const [value, expected, label, overdue] of [
+    [undefined, captured, '7 Oct 2026', false],
+    ['2026-10-07T08:00:00Z', captured, '7 Oct 2026', false],
+    ['2026-10-08T06:00:00Z', '2026-10-08T06:00:00Z', '8 Oct 2026', false],
+    ['2026-10-21T21:59:59Z', '2026-10-21T21:59:59Z', '21 Oct 2026', false],
+    ['2026-10-21T22:00:00Z', '2026-10-21T22:00:00Z', '22 Oct 2026', true],
+    ['2026-10-24T12:00:00Z', '2026-10-24T12:00:00Z', '24 Oct 2026', true],
+  ] as const) {
     cutoff = value;
-    if (cutoff) { data.knowledge_cutoff = cutoff; data.generated_at = '2026-10-09T08:00:00Z'; }
+    if (cutoff) { data.knowledge_cutoff = cutoff; data.generated_at = '2026-10-25T08:00:00Z'; }
     const dailyResponse = page.waitForResponse(response => response.url().includes('/daily/') && response.url().endsWith('current.json'));
     await page.goto('/atlas/');
     await dailyResponse;
@@ -64,13 +71,31 @@ test('Reports dates distinguish daily captures from the completed weekly cycle',
       await expect(dates.nth(0)).toHaveText(label);
       await expect(dates.nth(1)).toHaveAttribute('datetime', '2026-10-21');
       await expect(page.locator('.atlas-timeline-next')).toContainText('Next review');
+      await expect(page.locator('.atlas-timeline-next-label > svg')).toHaveClass(overdue ? /lucide-triangle-alert/ : /lucide-refresh-cw/);
+      await expect(page.locator('.atlas-timeline-next-label .sr-only')).toHaveText(overdue ? '(overdue)' : '(planned)');
+      for (const dark of [false, true]) {
+        await page.evaluate(dark => document.documentElement.classList.toggle('dark', dark), dark);
+        const colors = await dates.evaluateAll(elements => elements.map(element => getComputedStyle(element).color));
+        expect(colors[0] !== colors[1]).toBe(overdue);
+        await expect(page.locator('.atlas-timeline-next-label > svg')).toHaveCSS('color', colors[1]);
+      }
+      await page.evaluate(() => document.documentElement.classList.remove('dark'));
     }
+  }
+  cutoff = undefined;
+  for (const [cycle, overdue] of [['2026-09-30', false], ['2026-09-23', true]] as const) {
+    fixture.bodies['/current.json'] = Buffer.from(JSON.stringify({ ...fixture.release, mode: 'weekly', cycle }));
+    await page.goto('/atlas/');
+    await page.getByRole('tab', { name: 'Reports', exact: true }).click();
+    await expect(page.locator('.atlas-timeline-next time').first()).toHaveText('7 Oct 2026');
+    await expect(page.locator('.atlas-timeline-next-label .sr-only')).toHaveText(overdue ? '(overdue)' : '(planned)');
   }
   fixture.bodies['/current.json'] = Buffer.from(JSON.stringify(fixture.release));
   await page.goto('/atlas/');
   await page.getByRole('tab', { name: 'Reports', exact: true }).click();
   await expect(page.locator('.atlas-timeline-next')).toContainText('Collection plan');
   await expect(page.locator('.atlas-timeline-next time').nth(1)).toHaveAttribute('datetime', review);
+  await expect(page.locator('.atlas-timeline-next-label > svg')).toHaveClass(/lucide-refresh-cw/);
 });
 
 test('Reset clears every watch report highlight through either reset control', async ({ page }) => {

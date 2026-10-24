@@ -1,0 +1,89 @@
+.network { min-width: 0; padding-bottom: 8px; }
+.scope, .card > header, .evidenceSummary { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.scope { margin-bottom: 10px; color: var(--atlas-green); font-size: 12px; font-weight: 550; }
+.scope > span, .card h3 { display: flex; align-items: center; gap: 7px; }
+.network .scope > :global(button.atlas-scope-trigger) { position: static; }
+.summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 12px 10px; border-radius: 12px; background: linear-gradient(110deg, color-mix(in srgb, var(--primary) 6%, transparent), color-mix(in srgb, var(--atlas-green) 6%, transparent)); }
+.summary > div { text-align: center; }
+.summary dt { font-size: 10px; color: var(--muted-foreground); }
+.summary dd { margin: 3px 0 0; color: var(--atlas-green); font-size: 25px; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.summary dd small { font-size: 12px; color: var(--muted-foreground); font-weight: 400; }
+.caption { margin: 8px 0; color: var(--muted-foreground); font-size: 11px; line-height: 1.5; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+.card { min-width: 0; padding: 13px; border-radius: 12px; background: linear-gradient(145deg, color-mix(in srgb, var(--primary) 4%, var(--background)), color-mix(in srgb, var(--atlas-green) 3%, var(--background))); }
+.card > header { align-items: flex-start; gap: 8px; }
+.card h3 { margin: 0; font-size: 13px; font-weight: 600; }
+.card h3 > svg { flex-shrink: 0; color: var(--primary); }
+.card > header > small { font-size: 10px; color: var(--muted-foreground); white-space: nowrap; padding-top: 2px; }
+.search { display: flex; align-items: center; gap: 7px; margin: 10px 0 4px; padding: 5px 8px; border-radius: 7px; color: var(--primary); background: color-mix(in srgb, var(--primary) 5%, transparent); }
+.search input { width: 100%; min-width: 0; border: 0; background: transparent; font: inherit; color: var(--foreground); font-size: 11px; outline-offset: 3px; }
+.tableScroll, .sources { max-height: 212px; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.table { width: 100%; border-collapse: collapse; font-size: 11px; font-variant-numeric: tabular-nums; }
+.table th, .table td { padding: 7px 3px; text-align: right; border-bottom: 1px solid color-mix(in srgb, var(--primary) 8%, transparent); }
+.table thead th { font-size: 9px; font-weight: 500; color: var(--muted-foreground); position: sticky; top: 0; background: var(--background); z-index: 1; }
+.table th:first-child { text-align: left; }
+.table tbody th { width: 100%; font-weight: 500; }
+.network .table button { display: flex; align-items: center; justify-content: flex-start; gap: 5px; min-height: 22px; text-align: left; font: inherit; padding: 0; border: 0; color: var(--foreground); background: none; }
+.table button span { line-height: 1.35; }
+.table button :global(.atlas-location-symbol) { flex-shrink: 0; }
+.table tbody tr:hover { background: color-mix(in srgb, var(--primary) 5%, transparent); }
+.details { margin-top: 10px; padding-top: 9px; border-top: 1px solid color-mix(in srgb, var(--primary) 10%, transparent); font-size: 11px; line-height: 1.55; color: var(--muted-foreground); }
+.details > summary { cursor: pointer; color: var(--primary); font-weight: 500; }
+.details p { margin: 9px 0; }
+.details h3 { margin: 10px 0; }
+.details dl > div { display: flex; justify-content: space-between; gap: 12px; }
+.details dd { text-align: right; }
+.countryList { display: flex; flex-wrap: wrap; gap: 5px 8px; }
+.network .countryList button { display: inline-flex; align-items: center; gap: 4px; padding: 3px 0; border: 0; font-size: 10px; color: var(--primary); background: none; }
+.matrixScroll { overflow-x: auto; margin: 12px 0; }
+.matrix { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 9px; }
+.matrix th { color: var(--muted-foreground); font-weight: 450; }
+.matrix thead th { font-size: 8px; padding-bottom: 4px; }
+.matrix tbody th { text-align: left; padding-right: 5px; white-space: nowrap; }
+.matrix td { padding: 0; width: 11%; }
+.network .matrix button { display: grid; place-items: center; width: 100%; min-width: 22px; min-height: 26px; padding: 3px; border: 0; border-radius: 5px; font-size: 10px; font-variant-numeric: tabular-nums; color: var(--atlas-green); background: color-mix(in srgb, var(--atlas-green) calc(7% + var(--network-intensity) * 28%), transparent); transition: box-shadow .15s; }
+.network .matrix button:disabled { background: color-mix(in srgb, var(--primary) 3%, transparent); color: var(--muted-foreground); opacity: .65; }
+.network .matrix button:not(:disabled):hover { box-shadow: inset 0 0 0 1px var(--atlas-green); }
+.card > :global(.atlas-select) { margin-top: 8px; }
+.card > :global(.atlas-select > summary) { font-size: 11px; min-height: 30px; }
+.network .sources button { position: relative; display: flex; justify-content: space-between; gap: 12px; width: 100%; margin: 7px 0; padding: 6px 5px 9px; background: transparent; border: 0; font-size: 11px; text-align: left; color: var(--foreground); }
+.sources button i { position: absolute; left: 0; bottom: 0; height: 3px; border-radius: 2px; background: linear-gradient(90deg, var(--primary), var(--atlas-green)); }
+.sources button strong { color: var(--atlas-green); font-variant-numeric: tabular-nums; }
+.sources button:hover { background: color-mix(in srgb, var(--primary) 5%, transparent); }
+.chronology { display: flex; align-items: stretch; gap: 5px; height: 185px; overflow-x: auto; padding: 8px 0; scrollbar-width: thin; }
+.network .chronology button { display: flex; flex: 1 0 25px; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0; border: 0; background: transparent; color: var(--foreground); font-size: 9px; }
+.chronology button strong { font-size: 10px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.chronology button small { font-size: 8px; color: var(--muted-foreground); }
+.barTrack { display: flex; align-items: flex-end; justify-content: center; gap: 2px; height: 115px; width: 100%; margin: 5px 0; border-bottom: 1px solid color-mix(in srgb, var(--primary) 15%, transparent); }
+.barTrack i { width: 35%; max-width: 14px; border-radius: 3px 3px 0 0; background: linear-gradient(0deg, color-mix(in srgb, var(--primary) 40%, transparent), var(--primary)); }
+.barTrack i[data-documents] { background: linear-gradient(0deg, color-mix(in srgb, var(--atlas-green) 40%, transparent), var(--atlas-green)); }
+.chronology button:not(:disabled):hover .barTrack { background: color-mix(in srgb, var(--primary) 6%, transparent); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: center; font-size: 9px; color: var(--muted-foreground); }
+.legend span { display: flex; align-items: center; gap: 5px; }
+.legend i { width: 8px; height: 8px; border-radius: 2px; background: var(--primary); }
+.legend i[data-documents] { background: var(--atlas-green); }
+.empty { padding: 12px 0; font-size: 12px; line-height: 1.6; color: var(--muted-foreground); }
+.evidence { margin-top: 14px; scroll-margin: 72px; }
+.network .action { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; padding: 4px 7px; min-height: 26px; border: 0; border-radius: 6px; background: color-mix(in srgb, var(--primary) 6%, transparent); color: var(--primary); font-size: 10px; }
+.network .action:disabled { opacity: .5; }
+.evidenceSummary { padding: 10px 0; font-size: 11px; color: var(--muted-foreground); }
+.statements { max-height: 380px; overflow-y: auto; overscroll-behavior: contain; }
+.statement { padding: 10px 0; border-top: 1px solid color-mix(in srgb, var(--primary) 10%, transparent); font-size: 12px; line-height: 1.55; }
+.statement > summary { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; color: var(--foreground); font-weight: 550; cursor: pointer; }
+.statement > summary::before { content: '+'; color: var(--atlas-green); }
+.statement[open] > summary::before { content: '−'; }
+.statement summary > span { flex: 1; }
+.statement summary small { flex-shrink: 0; color: var(--muted-foreground); font-weight: 400; font-size: 10px; }
+.statement p { margin: 9px 0; }
+.endpoints { color: var(--atlas-green); font-size: 11px; }
+.network :is(button, input, summary, [tabindex]):focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+@container atlas-workspace (max-width: 620px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+}
+@container atlas-workspace (max-width: 400px) {
+  .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 8px; }
+  .card { padding: 11px; }
+  .card > header, .evidenceSummary { flex-wrap: wrap; }
+  .matrix thead th { font-size: 7px; }
+}
+@media (prefers-reduced-motion: reduce) { .network .matrix button { transition: none; } }

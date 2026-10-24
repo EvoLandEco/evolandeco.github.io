@@ -25,13 +25,16 @@ for (const width of [390, 1466]) test(`Reporting attention periods preserve scie
   const reports = (await page.getByRole('tab', { name: 'Reports', exact: true }).textContent())!;
   const range = await page.locator('.atlas-range-dates time').evaluateAll(nodes => nodes.map(node => node.getAttribute('datetime')));
   await expect(period.getByRole('button')).toHaveText(['Weekly']);
-  await expect(ring.locator('svg')).toHaveAttribute('aria-label', 'Reporting attention by subject across 0 report entries published 1 Oct 2026 to 7 Oct 2026; not disease incidence');
+  await expect(page.locator('.atlas-attention-empty')).toContainText('Weekly review pending');
+  await expect(page.locator('.atlas-attention-empty')).toContainText(/1\s*–\s*7 Oct 2026/);
+  await expect(ring).toHaveCount(0);
   await expect(ring.getByRole('button')).toHaveCount(0);
   const monthlyCount = bundle.records.filter(row => row.publication.slice(0, 10) >= '2026-09-08' && row.publication.slice(0, 10) <= '2026-10-07').length;
   expect(monthlyCount).toBeGreaterThan(0);
   const monthlyLabel = new RegExp(`^Reporting attention by subject across ${monthlyCount} report entries published 8 Sept? 2026 to 7 Oct 2026; not disease incidence$`);
   await weekly.press('Enter');
   await expect(period.getByRole('button')).toHaveText(['Monthly']);
+  await expect(page.locator('.atlas-attention-empty')).toHaveCount(0);
   await expect(monthly).toBeVisible();
   await expect(weekly).toHaveCount(0);
   await expect(ring.locator('svg')).toHaveAttribute('aria-label', monthlyLabel);
@@ -50,7 +53,25 @@ for (const width of [390, 1466]) test(`Reporting attention periods preserve scie
   await monthly.click();
   await expect(period.getByRole('button')).toHaveText(['Weekly']);
   await expect(ring.getByRole('button')).toHaveCount(0);
-  await expect(ring.locator('svg')).toHaveAttribute('aria-label', 'Reporting attention by subject across 0 report entries published 1 Oct 2026 to 7 Oct 2026; not disease incidence');
+  await expect(page.locator('.atlas-attention-empty')).toContainText('Weekly review pending');
+  await expect(page.locator('.atlas-attention-empty')).toContainText(/1\s*–\s*7 Oct 2026/);
+  await expect(ring).toHaveCount(0);
+  expect((await new AxeBuilder({page}).include('.atlas-trend-coverage').analyze()).violations).toEqual([]);
+  await page.locator('.atlas-trend-coverage').screenshot({path: `.cache/atlas-attention-pending-${width}.png`});
+});
+
+test('A period without daily reports does not claim a pending review', async ({ page }) => {
+  const fixture = await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
+  const manifest = JSON.parse(fixture.bodies[`/releases/${fixture.release.export_id}/browser/${fixture.release.browser.manifest.sha256}/manifest.json`].toString());
+  const daily = { ...dailyFixture(releaseSchema.parse(fixture.release), manifest.source.manifest.sha256), documents: [], findings: [], evidence: [], watch_items: [], watch_assessments: [], source_coverage: [] };
+  await page.route(/\/daily\//, route => route.fulfill({ json: route.request().url().endsWith('current.json') ? dailyPointer(daily) : daily }));
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  await page.goto('/atlas/');
+  await expect(page.locator('.atlas-page')).toHaveAttribute('data-ready', 'true');
+  const period = page.getByRole('group', {name: 'Reporting attention period', exact: true});
+  await expect(period.getByRole('button')).toHaveText(['Weekly']);
+  await expect(page.locator('.atlas-attention-empty')).toContainText('No matching report entries');
+  await expect(page.locator('.atlas-attention-empty')).not.toContainText('Weekly review pending');
 });
 
 for (const [width, height, workspace] of [[390,950,false], [1280,950,false], [1280,720,true]] as const) {

@@ -1447,9 +1447,10 @@ for (const width of [360, 1280]) test(`Reporting dates follow handles without ov
   }
   await expect(page.locator('input[type="date"]')).toHaveCount(0);
   await expect(labels).toHaveText(["26 Mar 2026", "25 Sept 2026"]);
-  const heading = await page.locator(".atlas-time-heading strong").boundingBox();
+  const heading = await page.locator(".atlas-window-control strong").boundingBox();
   const presets = await page.getByRole("group", { name: "Reporting window presets" }).boundingBox();
-  expect(Math.abs(heading!.y + heading!.height / 2 - presets!.y - presets!.height / 2)).toBeLessThan(2);
+  if (width < 580) expect(heading!.y + heading!.height).toBeLessThan(presets!.y);
+  else expect(Math.abs(heading!.y + heading!.height / 2 - presets!.y - presets!.height / 2)).toBeLessThan(2);
   for (const date of ["2026-09-25", "2026-06-25", "2026-03-26"]) {
     await setWindowDate(page, "start", date);
     await setWindowDate(page, "end", date);

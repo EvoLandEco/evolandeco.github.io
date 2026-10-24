@@ -509,7 +509,7 @@ for (const [width, fullscreen] of [[390, false], [1440, false], [1440, true]] as
   if (fullscreen) await page.getByRole('button', { name: 'Click to enter full screen' }).press('Enter');
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   await atlasSelect(page, 'Analysis view').locator('summary').click();
-  expect(await atlasSelect(page, 'Analysis view').getByRole('option').evaluateAll(options => options.map(option => option.getAttribute('aria-label')))).toEqual(['Signals & forecasts', 'Spatial links', 'Report relationships', 'Risk assessments']);
+  expect(await atlasSelect(page, 'Analysis view').getByRole('option').evaluateAll(options => options.map(option => option.getAttribute('aria-label')))).toEqual(['Signals & forecasts', 'Network', 'Spatial links', 'Report relationships', 'Risk assessments']);
   await page.keyboard.press('Escape');
   await selectAtlasOption(page, 'Analysis view', 'risk');
   const risk = page.locator('[data-risk-id]').first();

@@ -149,7 +149,6 @@
 .analysis { min-width: 0; color: var(--foreground); padding: 0 0 16px; scroll-margin-top: calc(var(--atlas-toolbar-height, 0px) + var(--atlas-panel-gap)); }
 .analysisHeader { display: grid; grid-template-columns: auto minmax(0, 1fr) 36px; align-items: center; gap: 10px; margin-bottom: 16px; }
 .analysisContent { min-width: 0; }
-.analysisHeader :global(.atlas-oh-view-select) { width: max-content; }
 @container atlas-workspace (max-width: 500px) {
   .analysisHeader { gap: 6px; }
 }

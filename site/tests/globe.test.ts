@@ -190,8 +190,8 @@ test("Parallel routes separate consistently without moving endpoints or callouts
   const distance = (a: number[], b: number[]) => Math.hypot(...a.map((v, i) => v - b[i]));
   assert(distance(midpoint(0, bends[0]), midpoint(1, bends[1])) > distance(midpoint(0), midpoint(1)) + .05);
   const route = routes[1], a = globePoint(route.from), b = globePoint(route.to);
-  assert.deepEqual(arcPoint(a, b, 0, .4, bends[1]), arcPoint(a, b, 0));
-  assert.deepEqual(arcPoint(a, b, 1, .4, bends[1]), arcPoint(a, b, 1));
+  assert.equal(distance(arcPoint(a, b, 0, .4, bends[1]), arcPoint(a, b, 0)), 0);
+  assert.equal(distance(arcPoint(a, b, 1, .4, bends[1]), arcPoint(a, b, 1)), 0);
   const camera = focusOrientation(route.from, 0);
   const path = projectArcPath(route.from, route.to, camera.phi, true, camera.theta, bends[1]);
   assert.notEqual(path, projectArcPath(route.from, route.to, camera.phi, true, camera.theta));

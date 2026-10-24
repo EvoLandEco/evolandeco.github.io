@@ -70,13 +70,12 @@ void main() {
       (coverage(12. - radius) - coverage(10. - radius)) * coverage(min(dash, 4. - dash)));
     return;
   }
+  vec4 rim = vec4(0.);
   if (node.y > 0.) {
     float d = min(segment(point, vec2(-3., -5.), vec2(2., 0.)),
       segment(point, vec2(2., 0.), vec2(-3., 5.)));
-    c = over(c, rimColor, coverage(2.5 - d) * node.z);
-    c = over(c, rimColor, coverage(.85 - d) * node.w);
-    outputColor = c * measures.w;
-    return;
+    rim = over(rim, rimColor, coverage(2.5 - d) * node.z);
+    rim = over(rim, rimColor, coverage(.85 - d) * node.w);
   }
   float radius = length(point);
   c = over(c, haloColor, .45 * clamp(1. - radius / measures.x, 0., 1.));
@@ -87,7 +86,7 @@ void main() {
     - coverage(measures.y - measures.z * .5 - radius));
   c = over(c, markerColor, coverage(3.5 - radius));
   c = over(c, sparkColor, coverage(1.3 - radius));
-  outputColor = c;
+  outputColor = mix(c, rim, node.y) * measures.w;
 }`;
 
 const stride = 14;
@@ -172,10 +171,10 @@ export function createGlobeMarkers(canvas: HTMLCanvasElement) {
         gl.uniform3f(colors[i], r / 255, g / 255, b / 255);
       }
     },
-    pose(index: number, x: number, y: number, rotation: number, scale: number, kind: number, opacity: number) {
+    pose(index: number, x: number, y: number, rotation: number, scale: number, kind: number, opacity: number, size = 1) {
       const offset = index * stride, cosine = Math.cos(rotation), sine = Math.sin(rotation);
-      poses[offset] = cosine * scale; poses[offset + 1] = sine * scale;
-      poses[offset + 2] = -sine; poses[offset + 3] = cosine;
+      poses[offset] = cosine * scale * size; poses[offset + 1] = sine * scale * size;
+      poses[offset + 2] = -sine * size; poses[offset + 3] = cosine * size;
       poses[offset + 4] = x; poses[offset + 5] = y;
       poses[offset + 9] = opacity; poses[offset + 11] = kind;
     },
