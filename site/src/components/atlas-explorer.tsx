@@ -1,5 +1,6 @@
 "use client";
 import { dailySelection, pendingDailyDocuments, reportChronology, highlightedReportIds, type DailyState, type DailyDocument, type DailySelection } from "@/lib/atlas-daily";
+import { createReportingSources } from "@/lib/atlas-reporting-sources";
 import { DailyReport, DailyProcessing, DailyVersions } from "./atlas-daily";
 import { SourceQuotation, OriginalTitle } from "./atlas-source-text";
 import type { AtlasExperiment } from "@/lib/atlas-intelligence";
@@ -269,15 +270,10 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
     setWindow([window[0] === knownBounds[0] ? min : window[0], window[1] === knownBounds[1] ? max : window[1]]);
   }
   const dailyExcluded = !!(diseases.length || topic.length || kind.length);
-  const dailyView = useMemo(() => daily.data && !dailyExcluded ? dailySelection(daily.data, window, source, places) : undefined, [daily.data, dailyExcluded, window, source, places]);
+  const reportingSources = useMemo(() => createReportingSources(bundle.channels, atlas.records.map(row => row.source), daily.data?.source_coverage ?? [], sourceName), [bundle.channels, atlas.records, daily.data, sourceName]);
+  const dailyView = useMemo(() => daily.data && !dailyExcluded ? dailySelection(daily.data, window, reportingSources.dailySources(source), places) : undefined, [daily.data, dailyExcluded, window, source, places, reportingSources]);
   const dailyDocuments = useMemo(() => dailyView ? pendingDailyDocuments(dailyView, new Set(bundle.records.map(row => row.id))) : [], [dailyView, bundle]);
-  const sourceChoices = useMemo(() => {
-    const choices = new Map(atlas.records.map(row => [row.source, sourceName(row.source)]));
-    for (const row of daily.data?.source_coverage ?? []) {
-      if (row.documents > 0) choices.set(bundle.channels.find(channel => channel.acquisition_source === row.source_id)?.id ?? row.source_id, row.source_name);
-    }
-    return [...choices].map(([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label));
-  }, [atlas.records, sourceName, daily.data, bundle.channels]);
+  const sourceChoices = reportingSources.choices;
   const sourceLabel = (id: string) => sourceChoices.find(item => item.value === id)?.label ?? sourceName(id);
   const globeLayout = useMemo<GlobeLink[]>(() => groupGeographicLinks(atlas.map_links, lookup).map(group => {
     const link = group.entries.at(-1)!.link;
@@ -481,14 +477,14 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
     const broaden = ids.some(id => !candidateIds.has(id));
     const targetDocuments = reportDocuments(broaden ? rows : candidates, basis, topics, sources);
     if (broaden) { setPlaces([]); setDiseases([]); }
-    const targetChronology = reportChronology(targetDocuments, !topics.length && (!diseases.length || broaden) && !kind.length && daily.data ? pendingDailyDocuments(dailySelection(daily.data, window, sources, broaden ? [] : places), new Set(bundle.records.map(row => row.id))) : [], id => atlasDocuments.get(id)!, daily.data?.documents, publicationBindings);
+    const targetChronology = reportChronology(targetDocuments, !topics.length && (!diseases.length || broaden) && !kind.length && daily.data ? pendingDailyDocuments(dailySelection(daily.data, window, reportingSources.dailySources(sources), broaden ? [] : places), new Set(bundle.records.map(row => row.id))) : [], id => atlasDocuments.get(id)!, daily.data?.documents, publicationBindings);
     const targets = highlightedReportIds(targetChronology, ids, documentIds);
     const index = targetChronology.findIndex(entry => targets.has(entry.id));
     setTopic(topics); setSource(sources); setTab("reports"); setReviewerOpen(false); setHover(null);
     setReportEvidence({ recordIds: ids, documentIds });
     setReportPage({ scope: JSON.stringify([basis, window, topics, sources, broaden ? [] : places, broaden ? [] : diseases, includeContext, kind]), index: index < 0 ? 0 : Math.floor(index / reportsPerPage) });
     setReportJump({ documentId: index < 0 ? null : targetChronology[index].id, expand });
-  }, [bundle, places, diseases, includeContext, rows, basis, reportDocuments, window, kind, daily.data, atlasDocuments, publicationBindings]);
+  }, [bundle, places, diseases, includeContext, rows, basis, reportDocuments, window, kind, daily.data, atlasDocuments, publicationBindings, reportingSources]);
   const showReports = useCallback((ids: string[], expand?: boolean) => openReports(ids, [], [], expand), [openReports]);
   const showDailyReport = useCallback((id: string) => {
     const index = documents.findIndex(entry => entry.dailyVersions.some(document => document.id === id));
