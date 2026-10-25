@@ -17,7 +17,7 @@
 .prediction, .countChecks { display: grid; grid-row: span 3; grid-template-rows: subgrid; min-width: 0; min-height: 0; }
 :is(.prediction, .countChecks) > .chart { display: grid; grid-row: 1 / span 2; grid-template-rows: subgrid; min-height: 0; min-width: 0; margin: 0; }
 :is(.prediction, .countChecks) > .chart .predictionSvg { height: 100%; min-height: 0; }
-.observationDetails { contain: size; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+.observationDetails { contain: size; min-width: 0; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; }
 .unavailableBadge { display: inline-block; margin-left: 5px; font-size: 10px; font-weight: 400; color: var(--muted-foreground); }
 .unavailableMessage { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; min-width: 0; min-height: 0; padding: 20px; border-radius: 10px; background: color-mix(in srgb, var(--primary) 3%, var(--background)); color: var(--muted-foreground); font-size: 12px; line-height: 1.5; text-align: center; }
 .unavailableMessage strong { color: var(--foreground); font-size: 12px; font-weight: 550; }
@@ -27,7 +27,7 @@
 .observationFigure :global(.atlas-observation-chart) { height: 100%; aspect-ratio: auto; min-height: 0; margin: 0; }
 .observationFigure figcaption { display: grid; gap: 2px; text-align: center; }
 .observationFigure figcaption strong { font-weight: 500; }
-.reportedSources > :global(.atlas-observation-details) { contain: size; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+.reportedSources > :global(.atlas-observation-details) { contain: size; min-width: 0; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; }
 .reportedSources :global(.atlas-observation-item) { padding: 4px 6px; margin-bottom: 6px; background: color-mix(in srgb, var(--primary) 3%, var(--background)); }
 .observationPoint { cursor: var(--cursor-pointer, pointer); }
 .observationPoint :is(.historyPoint, .actualPoint), .signalEvaluation :is(.interval, .predictionPoint, .expectedPoint, .thresholdMark) { pointer-events: none; }
@@ -48,7 +48,7 @@
 .disclosure[open] > summary::after { content: "−"; }
 .disclosure p, .disclosure ul { margin: 12px 0; }
 .disclosure a { color: var(--primary); }
-.disclosure blockquote { margin: 10px 0; padding: 4px 0 4px 12px; border-left: 2px solid var(--border); color: var(--foreground); white-space: normal; max-height: 260px; overflow-y: auto; overscroll-behavior: contain; }
+.disclosure blockquote { margin: 10px 0; padding: 4px 0 4px 12px; border-left: 2px solid var(--border); color: var(--foreground); white-space: normal; max-height: 260px; overflow-y: auto; }
 .disclosure cite { display: block; margin-top: 5px; font-size: 10px; color: var(--muted-foreground); }
 .sources { padding: 0; list-style: none; margin: 12px 0; }
 .sources li { margin: 12px 0; }
@@ -163,9 +163,9 @@
 .evaluationControls > div:first-child :global(.atlas-select-options) { left: 0; right: auto; }
 .evaluationControls > div:has([aria-disabled="true"]) .controlLabel { color: var(--muted-foreground); }
 @keyframes evaluationMenuIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-.analysis:is([data-view="signals"], [data-view="spatial"], [data-view="relationships"], [data-expanded]) { display: grid; grid-template-rows: auto minmax(0, 1fr); height: min(760px, calc(100dvh - var(--atlas-toolbar-height, 58px) - 112px)); min-height: 0; padding-bottom: 0; }
+.analysis:is([data-view="signals"], [data-view="spatial"], [data-view="relationships"], [data-view="landscape"], [data-expanded]) { display: grid; grid-template-rows: auto minmax(0, 1fr); height: min(760px, calc(100dvh - var(--atlas-toolbar-height, 58px) - 112px)); min-height: 0; padding-bottom: 0; }
 .analysis[data-view="signals"] { height: min(800px, calc(100dvh - var(--atlas-toolbar-height, 58px) - 72px)); }
-.analysis:is([data-view="signals"], [data-view="spatial"], [data-view="relationships"], [data-expanded]) .analysisContent { min-height: 0; }
+.analysis:is([data-view="signals"], [data-view="spatial"], [data-view="relationships"], [data-view="landscape"], [data-expanded]) .analysisContent { min-height: 0; }
 .signalContent { height: 100%; min-height: 0; min-width: 0; overflow: hidden; }
 .evaluation { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px; height: 100%; min-width: 0; min-height: 0; }
 .evaluation > .evaluationControls { margin: 0; }
@@ -175,10 +175,10 @@
 .detailHeading h3 { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; font-weight: 600; }
 .detailHeading h3 svg { flex-shrink: 0; color: var(--primary); }
 .detailHeading > span { color: var(--muted-foreground); font-size: 10px; }
-:global(.atlas-page[data-fullscreen]) .analysis:is([data-view="signals"], [data-view="spatial"], [data-view="relationships"], [data-expanded]) { height: 100%; }
+:global(.atlas-page[data-fullscreen]) .analysis:is([data-view="signals"], [data-view="spatial"], [data-view="relationships"], [data-view="landscape"], [data-expanded]) { height: 100%; }
 
 .performanceFrame { position: relative; min-height: 0; }
-.performanceCards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 7px; height: 100%; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.performanceCards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 7px; height: 100%; min-height: 0; overflow-y: auto; scrollbar-width: none; }
 .performanceCards::-webkit-scrollbar { display: none; }
 @media (forced-colors: active) { .performanceCards { scrollbar-width: auto; } .performanceCards::-webkit-scrollbar { display: block; } }
 .performanceCard { position: relative; min-width: 0; padding: 8px; border: 1px solid color-mix(in srgb, var(--primary) 16%, var(--border)); border-radius: 10px; background: color-mix(in srgb, var(--primary) 3%, var(--background)); transition: background-color .18s ease, border-color .18s ease; }
@@ -243,3 +243,6 @@
     .analysis .chart .forecastLegend .predictionLegend { min-height: 16px; }
   }
 }
+
+.analysis[data-view="landscape"] { grid-template-rows:minmax(0,1fr); height:min(900px,calc(100dvh - var(--atlas-toolbar-height,58px) - 70px)); min-height:650px; }
+:global(.atlas-page[data-fullscreen]) .analysis[data-view="landscape"] { grid-template-rows:minmax(0,1fr); height:100%; min-height:0; }

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { intelligenceSchema } from '../src/lib/atlas-intelligence';
-import { atlasSelect, selectAtlasOption, selectedAtlasValue } from './atlas-select-actions';
+import { atlasSelect, selectAtlasOption, selectedAtlasValue, openAtlasView } from './atlas-select-actions';
 
 test.use({ baseURL: process.env.ATLAS_INTELLIGENCE_PREVIEW_URL ?? 'http://127.0.0.1:3005' });
 
@@ -399,7 +399,7 @@ for (const width of [1440, 390]) test(`Merged Intelligence navigation and eviden
   await expect(analysis.getByRole('region', { name: 'Signal overview' })).toHaveCount(0);
   await expect(analysis.getByRole('group', { name: 'Signals views', exact: true })).toHaveCount(0);
   await expect(analysis.getByRole('region', { name: 'First country connections', exact: true })).toHaveCount(0);
-  await selectAtlasOption(analysis, 'Analysis view', 'spatial');
+  await openAtlasView(page, 'spatial');
   await expect(page.locator('.atlas-connection').first()).toBeVisible();
 
   await tabs.getByRole('tab', { name: 'Reports', exact: true }).click();
@@ -547,7 +547,7 @@ test('Floating pages stay clear of the mobile dock', async ({ page }) => {
     await expect(control.locator('summary')).toContainText('2 /');
   }
   await tabs.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  await selectAtlasOption(page, 'Analysis view', 'spatial');
+  await openAtlasView(page, 'spatial');
   await control.getByRole('button', { name: /^Next/ }).click();
   await expect(control.locator('summary')).toContainText('2 /');
   await tabs.getByRole('tab', { name: 'One Health', exact: true }).click();
@@ -682,16 +682,16 @@ test('Evidence views share the same gap below the main menu', async ({ page }) =
     }
     for (const [tab, selector] of [
       ['Trends', '.atlas-trend-activity > header'],
-      ['Analysis', '[aria-label="Experimental analysis"] > header'],
+      ['Analysis', '.atlas-analysis > header'],
       ['One Health', '.atlas-oh-tools'],
       ['Reports', '.atlas-report-tools'],
-      ['Journeys', '.atlas-geographic-journeys, .atlas-connection .atlas-entry-heading'],
+      ['Journeys', '.atlas-chain-toolbar, .atlas-spatial-links > header'],
     ]) {
       await tabs.getByRole('tab', { name: tab, exact: true }).click();
       await checkGap(selector);
       if (tab === 'Analysis') {
         for (const name of ['relationships', 'spatial']) {
-          await selectAtlasOption(page, 'Analysis view', name);
+          await openAtlasView(page, name);
           await checkGap(selector);
         }
       }

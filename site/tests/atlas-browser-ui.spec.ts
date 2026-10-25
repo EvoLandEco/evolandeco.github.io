@@ -1,4 +1,4 @@
-import { selectAtlasOption } from './atlas-select-actions';
+import { selectAtlasOption, openAtlasView } from './atlas-select-actions';
 import { test, expect, type Page, type Locator } from '@playwright/test';
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -169,8 +169,7 @@ test('Geographic cards load exact source quotations when expanded and release th
   const source = candidate();
   const map = JSON.parse(readFileSync(path.join(source.directory, source.manifest.map_core), 'utf8')) as AtlasBrowserMap;
   const { errors } = await serve(page, source);
-  await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  await selectAtlasOption(page, 'Analysis view', 'spatial');
+  await openAtlasView(page, 'spatial');
   const entries = page.locator('.atlas-connection[data-link-id]');
   await expect(entries.first()).toBeVisible();
   const ids = await entries.evaluateAll(elements => elements.map(element => element.getAttribute('data-link-id')));

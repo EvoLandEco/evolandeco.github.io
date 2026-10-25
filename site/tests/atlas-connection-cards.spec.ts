@@ -1,4 +1,4 @@
-import { selectAtlasOption } from './atlas-select-actions';
+import { openAtlasView, selectAtlasOption } from './atlas-select-actions';
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { routeBrowserFixture } from './atlas-browser-fixture.mjs';
@@ -13,9 +13,8 @@ for (const [width, fullscreen] of [[390, false], [1440, false], [1440, true]] as
   if (fullscreen) await page.getByRole('button', { name: 'Click to enter full screen' }).press('Enter');
   await page.getByRole('tab', { name: 'Journeys', exact: true }).click();
   await expect(page.locator('.atlas-connection-workspace')).toHaveCount(0);
-  for (const view of ['Spatial links', 'Report relationships']) {
-    await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-    await selectAtlasOption(page, 'Analysis view', view === 'Spatial links' ? 'spatial' : 'relationships');
+  for (const view of ['Spatial links']) {
+    await openAtlasView(page, view === 'Spatial links' ? 'spatial' : 'relationships');
     const collection = page.locator('.atlas-connection-workspace');
     const card = collection.locator('.atlas-connection').first();
     await expect(card).toBeVisible();
@@ -34,13 +33,6 @@ for (const [width, fullscreen] of [[390, false], [1440, false], [1440, true]] as
     const columns = await collection.locator('.atlas-connection').evaluateAll(cards => new Set(cards.map(card => Math.round(card.getBoundingClientRect().x))).size);
     if (width === 390) expect(columns).toBe(1);
     else expect(columns).toBeGreaterThan(1);
-    if (view === 'Report relationships') {
-      if (!fullscreen) await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
-      await expect.poll(async () => {
-        const header = (await page.locator('.atlas-analysis > header').boundingBox())!;
-        return (await card.boundingBox())!.y - header.y - header.height;
-      }).toBeGreaterThanOrEqual(15);
-    }
     const title = await card.locator('h3').textContent();
     const counts = await card.locator('.atlas-card-counts dd').allTextContents();
     expect(counts).toHaveLength(3);
@@ -62,7 +54,6 @@ for (const [width, fullscreen] of [[390, false], [1440, false], [1440, true]] as
     await collection.locator('.atlas-connection-scroll').evaluate(element => { element.scrollTop = 0; });
     await collection.screenshot({ path: `/tmp/atlas-masonry-${view.replaceAll(' ', '-')}-${width}-${fullscreen}.png` });
     if (fullscreen) {
-      if (view === 'Report relationships') await page.locator('.atlas-workspace').screenshot({ path: '/tmp/atlas-masonry-relationships-controls.png' });
       await page.setViewportSize({ width: 1100, height: 900 });
       await masonry();
       await page.setViewportSize({ width, height: 900 });
@@ -72,4 +63,76 @@ for (const [width, fullscreen] of [[390, false], [1440, false], [1440, true]] as
   await page.getByRole('tab', { name: 'Reports', exact: true }).click();
   await expect(page.locator('.atlas-connection-workspace')).toHaveCount(0);
   await expect(page.locator('.atlas-report-list > .atlas-report').first()).toBeVisible();
+});
+
+for (const [width, fullscreen, reduced] of [[390, false, true], [1440, false, false], [1440, true, false]] as const) test(`Relationship network expands evidence details and returns at ${width}px, fullscreen ${fullscreen}`, async ({ page }) => {
+  await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
+  await page.setViewportSize({ width, height: 900 });
+  await page.emulateMedia({ reducedMotion: reduced ? 'reduce' : 'no-preference' });
+  await page.goto('/atlas/');
+  await expect(page.locator('.atlas-page[data-ready="true"]')).toBeVisible();
+  if (fullscreen) await page.getByRole('button', { name: 'Click to enter full screen' }).press('Enter');
+  await openAtlasView(page, 'relationships');
+  const network = page.locator('svg[aria-label="Relationship evidence network"]');
+  await expect(network).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Relationship presentation' })).toHaveCount(0);
+  await expect(page.locator('.atlas-connection')).toHaveCount(0);
+  await selectAtlasOption(page, 'Report relationship', { index: 0 });
+  const summary = page.getByRole('complementary', { name: 'Selected relationship', exact: true });
+  const title = await summary.locator('h3').textContent();
+  const selected = await network.locator('[data-selected="true"]').getAttribute('aria-label');
+  const card = page.locator('.atlas-connection[data-expanded="true"]');
+  for (let cycle = 0; cycle < 2; cycle++) {
+    await summary.getByRole('button', { name: 'View details', exact: true }).click();
+    await expect(card).toBeVisible();
+    await expect(card.locator('h3')).toHaveText(title!);
+    await expect(network).toBeHidden();
+    await expect(card.getByRole('button', { name: 'Back to network', exact: true })).toBeFocused();
+    await expect(card.getByRole('heading', { name: 'Source evidence', exact: true })).toBeVisible();
+    const bounds = (await card.boundingBox())!;
+    const container = (await page.locator('.atlas-connection-workspace').boundingBox())!;
+    expect(bounds.width).toBeCloseTo(container.width, 0);
+    expect(bounds.height).toBeCloseTo(container.height, 0);
+    expect(bounds.y).toBeGreaterThanOrEqual((await page.locator('.atlas-analysis > header').boundingBox())!.y);
+    await expect(card.getByRole('region', { name: 'Connection details', exact: true })).toHaveCSS('scrollbar-width', 'none');
+    await expect(page.locator('html')).not.toHaveAttribute('data-atlas-connection-transition');
+    if (cycle === 0) await card.getByRole('button', { name: 'Back to network', exact: true }).click();
+    else await page.keyboard.press('Escape');
+    await expect(card).toHaveCount(0);
+    await expect(network).toBeVisible();
+    await expect(network.locator('[data-selected="true"]')).toHaveAttribute('aria-label', selected!);
+    await expect(summary.getByRole('button', { name: 'View details', exact: true })).toBeFocused();
+    await expect(page.locator('html')).not.toHaveAttribute('data-atlas-connection-transition');
+  }
+});
+
+for (const reduced of [false, true]) test(`Relationship groups preserve filters and return through expansion, reduced motion ${reduced}`, async ({ page }) => {
+  await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ reducedMotion: reduced ? 'reduce' : 'no-preference' });
+  await page.goto('/atlas/');
+  await expect(page.locator('.atlas-page[data-ready="true"]')).toBeVisible();
+  await page.getByRole('button', { name: 'Click to enter full screen' }).press('Enter');
+  await openAtlasView(page, 'relationships');
+  const graph = page.getByRole('img', { name: 'Relationship evidence network' });
+  const publisher = page.getByRole('group', { name: 'Filter groups by reporting source' }).getByRole('button').first();
+  await publisher.click();
+  await expect(publisher).toHaveAttribute('aria-pressed', 'true');
+  const count = await graph.getByRole('button').count();
+  const group = graph.getByRole('button').first();
+  const name = await group.getAttribute('aria-label');
+  await group.press('Enter');
+  await expect(page.getByRole('complementary', { name: 'Evidence group overview' })).toBeVisible();
+  await expect(graph.locator('[data-expanded-group]')).toHaveCount(1);
+  await page.getByRole('button', { name: 'All groups', exact: true }).click();
+  await expect(graph.locator('[data-expanded-group]')).toHaveCount(0);
+  await expect(graph.getByRole('button', { name: name!, exact: true })).toBeVisible();
+  await expect(publisher).toHaveAttribute('aria-pressed', 'true');
+  await expect(graph.getByRole('button')).toHaveCount(count);
+  const reset = page.getByRole('button', { name: 'Clear group filters' });
+  const box = await reset.boundingBox();
+  expect(Math.abs(box!.width - box!.height)).toBeLessThan(1);
+  await reset.click();
+  await expect(reset).toBeDisabled();
+  await expect(publisher).toHaveAttribute('aria-pressed', 'false');
 });

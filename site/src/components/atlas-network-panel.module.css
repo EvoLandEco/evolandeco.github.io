@@ -17,7 +17,7 @@
 .card > header > small { font-size: 10px; color: var(--muted-foreground); white-space: nowrap; padding-top: 2px; }
 .search { display: flex; align-items: center; gap: 7px; margin: 10px 0 4px; padding: 5px 8px; border-radius: 7px; color: var(--primary); background: color-mix(in srgb, var(--primary) 5%, transparent); }
 .search input { width: 100%; min-width: 0; border: 0; background: transparent; font: inherit; color: var(--foreground); font-size: 11px; outline-offset: 3px; }
-.tableScroll, .sources { max-height: 212px; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.tableScroll, .sources { max-height: 212px; overflow: auto; scrollbar-width: thin; }
 .table { width: 100%; border-collapse: collapse; font-size: 11px; font-variant-numeric: tabular-nums; }
 .table th, .table td { padding: 7px 3px; text-align: right; border-bottom: 1px solid color-mix(in srgb, var(--primary) 8%, transparent); }
 .table thead th { font-size: 9px; font-weight: 500; color: var(--muted-foreground); position: sticky; top: 0; background: var(--background); z-index: 1; }
@@ -67,7 +67,7 @@
 .network .action { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; padding: 4px 7px; min-height: 26px; border: 0; border-radius: 6px; background: color-mix(in srgb, var(--primary) 6%, transparent); color: var(--primary); font-size: 10px; }
 .network .action:disabled { opacity: .5; }
 .evidenceSummary { padding: 10px 0; font-size: 11px; color: var(--muted-foreground); }
-.statements { max-height: 380px; overflow-y: auto; overscroll-behavior: contain; }
+.statements { max-height: 380px; overflow-y: auto; }
 .statement { padding: 10px 0; border-top: 1px solid color-mix(in srgb, var(--primary) 10%, transparent); font-size: 12px; line-height: 1.55; }
 .statement > summary { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; color: var(--foreground); font-weight: 550; cursor: pointer; }
 .statement > summary::before { content: '+'; color: var(--atlas-green); }

@@ -1,5 +1,5 @@
 import { browserFixture, routeBrowserFixture } from "./atlas-browser-fixture.mjs";
-import { selectAtlasOption } from "./atlas-select-actions";
+import { selectAtlasOption, openAtlasView } from "./atlas-select-actions";
 import { test, expect, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import type { AtlasMapSnapshot } from "../src/lib/atlas-contract";
@@ -103,8 +103,7 @@ test("ATLAS entry, date windows, evidence and source focus", async ({ page }) =>
   await expect(page.locator(".atlas-timeline-next")).toBeVisible();
   await page.getByRole("button", { name: "All dates", exact: true }).click();
   await expect(page.locator(".atlas-timeline-next")).toBeVisible();
-  await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  await selectAtlasOption(page, 'Analysis view', 'spatial');
+  await openAtlasView(page, 'spatial');
   await expect(page.locator(".atlas-connection")).toHaveCount(Math.min(12, routeGroups.length));
   await expect(page.locator('.atlas-geographic-route[data-directed="true"] .atlas-geographic-route-arrow')).toHaveCount(routeGroups.slice(0, 12).filter(g => g.entries.at(-1)!.link.directed).length);
   await expect(page.locator('.atlas-geographic-route[data-directed="false"] .atlas-geographic-route-arrow')).toHaveCount(0);
@@ -115,8 +114,7 @@ test("ATLAS entry, date windows, evidence and source focus", async ({ page }) =>
   await page.getByRole("button", { name: "Reset all", exact: true }).click();
   await select(page, "Reporting topic", "Bundibugyo imported case · France");
   await expect(page.locator(".atlas-location-note")).toContainText("Country reference");
-  await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  await selectAtlasOption(page, 'Analysis view', 'spatial');
+  await openAtlasView(page, 'spatial');
   await expect(page.locator(".atlas-connection")).toHaveCount(1);
   await page.getByRole("button", { name: "Locate Reported return travel · Bundibugyo" }).click();
   await expect(page.locator(".atlas-evidence blockquote").first()).toBeVisible();
@@ -128,7 +126,8 @@ test("ATLAS entry, date windows, evidence and source focus", async ({ page }) =>
   await page.getByRole("tab", { name: "Reports", exact: true }).click();
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   await selectAtlasOption(page, 'Analysis view', 'relationships');
-  await expect(page.locator(".atlas-connection")).toHaveCount(Math.min(12, snapshot.relationships.length));
+  await expect(page.locator('svg[aria-label="Relationship evidence network"]')).toBeVisible();
+  await expect(page.locator(".atlas-connection")).toHaveCount(0);
   await page.getByRole("tab", { name: "Reports", exact: true }).click();
   await page.getByRole('button', { name: 'Source coverage', exact: true }).click();
   await page.getByRole("button", { name: "Reports from RIVM", exact: true }).click();
@@ -503,6 +502,7 @@ test("View evidence scrolls to matching reports and highlights their support", a
     await page.getByRole("button", { name: "Reported return travel · Bundibugyo", exact: true }).focus();
     await page.keyboard.press("Enter");
     await expect(page.locator('.atlas-analysis')).toHaveAttribute('data-view', 'spatial');
+    await expect(page.getByRole('tab', { name: 'Journeys', exact: true })).toHaveAttribute('aria-selected', 'true');
     await page.getByRole("link", { name: "View evidence", exact: true }).click();
     await expect(page.getByRole("tab", { name: /^Reports/ })).toHaveAttribute("aria-selected", "true");
     await expect(highlighted).toHaveCount(1);
@@ -566,9 +566,10 @@ test("Assessment evidence and source coverage land on their report pages", async
   await select(page, "Report page, side", `Page ${documentPages} of ${documentPages}`);
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   await selectAtlasOption(page, 'Analysis view', 'relationships');
-  const assessment = page.locator(".atlas-connection").first();
-  await assessment.getByText("Evidence & scope", { exact: true }).click();
-  await assessment.getByRole("button", { name: "View report", exact: true }).first().click();
+  await selectAtlasOption(page, "Report relationship", snapshot.relationships[0].id);
+  await page.getByRole("button", { name: "View details", exact: true }).click();
+  const assessment = page.locator(".atlas-connection");
+  await assessment.locator(".atlas-card-sources button").first().click();
   const target = page.locator('.atlas-report[data-evidence="true"]');
   await expect(target).toHaveCount(1);
   await expect(target).toHaveAttribute("id", "atlas-report-doc_7641c48c3fa91de32057ede8");
@@ -1388,16 +1389,16 @@ for (const width of [390, 1280]) test(`Expanded evidence headings stay reachable
   await expect(report).not.toHaveAttribute("open", "");
   await expect.poll(async () => (await report.locator(":scope > summary").boundingBox())!.y).toBeGreaterThanOrEqual(-1);
   for (const name of ["Journeys", "Relationships"]) {
-    await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-    await selectAtlasOption(page, 'Analysis view', name === 'Relationships' ? 'relationships' : 'spatial');
+    await openAtlasView(page, name === 'Relationships' ? 'relationships' : 'spatial');
+    if (name === "Relationships") await selectAtlasOption(page, "Report relationship", { index: 0 });
     const entry = page.locator(".atlas-connection").first();
-    await entry.getByRole('button', { name: 'View details', exact: true }).click();
+    await page.getByRole('button', { name: 'View details', exact: true }).first().click();
     const heading = entry.locator(':scope > .atlas-entry-heading');
     const top = (await heading.boundingBox())!.y;
     await entry.locator('.atlas-card-body').evaluate(element => { element.scrollTop = element.scrollHeight; });
     expect((await heading.boundingBox())!.y).toBe(top);
     await page.keyboard.press('Escape');
-    await expect(entry.getByRole('button', { name: 'View details', exact: true })).toBeFocused();
+    await expect(page.getByRole('button', { name: 'View details', exact: true }).first()).toBeFocused();
   }
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
@@ -1503,16 +1504,14 @@ for (const width of [390, 1280]) test(`Route history retains evidence and the gl
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-for (const width of [390, 1280]) test(`Links and assessments paginate and reset at ${width}px`, async ({ page }) => {
+for (const width of [390, 1280]) test(`Spatial links paginate and reset at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 950 });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/atlas/");
-  for (const [tab, entity, attribute, ids] of [
-    ["Journeys", "Geographic link", "data-link-id", routeGroups.map(g => g.entries.at(-1)!.link.id)],
-    ["Relationships", "Assessment", "data-assessment-id", snapshot.relationships.map(a => a.id)],
+  for (const [entity, attribute, ids] of [
+    ["Geographic link", "data-link-id", routeGroups.map(g => g.entries.at(-1)!.link.id)],
   ] as const) {
-    await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-    await selectAtlasOption(page, 'Analysis view', tab === 'Relationships' ? 'relationships' : 'spatial');
+    await openAtlasView(page, 'spatial');
     const entries = page.locator(".atlas-connection");
     const pages = Math.ceil(ids.length / 12);
     const shown = () => entries.evaluateAll((items, attr) => items.map(item => item.getAttribute(attr)), attribute);
@@ -1520,7 +1519,7 @@ for (const width of [390, 1280]) test(`Links and assessments paginate and reset 
     await showPageControl(page);
     await page.getByRole("navigation", { includeHidden: true, name: `${entity} pages, side` }).getByRole("button", { name: `Next ${entity.toLowerCase()} page` }).click();
     await expect.poll(shown).toEqual(ids.slice(12, 24));
-    await expect(page.locator(tab === "Relationships" ? "#atlas-assessments-heading" : "#atlas-links-heading")).toBeFocused();
+    await expect(page.locator("#atlas-links-heading")).toBeFocused();
     await select(page, `${entity} page, side`, `Page ${pages} of ${pages}`);
     await expect.poll(shown).toEqual(ids.slice((pages - 1) * 12));
     await expect(page.getByRole("navigation", { includeHidden: true, name: `${entity} pages, side` }).getByRole("button", { name: `Next ${entity.toLowerCase()} page` })).toBeDisabled();
@@ -1856,7 +1855,7 @@ test('EU/EEA report mentions display a loaded EU flag', async ({ page }) => {
   await claim.screenshot({ path: '/tmp/atlas-eu-eea-flag.png' });
 });
 
-for (const [width, fullscreen] of [[390, false], [1440, true]] as const) test(`Reports and Analysis preserve separate pages at ${width}px`, async ({ page }) => {
+for (const [width, fullscreen] of [[390, false], [1440, true]] as const) test(`Reports and Analysis preserve their selections at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 900 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/atlas/');
@@ -1870,14 +1869,13 @@ for (const [width, fullscreen] of [[390, false], [1440, true]] as const) test(`R
   const report = await page.locator('.atlas-report').first().getAttribute('id');
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   await selectAtlasOption(page, 'Analysis view', 'relationships');
-  if (!fullscreen) await showPageControl(page);
-  await page.getByRole('button', { name: 'Next assessment page', exact: true }).click();
-  const assessment = await page.locator('.atlas-connection').first().getAttribute('data-assessment-id');
+  await selectAtlasOption(page, 'Report relationship', { index: 13 });
+  const selected = await page.locator('svg[aria-label="Relationship evidence network"] [data-selected="true"]').getAttribute('aria-label');
   await page.getByRole('tab', { name: 'Reports', exact: true }).click();
   await expect(page.locator('.atlas-report').first()).toHaveAttribute('id', report!);
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   await expect(page.locator('.atlas-analysis')).toHaveAttribute('data-view', 'relationships');
-  await expect(page.locator('.atlas-connection').first()).toHaveAttribute('data-assessment-id', assessment!);
+  await expect(page.locator('svg[aria-label="Relationship evidence network"] [data-selected="true"]')).toHaveAttribute('aria-label', selected!);
   await expect(page.locator('.atlas-report-tools')).toHaveCount(0);
   expect((await new AxeBuilder({ page }).include('.atlas-workspace').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

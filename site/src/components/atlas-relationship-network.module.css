@@ -1,0 +1,146 @@
+.workspace { position: relative; height: 100%; min-width: 0; min-height: 0; }
+.networkView { height: 100%; min-width: 0; min-height: 0; }
+.networkView[data-obscured="true"] { visibility: hidden; }
+.expandedDetail { position: absolute; inset: 0; min-width: 0; min-height: 0; }
+:global(.atlas-page[data-fullscreen] .atlas-workspace-scroll):has(.workspace) { display: grid; grid-template-rows: minmax(0, 1fr); overflow: hidden; scrollbar-gutter: auto; }
+:global(.atlas-page[data-fullscreen] #atlas-panel):has(.workspace) { min-height: 0; }
+.network { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 32%); gap: 14px; min-width: 0; min-height: 0; height: 100%; container-type: inline-size; }
+.network [data-tone="sage"] { --connection-color: var(--atlas-green); }
+.network [data-tone="blue"] { --connection-color: var(--primary); }
+.network [data-tone="coral"] { --connection-color: #bb715c; }
+.network [data-tone="violet"] { --connection-color: #8470b1; }
+.network [data-tone="teal"] { --connection-color: #408b96; }
+:global(.dark) .network [data-tone="coral"] { --connection-color: #dfa68b; }
+:global(.dark) .network [data-tone="violet"] { --connection-color: #b2a1e0; }
+:global(.dark) .network [data-tone="teal"] { --connection-color: #80bdc6; }
+.canvasPane { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-width: 0; min-height: 0; overflow: hidden; border-radius: 14px; background: radial-gradient(ellipse at 55% 42%, color-mix(in srgb, var(--atlas-green) 9%, transparent), transparent 70%), linear-gradient(145deg, color-mix(in srgb, var(--primary) 4%, var(--background)), var(--background)); }
+.canvasTools { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 7px; padding: 10px 12px 0; z-index: 1; }
+.canvasTitle { display: flex; align-items: center; gap: 6px; margin: 0; min-height: 28px; font-size: 11px; font-weight: 550; color: var(--muted-foreground); }
+.workspace button.filterReset { display: grid; place-items: center; flex: none; width: 26px; height: 26px; min-height: 26px; padding: 0; margin-left: 3px; border: 0; border-radius: 50%; color: var(--primary); background: color-mix(in srgb, var(--primary) 9%, transparent); cursor: pointer; }
+.workspace button.filterReset:disabled { opacity: .3; background: transparent; cursor: default; }
+.workspace :is(.filterReset, .legend > button, .publisherKey > button, .returnGroups) { box-shadow: none; }
+.canvasFooter { display: grid; place-items: center; min-height: 48px; padding: 8px 10px 10px; }
+.workspace button.returnGroups { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 30px; padding: 6px 14px; border: 0; border-radius: 999px; color: var(--atlas-green); background: color-mix(in srgb, var(--atlas-green) 10%, var(--background)); font-size: 11px; font-weight: 550; cursor: pointer; transition: background .18s; }
+.workspace button.returnGroups:hover { background: color-mix(in srgb, var(--atlas-green) 17%, var(--background)); }
+.stage { position: relative; min-height: 0; overflow: hidden; contain: layout paint; }
+.graph { display: block; width: 100%; height: 100%; overflow: hidden; }
+.gridDot { fill: var(--primary); opacity: .08; }
+.overviewArt { transition: opacity .32s, visibility 0s; }
+.stage[data-focused="true"] .overviewArt { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .32s, visibility 0s .32s; }
+.groupGlyph { cursor: pointer; outline: none; transition: transform .24s cubic-bezier(.2,.8,.2,1), opacity .18s; }
+.overviewArt:has(.groupGlyph:hover) .groupGlyph:not(:hover),
+.overviewArt:not(:has(.groupGlyph:hover)):has(.groupGlyph:focus-visible) .groupGlyph:not(:focus-visible) { opacity: .2; }
+.groupSurface { fill: transparent; }
+.groupRing { fill: none; stroke: var(--connection-color); stroke-linecap: round; opacity: .65; pointer-events: none; transition: opacity .24s; }
+.groupCore { pointer-events: none; }
+.sourceFill { fill: color-mix(in srgb, var(--source-color) 68%, var(--background)); }
+:global(.dark) .sourceFill { fill: color-mix(in srgb, var(--source-color) 78%, var(--background)); }
+.sourceUnknown { fill: color-mix(in srgb, var(--muted-foreground) 22%, var(--background)); }
+.groupFocus { fill: none; stroke: var(--primary); stroke-width: 2; opacity: 0; pointer-events: none; }
+.groupGlyph:is(:hover, :focus-visible) .groupRing { opacity: 1; }
+.groupGlyph:focus-visible .groupFocus { opacity: .8; }
+.groupCalloutLayer { position: absolute; inset: 0; pointer-events: none; }
+.groupLeader { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; color: var(--atlas-green); }
+.groupLeader path { fill: none; stroke: currentColor; stroke-width: 1; stroke-linejoin: round; stroke-opacity: .65; stroke-dasharray: 1; animation: group-leader-in .18s ease-out; }
+.groupLeader circle { fill: var(--background); stroke: currentColor; stroke-width: 1.2; }
+.groupCallout { position: absolute; width: 188px; max-width: calc(100% - 16px); border-radius: 12px; background: linear-gradient(135deg, color-mix(in srgb, var(--atlas-green) 5%, var(--background)), var(--background)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--atlas-green) 18%, var(--border)), 0 6px 20px color-mix(in srgb, var(--primary) 9%, transparent); animation: group-callout-in .16s ease-out; }
+.groupCallout > div { display: grid; gap: 5px; padding: 10px 12px; }
+.groupCallout strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--foreground); font-size: 12px; line-height: 1.4; font-weight: 600; }
+.groupCallout > div > span { color: var(--muted-foreground); font-size: 11px; line-height: 1.4; font-variant-numeric: tabular-nums; }
+.groupCallout small { display: flex; align-items: center; gap: 5px; color: var(--atlas-green); font-size: 10px; line-height: 1.4; }
+.groupCallout small > svg:last-child { margin-left: auto; }
+@keyframes group-callout-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes group-leader-in { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.sector { color: var(--connection-color); }
+.sectorWash { fill: none; stroke: currentColor; stroke-width: 13; stroke-linecap: round; opacity: .045; pointer-events: none; }
+.morphRing { fill: none; stroke: currentColor; stroke-linecap: round; pointer-events: none; }
+.sectorLabel { fill: currentColor; font-size: 6.7px; text-anchor: middle; dominant-baseline: middle; font-weight: 550; letter-spacing: .02em; pointer-events: none; }
+.edge { pointer-events: none; color: var(--connection-color); }
+.edgeGlow { fill: none; stroke: currentColor; stroke-width: 3; opacity: .035; }
+.edgeLine { fill: none; stroke: currentColor; stroke-width: .65; opacity: .25; transition: opacity .15s; }
+.edge[data-type="exposure"] .edgeLine { stroke-dasharray: 3 2.4; }
+.edge[data-type="unresolved"] .edgeLine { stroke-dasharray: .7 2.5; stroke-linecap: round; }
+.edge[data-type="identity"] .edgeLine { stroke-dasharray: 6 2 1 2; }
+.edge[data-type="movement"] .edgeLine { stroke-dasharray: 5 2; }
+.edge[data-active="true"] .edgeGlow { opacity: .14; }
+.edge[data-active="true"] .edgeLine { opacity: .85; stroke-width: 1; }
+.beam { fill: none; stroke: color-mix(in srgb, var(--connection-color) 55%, var(--background)); stroke-width: 1.2; stroke-dasharray: .055 .945; stroke-linecap: round; stroke-dashoffset: 1; animation: flow 5s linear infinite; }
+.network:not([data-playing="true"]) .beam { animation-play-state: paused; opacity: 0; }
+.node { cursor: pointer; color: var(--connection-color); outline: none; }
+.nodeHalo { fill: currentColor; opacity: 0; transition: opacity .16s; }
+.nodeCore { fill: color-mix(in srgb, currentColor 8%, var(--background)); stroke: color-mix(in srgb, currentColor 60%, var(--background)); stroke-width: .8; transition: fill .16s, stroke .16s; }
+.nodeSymbol { stroke-width: 1.6; pointer-events: none; }
+.node[data-kind="report"] .nodeCore { fill: var(--background); stroke: color-mix(in srgb, var(--primary) 45%, var(--background)); stroke-width: .8; }
+.node[data-active="true"] .nodeHalo { opacity: .08; }
+.node[data-active="true"] .nodeCore { stroke: currentColor; fill: color-mix(in srgb, currentColor 14%, var(--background)); }
+.node[data-selected="true"] .nodeCore { stroke-width: 1.25; stroke: currentColor; fill: color-mix(in srgb, currentColor 24%, var(--background)); }
+.node:focus-visible .nodeHalo { stroke: currentColor; stroke-width: .7; opacity: .4; }
+.nodeLabel { fill: var(--muted-foreground); font-size: 5.3px; font-weight: 500; text-anchor: middle; paint-order: stroke; stroke: var(--background); stroke-width: 2px; stroke-linejoin: round; pointer-events: none; }
+.node[data-active="true"] .nodeLabel { fill: var(--foreground); }
+.legend { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px; color: var(--muted-foreground); font-size: 10px; }
+.legend > span { display: inline-flex; align-items: center; gap: 5px; }
+.legend .reportKey { margin-right: 5px; }
+.workspace .legend > button { display: inline-flex; align-items: center; gap: 5px; min-height: 28px; padding: 5px 8px; border: 0; border-radius: 999px; color: var(--muted-foreground); background: transparent; font-size: inherit; cursor: pointer; transition: background .18s, color .18s; }
+.workspace .legend > button:is(:hover, [aria-pressed="true"]) { color: var(--foreground); background: color-mix(in srgb, var(--connection-color) 12%, transparent); }
+.workspace .legend > button[aria-pressed="true"] { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--connection-color) 24%, transparent); }
+.workspace .legend > button:disabled { opacity: .35; background: transparent; cursor: default; }
+.legend [data-tone] > svg { color: var(--connection-color); }
+.legend b { font-weight: 500; color: var(--foreground); font-variant-numeric: tabular-nums; }
+.reportKey { color: var(--primary); }
+.detailPane { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-width: 0; min-height: 0; height: 100%; padding: 12px; border-radius: 12px; background: linear-gradient(150deg, color-mix(in srgb, var(--connection-color) 6%, var(--background)), color-mix(in srgb, var(--primary) 3%, var(--background))); }
+.detailBody { position: relative; min-width: 0; min-height: 0; }
+.detail { height: 100%; min-width: 0; min-height: 0; overflow-y: auto; scrollbar-width: none; padding-bottom: 28px; }
+.detail::-webkit-scrollbar { display: none; }
+.detail:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.detail > header { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.kind { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; color: var(--connection-color); font-weight: 550; }
+.detail h3 { margin: 10px 0 6px; font-size: 16px; font-weight: 600; letter-spacing: -.025em; line-height: 1.35; text-wrap: balance; }
+.status { margin: 0; color: var(--connection-color); font-size: 11px; line-height: 1.5; }
+.endpoints { margin: 18px 0; }
+.endpoints > div:not(.connector) { display: flex; gap: 9px; align-items: center; padding: 10px; border-radius: 10px; background: color-mix(in srgb, var(--background) 65%, transparent); }
+.endpoints p { margin: 0; font-size: 12px; font-weight: 500; line-height: 1.45; }
+.endpointDot { flex-shrink: 0; width: 9px; height: 9px; border-radius: 50%; background: var(--connection-color); border: 2px solid var(--background); box-shadow: 0 0 0 1px color-mix(in srgb, var(--connection-color) 60%, transparent), 0 0 0 5px color-mix(in srgb, var(--connection-color) 8%, transparent); }
+.connector { display: flex; flex-direction: column; align-items: center; color: var(--connection-color); }
+.connector span { width: 1px; height: 10px; background: color-mix(in srgb, var(--connection-color) 45%, transparent); }
+.connector svg { margin: 4px; }
+.figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 16px 0; }
+.figures span { font-size: 9px; color: var(--muted-foreground); text-align: center; line-height: 1.4; }
+.figures strong { display: block; margin-bottom: 2px; color: var(--connection-color); font-size: 20px; font-weight: 550; font-variant-numeric: tabular-nums; }
+.basis { font-size: 12px; line-height: 1.65; margin: 15px 0; }
+.sources { display: grid; gap: 6px; }
+.workspace .sources button { display: flex; align-items: center; gap: 8px; padding: 8px; border: 0; border-radius: 8px; color: var(--primary); background: color-mix(in srgb, var(--primary) 4%, transparent); font-size: 11px; text-align: left; cursor: pointer; }
+.workspace .sources button > svg:last-child { margin-left: auto; }
+.sources small { display: block; margin-top: 2px; color: var(--muted-foreground); font-size: 10px; }
+.sources button > svg { flex-shrink: 0; }
+.sources button > span { min-width: 0; }
+.reportTitle { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
+.sectionTitle { margin: 20px 0 9px; font-size: 11px; font-weight: 550; color: var(--muted-foreground); }
+.publisherKey { display: flex; flex-wrap: wrap; gap: 7px; }
+.workspace .publisherKey > button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border: 0; border-radius: 8px; text-align: left; color: var(--muted-foreground); background: color-mix(in srgb, var(--background) 60%, transparent); font-size: 10px; line-height: 1.4; cursor: pointer; transition: background .18s, color .18s, opacity .18s; }
+.sourceMark { width: 12px; height: 12px; flex: none; }
+.sourceCheck { flex: none; opacity: 0; }
+.publisherKey > button[aria-pressed="true"] .sourceCheck { opacity: 1; }
+.workspace .publisherKey > button:is(:hover, [aria-pressed="true"]) { color: var(--foreground); background: color-mix(in srgb, var(--source-color) 16%, var(--background)); }
+.workspace .publisherKey > button:disabled { opacity: .35; cursor: default; }
+.publisherKey[data-inspecting="true"] > button { opacity: .38; }
+.workspace .publisherKey[data-inspecting="true"] > button[data-highlighted="true"] { opacity: 1; color: var(--foreground); background: color-mix(in srgb, var(--source-color) 16%, var(--background)); }
+.typeProfile { display: grid; gap: 12px; margin: 20px 0; }
+.typeProfile > div { display: grid; grid-template-columns: 13px minmax(0, 1fr) auto; gap: 5px 7px; align-items: center; color: var(--connection-color); font-size: 11px; }
+.typeProfile strong { font-weight: 550; font-variant-numeric: tabular-nums; }
+.typeBar { grid-column: 2 / -1; height: 3px; border-radius: 3px; background: color-mix(in srgb, var(--connection-color) 8%, transparent); overflow: hidden; }
+.typeBar i { display: block; height: 100%; border-radius: inherit; background: var(--connection-color); opacity: .7; }
+.workspace .connectionList button { color: var(--connection-color); background: color-mix(in srgb, var(--connection-color) 5%, transparent); }
+.detailPane .actions { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.workspace button:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--muted-foreground); font-size: 12px; text-align: center; }
+@keyframes flow { to { stroke-dashoffset: 0; } }
+@container atlas-workspace (max-width: 650px) {
+  .network { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(420px, 1fr) min(560px, 100%); overflow-y: auto; scrollbar-width: none; }
+  .detail h3 { font-size: 17px; }
+  .endpoints { display: flex; align-items: center; }
+  .endpoints > div:not(.connector) { flex: 1; }
+  .endpoints .connector { flex-direction: row; margin: 0 4px; }
+  .connector span { height: 1px; width: 6px; }
+  .figures span { font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .beam { animation: none; display: none; } .groupCallout, .groupLeader path { animation: none; } .overviewArt, .stage[data-focused="true"] .overviewArt, .groupGlyph, .groupRing, .legend > button, .publisherKey > button, .returnGroups, .nodeHalo, .nodeCore, .edgeLine { transition: none; } }

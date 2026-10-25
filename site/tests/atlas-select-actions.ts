@@ -22,3 +22,9 @@ export async function selectedAtlasValue(scope: Page | Locator, label: string) {
   await menu.press('Escape');
   return value!;
 }
+
+export async function openAtlasView(page: Page, view: string) {
+  const spatial = view === 'spatial';
+  await page.getByRole('tab', { name: spatial ? 'Journeys' : 'Analysis', exact: true }).click();
+  await selectAtlasOption(page, spatial ? 'Journey view' : 'Analysis view', view);
+}

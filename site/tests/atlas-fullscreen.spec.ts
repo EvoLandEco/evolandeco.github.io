@@ -1,12 +1,12 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { bundle } from './atlas-fixture';
-import { selectAtlasOption } from './atlas-select-actions';
+import { selectAtlasOption, openAtlasView } from './atlas-select-actions';
 
 async function openView(page: Page, name: string) {
   const analysisViews: Record<string, string> = { Signals: 'signals', Risks: 'risk', Relationships: 'relationships', 'Spatial links': 'spatial' };
-  await page.getByRole('tab', { name: analysisViews[name] ? 'Analysis' : name, exact: true }).click();
-  if (analysisViews[name]) await selectAtlasOption(page, 'Analysis view', analysisViews[name]);
+  if (analysisViews[name]) await openAtlasView(page, analysisViews[name]);
+  else await page.getByRole('tab', { name, exact: true }).click();
 }
 
 async function selectCaseObservations(page: Page) {

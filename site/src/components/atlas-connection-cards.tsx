@@ -9,7 +9,7 @@ import { useAtlasMasonry } from "./use-atlas-masonry";
 
 const CardContext = createContext<{ expanded: string | null; transitioning: string | null; label: string; change: (id: string | null) => void } | null>(null);
 
-export function AtlasConnectionCards({ ids, selectedId, label, children }: { ids: string[]; selectedId: string; label: string; children: ReactNode }) {
+export function AtlasConnectionCards({ ids, selectedId, label, children, onReturn }: { ids: string[]; selectedId: string; label: string; children: ReactNode; onReturn?: () => void }) {
   const root = useRef<HTMLElement>(null);
   const [expanded, setExpanded] = useState<string | null>(ids.includes(selectedId) ? selectedId : null);
   const [transitioning, setTransitioning] = useState<string | null>(null);
@@ -38,6 +38,7 @@ export function AtlasConnectionCards({ ids, selectedId, label, children }: { ids
     return () => { observer.disconnect(); element.removeEventListener("scroll", update); };
   }, [expanded, children]);
   function change(id: string | null) {
+    if (id === null && onReturn) { onReturn(); return; }
     const target = id ?? expanded;
     if (!target || !root.current) return;
     const panel = scroll.current;
@@ -87,7 +88,7 @@ export function AtlasConnectionCards({ ids, selectedId, label, children }: { ids
     const finish = () => { if (active.current?.transition === transition) { clear(); active.current = null; } };
     void transition.finished.then(finish, finish);
   }
-  return <CardContext value={{ expanded, transitioning, label, change }}><section ref={root} className="atlas-connection-workspace" data-expanded={!!expanded || undefined} aria-label={label} onKeyDown={event => {
+  return <CardContext value={{ expanded, transitioning: onReturn ? selectedId : transitioning, label, change }}><section ref={root} className="atlas-connection-workspace" data-expanded={!!expanded || undefined} aria-label={label} onKeyDown={event => {
     if (event.key === "Escape" && expanded && !event.defaultPrevented && !(event.target as HTMLElement).closest('dialog, .atlas-select[open]')) { event.preventDefault(); event.stopPropagation(); change(null); }
   }}>
     <div ref={scroll} className="atlas-connection-scroll" tabIndex={expanded ? undefined : 0} aria-label={expanded ? undefined : label}>
@@ -106,7 +107,7 @@ export function AtlasConnectionCard({ id, label, selected, linkId, assessmentId,
   const context = useContext(CardContext)!;
   const expanded = context.expanded === id;
   const reducedMotion = useReducedMotion();
-  return <m.article layout={reducedMotion || context.transitioning === id ? false : "position"} initial={reducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: reducedMotion ? 0 : -12 }} className="atlas-connection atlas-evidence-card" data-card-id={id} data-link-id={linkId} data-assessment-id={assessmentId} data-kind={kind} data-selected={selected} data-expanded={expanded || undefined} hidden={!!context.expanded && !expanded} aria-label={label}>
+  return <m.article layout={reducedMotion || context.transitioning === id ? false : "position"} initial={reducedMotion || expanded ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: reducedMotion ? 0 : -12 }} className="atlas-connection atlas-evidence-card" data-card-id={id} data-link-id={linkId} data-assessment-id={assessmentId} data-kind={kind} data-selected={selected} data-expanded={expanded || undefined} hidden={!!context.expanded && !expanded} aria-label={label}>
     {expanded && <div className="atlas-card-back"><button className="atlas-watch-close" data-card-back data-card-part="control" onClick={() => context.change(null)}><ArrowLeft size={15} aria-hidden />Back to {context.label.toLowerCase()}</button></div>}
     <header id={assessmentId ? `atlas-assessment-${assessmentId}` : undefined} className="atlas-entry-heading atlas-card-heading" data-card-part="heading" tabIndex={-1}>{heading}</header>
     <div className="atlas-card-body" role={expanded ? "region" : undefined} aria-label={expanded ? detailsLabel : undefined} tabIndex={expanded ? 0 : undefined}>{children(expanded)}</div>

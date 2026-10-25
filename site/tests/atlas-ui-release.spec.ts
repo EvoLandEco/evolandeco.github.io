@@ -2,9 +2,9 @@ import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { bundle } from './atlas-fixture';
 import { routeBrowserFixture } from './atlas-browser-fixture.mjs';
-import { atlasSelect } from './atlas-select-actions';
+import { atlasSelect, openAtlasView, selectAtlasOption } from './atlas-select-actions';
 
-for (const width of [390, 1440]) test(`UI 0.8.0 exposes the published analysis views at ${width}px`, async ({ page }) => {
+for (const width of [390, 1440]) test(`UI 0.8.1 exposes the published analysis views at ${width}px`, async ({ page }) => {
   await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
   await page.setViewportSize({ width, height: 1000 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -18,12 +18,23 @@ for (const width of [390, 1440]) test(`UI 0.8.0 exposes the published analysis v
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   const selector = atlasSelect(page, 'Analysis view');
   await selector.locator(':scope > summary').click();
-  await expect(selector.getByRole('option')).toHaveCount(4);
+  await expect(selector.getByRole('option')).toHaveCount(3);
   await expect(selector.locator('button[value="network"]')).toHaveCount(0);
-  for (const value of ['signals', 'spatial', 'relationships', 'risk']) await expect(selector.locator(`button[value="${value}"]`)).toBeVisible();
+  await expect(selector.locator('button[value="spatial"], button[value="landscape"]')).toHaveCount(0);
+  for (const value of ['signals', 'relationships', 'risk']) await expect(selector.locator(`button[value="${value}"]`)).toBeVisible();
   await selector.press('Escape');
   await expect(page.getByRole('region', { name: 'Network analysis', exact: true })).toHaveCount(0);
+  await openAtlasView(page, 'spatial');
+  await expect(page.getByRole('tab', { name: 'Journeys', exact: true })).toHaveAttribute('aria-selected', 'true');
+  const journey = atlasSelect(page, 'Journey view');
+  await expect(journey.locator(':scope > summary')).toContainText('Links');
+  await expect(page.locator('.atlas-spatial-links .atlas-connection').first()).toBeVisible();
+  await journey.locator(':scope > summary').click();
+  await expect(journey.getByRole('option').locator('.atlas-select-choice-title')).toHaveText(['Event sequences', 'Spatial links']);
+  await journey.press('Escape');
+  await selectAtlasOption(page, 'Journey view', 'sequences');
+  await expect(page.locator('.atlas-chain-section')).toBeVisible();
   await page.getByRole('button', { name: 'About ATLAS', exact: true }).click();
-  await expect(page.getByLabel('ATLAS UI release')).toContainText('ATLAS UI v0.8.0');
+  await expect(page.getByLabel('ATLAS UI release')).toContainText('ATLAS UI v0.8.1');
   expect(errors).toEqual([]);
 });

@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { EvidenceSummary } from "./atlas-evidence-summary";
 import { AtlasDisclosure } from "./atlas-disclosure";
 import { AtlasDetailStatus, useAtlasDetails } from "./atlas-detail";
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowRight, CalendarDays, Clock3, ChevronDown, FileText, GitBranch, MapPin, MapPinOff, Route, X } from "lucide-react";
 import { useAtlas, useAtlasPanelState } from "./atlas-context";
 import { useElementSize } from "./use-element-size";
@@ -21,16 +21,15 @@ const kinds: Record<AtlasChainKind, string> = {
   travel_itinerary: "Reported journey", reporting_sequence: "Selected report sequence",
 };
 
-export function AtlasChains({ chains, onReport }: { chains: AtlasSelectedChain[]; onReport: (ids: string[]) => void }) {
+export function AtlasChains({ chains, onReport, viewSelector }: { chains: AtlasSelectedChain[]; onReport: (ids: string[]) => void; viewSelector: ReactNode }) {
   const { ref: toolbar, size: toolbarSize } = useElementSize<HTMLElement>();
   const [choice, setChoice] = useAtlasPanelState("trends.chain", "chain_be0dfd16da910b21c44e15c2");
   const [filters, setFilters] = useAtlasPanelState<string[]>("geographic.chainFilters", []);
   const matching = chains.filter(chain => !filters.length || filters.includes(chain.kind));
   const chain = matching.find(c => c.id === choice) ?? matching[0];
-  if (!chains.length) return null;
   return <section id="atlas-journeys" className="atlas-chain-section" aria-labelledby="atlas-chains-title" style={toolbarSize ? { "--atlas-journey-tools-height": `${toolbarSize.height}px` } as CSSProperties : undefined}>
     <h2 id="atlas-chains-title" className="sr-only">Event sequences</h2>
-    <header ref={toolbar} className="atlas-chain-toolbar atlas-entry-tools atlas-panel-tools"><div className="atlas-chain-heading atlas-oh-view-select"><AtlasSelect label="Journey view" disabled value="sequences" onChange={() => {}} items={[{ value: "sequences", label: "Event sequences" }]} summaryLabel={<span className="atlas-oh-mode-label"><GitBranch size={14} aria-hidden /><span>Sequences</span></span>} /></div>
+    <header ref={toolbar} className="atlas-chain-toolbar atlas-entry-tools atlas-panel-tools">{viewSelector}
     <div className="atlas-chain-tools atlas-entry-tools"><AtlasSelect label="Reviewed chain" searchable disabled={!chain} value={chain?.id ?? ""} onChange={setChoice} summaryLabel={<span className="atlas-select-choice"><span className="atlas-select-choice-title">{chain?.label ?? "No matching connections"}</span><small className="atlas-select-count" title={`${matching.length} journeys and connections`}>{matching.length}</small></span>} items={matching.map(c => ({ value: c.id, label: c.label, badges: [
       { kind: "kind", label: kinds[c.kind] },
       { kind: "count", label: `${c.nodes.length} ${c.nodes.length === 1 ? "event" : "events"}` },
@@ -38,7 +37,7 @@ export function AtlasChains({ chains, onReport }: { chains: AtlasSelectedChain[]
     ] }))} /><AtlasEntryFilters label="Filter geographic connections" value={filters} onChange={setFilters} count={matching.length} total={chains.length} groups={[
       { label: "Connection type", match: "any", items: Object.entries(kinds).map(([value, label]) => ({ value, label })) },
     ]} /></div></header>
-    {chain ? <ChainFigure chain={chain} onReport={onReport} /> : <p className="atlas-empty">No connections match these filters. Clear the entry filters or choose another type.</p>}
+    {chain ? <ChainFigure chain={chain} onReport={onReport} /> : <p className="atlas-empty">{chains.length ? "No connections match these filters. Clear the entry filters or choose another type." : "No reviewed event sequences in this selection."}</p>}
   </section>;
 }
 

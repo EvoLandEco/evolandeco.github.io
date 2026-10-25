@@ -179,9 +179,9 @@ test('Analysis selector supports keyboard navigation and restores the selected v
   const trigger = menu.locator(':scope > summary');
   await expect(trigger).toContainText('Signals');
   await trigger.press('Enter');
-  await expect(menu.getByRole('option')).toHaveCount(4);
-  await expect(menu.getByRole('option').locator('.atlas-select-choice-title')).toHaveText(['Signals & forecasts', 'Risk assessments', 'Spatial links', 'Report relationships']);
-  await menu.getByRole('option', { selected: true }).press('End');
+  await expect(menu.getByRole('option')).toHaveCount(3);
+  await expect(menu.getByRole('option').locator('.atlas-select-choice-title')).toHaveText(['Signals & forecasts', 'Report relationships', 'Risk assessments']);
+  await menu.getByRole('option', { selected: true }).press('ArrowDown');
   await page.keyboard.press('Enter');
   await expect(page.locator('.atlas-analysis')).toHaveAttribute('data-view', 'relationships');
   await expect(trigger).toBeFocused();

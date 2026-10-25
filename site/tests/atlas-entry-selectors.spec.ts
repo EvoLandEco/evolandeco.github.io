@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { intelligenceSchema } from '../src/lib/atlas-intelligence';
-import { atlasSelect, selectAtlasOption } from './atlas-select-actions';
+import { atlasSelect, selectAtlasOption, openAtlasView } from './atlas-select-actions';
 
 for (const width of [390, 1440]) test(`One Health content keeps its controls aligned across views at ${width}px`, async ({ page }, testInfo) => {
   await page.setViewportSize({ width, height: 950 });
@@ -172,7 +172,7 @@ for (const width of [390, 1440]) test(`Entry selectors share search, keyboard an
   await expect(page.locator('.atlas-chain-figure')).toHaveAttribute('aria-label', journey.label);
 
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  const analysis = page.getByRole('region', { name: 'Experimental analysis', exact: true });
+  const analysis = page.locator('.atlas-analysis');
   await expect(page.locator('.atlas-analysis')).toHaveAttribute('data-view', 'signals');
   await selectAtlasOption(analysis, 'Analysis view', 'risk');
   const seriesMenu = atlasSelect(analysis, 'Monitored series');
@@ -257,7 +257,7 @@ for (const width of [320, 390, 1440]) test(`Entry filters narrow lists and keep 
   }
 
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  const analysis = page.getByRole('region', { name: 'Experimental analysis', exact: true });
+  const analysis = page.locator('.atlas-analysis');
   await expect(page.locator('.atlas-analysis')).toHaveAttribute('data-view', 'signals');
   await selectAtlasOption(analysis, 'Analysis view', 'risk');
   const risks = await filterMenu(analysis, 'Filter risk profiles');
@@ -342,7 +342,7 @@ for (const [width, fullscreen] of [[390, false], [1440, false], [1440, true]] as
   await expect(page.locator('.atlas-page[data-ready="true"]')).toBeVisible();
   if (fullscreen) await page.getByRole('button', { name: 'Click to enter full screen' }).press('Enter');
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  const analysis = page.getByRole('region', { name: 'Experimental analysis', exact: true });
+  const analysis = page.locator('.atlas-analysis');
   const geometry = () => analysis.evaluate(element => {
     const header = element.querySelector('header')!;
     return [element, header, header.querySelector(':scope > .atlas-select')!, header.querySelector('.atlas-entry-filters')!, header.nextElementSibling!].map(item => {
@@ -352,7 +352,7 @@ for (const [width, fullscreen] of [[390, false], [1440, false], [1440, true]] as
   });
   const signals = await geometry();
   for (const view of ['risk', 'spatial', 'relationships']) {
-    await selectAtlasOption(analysis, 'Analysis view', view);
+    await openAtlasView(page, view);
     expect(await geometry()).toEqual(signals);
   }
   if (fullscreen) await expect(page.locator('.atlas-workspace-scroll')).toHaveCSS('scrollbar-gutter', 'stable');
@@ -370,12 +370,12 @@ for (const width of [390, 1440]) test(`Analysis card selectors search all pages 
   await expect(page.locator('.atlas-page[data-ready="true"]')).toBeVisible();
   if (width === 1440) await page.getByRole('button', { name: 'Click to enter full screen' }).press('Enter');
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  const analysis = page.getByRole('region', { name: 'Experimental analysis', exact: true });
+  const analysis = page.locator('.atlas-analysis');
   for (const [view, label, type, secondType, kind] of [
     ['spatial', 'Spatial link', 'Source hypothesis', 'Reported travel', 'hypothesis'],
     ['relationships', 'Report relationship', 'Exposure', 'Unresolved', 'exposure'],
   ]) {
-    await selectAtlasOption(analysis, 'Analysis view', view);
+    await openAtlasView(page, view);
     const menu = atlasSelect(analysis, label);
     await menu.locator('summary').press('Enter');
     const entries = await menu.getByRole('option').evaluateAll(options => options.map(option => ({
@@ -395,8 +395,10 @@ for (const width of [390, 1440]) test(`Analysis card selectors search all pages 
     await filters.getByRole('checkbox', { name: secondType, exact: true }).uncheck();
     await filters.getByRole('checkbox', { name: type, exact: true }).press('Escape');
     await expect(menu.locator('.atlas-select-count')).toHaveText(String(matches.length));
-    await expect(analysis.locator('.atlas-connection')).toHaveCount(12);
-    for (const card of await analysis.locator('.atlas-connection').all()) await expect(card).toHaveAttribute('data-kind', kind);
+    if (view === 'spatial') {
+      await expect(analysis.locator('.atlas-connection')).toHaveCount(12);
+      for (const card of await analysis.locator('.atlas-connection').all()) await expect(card).toHaveAttribute('data-kind', kind);
+    } else await expect(analysis.locator('svg[aria-label="Relationship evidence network"]')).toBeVisible();
     await expect(atlasSelect(page, 'Link type').locator('summary')).toContainText('All link types');
     await menu.locator('summary').press('Enter');
     await expect(menu.getByRole('option')).toHaveCount(matches.length);
@@ -408,12 +410,14 @@ for (const width of [390, 1440]) test(`Analysis card selectors search all pages 
     await menu.getByRole('searchbox').fill(title);
     await menu.getByRole('searchbox').press('ArrowDown');
     await menu.locator(`button[value=${JSON.stringify(id)}]`).press('Enter');
+    if (view === 'relationships') await analysis.getByRole('button', { name: 'View details', exact: true }).click();
     const card = analysis.locator(`.atlas-connection[data-${view === 'spatial' ? 'link' : 'assessment'}-id=${JSON.stringify(id)}]`);
     await expect(card).toHaveAttribute('data-expanded', 'true');
     await expect(card.locator('.atlas-evidence').first()).toBeVisible();
     const back = card.getByRole('button', { name: /^Back to/ });
     await back.click();
     await selectAtlasOption(analysis, label, id);
+    if (view === 'relationships') await analysis.getByRole('button', { name: 'View details', exact: true }).click();
     await expect(card).toHaveAttribute('data-expanded', 'true');
     await filters.locator('summary').press('Enter');
     await filters.getByRole('button', { name: 'Clear', exact: true }).click();
@@ -424,14 +428,14 @@ for (const width of [390, 1440]) test(`Analysis card selectors search all pages 
     expect((await new AxeBuilder({ page }).include('.atlas-analysis').analyze()).violations).toEqual([]);
     await analysis.screenshot({ path: testInfo.outputPath(`${view}-controls.png`) });
   }
-  await selectAtlasOption(analysis, 'Analysis view', 'spatial');
+  await openAtlasView(page, 'spatial');
   const filters = analysis.locator('.atlas-entry-filters');
   await filters.locator('summary').press('Enter');
   await filters.getByRole('checkbox', { name: 'Source hypothesis', exact: true }).check();
   await filters.locator('summary').press('Escape');
-  await selectAtlasOption(analysis, 'Analysis view', 'relationships');
+  await openAtlasView(page, 'relationships');
   await expect(analysis.locator('.atlas-entry-filters summary b')).toHaveCount(0);
-  await selectAtlasOption(analysis, 'Analysis view', 'spatial');
+  await openAtlasView(page, 'spatial');
   await expect(analysis.locator('.atlas-entry-filters summary b')).toHaveText('1');
   const globalType = atlasSelect(page, 'Link type');
   await globalType.locator('summary').click();
@@ -453,13 +457,14 @@ test('Report evidence can open a relationship excluded by its local type filter'
   await expect(page.locator('.atlas-page[data-ready="true"]')).toBeVisible();
   await page.getByRole('button', { name: 'Click to enter full screen' }).press('Enter');
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  const analysis = page.getByRole('region', { name: 'Experimental analysis', exact: true });
+  const analysis = page.locator('.atlas-analysis');
   await selectAtlasOption(analysis, 'Analysis view', 'relationships');
   const menu = atlasSelect(analysis, 'Report relationship');
   await menu.locator('summary').click();
   const identity = menu.getByRole('option').filter({ has: page.locator('[data-kind="kind"]', { hasText: /^Identity$/ }) }).first();
   const id = (await identity.getAttribute('value'))!;
   await identity.click();
+  await analysis.getByRole('button', { name: 'View details', exact: true }).click();
   const card = analysis.locator(`.atlas-connection[data-assessment-id=${JSON.stringify(id)}]`);
   await card.locator('.atlas-card-footer').getByRole('button', { name: 'View reports', exact: true }).click();
   const report = page.locator('.atlas-report[data-evidence="true"]').first();
@@ -476,9 +481,10 @@ test('Report evidence can open a relationship excluded by its local type filter'
   await page.getByRole('tab', { name: 'Reports', exact: true }).click();
   await page.locator(`[id=${JSON.stringify(reportId)}] .atlas-report-assessment-links details`).filter({ has: page.locator(`button[data-assessment-id=${JSON.stringify(id)}]`) }).locator('summary').click();
   await jump.click();
+  await analysis.getByRole('button', { name: 'View details', exact: true }).click();
   await expect(card).toHaveAttribute('data-expanded', 'true');
   await expect(card).toHaveAttribute('data-kind', 'identity');
-  await expect(card.locator('header')).toBeFocused();
+  await expect(card.getByRole('button', { name: 'Back to network', exact: true })).toBeFocused();
   await expect(filters.locator('summary b')).toHaveCount(0);
 });
 
@@ -509,7 +515,7 @@ for (const [width, fullscreen] of [[390, false], [1440, false], [1440, true]] as
   if (fullscreen) await page.getByRole('button', { name: 'Click to enter full screen' }).press('Enter');
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   await atlasSelect(page, 'Analysis view').locator('summary').click();
-  expect(await atlasSelect(page, 'Analysis view').getByRole('option').evaluateAll(options => options.map(option => option.getAttribute('aria-label')))).toEqual(['Signals & forecasts', 'Network', 'Spatial links', 'Report relationships', 'Risk assessments']);
+  expect(await atlasSelect(page, 'Analysis view').getByRole('option').evaluateAll(options => options.map(option => option.getAttribute('aria-label')))).toEqual(['Signals & forecasts', 'Report relationships', 'Risk assessments']);
   await page.keyboard.press('Escape');
   await selectAtlasOption(page, 'Analysis view', 'risk');
   const risk = page.locator('[data-risk-id]').first();
@@ -518,9 +524,8 @@ for (const [width, fullscreen] of [[390, false], [1440, false], [1440, true]] as
   await risk.locator('[data-risk-expand]').click();
   const expandedFooter = await cardFooterStyle(risk);
   await risk.locator('[data-risk-back]').click();
-  for (const view of ['Spatial links', 'Report relationships']) {
-    await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-    await selectAtlasOption(page, 'Analysis view', view === 'Spatial links' ? 'spatial' : 'relationships');
+  for (const view of ['Spatial links']) {
+    await openAtlasView(page, view === 'Spatial links' ? 'spatial' : 'relationships');
     const collection = page.locator('.atlas-connection-workspace');
     const scroll = collection.locator('.atlas-connection-scroll');
     const cards = collection.locator('.atlas-connection');
@@ -601,9 +606,8 @@ for (const [width, fullscreen] of [[390, false], [1440, false], [1440, true]] as
   await page.goto(process.env.ATLAS_INTELLIGENCE_TEST_PATH ?? '/atlas/');
   await expect(page.locator('.atlas-page[data-ready="true"]')).toBeVisible();
   if (fullscreen) await page.getByRole('button', { name: 'Click to enter full screen' }).press('Enter');
-  for (const view of ['Spatial links', 'Report relationships']) {
-    await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-    await selectAtlasOption(page, 'Analysis view', view === 'Spatial links' ? 'spatial' : 'relationships');
+  for (const view of ['Spatial links']) {
+    await openAtlasView(page, view === 'Spatial links' ? 'spatial' : 'relationships');
     const card = page.locator('.atlas-connection').first();
     for (const expanded of [true, false]) {
       const scroller = expanded ? page.locator('.atlas-connection-scroll') : card.locator('.atlas-card-body');
@@ -667,10 +671,11 @@ for (const [width, fullscreen] of [[390, false], [1440, false], [1440, true]] as
   const workspace = page.locator('.atlas-chain-section');
   await expect(workspace.locator('.atlas-chain-figure')).toHaveAttribute('aria-label', 'MV Hondius: selected episode reports');
   const journeyView = workspace.locator('summary[aria-label="Journey view"]');
-  await expect(journeyView).toHaveAttribute('aria-disabled', 'true');
+  await expect(journeyView).not.toHaveAttribute('aria-disabled', 'true');
   await expect(journeyView).toContainText('Sequences');
-  await journeyView.dispatchEvent('click');
-  await expect(journeyView.locator('..')).not.toHaveAttribute('open');
+  await journeyView.click();
+  await expect(atlasSelect(page, 'Journey view').getByRole('option')).toHaveCount(2);
+  await journeyView.press('Escape');
   const timing = page.getByRole('region', { name: 'Event timing', exact: true });
   const map = workspace.locator('.atlas-chain-map');
   const details = page.getByRole('region', { name: 'Journey details', exact: true });
@@ -849,7 +854,9 @@ for (const [width, fullscreen, reduced] of [[390, false, true], [1440, false, fa
   if (fullscreen) await page.getByRole('button', { name: 'Click to enter full screen' }).press('Enter');
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   await selectAtlasOption(page, 'Analysis view', 'relationships');
-  const id = await page.locator('[data-assessment-id]').first().getAttribute('data-assessment-id');
+  await selectAtlasOption(page, 'Report relationship', { index: 0 });
+  await page.getByRole('button', { name: 'View details', exact: true }).click();
+  const id = await page.locator('.atlas-connection[data-assessment-id]').getAttribute('data-assessment-id');
   const card = page.locator(`[data-assessment-id="${id}"]`);
   const globe = page.getByTestId('atlas-globe');
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -882,6 +889,8 @@ for (const [width, fullscreen, reduced] of [[390, false, true], [1440, false, fa
     if (!attempt) {
       await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
       await selectAtlasOption(page, 'Analysis view', 'relationships');
+      await selectAtlasOption(page, 'Report relationship', id!);
+      await page.getByRole('button', { name: 'View details', exact: true }).click();
     }
   }
 });
@@ -893,8 +902,8 @@ for (const [width, fullscreen] of [[390, false], [1440, false], [1440, true]] as
   await expect(page.locator('.atlas-page[data-ready="true"]')).toBeVisible();
   if (fullscreen) await page.getByRole('button', { name: 'Click to enter full screen' }).click();
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  for (const view of ['risk', 'spatial', 'relationships']) {
-    await selectAtlasOption(page, 'Analysis view', view);
+  for (const view of ['risk', 'spatial']) {
+    await openAtlasView(page, view);
     const card = page.locator(view === 'risk' ? '[data-risk-id]' : '.atlas-connection').first();
     for (let cycle = 0; cycle < 2; cycle++) {
       await card.getByRole('button', { name: /View details/ }).click();
@@ -917,8 +926,8 @@ test('Full screen card layers stay in their viewport on every rendered frame', a
   await expect(page.locator('.atlas-page[data-ready="true"]')).toBeVisible();
   await page.getByRole('button', { name: 'Click to enter full screen' }).press('Enter');
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
-  for (const view of ['spatial', 'relationships', 'risk']) {
-    await selectAtlasOption(page, 'Analysis view', view);
+  for (const view of ['spatial', 'risk']) {
+    await openAtlasView(page, view);
     const card = page.locator(view === 'risk' ? '[data-risk-id]' : '.atlas-connection').first();
     for (const expanded of [true, false]) {
       const result = await card.evaluate(async (element, expanded) => {
@@ -970,9 +979,9 @@ for (const width of [320, 390, 450]) test(`Compact panel controls stay on one ro
     expect(Math.max(...boxes.map(box => box.top))).toBeLessThan(Math.min(...boxes.map(box => box.bottom)));
     for (let index = 1; index < boxes.length; index++) expect(boxes[index].left).toBeGreaterThanOrEqual(boxes[index - 1].right);
   };
-  for (const [view, label] of [['signals', 'Signals'], ['spatial', 'Spatial'], ['relationships', 'Relationships'], ['risk', 'Risks']]) {
-    await selectAtlasOption(page, 'Analysis view', view);
-    await expect(atlasSelect(page, 'Analysis view').locator(':scope > summary')).toContainText(label);
+  for (const [view, label] of [['signals', 'Signals'], ['spatial', 'Links'], ['relationships', 'Relationships'], ['risk', 'Risks']]) {
+    await openAtlasView(page, view);
+    await expect(atlasSelect(page, view === 'spatial' ? 'Journey view' : 'Analysis view').locator(':scope > summary')).toContainText(label);
     await aligned('.atlas-analysis > header summary');
     expect(await page.locator('.atlas-analysis .atlas-oh-mode-label > span').evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
   }
@@ -983,11 +992,12 @@ for (const width of [320, 390, 450]) test(`Compact panel controls stay on one ro
   const analysisSize = await controlSize('Analysis view');
   await page.locator('.atlas-analysis > header').screenshot({ path: testInfo.outputPath('analysis-controls.png') });
   await page.getByRole('tab', { name: 'Journeys', exact: true }).click();
+  await selectAtlasOption(page, 'Journey view', 'sequences');
   await expect(page.locator('summary[aria-label="Journey view"]')).toContainText('Sequences');
   await aligned('.atlas-chain-toolbar summary');
   expect(await controlSize('Journey view')).toEqual(analysisSize);
-  await expect(page.locator('summary[aria-label="Journey view"]')).toHaveAttribute('aria-disabled', 'true');
-  expect(await page.locator('.atlas-chain-heading .atlas-oh-mode-label > span').evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+  await expect(page.locator('summary[aria-label="Journey view"]')).not.toHaveAttribute('aria-disabled', 'true');
+  expect(await page.locator('.atlas-chain-toolbar .atlas-oh-mode-label > span').evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
   await page.locator('.atlas-chain-toolbar').screenshot({ path: testInfo.outputPath('journey-controls.png') });
   await page.getByRole('tab', { name: 'One Health', exact: true }).click();
   expect(await controlSize('One Health view')).toEqual(analysisSize);

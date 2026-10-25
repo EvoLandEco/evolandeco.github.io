@@ -39,7 +39,8 @@ import { AtlasNetworkOverview } from "./atlas-network-overview";
 import { AtlasConnectionCards, AtlasConnectionCard } from "./atlas-connection-cards";
 import { CardTiming } from "./atlas-card-timing";
 import type { AnalysisView } from "./atlas-analysis";
-import { AtlasChains } from "./atlas-chains";
+import { AtlasJourneys, type JourneyView } from "./atlas-journeys";
+import { AtlasRelationships, relationshipIcons } from "./atlas-relationship-network";
 import { AtlasTrends } from "./atlas-trends";
 import { MetricFigures, ObservationHistory } from "./atlas-metrics";
 import { SourceComparisons, ComparisonBadge } from "./atlas-comparisons";
@@ -203,6 +204,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
   const deferredTab = useDeferredValue(requestedTab);
   const tab = reportTransition && requestedTab === "reports" ? requestedTab : deferredTab;
   const [analysisView, setAnalysisView] = useState<AnalysisView>("signals");
+  const [journeyView, setJourneyView] = useState<JourneyView>("sequences");
   const [spatialFilters, setSpatialFilters] = useState<string[]>([]);
   const [relationshipFilters, setRelationshipFilters] = useState<string[]>([]);
   const [connectionSelection, setConnectionSelection] = useState(0);
@@ -218,12 +220,17 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
   }, [tab]);
   const showingReports = tab === "reports";
   const showingRelationships = tab === "analysis" && analysisView === "relationships";
-  const showingSpatial = tab === "analysis" && analysisView === "spatial";
+  const showingSpatial = tab === "links" && journeyView === "spatial";
   const [analysisSeries, setAnalysisSeries] = useState("");
   const [healthReport, setHealthReport] = useState("");
   const [riskRecord, setRiskRecord] = useState("");
   function changeAnalysisView(next: AnalysisView) {
     setAnalysisView(next);
+    setReportJump(undefined);
+    workspaceScroll.current?.scrollTo({ top: 0 });
+  }
+  function changeJourneyView(next: JourneyView) {
+    setJourneyView(next);
     setReportJump(undefined);
     workspaceScroll.current?.scrollTo({ top: 0 });
   }
@@ -241,7 +248,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
     setReportEvidence({ recordIds: [], documentIds: [] });
     setReportJump(undefined);
   }, []);
-  const [entryPages, setEntryPages] = useState({ scope: "", links: 0, assessments: 0, sources: 0 });
+  const [entryPages, setEntryPages] = useState({ scope: "", links: 0, sources: 0 });
   const [hover, setHover] = useState<GlobeHover>(null);
   const calloutPoint = useMotionValue<GlobeAnchor>(null);
   const moveCallout = useCallback((point: GlobeAnchor) => calloutPoint.set(point), [calloutPoint]);
@@ -306,14 +313,14 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
   })), [linkGroups, spatialFilters, selectedLink]);
   const relationshipEntries = useMemo(() => assessments.filter(assessment => !relationshipFilters.length || relationshipFilters.includes(assessment.type)), [assessments, relationshipFilters]);
   const relationshipTypes = useMemo(() => [...new Set([...assessments.map(assessment => assessment.type), ...relationshipFilters])].sort().map(type => ({ value: type, label: relationshipTypeLabel(type) })), [assessments, relationshipFilters]);
-  const connectionItems = useMemo<AtlasSelectItem[]>(() => analysisView === "spatial" ? spatialEntries.map(({ group, link }) => ({
+  const connectionItems = useMemo<AtlasSelectItem[]>(() => showingSpatial ? spatialEntries.map(({ group, link }) => ({
     value: link.id, label: link.label, searchText: [link.from.label, link.to.label, ...group.entries.map(entry => linkLabels[entry.link.type])].join(" "),
     badges: [...new Set(group.entries.map(entry => entry.link.type))].map(type => ({ kind: "kind", label: linkLabels[type] })),
-  })) : analysisView === "relationships" ? relationshipEntries.map(assessment => ({
+  })) : showingRelationships ? relationshipEntries.map(assessment => ({
     value: assessment.id, label: `${tracks.get(assessment.track)?.label ?? assessment.track} · ${assessment.status}`,
     searchText: [assessment.from, assessment.to, assessment.basis, assessment.type].join(" "),
     badges: [{ kind: "kind", label: relationshipTypeLabel(assessment.type) }],
-  })) : [], [analysisView, spatialEntries, relationshipEntries, tracks]);
+  })) : [], [showingSpatial, showingRelationships, spatialEntries, relationshipEntries, tracks]);
   const reportRelationships = useMemo(() => {
     const entries = new Map<string, AtlasAssessment[]>();
     for (const assessment of assessments) {
@@ -332,13 +339,10 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
   const facetScope = [places, diseases, includeContext, kind];
   const reportScope = JSON.stringify([basis, window, topic, source, ...facetScope]);
   const entryScope = JSON.stringify([reportScope, kind, spatialFilters, relationshipFilters]);
-  if (entryPages.scope !== entryScope) setEntryPages({ scope: entryScope, links: 0, assessments: 0, sources: 0 });
+  if (entryPages.scope !== entryScope) setEntryPages({ scope: entryScope, links: 0, sources: 0 });
   const linkPageCount = Math.max(1, Math.ceil(spatialEntries.length / reportsPerPage));
-  const assessmentPageCount = Math.max(1, Math.ceil(relationshipEntries.length / reportsPerPage));
   const linkPageIndex = entryPages.scope === entryScope ? Math.min(entryPages.links, linkPageCount - 1) : 0;
-  const assessmentPageIndex = entryPages.scope === entryScope ? Math.min(entryPages.assessments, assessmentPageCount - 1) : 0;
   const linkPageItems = Array.from({ length: linkPageCount }, (_, i) => ({ value: String(i), label: `Page ${i + 1} of ${linkPageCount}` }));
-  const assessmentPageItems = Array.from({ length: assessmentPageCount }, (_, i) => ({ value: String(i), label: `Page ${i + 1} of ${assessmentPageCount}` }));
   const coverageTopics = useMemo(() => atlas.tracks.filter(t => activeTracks.has(t.id)), [atlas.tracks, activeTracks]);
   const sourcePageCount = Math.max(1, Math.ceil(coverageTopics.length / 24));
   const sourcePageIndex = entryPages.scope === entryScope ? Math.min(entryPages.sources, sourcePageCount - 1) : 0;
@@ -415,7 +419,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
   const chooseLink = useCallback((id: string) => {
     setHover(null);
     clearReportEvidence();
-    setSelectedLink(id); setSelectedPoint(""); setAnalysisView("spatial"); setTab("analysis");
+    setSelectedLink(id); setSelectedPoint(""); setJourneyView("spatial"); setTab("links");
     const filteredIndex = spatialEntries.findIndex(({ group }) => group.entries.some(e => e.link.id === id));
     const index = filteredIndex >= 0 ? filteredIndex : linkGroups.findIndex(group => group.entries.some(e => e.link.id === id));
     if (filteredIndex < 0) setSpatialFilters([]);
@@ -442,7 +446,7 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
   }
   function resetAll() {
     reset(); setWindow([min, max]); setPreset(3);
-    setReportPage({ scope: "", index: 0 }); setEntryPages({ scope: "", links: 0, assessments: 0, sources: 0 });
+    setReportPage({ scope: "", index: 0 }); setEntryPages({ scope: "", links: 0, sources: 0 });
   }
   function changeSource(value: string[]) {
     setSource(value); clearReportEvidence(); setSelectedLink(""); setSelectedPoint(""); setFocus(undefined); setHover(null);
@@ -517,9 +521,8 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
     if (index < 0) return;
     if (filteredIndex < 0) setRelationshipFilters([]);
     setAnalysisView("relationships"); setTab("analysis");
-    setEntryPages(current => ({ ...current, scope: filteredIndex >= 0 ? entryScope : JSON.stringify([reportScope, kind, spatialFilters, []]), assessments: Math.floor(index / reportsPerPage) }));
     setReportJump({ documentId: null, headingId: `atlas-assessment-${id}` });
-  }, [assessments, relationshipEntries, entryScope, reportScope, kind, spatialFilters]);
+  }, [assessments, relationshipEntries]);
   const showRisk = useCallback((id: string) => {
     panelStates.set("analysis.risk", experiment?.data?.risk_profiles.find(profile => profile.record_id === id)?.id ?? "");
     setAnalysisView("risk");
@@ -590,8 +593,8 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
     setReportPage({ scope: reportScope, index });
     setReportJump({ documentId: null });
   }
-  function changeEntryPage(view: "links" | "assessments" | "sources", index: number) {
-    const count = view === "links" ? linkPageCount : view === "sources" ? sourcePageCount : assessmentPageCount;
+  function changeEntryPage(view: "links" | "sources", index: number) {
+    const count = view === "links" ? linkPageCount : sourcePageCount;
     if (!Number.isInteger(index) || index < 0 || index >= count) return;
     setEntryPages(current => ({ ...current, scope: entryScope, [view]: index }));
     if (view === "sources") {
@@ -601,6 +604,14 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
   function viewEvidence() {
     openReports(calloutLink ? calloutLink.support.map(([id]) => String(id)) : calloutReports.map(r => r.id), calloutNode ? `place:${calloutNode.topics.join(",")}` : "");
   }
+  const connectionTools = <>
+          <AtlasSelect key={showingSpatial ? "spatial" : "relationships"} label={showingSpatial ? "Spatial link" : "Report relationship"} searchable disabled={!connectionItems.length} value={showingSpatial ? selectedLink : relationshipEntries.find(assessment => reportJump?.headingId === `atlas-assessment-${assessment.id}`)?.id ?? ""} items={connectionItems}
+            summaryLabel={<span className="atlas-select-choice"><span className="atlas-select-choice-title">{connectionItems.length ? showingSpatial ? "Find a spatial link" : "Find a relationship" : "No matching entries"}</span><small className="atlas-select-count" title={`${connectionItems.length} entries available`}>{connectionItems.length}</small></span>}
+            onChange={id => { setConnectionSelection(value => value + 1); if (showingSpatial) chooseLink(id); else showAssessment(id); }} />
+          <AtlasEntryFilters key={`filters:${showingSpatial ? "spatial" : "relationships"}`} label={showingSpatial ? "Filter spatial links" : "Filter report relationships"} value={showingSpatial ? spatialFilters : relationshipFilters}
+            onChange={value => { if (showingSpatial) { setSpatialFilters(value); setSelectedLink(""); } else setRelationshipFilters(value); setReportJump(undefined); }}
+            count={connectionItems.length} total={showingSpatial ? linkGroups.length : assessments.length} groups={[{ label: "Type", match: "any", items: showingSpatial ? Object.entries(linkLabels).map(([value, label]) => ({ value, label })) : relationshipTypes }]} />
+        </>;
   return <AtlasPanelStateContext value={panelStates}><AtlasWorkspaceContext value={fullscreen}><div className="atlas-stage" style={fullscreen ? { height: pageHeight } : undefined}><div ref={page} className="atlas-page" data-ready={!arriving} data-fullscreen={fullscreen || undefined} role={fullscreen ? "dialog" : undefined} aria-modal={fullscreen || undefined} aria-label={fullscreen ? "ATLAS full screen" : undefined} onKeyDown={event => {
     if (!fullscreen || event.defaultPrevented) return;
     if (event.key === "Escape") { event.preventDefault(); changeFullscreen(false); }
@@ -794,23 +805,13 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
           </div>
           <AnimatePresence initial={false} mode="popLayout">{pageDocuments.map(({ records, dailyVersions, id }) => !records.length && dailyView ? <DailyReport key={id} documents={dailyVersions} selection={dailyView} highlighted={evidence.has(id) || reportJump?.documentId === id} /> : <Report key={id} daily={dailyVersions} dailyView={dailyView} records={records} basis={basis} highlighted={evidence.has(id) || reportJump?.documentId === id} recordIds={recordIds} onReport={openReports} relationships={reportRelationships} riskRecords={riskRecords} onAssessment={showAssessment} onRisk={showRisk} />)}</AnimatePresence>
         </div>}
-        {tab === "analysis" && <AtlasAnalysis recordIds={recordIds} view={analysisView} onView={changeAnalysisView} spatialCount={spatialEntries.length} relationshipCount={relationshipEntries.length} connectionTools={<>
-          <AtlasSelect key={analysisView} label={showingSpatial ? "Spatial link" : "Report relationship"} searchable disabled={!connectionItems.length} value={showingSpatial ? selectedLink : relationshipEntries.find(assessment => reportJump?.headingId === `atlas-assessment-${assessment.id}`)?.id ?? ""} items={connectionItems}
-            summaryLabel={<span className="atlas-select-choice"><span className="atlas-select-choice-title">{connectionItems.length ? showingSpatial ? "Find a spatial link" : "Find a relationship" : "No matching entries"}</span><small className="atlas-select-count" title={`${connectionItems.length} entries available`}>{connectionItems.length}</small></span>}
-            onChange={id => { setConnectionSelection(value => value + 1); if (showingSpatial) chooseLink(id); else showAssessment(id); }} />
-          <AtlasEntryFilters key={`filters:${analysisView}`} label={showingSpatial ? "Filter spatial links" : "Filter report relationships"} value={showingSpatial ? spatialFilters : relationshipFilters}
-            onChange={value => { if (showingSpatial) { setSpatialFilters(value); setSelectedLink(""); } else setRelationshipFilters(value); setReportJump(undefined); }}
-            count={connectionItems.length} total={showingSpatial ? linkGroups.length : assessments.length} groups={[{ label: "Type", match: "any", items: showingSpatial ? Object.entries(linkLabels).map(([value, label]) => ({ value, label })) : relationshipTypes }]} />
-        </>} spatial={<><h2 className="sr-only" id="atlas-links-heading" tabIndex={-1}>Spatial links</h2>          <AtlasConnectionCards key={`links:${entryScope}:${linkPageIndex}:${connectionSelection}`} label="Spatial links" ids={spatialEntries.slice(linkPageIndex * reportsPerPage, (linkPageIndex + 1) * reportsPerPage).map(({ group }) => group.id)} selectedId={spatialEntries.find(({ group }) => group.entries.some(entry => entry.link.id === selectedLink))?.group.id ?? ""}>
-            {spatialEntries.length === 0 && <p className="atlas-empty">{spatialFilters.length ? "No spatial links match these types. Clear the entry filters or choose another type." : "No supported geographic links in this selection."}</p>}
-            <AnimatePresence initial={false}>{spatialEntries.slice(linkPageIndex * reportsPerPage, (linkPageIndex + 1) * reportsPerPage).map(({ link, group }) => <GeographicEntry key={group.id} link={link} group={group} selected={link.id === selectedLink} recordIds={recordIds} onLocate={chooseLink} onReport={openReports} />)}</AnimatePresence>
-          </AtlasConnectionCards></>} relationships={<><h2 className="sr-only" id="atlas-assessments-heading" tabIndex={-1}>Report relationships</h2>          <AtlasConnectionCards key={`relationships:${entryScope}:${assessmentPageIndex}:${connectionSelection}`} label="Report relationships" ids={relationshipEntries.slice(assessmentPageIndex * reportsPerPage, (assessmentPageIndex + 1) * reportsPerPage).map(a => a.id)} selectedId={relationshipEntries.find(a => reportJump?.headingId === `atlas-assessment-${a.id}`)?.id ?? ""}>
-            {relationshipEntries.length === 0 && <p className="atlas-empty">{relationshipFilters.length ? "No report relationships match these types. Clear the entry filters or choose another type." : "No assessments supported by this reporting window."}</p>}
-            <AnimatePresence initial={false}>{relationshipEntries.slice(assessmentPageIndex * reportsPerPage, (assessmentPageIndex + 1) * reportsPerPage).map(a => <AssessmentEntry key={a.id} selected={reportJump?.headingId === `atlas-assessment-${a.id}`} assessment={a} recordIds={recordIds} onLocate={locateRelationship} onReport={openReports} />)}</AnimatePresence>
-          </AtlasConnectionCards></>} footerTarget={footerTarget} experiment={experiment} rows={filtered} seriesId={analysisSeries} onSeries={setAnalysisSeries} onReport={showAnalysisReports} initialRiskRecord={riskRecord} onOneHealth={id => { panelStates.set("health.report", id); panelStates.set("health.mode", "network"); panelStates.set("health.selection", ""); panelStates.set("health.filters", []); setHealthReport(id); changeTab("one-health"); }} /> }
+        {tab === "analysis" && <AtlasAnalysis exportId={release.export_id} recordIds={recordIds} view={analysisView} onView={changeAnalysisView} relationshipCount={relationshipEntries.length} connectionTools={connectionTools} relationships={<AtlasRelationships entries={relationshipEntries} recordIds={recordIds} selectedId={relationshipEntries.find(a => reportJump?.headingId === `atlas-assessment-${a.id}`)?.id ?? ""} onSelect={showAssessment} onReport={showReports} onLocate={locateRelationship} renderDetails={entry => <AssessmentEntry assessment={entry} selected recordIds={recordIds} onLocate={locateRelationship} onReport={openReports}/>}/>} footerTarget={footerTarget} experiment={experiment} rows={filtered} seriesId={analysisSeries} onSeries={setAnalysisSeries} onReport={showAnalysisReports} initialRiskRecord={riskRecord} onOneHealth={id => { panelStates.set("health.report", id); panelStates.set("health.mode", "network"); panelStates.set("health.selection", ""); panelStates.set("health.filters", []); setHealthReport(id); changeTab("one-health"); }} /> }
         {tab === "one-health" && <AtlasOneHealth mergedTimeline initialReport={healthReport} footerTarget={footerTarget} rows={filtered} onReport={showReports} />}
         {tab === "trends" && <AtlasTrends networkOverview={networkOverview} rows={filtered} recordIds={recordIds} window={window} onReport={showReports} onBrowseReports={browseReports} daily={dailyView} dailyDocuments={dailyDocuments} dailyState={daily} dailyExcluded={dailyExcluded} onDailyReport={showDailyReport} onWatchReports={showWatchReports} onPeriod={showPeriod} />}
-        {tab === "links" && <div className="atlas-geographic-journeys">{chains.length ? <AtlasChains chains={chains} onReport={showReports} /> : <p className="atlas-empty">No reviewed journeys or connections in this selection.</p>}</div>}
+        {tab === "links" && <AtlasJourneys view={journeyView} onView={changeJourneyView} chains={chains} onReport={showReports} spatialTools={connectionTools} spatialCount={spatialEntries.length} spatial={<><h2 className="sr-only" id="atlas-links-heading" tabIndex={-1}>Spatial links</h2>          <AtlasConnectionCards key={`links:${entryScope}:${linkPageIndex}:${connectionSelection}`} label="Spatial links" ids={spatialEntries.slice(linkPageIndex * reportsPerPage, (linkPageIndex + 1) * reportsPerPage).map(({ group }) => group.id)} selectedId={spatialEntries.find(({ group }) => group.entries.some(entry => entry.link.id === selectedLink))?.group.id ?? ""}>
+            {spatialEntries.length === 0 && <p className="atlas-empty">{spatialFilters.length ? "No spatial links match these types. Clear the entry filters or choose another type." : "No supported geographic links in this selection."}</p>}
+            <AnimatePresence initial={false}>{spatialEntries.slice(linkPageIndex * reportsPerPage, (linkPageIndex + 1) * reportsPerPage).map(({ link, group }) => <GeographicEntry key={group.id} link={link} group={group} selected={link.id === selectedLink} recordIds={recordIds} onLocate={chooseLink} onReport={openReports} />)}</AnimatePresence>
+          </AtlasConnectionCards></>}/>}
 
 
       </div>
@@ -858,7 +859,6 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
       <div ref={setFooterTarget} className="atlas-footer-navigation">
         {showingReports && !reviewerOpen && pageCount > 1 && <ReportPagination position="bottom" index={pageIndex} items={pageItems} onChange={changeReportPage} />}
         {showingSpatial && linkPageCount > 1 && <ReportPagination entity="Geographic link" position="bottom" index={linkPageIndex} items={linkPageItems} onChange={index => changeEntryPage("links", index)} />}
-        {showingRelationships && assessmentPageCount > 1 && <ReportPagination entity="Assessment" position="bottom" index={assessmentPageIndex} items={assessmentPageItems} onChange={index => changeEntryPage("assessments", index)} />}
       </div>
     </footer>
     </section>
@@ -939,7 +939,8 @@ const AssessmentEntry = memo(function AssessmentEntry({ assessment: a, selected,
   const updates = (a.updates ?? []).map((update, index) => ({ ...update, index })).filter(update => supported(update.support, recordIds));
   const support = [...a.support, ...updates.flatMap(update => update.support)];
   const label = tracks.get(a.track)?.label ?? a.track;
-  return <AtlasConnectionCard id={a.id} assessmentId={a.id} label={label} kind={a.type} selected={selected} heading={<><div className="atlas-select-badges"><span className="atlas-select-badge" data-kind="kind"><GitBranch size={12} aria-hidden />{relationshipTypeLabel(a.type)}</span><span className="atlas-status"><Info size={14} aria-hidden />{a.status}</span></div><h3>{label}</h3></>} actions={<><button aria-label="View reports" title="View reports" onClick={() => onReport([...new Set(support.map(([id]) => id))])}><FileText size={14} aria-hidden /><span className="atlas-card-action-label">View reports</span></button><button aria-label="Locate relationship" title="Locate relationship" onClick={() => onLocate(a.track)}><ScanLine size={14} aria-hidden /><span className="atlas-card-action-label">Locate</span></button></>}>
+  const Icon = relationshipIcons[a.type as keyof typeof relationshipIcons] ?? GitBranch;
+  return <AtlasConnectionCard id={a.id} assessmentId={a.id} label={label} kind={a.type} selected={selected} heading={<><div className="atlas-select-badges"><span className="atlas-select-badge" data-kind="kind"><Icon size={12} aria-hidden />{relationshipTypeLabel(a.type)}</span><span className="atlas-status"><Info size={14} aria-hidden />{a.status}</span></div><h3>{label}</h3></>} actions={<><button aria-label="View reports" title="View reports" onClick={() => onReport([...new Set(support.map(([id]) => id))])}><FileText size={14} aria-hidden /><span className="atlas-card-action-label">View reports</span></button><button aria-label="Locate relationship" title="Locate relationship" onClick={() => onLocate(a.track)}><ScanLine size={14} aria-hidden /><span className="atlas-card-action-label">Locate</span></button></>}>
     {expanded => <><div className="atlas-card-main">
       {(a.from || a.to) && <div className="atlas-card-relationship" data-card-part="route"><span>{a.from}</span><ArrowRight size={18} aria-hidden /><span>{a.to}</span></div>}
       <CardTiming support={support} label="Report timeline" />
