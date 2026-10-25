@@ -36,6 +36,7 @@ test('filtered bubbles stay bounded and expanded vectors stay centred at native 
     await expect(async () => {
       const measured = await graph.evaluate(element => {
         const stage = element.getBoundingClientRect();
+        const viewport = element.querySelector('svg')!.viewBox.baseVal;
         const detailElement = element.querySelector<SVGGraphicsElement>('[data-network-detail]')!;
         const detail = detailElement.getBBox(), screen = detailElement.getScreenCTM()!;
         const center = new DOMPoint(detail.x + detail.width / 2, detail.y + detail.height / 2).matrixTransform(screen);
@@ -44,9 +45,11 @@ test('filtered bubbles stay bounded and expanded vectors stay centred at native 
         const matrix = new DOMMatrix(getComputedStyle(camera).transform);
         return { dx: Math.abs(center.x - stage.x - stage.width / 2),
           dy: Math.abs(center.y - stage.y - stage.height / 2),
+          aspectError: Math.abs(viewport.width / viewport.height - stage.width / stage.height),
           fits: painted.width < stage.width && painted.height < stage.height, scale: matrix.a,
           willChange: getComputedStyle(camera).willChange };
       });
+      expect(measured.aspectError).toBeLessThan(1e-8);
       expect(measured.dx).toBeLessThan(.5);
       expect(measured.dy).toBeLessThan(.5);
       expect(measured.fits).toBe(true);

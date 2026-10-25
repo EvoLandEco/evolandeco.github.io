@@ -5,7 +5,7 @@ export function useElementSize<T extends Element>() {
   const ref = useCallback((element: T | null) => {
     if (!element) return;
     const observer = new ResizeObserver(([entry]) => {
-      const width = Math.round(entry.contentRect.width), height = Math.round(entry.contentRect.height);
+      const { width, height } = entry.contentRect;
       if (width > 0 && height > 0) setSize(current => current?.width === width && current.height === height ? current : { width, height });
     });
     observer.observe(element);

@@ -38,10 +38,12 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm check:export
       - run: pnpm exec playwright install --with-deps chromium webkit
+      - name: Check network framing in Chromium and WebKit
+        run: pnpm exec playwright test atlas-relationship-motion.spec.ts
       - name: Check ATLAS browser interactions
         run: pnpm exec playwright test atlas.spec.ts --grep "ATLAS entry|ATLAS is readable|download errors|Checkbox filters|Globe surface clicks|assertion branches"
       - name: Check ATLAS reports and briefing
-        run: pnpm exec playwright test atlas-reviewer.spec.ts atlas-daily.spec.ts atlas-daily-navigation.spec.ts atlas-percentage-points.spec.ts atlas-briefing.spec.ts atlas-undated.spec.ts atlas-connection-cards.spec.ts atlas-relationship-motion.spec.ts atlas-ui-release.spec.ts
+        run: pnpm exec playwright test atlas-reviewer.spec.ts atlas-daily.spec.ts atlas-daily-navigation.spec.ts atlas-percentage-points.spec.ts atlas-briefing.spec.ts atlas-undated.spec.ts atlas-connection-cards.spec.ts atlas-ui-release.spec.ts
       - name: Save WebKit network previews
         if: always()
         uses: actions/upload-artifact@v4
