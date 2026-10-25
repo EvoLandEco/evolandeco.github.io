@@ -2056,6 +2056,8 @@ for (const reducedMotion of ["reduce", "no-preference"] as const) test(`Globe su
       const angle = Number(await canvas.getAttribute("data-angle"));
       await page.mouse.down();
       await page.mouse.move(point.x + 65, point.y + 2, { steps: 8 });
+      await expect(page.getByRole("tooltip")).toHaveCount(0);
+      await expect(frame.locator('[data-hovered="true"]')).toHaveCount(0);
       await page.mouse.up();
       expect(Math.abs(Number(await canvas.getAttribute("data-angle")) - angle)).toBeGreaterThan(.05);
       if (fullscreen) await expect(atlas).toHaveAttribute("data-fullscreen", "true");

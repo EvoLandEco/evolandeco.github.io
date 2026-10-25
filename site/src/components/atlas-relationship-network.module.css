@@ -28,7 +28,9 @@
 .scene { position: absolute; inset: 0; }
 .graph { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: hidden; }
 .focusLayer { overflow: visible; pointer-events: none; }
-.cameraLayer { position: absolute; inset: 0; transform-origin: 0 0; pointer-events: none; will-change: transform; }
+.cameraLayer { position: absolute; inset: 0; transform-origin: 0 0; pointer-events: none; }
+.cameraLayer[data-settled="false"] { will-change: transform; }
+.scene[data-transitioning="true"] .overviewLayer { pointer-events: none; }
 .overviewLayer { position: absolute; inset: 0; contain: paint; will-change: opacity; transition: opacity .18s; }
 .stage[data-focused="true"] .overviewLayer { opacity: 0; }
 .gridDot { fill: var(--primary); opacity: .08; }

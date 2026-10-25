@@ -249,7 +249,7 @@ html[data-atlas-transition]::view-transition-new(atlas-globe):only-child { anima
 .atlas-network-scroll { overflow-x: auto; }
 
 .atlas-globe-frame:hover { transform: none; }
-.atlas-link-target:hover { stroke: color-mix(in srgb, var(--primary) 12%, transparent); }
+.atlas-link-target[data-hovered="true"] { stroke: color-mix(in srgb, var(--primary) 12%, transparent); }
 .atlas-globe-pin:focus-visible .atlas-globe-hit { stroke: var(--primary); stroke-width: 2; stroke-dasharray: 4 4; }
 .atlas-page .atlas-controls :is(button, input[type="date"]) { border-color: transparent; background: transparent; }
 .atlas-page .atlas-controls :is(button, input[type="date"]):hover { background: color-mix(in srgb, var(--primary) 7%, transparent); }
@@ -321,16 +321,16 @@ html[data-atlas-transition]::view-transition-new(atlas-globe):only-child { anima
 .atlas-rim-arrow path { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
 .atlas-rim-chevron { stroke-width: 1.7; opacity: .5; }
 .atlas-rim-glow { stroke-width: 5; opacity: .07; }
-.atlas-globe-pin:is(:hover, :focus-visible, [data-selected="true"]) .atlas-rim-chevron { opacity: .95; }
-.atlas-globe-pin:is(:hover, :focus-visible, [data-selected="true"]) .atlas-rim-glow { opacity: .18; }
+.atlas-globe-pin:is([data-hovered="true"], :focus-visible, [data-selected="true"]) .atlas-rim-chevron { opacity: .95; }
+.atlas-globe-pin:is([data-hovered="true"], :focus-visible, [data-selected="true"]) .atlas-rim-glow { opacity: .18; }
 .atlas-event-ring { fill: var(--background); fill-opacity: .9; stroke: currentColor; stroke-width: 1.7; }
 .atlas-event-core { fill: currentColor; }
 .atlas-event-spark { fill: var(--atlas-marker-spark); }
 .atlas-event-pulse { fill: none; stroke: currentColor; stroke-width: 1.2; opacity: .25; transform-origin: 0 0; }
 .atlas-globe-pins[data-playing="true"] .atlas-event-pulse { animation: atlas-event-ripple 3.6s ease-out infinite; }
 @keyframes atlas-event-ripple { from { transform: scale(.7); opacity: .65; } to { transform: scale(1.65); opacity: 0; } }
-.atlas-globe-pin:is(:hover, :focus-visible, [data-selected="true"]) .atlas-event-ring { r: 8.5; stroke-width: 2; }
-.atlas-globe-pin:is(:hover, :focus-visible, [data-selected="true"]) .atlas-event-halo { r: 24; }
+.atlas-globe-pin:is([data-hovered="true"], :focus-visible, [data-selected="true"]) .atlas-event-ring { r: 8.5; stroke-width: 2; }
+.atlas-globe-pin:is([data-hovered="true"], :focus-visible, [data-selected="true"]) .atlas-event-halo { r: 24; }
 .atlas-globe-pins[data-renderer="gpu"] :is(.atlas-event-marker, .atlas-rim-arrow) { display: none; }
 .atlas-globe-pins[data-renderer="gpu"] .atlas-event-pulse { animation: none; }
 .atlas-globe-pins[data-renderer="gpu"] .atlas-globe-hit { stroke-opacity: 0; }

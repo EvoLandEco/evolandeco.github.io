@@ -156,6 +156,29 @@ test('overview bubbles preserve counts, area ratios and spacing across viewport 
   }
 });
 
+test('filtered groups keep their area ratios within the full overview size cap', () => {
+  const entries = Array.from({ length: 120 }, (_, i) => entry(`isolated-${i}`, []));
+  entries.push(...Array.from({ length: 38 }, (_, i) => entry(`connected-${i}`, ['a'])));
+  const byId = new Map(entries.map(entry => [entry.id, entry]));
+  const graph = relationshipNetwork(entries, records, ids);
+  for (const height of [450, 1000, 1600]) {
+    const full = relationshipOverview(graph, byId, 1000, height);
+    const cap = Math.max(...full.map(group => group.radius));
+    for (const groups of [graph.groups.slice(0, 1), graph.groups.slice(0, 4), graph.groups.slice(-1), []]) {
+      const filtered = relationshipOverview({ groups }, byId, 1000, height, cap);
+      for (const group of filtered) {
+        assert.ok(group.radius <= cap + 1e-8);
+        assert.ok(Math.abs(group.x) + group.radius <= 500);
+        assert.ok(Math.abs(group.y) + group.radius <= height / 2);
+        assert.ok(Math.abs(group.radius ** 2 / filtered[0].radius ** 2 - group.count / filtered[0].count) < 1e-8);
+      }
+      for (let i = 0; i < filtered.length; i++) for (let j = i + 1; j < filtered.length; j++) {
+        assert.ok(Math.hypot(filtered[i].x - filtered[j].x, filtered[i].y - filtered[j].y) > filtered[i].radius + filtered[j].radius);
+      }
+    }
+  }
+});
+
 test('thick rounded rings retain small categories and keep the source centre clear', async () => {
   for (const parts of [[{ type: 'exposure', fraction: .99 }, { type: 'transmission', fraction: .01 }], [{ type: 'transmission', fraction: 1 }]]) {
     const ring = relationshipRing(50, parts);

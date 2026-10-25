@@ -167,6 +167,11 @@ export function Globe({
   const angle = useRef(lastAngle);
   const tilt = useRef(lastTilt);
   const hover = useRef<GlobeHover>(null);
+  const hoverTarget = useRef<SVGElement | undefined>(undefined);
+  const focusedPin = useRef('');
+  const selectedPin = useRef(selected);
+  const nodeIndices = useMemo(() => new Map(nodes?.map((node, index) => [node.id, index])), [nodes]);
+  const routeIndices = useMemo(() => new Map(routes.map((route, index) => [route.id, index])), [routes]);
   const flight = useRef(0);
   const overview = useRef<{ phi: number; theta: number } | null>(null);
   const moved = useRef(false);
@@ -179,8 +184,12 @@ export function Globe({
   useEffect(() => () => cancelAnimationFrame(dragFrame.current), []);
   const highlight = useCallback((item: GlobeHover) => {
     if (drag.current || hover.current?.kind === item?.kind && hover.current?.id === item?.id) return;
+    if (hoverTarget.current) delete hoverTarget.current.dataset.hovered;
+    hoverTarget.current = (item?.kind === 'node' ? pins.current[nodeIndices.get(item.id)!]
+      : item?.kind === 'link' ? routeHits.current[routeIndices.get(item.id)!] : undefined) ?? undefined;
+    if (hoverTarget.current) hoverTarget.current.dataset.hovered = 'true';
     hover.current = item; onHover?.(item); paint.current();
-  }, [onHover]);
+  }, [onHover, nodeIndices, routeIndices]);
   const renderCamera = useCallback(() => {
     lastAngle = angle.current;
     lastTilt = tilt.current;
@@ -432,9 +441,9 @@ export function Globe({
       const batch = markerRenderer.current;
       const routeBatch = routeRenderer.current;
       const mix = mapMix.current, net = networkMix.current;
-      if (batch) nodes?.forEach((_, i) => {
-        const pin = pins.current[i];
-        batch.active(i, !!pin?.matches(':hover, :focus-visible, [data-selected="true"]'), !!pin?.matches(":focus-visible"));
+      if (batch) nodes?.forEach((node, i) => {
+        const focused = focusedPin.current === node.id;
+        batch.active(i, focused || selectedPin.current === node.id || hover.current?.kind === 'node' && hover.current.id === node.id, focused);
       });
       tiltReset.current?.setAttribute("aria-disabled", String(!visible || (projection === "network"
         ? net !== 1 || !selectedContinents.length
@@ -599,7 +608,7 @@ export function Globe({
     });
     return () => animations.forEach(animation => animation.cancel());
   }, [locate, visible, playing]);
-  useLayoutEffect(() => { paint.current(); }, [selected, playing, fullscreen, controls]);
+  useLayoutEffect(() => { selectedPin.current = selected; paint.current(); }, [selected, playing, fullscreen, controls]);
   useEffect(() => {
     if (!visible) return;
     const continuous = playing && (!nodes || nodes.length > 0 || rotating || routes.some(route => route.directed || route.type === "movement"));
@@ -682,10 +691,10 @@ export function Globe({
   }
   // Pointer previews wait for camera centering; clicks and keyboard focus remain available.
   const routeTargets = useMemo(() => routes.map((route, i) => <path key={route.groupId ?? route.id} ref={el => { routeHits.current[i] = el; }} fill="none" stroke="transparent" strokeWidth={18} className="atlas-link-target"
-          role="button" tabIndex={0} aria-label={route.label} aria-description={route.count && route.count > 1 ? `${route.count} links between these locations` : undefined} onPointerMove={() => { if (!flight.current) highlight({ kind: "link", id: route.id }); }} onPointerLeave={() => highlight(null)} onFocus={() => highlight({ kind: "link", id: route.id })} onBlur={() => highlight(null)} onClick={() => { highlight(null); onLink?.(route.id); }}
+          role="button" tabIndex={0} aria-label={route.label} aria-description={route.count && route.count > 1 ? `${route.count} links between these locations` : undefined} onPointerMove={() => { if (!flight.current && !morph.current) highlight({ kind: "link", id: route.id }); }} onPointerLeave={() => highlight(null)} onFocus={() => highlight({ kind: "link", id: route.id })} onBlur={() => highlight(null)} onClick={() => { highlight(null); onLink?.(route.id); }}
           onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); highlight(null); onLink?.(route.id); } }}></path>), [routes, highlight, onLink]);
   const nodeElements = useMemo(() => nodes?.map((node, i) => ({ node, i })).sort((a, b) => Number(a.node.id === selected) - Number(b.node.id === selected)).map(({ node, i }) => <g key={node.id} ref={el => { pins.current[i] = el; }} className="atlas-globe-pin"
-          data-selected={selected === node.id} data-network-isolated={network.isolated.has(node.location.join(","))} role="button" tabIndex={0} aria-label={node.label} onPointerMove={() => { if (!flight.current) highlight({ kind: "node", id: node.id }); }} onPointerLeave={() => highlight(null)} onFocus={() => highlight({ kind: "node", id: node.id })} onBlur={() => highlight(null)} onClick={() => { highlight(null); onSelect?.(node.id); }}
+          data-selected={selected === node.id} data-network-isolated={network.isolated.has(node.location.join(","))} role="button" tabIndex={0} aria-label={node.label} onPointerMove={() => { if (!flight.current && !morph.current) highlight({ kind: "node", id: node.id }); }} onPointerLeave={() => highlight(null)} onFocus={event => { focusedPin.current = event.currentTarget.matches(':focus-visible') ? node.id : ''; highlight({ kind: "node", id: node.id }); paint.current(); }} onBlur={() => { focusedPin.current = ''; highlight(null); paint.current(); }} onClick={() => { highlight(null); onSelect?.(node.id); }}
           onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); highlight(null); onSelect?.(node.id); } }}>
           <g ref={el => { markers.current[i] = el; }} className="atlas-event-marker" aria-hidden="true">
             <circle className="atlas-event-halo" r="18" fill={`url(#${haloId})`} />

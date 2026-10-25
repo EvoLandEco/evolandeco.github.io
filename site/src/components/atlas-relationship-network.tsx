@@ -85,14 +85,16 @@ const RelationshipNetwork = memo(function RelationshipNetwork({ entries, recordI
   const selection = useMemo(() => relationshipGroupFilter(graph, byId, sources, filters.types, filters.sources), [graph, byId, sources, filters]);
   const filtering = !!(filters.types.length || filters.sources.length);
   const height = size ? 1000 * size.height / size.width : 700;
-  const bubbles = useMemo(() => relationshipOverview(selection, byId, 1000, height), [selection, byId, height]);
+  const fullOverview = useMemo(() => relationshipOverview(graph, byId, 1000, height), [graph, byId, height]);
+  const bubbles = useMemo(() => filtering ? relationshipOverview(selection, byId, 1000, height, Math.max(...fullOverview.map(group => group.radius)))
+    : fullOverview, [selection, byId, height, filtering, fullOverview]);
   const descriptionId = useId();
   const [overview, setOverview] = useState(!selectedId);
   const [expandedGroup, setExpandedGroup] = useState(graph.groupByEntry.get(selectedId) ?? '');
   const [inspection, setInspection] = useState<{ kind: 'group' | 'relationship' | 'report'; id: string }>({ kind: 'relationship', id: selectedId });
   const [groupHover, setGroupHover] = useState({ pointer: '', focus: '' });
   const hoveredGroup = groupHover.pointer || groupHover.focus;
-  const hoverGroup = useCallback((id: string, kind: 'pointer' | 'focus') => setGroupHover(current => ({ ...current, [kind]: id })), []);
+  const hoverGroup = useCallback((id: string, kind: 'pointer' | 'focus') => setGroupHover(current => current[kind] === id ? current : { ...current, [kind]: id }), []);
   const [previousId, setPreviousId] = useState(selectedId);
   if (previousId !== selectedId) { setPreviousId(selectedId); setExpandedGroup(graph.groupByEntry.get(selectedId) ?? ''); setOverview(!selectedId); setInspection({ kind: 'relationship', id: selectedId }); setFilters({ types: [], sources: [] }); }
   const filterGroups = useCallback((kind: 'types' | 'sources', value: string) => {
@@ -150,35 +152,28 @@ const NetworkScene = memo(function NetworkScene({ graph, byId, sources, colors, 
   selectedNode: string; onSelect: (id: string) => void; onInspectReport: (id: string) => void; onOpenGroup: (id: string) => void; onGroupHover: (id: string, kind: 'pointer' | 'focus') => void;
 }) {
   const patternId = useId();
-  const reducedMotion = useReducedMotion();
   const { atlasDocuments } = useAtlas();
   const dates = useMemo(() => new Map([...atlasDocuments].map(([id, doc]) => [id, doc.publication])), [atlasDocuments]);
   const origin = overview.find(group => group.id === focused?.id);
   const [retainedId, setRetainedId] = useState('');
   if (focused && retainedId !== focused.id) setRetainedId(focused.id);
   const layout = useMemo(() => focused && relationshipGroupLayout(focused, byId, dates), [focused, byId, dates]);
-  const camera = useMemo(() => {
-    if (!layout || !origin) return { x: 500, y: height / 2, scale: 1 };
-    const scale = Math.min(1000, height) / (2 * layout.radius);
-    return { x: 500 - (origin.x + layout.center.x) * scale, y: height / 2 - (origin.y + layout.center.y) * scale, scale };
-  }, [height, layout, origin]);
-  return <div className={styles.scene} role="img" aria-label="Relationship evidence network">
+  const [settledId, setSettledId] = useState('');
+  const onSettled = useCallback((id: string) => setSettledId(id), []);
+  const transitioning = focused ? settledId !== focused.id : !!retainedId;
+  return <div className={styles.scene} role="img" aria-label="Relationship evidence network" data-transitioning={transitioning}>
     <svg viewBox={`0 0 1000 ${height}`} className={styles.graph} aria-hidden>
       <defs><pattern id={patternId} width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="14" cy="14" r=".6" className={styles.gridDot}/></pattern></defs>
       <rect width="1000" height={height} fill={`url(#${patternId})`}/>
     </svg>
-    <div className={styles.overviewLayer} inert={!!focused} aria-hidden={!!focused || undefined}>
+    <div className={styles.overviewLayer} inert={!!focused || !!retainedId} aria-hidden={!!focused || !!retainedId || undefined}>
       <svg viewBox={`0 0 1000 ${height}`} className={styles.graph}>
         <g transform={`translate(500 ${height / 2})`}><NetworkOverview overview={overview} sources={sources} colors={colors} descriptionId={descriptionId} retainedId={retainedId} onSelect={onOpenGroup} onHover={onGroupHover}/></g>
       </svg>
     </div>
-    <motion.div className={styles.cameraLayer} animate={{ x: `${camera.x / 10}%`, y: `${camera.y / height * 100}%`, scale: camera.scale }} initial={false} transition={{ duration: reducedMotion ? 0 : .48, ease: [.22, .8, .2, 1] }}>
-      <svg viewBox={`0 0 1000 ${height}`} className={`${styles.graph} ${styles.focusLayer}`}>
-        <AnimatePresence initial={false} onExitComplete={() => setRetainedId(focused?.id ?? '')}>
-          {focused && layout && origin && <FocusedGroup key={focused.id} origin={origin} layout={layout} graph={graph} byId={byId} colors={colors} selectedNode={selectedNode} onSelect={onSelect} onInspectReport={onInspectReport}/>}
-        </AnimatePresence>
-      </svg>
-    </motion.div>
+    <AnimatePresence initial={false} onExitComplete={() => { setRetainedId(focused?.id ?? ''); setSettledId(''); }}>
+      {focused && layout && origin && <FocusedGroup key={focused.id} origin={origin} layout={layout} height={height} graph={graph} byId={byId} colors={colors} selectedNode={selectedNode} onSelect={onSelect} onInspectReport={onInspectReport} onSettled={onSettled}/>}
+    </AnimatePresence>
   </div>;
 });
 
@@ -233,8 +228,8 @@ function GroupCallout({ id, group, frame, sources, reports }: {
 }
 
 type GroupLayout = ReturnType<typeof relationshipGroupLayout>;
-const FocusedGroup = memo(function FocusedGroup({ origin, layout, graph, byId, colors, selectedNode, onSelect, onInspectReport }: {
-  layout: GroupLayout; graph: RelationshipGraph; byId: Map<string, AtlasAssessment>;
+const FocusedGroup = memo(function FocusedGroup({ origin, layout, height, graph, byId, colors, selectedNode, onSelect, onInspectReport, onSettled }: {
+  layout: GroupLayout; height: number; onSettled: (id: string) => void; graph: RelationshipGraph; byId: Map<string, AtlasAssessment>;
   origin: ReturnType<typeof relationshipOverview>[number]; colors: Map<string, string>;
   selectedNode: string; onSelect: (id: string) => void; onInspectReport: (id: string) => void;
 }) {
@@ -242,13 +237,36 @@ const FocusedGroup = memo(function FocusedGroup({ origin, layout, graph, byId, c
   const edgeClipId = useId();
   const reducedMotion = useReducedMotion();
   const [present, safeToRemove] = usePresence();
+  const detail = useRef<SVGGElement>(null);
+  const [frame, setFrame] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [settled, setSettled] = useState(false);
   const progress = useMotionValue(reducedMotion ? 1 : 0);
   useEffect(() => {
+    if (!detail.current) return;
+    // SVG bounds include the rendered labels and asymmetric sectors in local coordinates.
+    const observer = new ResizeObserver(([entry]) => {
+      const { x, y, width, height } = (entry.target as SVGGraphicsElement).getBBox();
+      setFrame(current => current && current.x === x && current.y === y && current.width === width && current.height === height
+        ? current : { x, y, width, height });
+    });
+    observer.observe(detail.current);
+    return () => observer.disconnect();
+  }, [layout]);
+  useEffect(() => {
+    if (!frame) return;
     const target = present ? 1 : 0;
     const animation = animate(progress, target, { duration: reducedMotion ? 0 : .48 * Math.abs(target - progress.get()), ease: [.22, .8, .2, 1],
-      onComplete: () => { if (!present) safeToRemove?.(); } });
+      onComplete: () => { if (!present) safeToRemove?.(); else { setSettled(true); onSettled(origin.id); } } });
     return () => animation.stop();
-  }, [present, progress, reducedMotion, safeToRemove]);
+  }, [present, progress, reducedMotion, safeToRemove, frame, onSettled, origin.id]);
+  const interactive = present && settled;
+  const center = frame ? { x: frame.x + frame.width / 2, y: frame.y + frame.height / 2 } : layout.center;
+  const zoom = frame ? Math.min(1000 / (frame.width + 24), height / (frame.height + 24)) : Math.min(1000, height) / (2 * layout.radius);
+  // Paint vectors at the largest camera scale so compositing never enlarges a low-resolution surface.
+  const resolution = Math.max(1, zoom);
+  const cameraX = useTransform(progress, value => `${50 - (origin.x + center.x) * zoom * value / 10}%`);
+  const cameraY = useTransform(progress, value => `${50 - (origin.y + center.y) * zoom * value / height * 100}%`);
+  const cameraScale = useTransform(progress, value => (1 + (zoom - 1) * value) / resolution);
   const ring = useMemo(() => relationshipRing(origin.radius, origin.parts), [origin]);
   const shapes = useMemo(() => relationshipSourceShapes([...colors.keys()]), [colors]);
   const detailTransform = useTransform(progress, value => `scale(${ring.parts[0].radius / (layout.sectors[0].radius + 14) * (1 - value) + value})`);
@@ -271,16 +289,18 @@ const FocusedGroup = memo(function FocusedGroup({ origin, layout, graph, byId, c
   const marks = useMemo(() => new Map(relationshipSourceMarks(reportNodes.map(node => node.sourceId)).map(mark => [mark.source, mark])), [reportNodes]);
   const renderNode = (id: string) => {
     const node = nodes.get(id)!;
-    return <NetworkNode key={node.id} node={node} present={present} active={node.id === highlighted || !!neighbors?.has(node.id)} selected={node.id === selectedNode} onHover={setHover} onSelect={onSelect} onInspectReport={onInspectReport}/>;
+    return <NetworkNode key={node.id} node={node} present={interactive} active={node.id === highlighted || !!neighbors?.has(node.id)} selected={node.id === selectedNode} onHover={setHover} onSelect={onSelect} onInspectReport={onInspectReport}/>;
   };
-  return <g data-expanded-group={origin.id} transform={`translate(${origin.x} ${origin.y})`} aria-hidden={!present || undefined} pointerEvents={present ? 'auto' : 'none'}>
+  return <motion.div className={styles.cameraLayer} data-settled={interactive} style={{ x: cameraX, y: cameraY, scale: cameraScale }}>
+    <svg viewBox={`0 0 ${1000 / resolution} ${height / resolution}`} className={`${styles.graph} ${styles.focusLayer}`}>
+    <g data-expanded-group={origin.id} transform={`translate(${origin.x} ${origin.y})`} aria-hidden={!present || undefined} pointerEvents={interactive ? 'auto' : 'none'}>
     {layout.sectors.map(sector => <MorphRing key={sector.type} from={ring.parts.find(part => part.type === sector.type)!}
       to={{ radius: sector.radius + 14, start: sector.start + turn, end: sector.end + turn }} width={ring.width} progress={progress} type={sector.type}/>)}
     <motion.g style={{ opacity: sourceOpacity }} pointerEvents="none" aria-hidden>
       {reportNodes.map(node => <MorphSource key={node.id} mark={marks.get(node.sourceId)!} node={node} radius={origin.radius} progress={progress} path={shapes.get(node.sourceId)!} color={colors.get(node.sourceId)!}/>)}
       {!reportNodes.length && <circle r={origin.radius * .42} className={styles.sourceUnknown}/>}
     </motion.g>
-    <motion.g transform={detailTransform} style={{ opacity: detailOpacity }}>
+    <motion.g ref={detail} data-network-detail transform={detailTransform} style={{ opacity: detailOpacity }}>
       <defs><clipPath id={edgeClipId} clipPathUnits="userSpaceOnUse"><path d={layout.edgeClip} clipRule="evenodd" fillRule="evenodd"/></clipPath></defs>
       <g clipPath={`url(#${edgeClipId})`}>
         {layout.edges.map(edge => <NetworkEdge key={edge.id} edge={edge} active={edge.from === highlighted || edge.to === highlighted}/>)}
@@ -293,7 +313,9 @@ const FocusedGroup = memo(function FocusedGroup({ origin, layout, graph, byId, c
       </g>)}
       <g className={styles.publications}>{reportNodes.map(node => renderNode(node.id))}</g>
     </motion.g>
-  </g>;
+    </g>
+    </svg>
+  </motion.div>;
 });
 
 function MorphRing({ from, to, width, progress, type }: {

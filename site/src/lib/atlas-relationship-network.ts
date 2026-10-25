@@ -90,7 +90,7 @@ export function relationshipGroupFilter(graph: RelationshipGraph, entries: Map<s
     counts: [...counts].sort(([a], [b]) => a.localeCompare(b)).map(([type, count]) => ({ type, count })) };
 }
 
-export function relationshipOverview(graph: Pick<RelationshipGraph, 'groups'>, entries: Map<string, AtlasAssessment>, width = 1000, height = 1000) {
+export function relationshipOverview(graph: Pick<RelationshipGraph, 'groups'>, entries: Map<string, AtlasAssessment>, width = 1000, height = 1000, maxRadius = Infinity) {
   const summaries = graph.groups.map(group => {
     const counts = new Map<string, number>();
     let first = '';
@@ -107,8 +107,10 @@ export function relationshipOverview(graph: Pick<RelationshipGraph, 'groups'>, e
   type Bubble = { group?: typeof summaries[number]; children?: Bubble[] };
   const root = hierarchy<Bubble>({ children: summaries.map(group => ({ group })) }).sum(node => node.group?.count ?? 0)
     .sort((a, b) => b.value! - a.value! || a.data.group!.id.localeCompare(b.data.group!.id));
-  return pack<Bubble>().size([width, height]).padding(16)(root).leaves().map(node => ({
-    ...node.data.group!, x: node.x - width / 2, y: node.y - height / 2, radius: node.r,
+  const packed = pack<Bubble>().size([width, height]).padding(16)(root).leaves();
+  const scale = Math.min(1, maxRadius / Math.max(...packed.map(node => node.r)));
+  return packed.map(node => ({
+    ...node.data.group!, x: (node.x - width / 2) * scale, y: (node.y - height / 2) * scale, radius: node.r * scale,
   }));
 }
 

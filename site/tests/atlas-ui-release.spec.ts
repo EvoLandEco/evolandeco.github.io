@@ -4,7 +4,7 @@ import { bundle } from './atlas-fixture';
 import { routeBrowserFixture } from './atlas-browser-fixture.mjs';
 import { atlasSelect, openAtlasView, selectAtlasOption } from './atlas-select-actions';
 
-for (const width of [390, 1440]) test(`UI 0.8.2 exposes the published analysis views at ${width}px`, async ({ page }) => {
+for (const width of [390, 1440]) test(`UI 0.8.3 exposes the published analysis views at ${width}px`, async ({ page }) => {
   await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
   await page.setViewportSize({ width, height: 1000 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -35,6 +35,6 @@ for (const width of [390, 1440]) test(`UI 0.8.2 exposes the published analysis v
   await selectAtlasOption(page, 'Journey view', 'sequences');
   await expect(page.locator('.atlas-chain-section')).toBeVisible();
   await page.getByRole('button', { name: 'About ATLAS', exact: true }).click();
-  await expect(page.getByLabel('ATLAS UI release')).toContainText('ATLAS UI v0.8.2');
+  await expect(page.getByLabel('ATLAS UI release')).toContainText('ATLAS UI v0.8.3');
   expect(errors).toEqual([]);
 });
