@@ -33,22 +33,27 @@ test('filtered bubbles stay bounded and expanded vectors stay centred at native 
     }
     await expect(camera).toHaveAttribute('data-settled', 'true');
     await expect(graph).toHaveAttribute('data-transitioning', 'false');
-    const measured = await graph.evaluate(element => {
-      const stage = element.getBoundingClientRect();
-      const detail = element.querySelector('[data-network-detail]')!.getBoundingClientRect();
-      const camera = element.querySelector('[data-settled]')!;
-      const matrix = new DOMMatrix(getComputedStyle(camera).transform);
-      return { dx: Math.abs(detail.x + detail.width / 2 - stage.x - stage.width / 2),
-        dy: Math.abs(detail.y + detail.height / 2 - stage.y - stage.height / 2),
-        fits: detail.width < stage.width && detail.height < stage.height, scale: matrix.a,
-        willChange: getComputedStyle(camera).willChange };
-    });
+    await expect(async () => {
+      const measured = await graph.evaluate(element => {
+        const stage = element.getBoundingClientRect();
+        const detailElement = element.querySelector<SVGGraphicsElement>('[data-network-detail]')!;
+        const detail = detailElement.getBBox(), screen = detailElement.getScreenCTM()!;
+        const center = new DOMPoint(detail.x + detail.width / 2, detail.y + detail.height / 2).matrixTransform(screen);
+        const painted = detailElement.getBoundingClientRect();
+        const camera = element.querySelector('[data-settled]')!;
+        const matrix = new DOMMatrix(getComputedStyle(camera).transform);
+        return { dx: Math.abs(center.x - stage.x - stage.width / 2),
+          dy: Math.abs(center.y - stage.y - stage.height / 2),
+          fits: painted.width < stage.width && painted.height < stage.height, scale: matrix.a,
+          willChange: getComputedStyle(camera).willChange };
+      });
+      expect(measured.dx).toBeLessThan(.5);
+      expect(measured.dy).toBeLessThan(.5);
+      expect(measured.fits).toBe(true);
+      expect(measured.scale).toBeLessThanOrEqual(1);
+      expect(measured.willChange).toBe('auto');
+    }).toPass({ timeout: 5000 });
     if (browserName === 'webkit') await graph.screenshot({ path: testInfo.outputPath(`network-${index}.png`) });
-    expect(measured.dx).toBeLessThan(2);
-    expect(measured.dy).toBeLessThan(2);
-    expect(measured.fits).toBe(true);
-    expect(measured.scale).toBeLessThanOrEqual(1);
-    expect(measured.willChange).toBe('auto');
     await page.getByRole('button', { name: 'All groups', exact: true }).click();
     const box = (await graph.boundingBox())!;
     for (const fraction of [.3, .6, .4, .7]) {
