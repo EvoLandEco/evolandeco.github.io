@@ -2046,9 +2046,13 @@ for (const reducedMotion of ["reduce", "no-preference"] as const) test(`Globe su
   const dragOverlays = async (fullscreen: boolean) => {
     await expect(page.locator("html")).not.toHaveAttribute("data-atlas-workspace-transition");
     for (const selector of [".atlas-globe-pin", ".atlas-link-target"]) {
-      const point = await overlayPoint(selector);
-      await page.mouse.move(point.x, point.y);
-      await expect(page.getByRole("tooltip")).toBeVisible();
+      let point!: { x: number; y: number };
+      // Sample the rotating target until the pointer preview holds its position.
+      await expect(async () => {
+        point = await overlayPoint(selector);
+        await page.mouse.move(point.x, point.y);
+        await expect(page.getByRole("tooltip")).toBeVisible({ timeout: 250 });
+      }).toPass({ timeout: 5000 });
       const angle = Number(await canvas.getAttribute("data-angle"));
       await page.mouse.down();
       await page.mouse.move(point.x + 65, point.y + 2, { steps: 8 });
