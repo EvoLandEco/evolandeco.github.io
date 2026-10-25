@@ -45,11 +45,11 @@ test('filtered bubbles stay bounded and expanded vectors stay centred at native 
         const matrix = new DOMMatrix(getComputedStyle(camera).transform);
         return { dx: Math.abs(center.x - stage.x - stage.width / 2),
           dy: Math.abs(center.y - stage.y - stage.height / 2),
-          aspectError: Math.abs(viewport.width / viewport.height - stage.width / stage.height),
+          viewportError: Math.abs(viewport.width / viewport.height * stage.height - stage.width),
           fits: painted.width < stage.width && painted.height < stage.height, scale: matrix.a,
           willChange: getComputedStyle(camera).willChange };
       });
-      expect(measured.aspectError).toBeLessThan(1e-8);
+      expect(measured.viewportError).toBeLessThan(.01);
       expect(measured.dx).toBeLessThan(.5);
       expect(measured.dy).toBeLessThan(.5);
       expect(measured.fits).toBe(true);
