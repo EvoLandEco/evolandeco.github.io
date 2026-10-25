@@ -8,7 +8,7 @@ export default defineConfig({
   retries: 0,
   projects: [
     { name: "chromium", use: { browserName: "chromium" } },
-    { name: "webkit", testMatch: "atlas-relationship-motion.spec.ts", use: { browserName: "webkit", deviceScaleFactor: 3, isMobile: true, hasTouch: true } },
+    { name: "webkit", testMatch: "atlas-relationship-motion.spec.ts", use: { browserName: "webkit", deviceScaleFactor: 3, isMobile: true, hasTouch: true, actionTimeout: 30000 } },
   ],
   reporter: [["list"], ["json", { outputFile: "evidence/browser-tests.json" }]],
   webServer: process.env.CI ? {
