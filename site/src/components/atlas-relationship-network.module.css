@@ -20,14 +20,19 @@
 .workspace button.filterReset:disabled { opacity: .3; background: transparent; cursor: default; }
 .workspace :is(.filterReset, .legend > button, .publisherKey > button, .returnGroups) { box-shadow: none; }
 .canvasFooter { display: grid; place-items: center; min-height: 48px; padding: 8px 10px 10px; }
+.canvasFooter > * { grid-area: 1 / 1; }
+.canvasFooter[data-focused="true"] .legend, .canvasFooter[data-focused="false"] .returnGroups { visibility: hidden; pointer-events: none; }
 .workspace button.returnGroups { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 30px; padding: 6px 14px; border: 0; border-radius: 999px; color: var(--atlas-green); background: color-mix(in srgb, var(--atlas-green) 10%, var(--background)); font-size: 11px; font-weight: 550; cursor: pointer; transition: background .18s; }
 .workspace button.returnGroups:hover { background: color-mix(in srgb, var(--atlas-green) 17%, var(--background)); }
 .stage { position: relative; min-height: 0; overflow: hidden; contain: layout paint; }
-.graph { display: block; width: 100%; height: 100%; overflow: hidden; }
+.scene { position: absolute; inset: 0; }
+.graph { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: hidden; }
+.focusLayer { overflow: visible; pointer-events: none; }
+.cameraLayer { position: absolute; inset: 0; transform-origin: 0 0; pointer-events: none; will-change: transform; }
+.overviewLayer { position: absolute; inset: 0; contain: paint; will-change: opacity; transition: opacity .18s; }
+.stage[data-focused="true"] .overviewLayer { opacity: 0; }
 .gridDot { fill: var(--primary); opacity: .08; }
-.overviewArt { transition: opacity .32s, visibility 0s; }
-.stage[data-focused="true"] .overviewArt { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .32s, visibility 0s .32s; }
-.groupGlyph { cursor: pointer; outline: none; transition: transform .24s cubic-bezier(.2,.8,.2,1), opacity .18s; }
+.groupGlyph { cursor: pointer; outline: none; transition: opacity .18s; }
 .overviewArt:has(.groupGlyph:hover) .groupGlyph:not(:hover),
 .overviewArt:not(:has(.groupGlyph:hover)):has(.groupGlyph:focus-visible) .groupGlyph:not(:focus-visible) { opacity: .2; }
 .groupSurface { fill: transparent; }
@@ -143,4 +148,4 @@
   .connector span { height: 1px; width: 6px; }
   .figures span { font-size: 10px; }
 }
-@media (prefers-reduced-motion: reduce) { .beam { animation: none; display: none; } .groupCallout, .groupLeader path { animation: none; } .overviewArt, .stage[data-focused="true"] .overviewArt, .groupGlyph, .groupRing, .legend > button, .publisherKey > button, .returnGroups, .nodeHalo, .nodeCore, .edgeLine { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .beam { animation: none; display: none; } .groupCallout, .groupLeader path { animation: none; } .overviewLayer, .stage[data-focused="true"] .overviewLayer, .groupGlyph, .groupRing, .legend > button, .publisherKey > button, .returnGroups, .nodeHalo, .nodeCore, .edgeLine { transition: none; } }

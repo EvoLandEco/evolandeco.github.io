@@ -73,7 +73,7 @@ for (const [width, fullscreen, reduced] of [[390, false, true], [1440, false, fa
   await expect(page.locator('.atlas-page[data-ready="true"]')).toBeVisible();
   if (fullscreen) await page.getByRole('button', { name: 'Click to enter full screen' }).press('Enter');
   await openAtlasView(page, 'relationships');
-  const network = page.locator('svg[aria-label="Relationship evidence network"]');
+  const network = page.locator('[role="img"][aria-label="Relationship evidence network"]');
   await expect(network).toBeVisible();
   await expect(page.getByRole('group', { name: 'Relationship presentation' })).toHaveCount(0);
   await expect(page.locator('.atlas-connection')).toHaveCount(0);
@@ -121,12 +121,24 @@ for (const reduced of [false, true]) test(`Relationship groups preserve filters 
   const count = await graph.getByRole('button').count();
   const group = graph.getByRole('button').first();
   const name = await group.getAttribute('aria-label');
-  await group.press('Enter');
-  await expect(page.getByRole('complementary', { name: 'Evidence group overview' })).toBeVisible();
-  await expect(graph.locator('[data-expanded-group]')).toHaveCount(1);
-  await page.getByRole('button', { name: 'All groups', exact: true }).click();
-  await expect(graph.locator('[data-expanded-group]')).toHaveCount(0);
-  await expect(graph.getByRole('button', { name: name!, exact: true })).toBeVisible();
+  const reportingSelection = page.locator('summary[aria-label="Report relationship"]');
+  const reportingLabel = await reportingSelection.textContent();
+  for (let cycle = 0; cycle < 2; cycle++) {
+    await graph.getByRole('button', { name: name!, exact: true }).press('Enter');
+    const detail = page.getByRole('complementary', { name: 'Evidence group overview' });
+    await expect(detail).toBeVisible();
+    await expect(reportingSelection).toHaveText(reportingLabel!);
+    await expect(graph.locator('[data-expanded-group]')).toHaveCount(1);
+    await expect(graph.getByRole('button', { name: /^Explore evidence group/ })).toHaveCount(0);
+    await expect.poll(() => detail.evaluate(element => {
+      const body = element.querySelector('[role="region"]')!;
+      const more = Math.ceil(body.scrollTop) < body.scrollHeight - body.clientHeight;
+      return element.querySelector('.atlas-scroll-cue')?.getAttribute('data-more') === String(more);
+    })).toBe(true);
+    await page.getByRole('button', { name: 'All groups', exact: true }).click();
+    await expect(graph.locator('[data-expanded-group]')).toHaveCount(0);
+    await expect(graph.getByRole('button', { name: name!, exact: true })).toBeVisible();
+  }
   await expect(publisher).toHaveAttribute('aria-pressed', 'true');
   await expect(graph.getByRole('button')).toHaveCount(count);
   const reset = page.getByRole('button', { name: 'Clear group filters' });

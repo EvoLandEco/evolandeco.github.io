@@ -398,7 +398,7 @@ for (const width of [390, 1440]) test(`Analysis card selectors search all pages 
     if (view === 'spatial') {
       await expect(analysis.locator('.atlas-connection')).toHaveCount(12);
       for (const card of await analysis.locator('.atlas-connection').all()) await expect(card).toHaveAttribute('data-kind', kind);
-    } else await expect(analysis.locator('svg[aria-label="Relationship evidence network"]')).toBeVisible();
+    } else await expect(analysis.locator('[role="img"][aria-label="Relationship evidence network"]')).toBeVisible();
     await expect(atlasSelect(page, 'Link type').locator('summary')).toContainText('All link types');
     await menu.locator('summary').press('Enter');
     await expect(menu.getByRole('option')).toHaveCount(matches.length);

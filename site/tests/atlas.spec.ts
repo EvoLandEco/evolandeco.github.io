@@ -126,7 +126,7 @@ test("ATLAS entry, date windows, evidence and source focus", async ({ page }) =>
   await page.getByRole("tab", { name: "Reports", exact: true }).click();
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   await selectAtlasOption(page, 'Analysis view', 'relationships');
-  await expect(page.locator('svg[aria-label="Relationship evidence network"]')).toBeVisible();
+  await expect(page.locator('[role="img"][aria-label="Relationship evidence network"]')).toBeVisible();
   await expect(page.locator(".atlas-connection")).toHaveCount(0);
   await page.getByRole("tab", { name: "Reports", exact: true }).click();
   await page.getByRole('button', { name: 'Source coverage', exact: true }).click();
@@ -1870,12 +1870,12 @@ for (const [width, fullscreen] of [[390, false], [1440, true]] as const) test(`R
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   await selectAtlasOption(page, 'Analysis view', 'relationships');
   await selectAtlasOption(page, 'Report relationship', { index: 13 });
-  const selected = await page.locator('svg[aria-label="Relationship evidence network"] [data-selected="true"]').getAttribute('aria-label');
+  const selected = await page.locator('[role="img"][aria-label="Relationship evidence network"] [data-selected="true"]').getAttribute('aria-label');
   await page.getByRole('tab', { name: 'Reports', exact: true }).click();
   await expect(page.locator('.atlas-report').first()).toHaveAttribute('id', report!);
   await page.getByRole('tab', { name: 'Analysis', exact: true }).click();
   await expect(page.locator('.atlas-analysis')).toHaveAttribute('data-view', 'relationships');
-  await expect(page.locator('svg[aria-label="Relationship evidence network"] [data-selected="true"]')).toHaveAttribute('aria-label', selected!);
+  await expect(page.locator('[role="img"][aria-label="Relationship evidence network"] [data-selected="true"]')).toHaveAttribute('aria-label', selected!);
   await expect(page.locator('.atlas-report-tools')).toHaveCount(0);
   expect((await new AxeBuilder({ page }).include('.atlas-workspace').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

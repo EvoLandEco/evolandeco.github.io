@@ -88,25 +88,26 @@ const RelationshipNetwork = memo(function RelationshipNetwork({ entries, recordI
   const bubbles = useMemo(() => relationshipOverview(selection, byId, 1000, height), [selection, byId, height]);
   const descriptionId = useId();
   const [overview, setOverview] = useState(!selectedId);
+  const [expandedGroup, setExpandedGroup] = useState(graph.groupByEntry.get(selectedId) ?? '');
   const [inspection, setInspection] = useState<{ kind: 'group' | 'relationship' | 'report'; id: string }>({ kind: 'relationship', id: selectedId });
   const [groupHover, setGroupHover] = useState({ pointer: '', focus: '' });
   const hoveredGroup = groupHover.pointer || groupHover.focus;
   const hoverGroup = useCallback((id: string, kind: 'pointer' | 'focus') => setGroupHover(current => ({ ...current, [kind]: id })), []);
   const [previousId, setPreviousId] = useState(selectedId);
-  if (previousId !== selectedId) { setPreviousId(selectedId); setOverview(!selectedId); setInspection({ kind: 'relationship', id: selectedId }); setFilters({ types: [], sources: [] }); }
+  if (previousId !== selectedId) { setPreviousId(selectedId); setExpandedGroup(graph.groupByEntry.get(selectedId) ?? ''); setOverview(!selectedId); setInspection({ kind: 'relationship', id: selectedId }); setFilters({ types: [], sources: [] }); }
   const filterGroups = useCallback((kind: 'types' | 'sources', value: string) => {
     setFilters(current => ({ ...current, [kind]: current[kind].includes(value) ? current[kind].filter(item => item !== value) : [...current[kind], value] }));
     setOverview(true); setGroupHover({ pointer: '', focus: '' });
   }, []);
   const clearFilters = () => { setFilters({ types: [], sources: [] }); setOverview(true); setGroupHover({ pointer: '', focus: '' }); };
   const selected = byId.get(selectedId) ?? entries[0];
-  const focused = !overview && selected ? groups.get(graph.groupByEntry.get(selected.id)!) : undefined;
+  const focused = !overview ? groups.get(expandedGroup) : undefined;
   const select = useCallback((id: string) => {
-    setGroupHover({ pointer: '', focus: '' }); setOverview(false); setPreviousId(id); setInspection({ kind: 'relationship', id }); onSelect(id);
-  }, [onSelect]);
+    setGroupHover({ pointer: '', focus: '' }); setOverview(false); setExpandedGroup(graph.groupByEntry.get(id)!); setPreviousId(id); setInspection({ kind: 'relationship', id }); onSelect(id);
+  }, [graph.groupByEntry, onSelect]);
   const openGroup = useCallback((id: string) => {
-    setGroupHover({ pointer: '', focus: '' }); setOverview(false); setPreviousId(id); setInspection({ kind: 'group', id }); onSelect(id);
-  }, [onSelect]);
+    setGroupHover({ pointer: '', focus: '' }); setOverview(false); setExpandedGroup(graph.groupByEntry.get(id)!); setInspection({ kind: 'group', id });
+  }, [graph.groupByEntry]);
   const inspectReport = useCallback((id: string) => setInspection({ kind: 'report', id }), []);
   const selectedNode = focused?.nodes.find(node => node.kind === inspection.kind && node.reference === inspection.id)?.id ?? '';
   const hoveredIndex = !focused ? bubbles.findIndex(group => group.id === hoveredGroup) : -1;
@@ -129,11 +130,11 @@ const RelationshipNetwork = memo(function RelationshipNetwork({ entries, recordI
           sources={sources.get(hovered.id)!.map(sourceName).join(' + ')} reports={groups.get(hovered.id)!.nodes.filter(node => node.kind === 'report').length}/>}
         {!selection.groups.length && <div className={styles.empty}><Share2 size={26}/><p>No groups match this selection.</p>{filtering && <button onClick={clearFilters}>Clear group filters</button>}</div>}
       </div>
-      <div className={styles.canvasFooter}>{focused ? <button className={styles.returnGroups} onClick={() => setOverview(true)}><ArrowLeft size={13} aria-hidden/>All groups</button> :
+      <div className={styles.canvasFooter} data-focused={!!focused}><button className={styles.returnGroups} onClick={() => setOverview(true)}><ArrowLeft size={13} aria-hidden/>All groups</button>
       <div className={styles.legend} role="group" aria-label="Filter groups by relationship type"><span className={styles.reportKey}><FileText size={12} aria-hidden/>Report</span>{[...selection.typeCounts].sort(([a], [b]) => a.localeCompare(b)).map(([type, count]) => {
         const Icon = relationshipIcons[type as keyof typeof relationshipIcons] ?? Share2;
         return <button key={type} data-tone={tone(type)} aria-label={`Filter ${typeLabel(type)} groups`} aria-pressed={filters.types.includes(type)} disabled={!count && !filters.types.includes(type)} onClick={() => filterGroups('types', type)}><Icon size={12} aria-hidden/>{typeLabel(type)}<b>{count}</b></button>;
-      })}</div>}</div>
+      })}</div></div>
     </div>
     {!focused ? <NetworkSummary selection={selection} sources={sources} colors={colors} hoveredGroup={hoveredGroup} selectedSources={filters.sources} onFilter={filterGroups}/> : !selectedNode ?
       <GroupDetail key={focused.id} group={focused} graph={graph} byId={byId} onInspectReport={inspectReport} onReport={onReport}/> : inspection.kind === 'report' ?
@@ -161,22 +162,28 @@ const NetworkScene = memo(function NetworkScene({ graph, byId, sources, colors, 
     const scale = Math.min(1000, height) / (2 * layout.radius);
     return { x: 500 - (origin.x + layout.center.x) * scale, y: height / 2 - (origin.y + layout.center.y) * scale, scale };
   }, [height, layout, origin]);
-  return <svg viewBox={`0 0 1000 ${height}`} aria-label="Relationship evidence network" className={styles.graph}>
-    <defs>
-      <pattern id={patternId} width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="14" cy="14" r=".6" className={styles.gridDot}/></pattern>
-    </defs>
-    <rect width="1000" height={height} fill={`url(#${patternId})`} pointerEvents="none"/>
-    <motion.g animate={camera} initial={false} transition={{ duration: reducedMotion ? 0 : .72, ease: [.22, .8, .2, 1] }}>
-      <NetworkOverview overview={overview} sources={sources} colors={colors} descriptionId={descriptionId} focusedId={focused?.id ?? ''} retainedId={retainedId} onSelect={onOpenGroup} onHover={onGroupHover}/>
-      <AnimatePresence initial={false} onExitComplete={() => setRetainedId(focused?.id ?? '')}>
-        {focused && layout && origin && <FocusedGroup key={focused.id} origin={origin} layout={layout} graph={graph} byId={byId} colors={colors} selectedNode={selectedNode} onSelect={onSelect} onInspectReport={onInspectReport}/>}
-      </AnimatePresence>
-    </motion.g>
-  </svg>;
+  return <div className={styles.scene} role="img" aria-label="Relationship evidence network">
+    <svg viewBox={`0 0 1000 ${height}`} className={styles.graph} aria-hidden>
+      <defs><pattern id={patternId} width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="14" cy="14" r=".6" className={styles.gridDot}/></pattern></defs>
+      <rect width="1000" height={height} fill={`url(#${patternId})`}/>
+    </svg>
+    <div className={styles.overviewLayer} inert={!!focused} aria-hidden={!!focused || undefined}>
+      <svg viewBox={`0 0 1000 ${height}`} className={styles.graph}>
+        <g transform={`translate(500 ${height / 2})`}><NetworkOverview overview={overview} sources={sources} colors={colors} descriptionId={descriptionId} retainedId={retainedId} onSelect={onOpenGroup} onHover={onGroupHover}/></g>
+      </svg>
+    </div>
+    <motion.div className={styles.cameraLayer} animate={{ x: `${camera.x / 10}%`, y: `${camera.y / height * 100}%`, scale: camera.scale }} initial={false} transition={{ duration: reducedMotion ? 0 : .48, ease: [.22, .8, .2, 1] }}>
+      <svg viewBox={`0 0 1000 ${height}`} className={`${styles.graph} ${styles.focusLayer}`}>
+        <AnimatePresence initial={false} onExitComplete={() => setRetainedId(focused?.id ?? '')}>
+          {focused && layout && origin && <FocusedGroup key={focused.id} origin={origin} layout={layout} graph={graph} byId={byId} colors={colors} selectedNode={selectedNode} onSelect={onSelect} onInspectReport={onInspectReport}/>}
+        </AnimatePresence>
+      </svg>
+    </motion.div>
+  </div>;
 });
 
-const NetworkOverview = memo(function NetworkOverview({ overview, sources, colors, descriptionId, focusedId, retainedId, onSelect, onHover }: {
-  overview: ReturnType<typeof relationshipOverview>; descriptionId: string; focusedId: string; retainedId: string; onSelect: (id: string) => void; onHover: (id: string, kind: 'pointer' | 'focus') => void;
+const NetworkOverview = memo(function NetworkOverview({ overview, sources, colors, descriptionId, retainedId, onSelect, onHover }: {
+  overview: ReturnType<typeof relationshipOverview>; descriptionId: string; retainedId: string; onSelect: (id: string) => void; onHover: (id: string, kind: 'pointer' | 'focus') => void;
   sources: ReturnType<typeof relationshipSources>; colors: Map<string, string>;
 }) {
   const { reportOrganizations } = useAtlas();
@@ -184,13 +191,11 @@ const NetworkOverview = memo(function NetworkOverview({ overview, sources, color
   const rings = useMemo(() => overview.map(group => relationshipRing(group.radius, group.parts)), [overview]);
   const shapes = useMemo(() => relationshipSourceShapes([...colors.keys()]), [colors]);
   const marks = useMemo(() => new Map([...sources].map(([id, publishers]) => [id, relationshipSourceMarks(publishers)])), [sources]);
-  return <g className={styles.overviewArt} aria-hidden={!!focusedId || undefined}>
-    {overview.map((group, index) => {
+  const glyphs = useMemo(() => overview.map((group, index) => {
       const primaryType = group.parts.reduce((largest, part) => part.fraction > largest.fraction ? part : largest).type;
       const publishers = sources.get(group.id)!;
       const names = publishers.map(source => reportOrganizations[source].label).join(' + ');
-      return <g key={group.id} transform={`translate(${group.x} ${group.y})`} visibility={group.id === retainedId ? 'hidden' : undefined}>
-      <g role="button" tabIndex={focusedId ? -1 : 0} aria-label={`Explore evidence group ${index + 1}: ${group.count} connection${group.count === 1 ? '' : 's'}${names ? ` · ${names}` : ''}`} aria-describedby={`${descriptionId}-${index}`} className={styles.groupGlyph} data-tone={tone(primaryType)}
+      return <g key={group.id} role="button" tabIndex={0} aria-label={`Explore evidence group ${index + 1}: ${group.count} connection${group.count === 1 ? '' : 's'}${names ? ` · ${names}` : ''}`} aria-describedby={`${descriptionId}-${index}`} className={styles.groupGlyph} data-tone={tone(primaryType)}
         onPointerEnter={() => onHover(group.id, 'pointer')} onPointerLeave={() => onHover('', 'pointer')}
         onFocus={event => onHover(event.currentTarget.matches(':focus-visible') ? group.id : '', 'focus')} onBlur={() => onHover('', 'focus')}
         onClick={() => onSelect(group.first)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(group.first); } }}>
@@ -205,10 +210,9 @@ const NetworkOverview = memo(function NetworkOverview({ overview, sources, color
             style={{ '--source-color': colors.get(mark.source) } as CSSProperties} className={styles.sourceFill}/>) : <circle r={group.radius * .42} className={styles.sourceUnknown}/>}
         </g>
         <circle r={group.radius + 3} className={styles.groupFocus}/>
-      </g>
-    </g>;
-    })}
-  </g>;
+      </g>;
+    }), [overview, sources, reportOrganizations, descriptionId, onHover, onSelect, rings, marks, shapes, colors, paintId]);
+  return <g className={styles.overviewArt}>{overview.map((group, index) => <g key={group.id} transform={`translate(${group.x} ${group.y})`} visibility={group.id === retainedId ? 'hidden' : undefined}>{glyphs[index]}</g>)}</g>;
 });
 
 function GroupCallout({ id, group, frame, sources, reports }: {
@@ -216,7 +220,7 @@ function GroupCallout({ id, group, frame, sources, reports }: {
 }) {
   const { ref, size } = useElementSize<HTMLDivElement>();
   const scale = frame.width / 1000;
-  const placement = size && relationshipCallout({ x: frame.width / 2 + group.x * scale, y: frame.height / 2 + group.y * scale, radius: group.radius * scale * 1.05 }, frame, size);
+  const placement = size && relationshipCallout({ x: frame.width / 2 + group.x * scale, y: frame.height / 2 + group.y * scale, radius: group.radius * scale }, frame, size);
   return <div className={styles.groupCalloutLayer}>
     {placement && <svg className={styles.groupLeader} aria-hidden><path d={placement.path} pathLength="1"/><circle cx={placement.start.x} cy={placement.start.y} r="2"/></svg>}
     <div ref={ref} id={id} role="tooltip" className={styles.groupCallout} style={placement ? { left: placement.x, top: placement.y } : { visibility: 'hidden' }}>
@@ -241,7 +245,7 @@ const FocusedGroup = memo(function FocusedGroup({ origin, layout, graph, byId, c
   const progress = useMotionValue(reducedMotion ? 1 : 0);
   useEffect(() => {
     const target = present ? 1 : 0;
-    const animation = animate(progress, target, { duration: reducedMotion ? 0 : .72 * Math.abs(target - progress.get()), ease: [.22, .8, .2, 1],
+    const animation = animate(progress, target, { duration: reducedMotion ? 0 : .48 * Math.abs(target - progress.get()), ease: [.22, .8, .2, 1],
       onComplete: () => { if (!present) safeToRemove?.(); } });
     return () => animation.stop();
   }, [present, progress, reducedMotion, safeToRemove]);
@@ -269,7 +273,7 @@ const FocusedGroup = memo(function FocusedGroup({ origin, layout, graph, byId, c
     const node = nodes.get(id)!;
     return <NetworkNode key={node.id} node={node} present={present} active={node.id === highlighted || !!neighbors?.has(node.id)} selected={node.id === selectedNode} onHover={setHover} onSelect={onSelect} onInspectReport={onInspectReport}/>;
   };
-  return <g data-expanded-group={origin.id} transform={`translate(${origin.x} ${origin.y})`} aria-hidden={!present || undefined} pointerEvents={present ? undefined : 'none'}>
+  return <g data-expanded-group={origin.id} transform={`translate(${origin.x} ${origin.y})`} aria-hidden={!present || undefined} pointerEvents={present ? 'auto' : 'none'}>
     {layout.sectors.map(sector => <MorphRing key={sector.type} from={ring.parts.find(part => part.type === sector.type)!}
       to={{ radius: sector.radius + 14, start: sector.start + turn, end: sector.end + turn }} width={ring.width} progress={progress} type={sector.type}/>)}
     <motion.g style={{ opacity: sourceOpacity }} pointerEvents="none" aria-hidden>
@@ -353,7 +357,6 @@ function DetailPane({ label, color, actions, children }: { label: string; color:
     observer.observe(element);
     [...element.children].forEach(child => observer.observe(child));
     element.addEventListener('scroll', update, { passive: true });
-    update();
     return () => { observer.disconnect(); element.removeEventListener('scroll', update); };
   }, [children]);
   return <aside className={styles.detailPane} aria-label={label} data-tone={color}>
