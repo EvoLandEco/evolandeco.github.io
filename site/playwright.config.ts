@@ -6,6 +6,10 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
+  projects: [
+    { name: "chromium", use: { browserName: "chromium" } },
+    { name: "webkit", testMatch: "atlas-relationship-motion.spec.ts", use: { browserName: "webkit", deviceScaleFactor: 3, isMobile: true, hasTouch: true } },
+  ],
   reporter: [["list"], ["json", { outputFile: "evidence/browser-tests.json" }]],
   webServer: process.env.CI ? {
     command: "python3 -m http.server 3000 --bind 127.0.0.1 --directory out",

@@ -41,7 +41,15 @@ jobs:
       - name: Check ATLAS browser interactions
         run: pnpm exec playwright test atlas.spec.ts --grep "ATLAS entry|ATLAS is readable|download errors|Checkbox filters|Globe surface clicks|assertion branches"
       - name: Check ATLAS reports and briefing
-        run: pnpm exec playwright test atlas-reviewer.spec.ts atlas-daily.spec.ts atlas-daily-navigation.spec.ts atlas-percentage-points.spec.ts atlas-briefing.spec.ts atlas-undated.spec.ts atlas-connection-cards.spec.ts atlas-ui-release.spec.ts
+        run: pnpm exec playwright test atlas-reviewer.spec.ts atlas-daily.spec.ts atlas-daily-navigation.spec.ts atlas-percentage-points.spec.ts atlas-briefing.spec.ts atlas-undated.spec.ts atlas-connection-cards.spec.ts atlas-relationship-motion.spec.ts atlas-ui-release.spec.ts
+      - name: Save WebKit network previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-webkit-network
+          path: site/test-results/**/network-*.png
+          if-no-files-found: ignore
+          retention-days: 3
       - uses: actions/upload-pages-artifact@v4
         with:
           path: site/out
