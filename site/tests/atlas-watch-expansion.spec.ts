@@ -34,13 +34,13 @@ for (const fullscreen of [false, true]) test(`Outbreak watch expands ${fullscree
     await expect(button).toHaveCSS('border-top-style', 'solid');
   }
   const columns = page.locator('.atlas-briefing-columns');
-  expect(await columns.evaluate(element => {
-    const fade = getComputedStyle(element, '::after');
-    return { content: fade.content, width: Math.round(parseFloat(fade.width)), area: Math.round(element.getBoundingClientRect().width), filter: fade.backdropFilter, pointer: fade.pointerEvents };
-  })).toEqual({ content: '\"\"', width: Math.round((await columns.boundingBox())!.width), area: Math.round((await columns.boundingBox())!.width), filter: 'blur(10px)', pointer: 'none' });
-  for (const body of await columns.locator('.atlas-briefing-body').all()) {
-    expect(await body.evaluate(element => getComputedStyle(element, '::after').content)).toBe('none');
-  }
+  const fade = columns.locator(':scope > .atlas-briefing-shared-fade');
+  await expect(fade).toBeVisible();
+  await expect(fade).toHaveCSS('pointer-events', 'none');
+  expect((await fade.boundingBox())!.width).toBeCloseTo((await columns.boundingBox())!.width, 0);
+  const layers = await fade.locator(':scope > div').evaluateAll(elements => elements.map(element => getComputedStyle(element).backdropFilter));
+  expect(layers).toEqual(['blur(0.5px)', 'blur(1px)', 'blur(2px)', 'blur(4px)', 'blur(6px)', 'blur(8px)', 'blur(10px)', 'blur(10px)']);
+  for (const body of await columns.locator('.atlas-briefing-body').all()) await expect(body.locator('.atlas-briefing-fade')).toBeHidden();
   await entrance.scrollIntoViewIfNeeded();
   await page.screenshot({ path: testInfo.outputPath('shared-briefing-fade.png') });
   const before = await watch.boundingBox();
@@ -49,7 +49,7 @@ for (const fullscreen of [false, true]) test(`Outbreak watch expands ${fullscree
   await expect(page.locator('html')).not.toHaveAttribute('data-atlas-watch-transition');
   await expect(exit).toBeFocused();
   await expect(page.locator('.atlas-latest')).toBeHidden();
-  expect(await columns.evaluate(element => getComputedStyle(element, '::after').content)).toBe('none');
+  await expect(columns.locator('.atlas-briefing-shared-fade')).toHaveCount(0);
   expect((await watch.boundingBox())!.width).toBeGreaterThan(before!.width);
   expect((await watch.boundingBox())!.width).toBeCloseTo((await page.locator('.atlas-trends').boundingBox())!.width, 0);
   if (fullscreen) {
@@ -68,7 +68,7 @@ for (const fullscreen of [false, true]) test(`Outbreak watch expands ${fullscree
   expect(exitBox.y).toBeGreaterThanOrEqual(0);
   expect(exitBox.y + exitBox.height).toBeLessThanOrEqual(832);
   await expect(watch.locator('.atlas-briefing-body')).toHaveAttribute('data-fade', 'false');
-  expect(await watch.locator('.atlas-briefing-body').evaluate(element => getComputedStyle(element, '::after').content)).toBe('none');
+  await expect(watch.locator('.atlas-briefing-fade')).toHaveCount(0);
   const list = page.getByRole('region', { name: 'Outbreak watch cards' });
   await expect(list).toHaveCSS('scrollbar-width', 'none');
   const more = page.getByRole('button', { name: 'More outbreaks below', exact: true });
@@ -148,8 +148,8 @@ test('Narrow layouts keep page scrolling and three-card loading after a resize',
   await expect(page.getByRole('button', { name: 'View all outbreaks', exact: true })).toBeHidden();
   await expect(page.getByRole('button', { name: 'Back to Trends', exact: true })).toHaveCount(0);
   await expect(page.locator('.atlas-latest')).toBeVisible();
-  expect(await page.locator('.atlas-briefing-columns').evaluate(element => getComputedStyle(element, '::after').content)).toBe('none');
-  expect(await page.locator('.atlas-latest-body').evaluate(element => getComputedStyle(element, '::after').content)).toBe('""');
+  await expect(page.locator('.atlas-briefing-shared-fade')).toBeHidden();
+  await expect(page.locator('.atlas-latest-body > .atlas-briefing-fade')).toBeVisible();
   await expect(page.locator('.atlas-daily-watch:visible')).toHaveCount(3);
   await expect(page.locator('.atlas-latest-list > li:not([inert]) .atlas-latest-entry')).toHaveCount(7);
   await expect(page.locator('.atlas-watch-list')).toHaveCSS('overflow-y', 'visible');

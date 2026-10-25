@@ -74,7 +74,7 @@ test('Fullscreen briefing allocates space and fits complete timeline entries', a
       const list = element.querySelector('.atlas-latest-list')!;
       const watchBody = element.querySelector('.atlas-watch .atlas-briefing-body')!;
       const latestBody = element.querySelector('.atlas-latest-body')!;
-      return { watch: watch.height, latest: latest.height, watchRight: watch.right, latestLeft: latest.left, watchTop: watch.top, latestTop: latest.top, overflow: list.scrollHeight - list.clientHeight, watchBottom: watchBody.getBoundingClientRect().bottom, latestBottom: latestBody.getBoundingClientRect().bottom, watchFade: getComputedStyle(watchBody, '::after').height, latestFade: getComputedStyle(latestBody, '::after').height };
+      return { watch: watch.height, latest: latest.height, watchRight: watch.right, latestLeft: latest.left, watchTop: watch.top, latestTop: latest.top, overflow: list.scrollHeight - list.clientHeight, watchBottom: watchBody.getBoundingClientRect().bottom, latestBottom: latestBody.getBoundingClientRect().bottom, watchFade: getComputedStyle(watchBody.querySelector('.atlas-briefing-fade')!).height, latestFade: getComputedStyle(latestBody.querySelector('.atlas-briefing-fade')!).height };
     });
     expect(dimensions.latest).toBeCloseTo(dimensions.watch, 0);
     expect(dimensions.watchTop).toBeCloseTo(dimensions.latestTop, 0);
@@ -87,7 +87,7 @@ test('Fullscreen briefing allocates space and fits complete timeline entries', a
       const heights = rows.map(row => row.height);
       const nodes = [...element.querySelectorAll('.atlas-source-logo')].map(node => node.getBoundingClientRect().top);
       const gaps = nodes.slice(1).map((top, index) => top - nodes[index]);
-      const fade = parseFloat(getComputedStyle(element.closest('.atlas-briefing-columns')!, '::after').height);
+      const fade = parseFloat(getComputedStyle(element.closest('.atlas-briefing-columns')!.querySelector('.atlas-briefing-shared-fade')!).height);
       const topGap = element.querySelector('.atlas-latest-date')!.getBoundingClientRect().top - rows[0].top;
       return { spread: Math.max(...heights) - Math.min(...heights), nodeSpread: Math.max(...gaps) - Math.min(...gaps), topGap, previewHeight: heights.at(-1)!, fade };
     });

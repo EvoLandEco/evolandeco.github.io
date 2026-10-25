@@ -9,9 +9,12 @@ import Image from "next/image";
 import { ArrowLeft, ArrowRight, Expand, ChevronDown, ChevronLeft, ChevronRight, ChevronsDown, Newspaper, Radar, Activity, ChartPie, Building2, Timer } from "lucide-react";
 import { useAtlas, useAtlasPanelState, AtlasWorkspaceContext } from "./atlas-context";
 import { useElementSize } from "./use-element-size";
+import { ProgressiveBlur } from "./magicui/progressive-blur";
 import { ReportCountryFlags } from "./atlas-location-badges";
 import { formatDate, type AtlasRecord } from "@/lib/atlas";
 import { attentionHasPendingReview, attentionSelection } from "@/lib/atlas-attention";
+
+const briefingBlurLevels = [.5, 1, 2, 4, 6, 8, 10, 10];
 
 export const AtlasTrends = memo(function AtlasTrends({ networkOverview, rows, recordIds, window, onReport, onBrowseReports, daily, dailyDocuments = [], dailyState, dailyExcluded, onDailyReport, onWatchReports, onPeriod }: { networkOverview: ReactNode; rows: AtlasRecord[]; recordIds: Set<string>; window: [string, string]; onReport: (ids: string[], expand?: boolean) => void; onBrowseReports: () => void; daily?: DailySelection; dailyDocuments?: DailyDocument[]; dailyState?: DailyState; dailyExcluded?: boolean; onDailyReport: (id: string) => void; onWatchReports: (item: DailyWatch) => void; onPeriod: (month: string) => void }) {
   const { atlasDocuments, englishTitle, sourceName, reportOrganizations, selectedResearch } = useAtlas();
@@ -133,6 +136,7 @@ export const AtlasTrends = memo(function AtlasTrends({ networkOverview, rows, re
       <div className="atlas-briefing-body" data-fade={!watchExpanded && dailyEvents.length > 0}><ReportCountryFlags value={true}><div ref={watchList} className="atlas-watch-list" tabIndex={watchExpanded ? 0 : undefined} role={watchExpanded ? "region" : undefined} aria-label={watchExpanded ? "Outbreak watch cards" : undefined}>{dailyState?.loading && <p className="atlas-daily-notice" role="status">Checking daily reports…</p>}{dailyState?.error && <p className="atlas-daily-notice" role="status">{dailyState.error}</p>}{dailyState?.data && dailyExcluded && <p className="atlas-daily-notice">Daily reports have no reviewed disease, topic or relationship classifications for these filters.</p>}<div className="atlas-watch-cards" id="atlas-watch-cards"><AnimatePresence initial={false} mode="popLayout">{dailyEvents.map((item, index) => <m.div layout="position" layoutDependency={dailyEvents} initial={{ opacity: 0, y: 16, scale: .97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -12, scale: .97 }} key={item.id} data-mobile-hidden={index >= watchCount}><DailyWatchCard item={item} onReports={onWatchReports} /></m.div>)}</AnimatePresence></div>
         {dailyEvents.length > watchCount && <button className="atlas-briefing-link atlas-watch-more" aria-controls="atlas-watch-cards" onClick={() => setWatchCount(count => count + 3)}>Load more<ChevronDown size={16} aria-hidden /></button>}
         {!dailyEvents.length && !dailyState?.loading && !dailyState?.error && <p className="atlas-empty">No current watch selections match this reporting scope.</p>}<div ref={watchEnd} className="atlas-watch-end" aria-hidden /></div></ReportCountryFlags>
+        {dailyEvents.length > 0 && !watchExpanded && <ProgressiveBlur className="atlas-briefing-fade" height="var(--briefing-fade-height)" blurLevels={briefingBlurLevels}/>}
         {dailyEvents.length > 0 && !watchExpanded && <button ref={watchEntrance} className="atlas-briefing-link atlas-watch-all" aria-expanded={false} aria-controls="atlas-watch-cards" onClick={() => changeWatch(true)}>View all outbreaks<Expand size={15} aria-hidden /></button>}
         {watchExpanded && <button className="atlas-watch-next atlas-scroll-cue" data-more={watchHasMore} tabIndex={watchHasMore ? 0 : -1} aria-hidden={!watchHasMore} aria-label="More outbreaks below" title="More outbreaks below" aria-controls="atlas-watch-cards" onClick={() => watchList.current?.scrollBy({ top: watchList.current.clientHeight, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" })}><ChevronsDown size={18} aria-hidden /></button>}
       </div>
@@ -141,9 +145,12 @@ export const AtlasTrends = memo(function AtlasTrends({ networkOverview, rows, re
       <header><Newspaper size={18} aria-hidden /><h2 id="atlas-latest-title">Latest reports</h2></header>
       <div ref={latestBody} className="atlas-briefing-body atlas-latest-body" data-fade={latest.length > latestCount}>
         <ol className="atlas-latest-list"><AnimatePresence initial={false} mode="popLayout">{latest.length ? latest.slice(0, latestCount + 1).map(latestEntry) : <li key="empty" className="atlas-empty">No dated reports match these filters.</li>}</AnimatePresence></ol>
+        {latest.length > latestCount && <ProgressiveBlur className="atlas-briefing-fade" height="var(--briefing-fade-height)" blurLevels={briefingBlurLevels}/>}
         <button className="atlas-briefing-link atlas-latest-all" onClick={onBrowseReports}>View all reports<ArrowRight size={15} aria-hidden /></button>
       </div>
-    </section></div>
+    </section>
+    {!watchExpanded && dailyEvents.length > 0 && latest.length > latestCount && <ProgressiveBlur className="atlas-briefing-fade atlas-briefing-shared-fade" height="var(--briefing-fade-height)" blurLevels={briefingBlurLevels}/>}
+    </div>
   </div>;
 });
 

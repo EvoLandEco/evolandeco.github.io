@@ -2,8 +2,8 @@
 import { memo, useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { AnimatePresence, animate, motion, useMotionValue, usePresence, useReducedMotion, useTransform, type MotionValue } from 'motion/react';
-import { ArrowLeft, ArrowRight, Check, ChevronsDown, CircleHelp, Expand, FileText, Focus, GitBranch, Link2, MoveUpRight, RotateCcw, ScanLine, Share2 } from 'lucide-react';
-import { relationshipNetwork, relationshipOverview, relationshipSources, relationshipGroupFilter, relationshipGroupLayout, relationshipNodeOutline, relationshipRing, relationshipMorphArc, relationshipSourceColors, relationshipSourceShapes, relationshipSourceMarks, relationshipCallout, type RelationshipGraph, type RelationshipGroup } from '@/lib/atlas-relationship-network';
+import { ArrowLeft, ArrowRight, Building2, Check, ChevronsDown, CircleHelp, Expand, FileText, Focus, GitBranch, Link2, MoveUpRight, RotateCcw, ScanLine, Share2 } from 'lucide-react';
+import { relationshipNetwork, relationshipOverview, relationshipSources, relationshipGroupFilter, relationshipGroupLayout, relationshipNodeOutline, relationshipRing, relationshipMorphArc, relationshipSourceColors, relationshipSourceMarks, relationshipCallout, type RelationshipGraph, type RelationshipGroup } from '@/lib/atlas-relationship-network';
 import { formatDate, supported, type AtlasAssessment } from '@/lib/atlas';
 import { useAtlas } from './atlas-context';
 import { usePanelMotion } from './motion-policy';
@@ -127,7 +127,7 @@ const RelationshipNetwork = memo(function RelationshipNetwork({ entries, recordI
         <button className={styles.filterReset} aria-label="Clear group filters" disabled={!filtering} onClick={clearFilters}><RotateCcw size={13} aria-hidden/></button>
       </div>
       <div ref={stage} className={styles.stage} data-focused={!!focused}>
-        {size && <NetworkScene graph={graph} byId={byId} sources={sources} colors={colors} overview={bubbles} descriptionId={descriptionId} focused={focused} height={height} selectedNode={selectedNode} onSelect={select} onInspectReport={inspectReport} onOpenGroup={openGroup} onGroupHover={hoverGroup}/>}
+        {size && <NetworkScene graph={graph} byId={byId} sources={sources} overview={bubbles} descriptionId={descriptionId} focused={focused} height={height} selectedNode={selectedNode} onSelect={select} onInspectReport={inspectReport} onOpenGroup={openGroup} onGroupHover={hoverGroup}/>}
         {hovered && size && <GroupCallout key={hovered.id} id={`${descriptionId}-${hoveredIndex}`} group={hovered} frame={size}
           sources={sources.get(hovered.id)!.map(sourceName).join(' + ')} reports={groups.get(hovered.id)!.nodes.filter(node => node.kind === 'report').length}/>}
         {!selection.groups.length && <div className={styles.empty}><Share2 size={26}/><p>No groups match this selection.</p>{filtering && <button onClick={clearFilters}>Clear group filters</button>}</div>}
@@ -145,9 +145,9 @@ const RelationshipNetwork = memo(function RelationshipNetwork({ entries, recordI
   </div>;
 });
 
-const NetworkScene = memo(function NetworkScene({ graph, byId, sources, colors, overview, descriptionId, focused, height, selectedNode, onSelect, onInspectReport, onOpenGroup, onGroupHover }: {
+const NetworkScene = memo(function NetworkScene({ graph, byId, sources, overview, descriptionId, focused, height, selectedNode, onSelect, onInspectReport, onOpenGroup, onGroupHover }: {
   graph: RelationshipGraph; byId: Map<string, AtlasAssessment>; focused: RelationshipGroup | undefined; height: number;
-  sources: ReturnType<typeof relationshipSources>; colors: Map<string, string>;
+  sources: ReturnType<typeof relationshipSources>;
   overview: ReturnType<typeof relationshipOverview>; descriptionId: string;
   selectedNode: string; onSelect: (id: string) => void; onInspectReport: (id: string) => void; onOpenGroup: (id: string) => void; onGroupHover: (id: string, kind: 'pointer' | 'focus') => void;
 }) {
@@ -168,23 +168,22 @@ const NetworkScene = memo(function NetworkScene({ graph, byId, sources, colors, 
     </svg>
     <div className={styles.overviewLayer} inert={!!focused || !!retainedId} aria-hidden={!!focused || !!retainedId || undefined}>
       <svg viewBox={`0 0 1000 ${height}`} className={styles.graph}>
-        <g transform={`translate(500 ${height / 2})`}><NetworkOverview overview={overview} sources={sources} colors={colors} descriptionId={descriptionId} retainedId={retainedId} onSelect={onOpenGroup} onHover={onGroupHover}/></g>
+        <g transform={`translate(500 ${height / 2})`}><NetworkOverview overview={overview} sources={sources} descriptionId={descriptionId} retainedId={retainedId} onSelect={onOpenGroup} onHover={onGroupHover}/></g>
       </svg>
     </div>
     <AnimatePresence initial={false} onExitComplete={() => { setRetainedId(focused?.id ?? ''); setSettledId(''); }}>
-      {focused && layout && origin && <FocusedGroup key={focused.id} origin={origin} layout={layout} height={height} graph={graph} byId={byId} colors={colors} selectedNode={selectedNode} onSelect={onSelect} onInspectReport={onInspectReport} onSettled={onSettled}/>}
+      {focused && layout && origin && <FocusedGroup key={focused.id} origin={origin} layout={layout} height={height} graph={graph} byId={byId} selectedNode={selectedNode} onSelect={onSelect} onInspectReport={onInspectReport} onSettled={onSettled}/>}
     </AnimatePresence>
   </div>;
 });
 
-const NetworkOverview = memo(function NetworkOverview({ overview, sources, colors, descriptionId, retainedId, onSelect, onHover }: {
+const NetworkOverview = memo(function NetworkOverview({ overview, sources, descriptionId, retainedId, onSelect, onHover }: {
   overview: ReturnType<typeof relationshipOverview>; descriptionId: string; retainedId: string; onSelect: (id: string) => void; onHover: (id: string, kind: 'pointer' | 'focus') => void;
-  sources: ReturnType<typeof relationshipSources>; colors: Map<string, string>;
+  sources: ReturnType<typeof relationshipSources>;
 }) {
   const { reportOrganizations } = useAtlas();
   const paintId = useId();
   const rings = useMemo(() => overview.map(group => relationshipRing(group.radius, group.parts)), [overview]);
-  const shapes = useMemo(() => relationshipSourceShapes([...colors.keys()]), [colors]);
   const marks = useMemo(() => new Map([...sources].map(([id, publishers]) => [id, relationshipSourceMarks(publishers)])), [sources]);
   const glyphs = useMemo(() => overview.map((group, index) => {
       const primaryType = group.parts.reduce((largest, part) => part.fraction > largest.fraction ? part : largest).type;
@@ -200,13 +199,12 @@ const NetworkOverview = memo(function NetworkOverview({ overview, sources, color
           <path d={part.path} strokeWidth={rings[index].width} clipPath={`url(#${paintId}-${index}-${segment})`} className={styles.groupRing}/>
         </g>)}
         <g className={styles.groupCore}>
-          {publishers.length ? marks.get(group.id)!.map(mark => <path key={mark.source} d={shapes.get(mark.source)}
-            transform={`translate(${mark.x * group.radius * .5} ${mark.y * group.radius * .5}) scale(${mark.scale * group.radius * .5})`}
-            style={{ '--source-color': colors.get(mark.source) } as CSSProperties} className={styles.sourceFill}/>) : <circle r={group.radius * .42} className={styles.sourceUnknown}/>}
+          {publishers.length ? marks.get(group.id)!.map(mark => <g key={mark.source}
+            transform={`translate(${mark.x * group.radius * .5} ${mark.y * group.radius * .5}) scale(${mark.scale * group.radius * .5})`}><SourceLogo logo={reportOrganizations[mark.source].logo}/></g>) : <circle r={group.radius * .42} className={styles.sourceUnknown}/>}
         </g>
         <circle r={group.radius + 3} className={styles.groupFocus}/>
       </g>;
-    }), [overview, sources, reportOrganizations, descriptionId, onHover, onSelect, rings, marks, shapes, colors, paintId]);
+    }), [overview, sources, reportOrganizations, descriptionId, onHover, onSelect, rings, marks, paintId]);
   return <g className={styles.overviewArt}>{overview.map((group, index) => <g key={group.id} transform={`translate(${group.x} ${group.y})`} visibility={group.id === retainedId ? 'hidden' : undefined}>{glyphs[index]}</g>)}</g>;
 });
 
@@ -228,12 +226,12 @@ function GroupCallout({ id, group, frame, sources, reports }: {
 }
 
 type GroupLayout = ReturnType<typeof relationshipGroupLayout>;
-const FocusedGroup = memo(function FocusedGroup({ origin, layout, height, graph, byId, colors, selectedNode, onSelect, onInspectReport, onSettled }: {
+const FocusedGroup = memo(function FocusedGroup({ origin, layout, height, graph, byId, selectedNode, onSelect, onInspectReport, onSettled }: {
   layout: GroupLayout; height: number; onSettled: (id: string) => void; graph: RelationshipGraph; byId: Map<string, AtlasAssessment>;
-  origin: ReturnType<typeof relationshipOverview>[number]; colors: Map<string, string>;
+  origin: ReturnType<typeof relationshipOverview>[number];
   selectedNode: string; onSelect: (id: string) => void; onInspectReport: (id: string) => void;
 }) {
-  const { atlasDocuments, lookup, englishTitle, sourceName } = useAtlas();
+  const { atlasDocuments, lookup, englishTitle, sourceName, reportOrganizations } = useAtlas();
   const edgeClipId = useId();
   const reducedMotion = useReducedMotion();
   const [present, safeToRemove] = usePresence();
@@ -268,7 +266,6 @@ const FocusedGroup = memo(function FocusedGroup({ origin, layout, height, graph,
   const cameraY = useTransform(progress, value => `${50 - (origin.y + center.y) * zoom * value / height * 100}%`);
   const cameraScale = useTransform(progress, value => (1 + (zoom - 1) * value) / resolution);
   const ring = useMemo(() => relationshipRing(origin.radius, origin.parts), [origin]);
-  const shapes = useMemo(() => relationshipSourceShapes([...colors.keys()]), [colors]);
   const detailTransform = useTransform(progress, value => `scale(${ring.parts[0].radius / (layout.sectors[0].radius + 14) * (1 - value) + value})`);
   const detailOpacity = useTransform(progress, [0, .25, .8, 1], [0, 0, 1, 1]);
   const sourceOpacity = useTransform(progress, [0, .35, .85, 1], [1, 1, 0, 0]);
@@ -297,7 +294,7 @@ const FocusedGroup = memo(function FocusedGroup({ origin, layout, height, graph,
     {layout.sectors.map(sector => <MorphRing key={sector.type} from={ring.parts.find(part => part.type === sector.type)!}
       to={{ radius: sector.radius + 14, start: sector.start + turn, end: sector.end + turn }} width={ring.width} progress={progress} type={sector.type}/>)}
     <motion.g style={{ opacity: sourceOpacity }} pointerEvents="none" aria-hidden>
-      {reportNodes.map(node => <MorphSource key={node.id} mark={marks.get(node.sourceId)!} node={node} radius={origin.radius} progress={progress} path={shapes.get(node.sourceId)!} color={colors.get(node.sourceId)!}/>)}
+      {reportNodes.map(node => <MorphSource key={node.id} mark={marks.get(node.sourceId)!} node={node} radius={origin.radius} progress={progress} logo={reportOrganizations[node.sourceId].logo}/>)}
       {!reportNodes.length && <circle r={origin.radius * .42} className={styles.sourceUnknown}/>}
     </motion.g>
     <motion.g ref={detail} data-network-detail transform={detailTransform} style={{ opacity: detailOpacity }}>
@@ -327,14 +324,20 @@ function MorphRing({ from, to, width, progress, type }: {
   return <g data-tone={tone(type)} className={styles.sector} aria-hidden><motion.path d={path} className={styles.morphRing} style={{ strokeWidth, opacity }}/></g>;
 }
 
-function MorphSource({ mark, node, radius, progress, path, color }: {
-  mark: ReturnType<typeof relationshipSourceMarks>[number]; node: { x: number; y: number }; radius: number; progress: MotionValue<number>; path: string; color: string;
+function MorphSource({ mark, node, radius, progress, logo }: {
+  mark: ReturnType<typeof relationshipSourceMarks>[number]; node: { x: number; y: number }; radius: number; progress: MotionValue<number>; logo: string | undefined;
 }) {
   const x = useTransform(progress, [0, 1], [mark.x * radius * .5, node.x]);
   const y = useTransform(progress, [0, 1], [mark.y * radius * .5, node.y]);
   const scale = useTransform(progress, [0, 1], [mark.scale * radius * .5, 12]);
   const transform = useTransform(() => `translate(${x.get()} ${y.get()}) scale(${scale.get()})`);
-  return <motion.g transform={transform}><path d={path} className={styles.sourceFill} style={{ '--source-color': color } as CSSProperties}/></motion.g>;
+  return <motion.g transform={transform}><SourceLogo logo={logo}/></motion.g>;
+}
+
+function SourceLogo({ logo }: { logo: string | undefined }) {
+  return logo
+    ? <image href={`/logos/atlas/${logo}`} x={-.9} y={-.9} width={1.8} height={1.8} preserveAspectRatio="xMidYMid meet" className={styles.sourceLogo} aria-hidden/>
+    : <Building2 x={-.9} y={-.9} width={1.8} height={1.8} strokeWidth={1.5} className={styles.sourceInstitution} aria-hidden/>;
 }
 
 type FocusedNode = GroupLayout['nodes'][number] & { type: string | undefined; label: string; sourceId: string; source: string; date: string };
@@ -411,7 +414,6 @@ const NetworkSummary = memo(function NetworkSummary({ selection, sources, colors
     return [...groups].sort(([a, n], [b, m]) => m - n || a.localeCompare(b)).map(([source]) => source);
   }, [sources]);
   const highlighted = new Set(sources.get(hoveredGroup));
-  const shapes = useMemo(() => relationshipSourceShapes([...colors.keys()]), [colors]);
   return <DetailPane label="Network overview" color="sage">
     <header><span className={styles.kind}><Share2 size={13} aria-hidden/>Overview</span></header>
     <h3>Evidence groups</h3>
@@ -422,7 +424,7 @@ const NetworkSummary = memo(function NetworkSummary({ selection, sources, colors
       const organization = reportOrganizations[source];
       return <button key={source} style={{ '--source-color': colors.get(source) } as CSSProperties} data-highlighted={highlighted.has(source)}
         aria-label={`Filter ${organization.label} groups`} aria-pressed={selectedSources.includes(source)} disabled={!selection.sourceCounts.get(source) && !selectedSources.includes(source)} onClick={() => onFilter('sources', source)}>
-        <svg viewBox="-1.1 -1.1 2.2 2.2" className={styles.sourceMark} aria-hidden><path d={shapes.get(source)} className={styles.sourceFill}/></svg>
+        <svg viewBox="-1.1 -1.1 2.2 2.2" className={styles.sourceMark} aria-hidden><SourceLogo logo={organization.logo}/></svg>
         <span>{organization.label}</span>
         <Check size={11} className={styles.sourceCheck} aria-hidden/>
       </button>;

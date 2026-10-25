@@ -40,8 +40,9 @@
 .groupSurface { fill: transparent; }
 .groupRing { fill: none; stroke: var(--connection-color); stroke-linecap: round; opacity: .65; pointer-events: none; transition: opacity .24s; }
 .groupCore { pointer-events: none; }
-.sourceFill { fill: color-mix(in srgb, var(--source-color) 68%, var(--background)); }
-:global(.dark) .sourceFill { fill: color-mix(in srgb, var(--source-color) 78%, var(--background)); }
+.sourceLogo { pointer-events: none; }
+:global(.dark) .sourceLogo { filter: brightness(1.65); }
+.sourceInstitution { color: var(--muted-foreground); }
 .sourceUnknown { fill: color-mix(in srgb, var(--muted-foreground) 22%, var(--background)); }
 .groupFocus { fill: none; stroke: var(--primary); stroke-width: 2; opacity: 0; pointer-events: none; }
 .groupGlyph:is(:hover, :focus-visible) .groupRing { opacity: 1; }

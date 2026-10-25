@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
-import { relationshipNetwork, relationshipOverview, relationshipSources, relationshipGroupFilter, relationshipGroupLayout, relationshipLabelRotation, relationshipRing, relationshipMorphArc, relationshipWedge, relationshipSourceColors, relationshipSourceShapes, relationshipSourceMarks, relationshipCallout } from '../src/lib/atlas-relationship-network';
+import { relationshipNetwork, relationshipOverview, relationshipSources, relationshipGroupFilter, relationshipGroupLayout, relationshipLabelRotation, relationshipRing, relationshipMorphArc, relationshipWedge, relationshipSourceColors, relationshipSourceMarks, relationshipCallout } from '../src/lib/atlas-relationship-network';
 import type { AtlasAssessment, AtlasRecord } from '../src/lib/atlas';
 
 const records = new Map(['a', 'b', 'c'].map(id => [id, { id, document_id: id === 'b' ? 'a' : id } as AtlasRecord]));
@@ -209,11 +209,8 @@ test('source colours follow identity and source sectors form one solid disc', as
   assert.equal(image[(100 * 200 + 100) * 4 + 3], 255);
 });
 
-test('source shapes match the key and remain separate inside a shared group centre', () => {
+test('source marks remain separate inside a shared group centre', () => {
   const sources = Array.from({ length: 16 }, (_, i) => `publisher-${i}`);
-  const shapes = relationshipSourceShapes(sources);
-  assert.deepEqual(shapes, relationshipSourceShapes([...sources.toReversed(), sources[0]]));
-  assert.equal(new Set(shapes.values()).size, 6);
   assert.deepEqual(relationshipSourceMarks([]), []);
   for (let count = 1; count <= sources.length; count++) {
     const members = sources.slice(0, count), marks = relationshipSourceMarks(members);

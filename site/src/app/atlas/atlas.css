@@ -1542,8 +1542,9 @@ html[data-atlas-workspace-transition]::view-transition-group(*) { animation-dura
 .atlas-briefing-columns > section { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); }
 .atlas-briefing-columns > section > header { position: relative; min-height: 30px; margin-bottom: 12px; }
 .atlas-briefing-body { position: relative; display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0; }
-.atlas-briefing-body[data-fade="true"]::after { content: ""; }
-.atlas-briefing-body[data-fade="true"]::after, .atlas-briefing-columns::after { position: absolute; z-index: 1; inset: auto 0 0; height: var(--briefing-fade-height); pointer-events: none; backdrop-filter: blur(10px); mask-image: linear-gradient(transparent, #000 65%); background: linear-gradient(transparent, var(--background)); }
+.atlas-briefing-fade { z-index: 1; }
+.atlas-briefing-fade::after { content: ""; position: absolute; inset: 0; z-index: 9; mask-image: linear-gradient(transparent, #000 65%); background: linear-gradient(transparent, var(--background)); }
+.atlas-briefing-shared-fade { display: none; }
 .atlas-watch .atlas-briefing-body[data-fade="true"] .atlas-watch-list { scroll-padding-bottom: var(--briefing-fade-height); }
 .atlas-watch .atlas-briefing-body[data-fade="true"] .atlas-watch-end { margin-top: var(--briefing-fade-height); }
 .atlas-page .atlas-briefing-body button:is(.atlas-latest-all, .atlas-watch-all) { position: absolute; z-index: 2; bottom: 20px; left: 50%; transform: translateX(-50%); border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border)); color: var(--primary); font-weight: 500; background: color-mix(in srgb, var(--primary) 10%, var(--background)); }
@@ -1591,8 +1592,8 @@ html[data-atlas-workspace-transition]::view-transition-group(*) { animation-dura
 .atlas-latest-entry strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .atlas-page button.atlas-watch-more { display: none; width: 100%; min-height: 44px; margin-top: 12px; font-size: 12px; }
 @container atlas-workspace (min-width: 621px) {
-  .atlas-briefing-columns:has(.atlas-watch > [data-fade="true"]):has(.atlas-latest > [data-fade="true"])::after { content: ""; }
-  .atlas-briefing-columns:has(.atlas-watch > [data-fade="true"]):has(.atlas-latest > [data-fade="true"]) > section > .atlas-briefing-body::after { content: none; }
+  .atlas-briefing-shared-fade { display: block; }
+  .atlas-briefing-columns:has(> .atlas-briefing-shared-fade) > section > .atlas-briefing-body > .atlas-briefing-fade { display: none; }
   .atlas-page:not([data-fullscreen]) .atlas-briefing-body { height: calc(10 * var(--latest-row-height)); }
 }
 @container atlas-workspace (max-width: 620px) {
@@ -1600,7 +1601,7 @@ html[data-atlas-workspace-transition]::view-transition-group(*) { animation-dura
   .atlas-page:not([data-fullscreen]) .atlas-watch .atlas-briefing-body { height: auto; }
   .atlas-page:not([data-fullscreen]) .atlas-watch-list { overflow: visible; }
   .atlas-page:not([data-fullscreen]) .atlas-briefing-body button.atlas-watch-all { display: none; }
-  .atlas-page:not([data-fullscreen]) .atlas-watch .atlas-briefing-body::after { display: none; }
+  .atlas-page:not([data-fullscreen]) .atlas-watch .atlas-briefing-fade { display: none; }
   .atlas-page:not([data-fullscreen]) .atlas-watch .atlas-briefing-body .atlas-watch-end { margin-top: 0; }
   .atlas-page:not([data-fullscreen]) .atlas-watch-cards > [data-mobile-hidden="true"] { display: none; }
   .atlas-page:not([data-fullscreen]) button.atlas-watch-more { display: flex; }

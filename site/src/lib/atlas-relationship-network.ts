@@ -150,18 +150,6 @@ export function relationshipSourceColors(sources: string[]) {
   return new Map(catalogue.map((source, index) => [source, `oklch(${index % 2 ? 72 : 60}% .12 ${(220 + index * 360 / catalogue.length) % 360})`]));
 }
 
-export function relationshipSourceShapes(sources: string[]) {
-  const shapes = [
-    'M-.5 -.78H.5Q.78 -.78 .78 -.5V.5Q.78 .78 .5 .78H-.5Q-.78 .78 -.78 .5V-.5Q-.78 -.78 -.5 -.78Z',
-    'M0 -.9A.9 .9 0 1 1 0 .9A.9 .9 0 1 1 0 -.9Z',
-    'M-.12 -.91Q0 -1.03 .12 -.91L.91 -.12Q1.03 0 .91 .12L.12 .91Q0 1.03 -.12 .91L-.91 .12Q-1.03 0 -.91 -.12Z',
-    'M-.36 -.78H.36Q.46 -.78 .51 -.69L.88 -.09Q.93 0 .88 .09L.51 .69Q.46 .78 .36 .78H-.36Q-.46 .78 -.51 .69L-.88 .09Q-.93 0 -.88 -.09L-.51 -.69Q-.46 -.78 -.36 -.78Z',
-    'M-.12 -.91Q0 -1.12 .12 -.91L.88 .41Q1 .62 .76 .62H-.76Q-1 .62 -.88 .41Z',
-    'M-.3 -.65H.3A.65 .65 0 0 1 .3 .65H-.3A.65 .65 0 0 1 -.3 -.65Z',
-  ];
-  return new Map([...new Set(sources)].sort().map((source, index) => [source, shapes[index % shapes.length]]));
-}
-
 export function relationshipSourceMarks(sources: string[]) {
   if (!sources.length) return [];
   const packed = packSiblings([...new Set(sources)].sort().map(source => ({ source, r: 1.12 })));
