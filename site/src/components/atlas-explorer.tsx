@@ -827,6 +827,8 @@ export function AtlasExplorer({ release, experiment, daily = {} }: { release: At
           <span className="atlas-status" data-tone="warning"><FlaskConical size={13} aria-hidden />{atlasUI.status}</span>
         </div>
         <p>ATLAS brings source reports, extracted findings and supporting quotations into one research workspace. The UI release identifies the interface; the research snapshot describes the evidence it displays.</p>
+        <p>ATLAS runs two daily updates and three Wednesday jobs: review, production and the review inbox. Cloudflare Workers schedule the jobs, Containers run the agents, and private R2 storage holds evidence and checkpoints.</p>
+        <p>The workflow can continue while the Mac and Codex desktop app are offline. Every public data release requires scientific validation and approval tied to that exact release.</p>
         <a className="atlas-about-repo" href="https://github.com/EvoLandEco/ATLAS" target="_blank" rel="noopener noreferrer"><GitBranch size={16} aria-hidden /><span>EvoLandEco/ATLAS</span><ExternalLink size={13} aria-hidden /><span className="sr-only"> on GitHub</span></a>
         <section className="atlas-about-section" aria-labelledby="atlas-about-technology">
           <h3 id="atlas-about-technology"><FlaskConical size={16} aria-hidden />Tech stack</h3>
