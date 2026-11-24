@@ -14,7 +14,7 @@ import type { AtlasData } from "./atlas-contract";
 import type { AtlasRecord } from "./atlas";
 export type { DailyDocument, DailyFinding, DailyEvidence, DailyWatch } from "./atlas-vendor/daily/0.2.1/daily";
 export type DailySelection = ReturnType<typeof selectDaily021> | ReturnType<typeof selectDaily023>;
-export type DailyState = { data?: DailyData; error?: string; loading?: boolean };
+export type DailyState = { data?: DailyData; error?: string; loading?: boolean; pending?: { cycle: string | null } };
 export const dailyPins = {
   "0.2.1": { schema: "91c8f56346d966f095006d3d0932c3f96d3d9a703312f6190ef8bbc957599c06", selector: "76a1c662f49d9e0fcc5e26e8f90f92be96abc765f9c3b2f824335364568fb5e0" },
   "0.2.2": { schema: "c9f07d7a5caa67407d902d6351badf7c4cf9e748437311287f12764ac2dced70", selector: "2444ebf378f61e01358fb581372a1e2d70c6061cf20cbea0aa4cf0bf6fa319b5" },

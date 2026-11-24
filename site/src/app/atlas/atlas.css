@@ -1554,6 +1554,10 @@ html[data-atlas-workspace-transition]::view-transition-group(*) { animation-dura
 .atlas-watch-list::-webkit-scrollbar, .atlas-latest-list::-webkit-scrollbar { display: none; }
 .atlas-watch-end { height: 1px; }
 .atlas-watch-list .atlas-empty { margin: 0; padding: 8px 0; }
+.atlas-watch-pending { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 160px; padding: 24px 16px; border-radius: 16px; background: color-mix(in srgb, var(--primary) 4%, var(--background)); text-align: center; }
+.atlas-watch-pending > svg { flex-shrink: 0; color: var(--primary); }
+.atlas-watch-pending strong { font-size: 14px; font-weight: 550; text-wrap: balance; }
+.atlas-watch-pending > span { color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
 .atlas-watch-entry { position: relative; padding: 8px 14px; border-radius: 12px; background: color-mix(in srgb, var(--primary) 3%, transparent); }
 .atlas-watch-entry + .atlas-watch-entry { margin-top: 10px; }
 .atlas-briefing-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 10px; color: var(--muted-foreground); margin-bottom: 4px; }

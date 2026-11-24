@@ -8,6 +8,52 @@ import AxeBuilder from '@axe-core/playwright';
 import type { DailyData } from '../src/lib/atlas-daily';
 import { sourceLogos } from '../src/lib/atlas-identities';
 
+for (const cycle of ['2026-11-18', null]) test(`Missing daily edition identifies its weekly release (${cycle ?? 'initial'})`, async ({ page }, testInfo) => {
+  const fixture = await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
+  fixture.bodies['/current.json'] = Buffer.from(JSON.stringify({ ...fixture.release, cycle, mode: cycle ? 'weekly' : 'initial' }));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/atlas/');
+  const watch = page.locator('.atlas-watch');
+  const pending = watch.getByRole('status');
+  await expect(pending).toContainText('Daily watch edition pending');
+  await expect(pending).toContainText(cycle ? 'For the 18 Nov 2026 weekly release.' : 'For this ATLAS release.');
+  await expect(watch.locator('.atlas-empty, .atlas-daily-watch')).toHaveCount(0);
+  await expect(page.locator('.atlas-latest-entry').first()).toBeVisible();
+  for (const width of [390, 1466]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const dark of [false, true]) {
+      await page.evaluate(dark => document.documentElement.classList.toggle('dark', dark), dark);
+      await pending.scrollIntoViewIfNeeded();
+      await expect(pending).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await watch.screenshot({ path: testInfo.outputPath(`pending-${width}-${dark ? 'dark' : 'light'}.png`) });
+    }
+  }
+});
+
+test('Daily publication errors and published empty selections stay distinct from a pending edition', async ({ page }) => {
+  const fixture = await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
+  const manifest = JSON.parse(fixture.bodies[`/releases/${fixture.release.export_id}/browser/${fixture.release.browser.manifest.sha256}/manifest.json`].toString());
+  const data = dailyFixture(releaseSchema.parse(fixture.release), manifest.source.manifest.sha256);
+  data.watch_items = [];
+  let response: 'error' | 'mismatch' | 'empty' = 'error';
+  await page.route(/\/daily\//, route => {
+    if (response === 'error') return route.fulfill({ status: 503 });
+    const pointer = dailyPointer(data);
+    if (response === 'mismatch') pointer.base_source_export_id = 'f'.repeat(64);
+    return route.fulfill({ contentType: 'application/json', body: JSON.stringify(route.request().url().endsWith('current.json') ? pointer : data) });
+  });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const state of ['error', 'mismatch', 'empty'] as const) {
+    response = state;
+    await page.goto('/atlas/');
+    const watch = page.locator('.atlas-watch');
+    await expect(watch).toContainText(state === 'empty' ? 'No current watch selections match this reporting scope.' : 'Daily reports could not be verified. Reload to try again.');
+    await expect(watch.locator('.atlas-watch-pending, .atlas-daily-watch')).toHaveCount(0);
+    if (state !== 'empty') await expect(watch.locator('.atlas-empty')).toHaveCount(0);
+  }
+});
+
 test('Source filters list collected sources and retain weekly sources with no daily documents', async ({ page }) => {
   const fixture = await routeBrowserFixture(page, bundle, JSON.parse(readFileSync('.cache/atlas-fixture/map.json', 'utf8')));
   const manifest = JSON.parse(fixture.bodies[`/releases/${fixture.release.export_id}/browser/${fixture.release.browser.manifest.sha256}/manifest.json`].toString());

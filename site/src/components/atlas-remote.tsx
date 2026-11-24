@@ -39,7 +39,7 @@ export function AtlasRemote({ experiment }: { experiment?: AtlasExperiment } = {
         store = createAtlasStore(snapshot, bundle, browser, presentation.sourceText, presentation.watch);
         setData({ store, release, analysis });
         void import("@/lib/atlas-daily").then(async module => { const daily = await module.fetchDaily(release, scientificManifestSha256, controller.signal); if (daily) module.validateDailyReferences(daily, bundle); return daily; }).then(data => {
-          if (!controller.signal.aborted) setDaily({ data });
+          if (!controller.signal.aborted) setDaily(data ? { data } : { pending: { cycle: release.cycle } });
         }).catch(() => { if (!controller.signal.aborted) setDaily({ error: "Daily reports could not be verified. Reload to try again." }); });
       }
     }).catch(() => { if (!controller.signal.aborted) { controller.abort(); setError(true); } });
