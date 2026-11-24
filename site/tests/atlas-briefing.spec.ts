@@ -14,7 +14,7 @@ for (const width of [390, 1280]) test(`Briefing lists recent documents without c
   await expect(page.getByRole('heading', { name: 'Reporting activity', exact: true })).toBeVisible();
   await expect(page.locator('.atlas-trend-coverage > svg, .atlas-disease-ring > svg')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Outbreak watch', exact: true })).toBeVisible();
-  await expect(page.locator('.atlas-watch-list')).toContainText('No current watch selections');
+  await expect(page.locator('.atlas-watch-list')).toContainText('Daily watch edition pending');
   const reports = page.locator('.atlas-latest-list > li:not([inert]) .atlas-latest-entry');
   await expect(reports).toHaveCount(width === 390 ? 7 : 9);
   await expect(page.locator('.atlas-latest-body')).toHaveCSS('height', width === 390 ? '672px' : '840px');
